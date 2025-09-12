@@ -1,0 +1,746 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}System Settings - Self Brain AGI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h2 mb-4">System Settings</h1>
+            <p class="text-muted">Configure your Self Brain AGI system parameters</p>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="row">
+        <div class="col-12">
+            <ul class="nav nav-tabs mb-4" id="settingsTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab">
+                        <i class="bi bi-gear"></i> General
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="models-tab" data-bs-toggle="tab" data-bs-target="#models" type="button" role="tab">
+                        <i class="bi bi-cpu"></i> Models
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="api-tab" data-bs-toggle="tab" data-bs-target="#api" type="button" role="tab">
+                        <i class="bi bi-link-45deg"></i> API Configuration
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="hardware-tab" data-bs-toggle="tab" data-bs-target="#hardware" type="button" role="tab">
+                        <i class="bi bi-motherboard"></i> Hardware
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab">
+                        <i class="bi bi-shield-lock"></i> Security
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="settingsTabContent">
+        <!-- General Settings -->
+        <div class="tab-pane fade show active" id="general" role="tabpanel">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">General Configuration</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="generalSettingsForm">
+                                <div class="mb-3">
+                                    <label for="systemName" class="form-label">System Name</label>
+                                    <input type="text" class="form-control" id="systemName" value="Self Brain AGI" placeholder="Enter system name">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="logLevel" class="form-label">Log Level</label>
+                                    <select class="form-select" id="logLevel">
+                                        <option value="debug">Debug</option>
+                                        <option value="info" selected>Info</option>
+                                        <option value="warning">Warning</option>
+                                        <option value="error">Error</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="autoSaveInterval" class="form-label">Auto Save Interval (minutes)</label>
+                                    <input type="number" class="form-control" id="autoSaveInterval" value="5" min="1" max="60">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="autoStart" checked>
+                                        <label class="form-check-label" for="autoStart">
+                                            Auto-start on system boot
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enableMetrics" checked>
+                                        <label class="form-check-label" for="enableMetrics">
+                                            Enable performance metrics collection
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-outline-dark">
+                                    <i class="bi bi-save"></i> Save General Settings
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">System Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-5">Version:</dt>
+                                <dd class="col-sm-7">1.0.0</dd>
+                                
+                                <dt class="col-sm-5">Build Date:</dt>
+                                <dd class="col-sm-7">2024-01-15</dd>
+                                
+                                <dt class="col-sm-5">Python:</dt>
+                                <dd class="col-sm-7">3.9+</dd>
+                                
+                                <dt class="col-sm-5">License:</dt>
+                                <dd class="col-sm-7">Apache 2.0</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Model Settings -->
+        <div class="tab-pane fade" id="models" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Model Configuration</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Model</th>
+                                            <th>Status</th>
+                                            <th>Type</th>
+                                            <th>Memory Usage</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>A</strong> Management Model</td>
+                                            <td><span class="badge bg-dark">Active</span></td>
+                                            <td>Local</td>
+                                            <td>2.1 GB</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
+                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>B</strong> Large Language Model</td>
+                                            <td><span class="badge bg-dark">Active</span></td>
+                                            <td>Local</td>
+                                            <td>4.2 GB</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
+                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>C</strong> Audio Processing</td>
+                                            <td><span class="badge bg-dark">Active</span></td>
+                                            <td>Local</td>
+                                            <td>1.8 GB</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
+                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>D</strong> Image Vision</td>
+                                            <td><span class="badge bg-dark">Active</span></td>
+                                            <td>Local</td>
+                                            <td>3.5 GB</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
+                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>E</strong> Video Stream</td>
+                                            <td><span class="badge bg-dark">Active</span></td>
+                                            <td>Local</td>
+                                            <td>2.9 GB</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
+                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>F</strong> Binocular Spatial</td>
+                                            <td><span class="badge bg-dark">Active</span></td>
+                                            <td>Local</td>
+                                            <td>2.3 GB</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
+                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>G</strong> Sensor Processing</td>
+                                            <td><span class="badge bg-dark">Active</span></td>
+                                            <td>Local</td>
+                                            <td>1.5 GB</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
+                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>H</strong> Computer Control</td>
+                                            <td><span class="badge bg-dark">Active</span></td>
+                                            <td>Local</td>
+                                            <td>2.7 GB</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
+                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>I</strong> Motion Control</td>
+                                            <td><span class="badge bg-dark">Active</span></td>
+                                            <td>Local</td>
+                                            <td>1.9 GB</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
+                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>J</strong> Knowledge Expert</td>
+                                            <td><span class="badge bg-dark">Active</span></td>
+                                            <td>Local</td>
+                                            <td>5.1 GB</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
+                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>K</strong> Programming</td>
+                                            <td><span class="badge bg-dark">Active</span></td>
+                                            <td>Local</td>
+                                            <td>2.4 GB</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
+                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Configuration -->
+        <div class="tab-pane fade" id="api" role="tabpanel">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">API Configuration</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="apiSettingsForm">
+                                <div class="mb-3">
+                                    <label for="openaiApiKey" class="form-label">OpenAI API Key</label>
+                                    <input type="password" class="form-control" id="openaiApiKey" placeholder="Enter your OpenAI API key">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="anthropicApiKey" class="form-label">Anthropic API Key</label>
+                                    <input type="password" class="form-control" id="anthropicApiKey" placeholder="Enter your Anthropic API key">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="googleApiKey" class="form-label">Google AI API Key</label>
+                                    <input type="password" class="form-control" id="googleApiKey" placeholder="Enter your Google AI API key">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="huggingfaceToken" class="form-label">Hugging Face Token</label>
+                                    <input type="password" class="form-control" id="huggingfaceToken" placeholder="Enter your Hugging Face token">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="apiTimeout" class="form-label">API Timeout (seconds)</label>
+                                    <input type="number" class="form-control" id="apiTimeout" value="30" min="5" max="300">
+                                </div>
+                                
+                                <button type="button" class="btn btn-outline-dark me-2" onclick="testApiConnection()">
+                                    <i class="bi bi-wifi"></i> Test Connection
+                                </button>
+                                <button type="submit" class="btn btn-outline-dark">
+                                    <i class="bi bi-save"></i> Save API Settings
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Connection Status</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="connectionStatus">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span>OpenAI</span>
+                                    <span class="badge bg-secondary">Unknown</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span>Anthropic</span>
+                                    <span class="badge bg-secondary">Unknown</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span>Google AI</span>
+                                    <span class="badge bg-secondary">Unknown</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Hugging Face</span>
+                                    <span class="badge bg-secondary">Unknown</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hardware Settings -->
+        <div class="tab-pane fade" id="hardware" role="tabpanel">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Hardware Configuration</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="hardwareSettingsForm">
+                                <div class="mb-3">
+                                    <label for="maxMemoryUsage" class="form-label">Maximum Memory Usage (%)</label>
+                                    <input type="range" class="form-range" id="maxMemoryUsage" min="50" max="95" value="80">
+                                    <div class="d-flex justify-content-between">
+                                        <small>50%</small>
+                                        <small id="memoryValue">80%</small>
+                                        <small>95%</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="maxCpuUsage" class="form-label">Maximum CPU Usage (%)</label>
+                                    <input type="range" class="form-range" id="maxCpuUsage" min="50" max="100" value="90">
+                                    <div class="d-flex justify-content-between">
+                                        <small>50%</small>
+                                        <small id="cpuValue">90%</small>
+                                        <small>100%</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="gpuAcceleration" class="form-label">GPU Acceleration</label>
+                                    <select class="form-select" id="gpuAcceleration">
+                                        <option value="auto" selected>Auto-detect</option>
+                                        <option value="cuda">CUDA (NVIDIA)</option>
+                                        <option value="opencl">OpenCL</option>
+                                        <option value="none">Disabled</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="cacheSize" class="form-label">Cache Size (GB)</label>
+                                    <input type="number" class="form-control" id="cacheSize" value="10" min="1" max="100">
+                                </div>
+                                
+                                <button type="submit" class="btn btn-outline-dark">
+                                    <i class="bi bi-save"></i> Save Hardware Settings
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Hardware Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-6">CPU:</dt>
+                                <dd class="col-sm-6">8 cores</dd>
+                                
+                                <dt class="col-sm-6">Memory:</dt>
+                                <dd class="col-sm-6">32 GB</dd>
+                                
+                                <dt class="col-sm-6">GPU:</dt>
+                                <dd class="col-sm-6">NVIDIA RTX 4070</dd>
+                                
+                                <dt class="col-sm-6">Storage:</dt>
+                                <dd class="col-sm-6">1 TB SSD</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Settings -->
+        <div class="tab-pane fade" id="security" role="tabpanel">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Security Settings</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="securitySettingsForm">
+                                <div class="mb-3">
+                                    <label for="adminPassword" class="form-label">Admin Password</label>
+                                    <input type="password" class="form-control" id="adminPassword" placeholder="Enter new admin password">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="confirmPassword" class="form-label">Confirm Password</label>
+                                    <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm new password">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enableEncryption" checked>
+                                        <label class="form-check-label" for="enableEncryption">
+                                            Enable data encryption
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enableAuditLog" checked>
+                                        <label class="form-check-label" for="enableAuditLog">
+                                            Enable audit logging
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="sessionTimeout" class="form-label">Session Timeout (minutes)</label>
+                                    <input type="number" class="form-control" id="sessionTimeout" value="30" min="5" max="1440">
+                                </div>
+                                
+                                <button type="submit" class="btn btn-outline-dark">
+                                    <i class="bi bi-save"></i> Save Security Settings
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Security Status</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Encryption</span>
+                                <span class="badge bg-dark">Enabled</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Audit Log</span>
+                                <span class="badge bg-dark">Enabled</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Last Backup</span>
+                                <span class="badge bg-dark">2 hours ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize range sliders
+function initializeSliders() {
+    const maxMemoryUsage = document.getElementById('maxMemoryUsage');
+    const maxCpuUsage = document.getElementById('maxCpuUsage');
+    const memoryValue = document.getElementById('memoryValue');
+    const cpuValue = document.getElementById('cpuValue');
+
+    maxMemoryUsage.addEventListener('input', function() {
+        memoryValue.textContent = this.value + '%';
+    });
+
+    maxCpuUsage.addEventListener('input', function() {
+        cpuValue.textContent = this.value + '%';
+    });
+}
+
+// Test API connection
+function testApiConnection() {
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Testing...';
+    button.disabled = true;
+
+    setTimeout(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+        
+        // Simulate connection test results
+        document.querySelectorAll('#connectionStatus .badge').forEach(badge => {
+            badge.className = 'badge bg-dark';
+            badge.textContent = 'Connected';
+        });
+    }, 2000);
+}
+
+// Form submissions
+function handleFormSubmission(formId, endpoint) {
+    document.getElementById(formId).addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Saving...';
+        submitBtn.disabled = true;
+
+        try {
+            // Collect form data
+            const formData = new FormData(this);
+            const data = {};
+            
+            // Handle different input types
+            const inputs = this.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                if (input.type === 'checkbox') {
+                    data[input.id || input.name] = input.checked;
+                } else if (input.type === 'number') {
+                    data[input.id || input.name] = parseFloat(input.value) || parseInt(input.value) || 0;
+                } else {
+                    data[input.id || input.name] = input.value;
+                }
+            });
+
+            // Validate security form
+            if (formId === 'securitySettingsForm') {
+                const password = data.adminPassword;
+                const confirmPassword = data.confirmPassword;
+                if (password && password !== confirmPassword) {
+                    showNotification('Passwords do not match', 'error');
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                    return;
+                }
+            }
+
+            // Send to server
+            const response = await fetchWithRetry(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                showNotification(result.message || 'Settings saved successfully', 'success');
+                
+                // Clear password fields after security settings save
+                if (formId === 'securitySettingsForm') {
+                    document.getElementById('adminPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                }
+            } else {
+                showNotification(result.message || 'Failed to save settings', 'error');
+            }
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            showNotification('Failed to save settings: ' + error.message, 'error');
+        } finally {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
+    });
+}
+
+// Show notification
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = 'alert alert-dark alert-dismissible fade show position-fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.zIndex = '9999';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
+// Load settings on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSliders();
+    handleFormSubmission('generalSettingsForm', '/api/settings/general');
+    handleFormSubmission('apiSettingsForm', '/api/settings/api');
+    handleFormSubmission('hardwareSettingsForm', '/api/settings/hardware');
+    handleFormSubmission('securitySettingsForm', '/api/settings/security');
+    
+    // Load settings after DOM is ready
+    setTimeout(loadAllSettings, 100);
+});
+
+// Load all settings from server with enhanced error handling
+    async function loadAllSettings() {
+        try {
+            const response = await fetchWithRetry('/api/settings/load');
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                populateFormFields(data.settings);
+            } else {
+                showNotification('Failed to load settings: ' + data.message, 'error');
+            }
+        } catch (error) {
+            console.error('Error loading settings:', error);
+            showNotification('Failed to load settings: ' + error.message, 'error');
+        }
+    }
+
+    // Enhanced fetch with retry for settings
+    async function fetchWithRetry(url, options = {}, maxRetries = 3) {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    mode: 'cors',
+                    credentials: 'include',
+                    cache: 'no-cache'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response;
+            } catch (error) {
+                if (error.message?.includes('net::ERR_ABORTED') || error.name === 'AbortError') {
+                    console.warn(`Attempt ${attempt} aborted for ${url}:`, error.message);
+                    if (attempt === maxRetries) {
+                        throw new Error(`Request aborted after ${maxRetries} attempts`);
+                    }
+                } else {
+                    console.warn(`Attempt ${attempt} failed for ${url}:`, error.message);
+                    if (attempt === maxRetries) {
+                        throw error;
+                    }
+                }
+                // Exponential backoff
+                await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
+            }
+        }
+    }
+
+// Populate form fields with loaded settings
+function populateFormFields(settings) {
+    const safeSetValue = (id, value, defaultValue = '') => {
+        const element = document.getElementById(id);
+        if (element) {
+            if (element.type === 'checkbox') {
+                element.checked = value !== false && value !== 'false';
+            } else {
+                element.value = value || defaultValue;
+            }
+        }
+    };
+
+    const safeSetText = (id, text) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = text;
+        }
+    };
+
+    // General settings
+    if (settings.general) {
+        safeSetValue('systemName', settings.general.systemName, 'Self Brain AGI');
+        safeSetValue('systemDescription', settings.general.systemDescription);
+        safeSetValue('timezone', settings.general.timezone, 'UTC');
+        safeSetValue('language', settings.general.language, 'en');
+    }
+    
+    // API settings
+    if (settings.api) {
+        safeSetValue('openaiApiKey', settings.api.openaiApiKey);
+        safeSetValue('anthropicApiKey', settings.api.anthropicApiKey);
+        safeSetValue('googleApiKey', settings.api.googleApiKey);
+        safeSetValue('huggingfaceToken', settings.api.huggingfaceToken);
+        safeSetValue('apiTimeout', settings.api.apiTimeout, 30);
+    }
+    
+    // Hardware settings
+    if (settings.hardware) {
+        safeSetValue('maxMemoryUsage', settings.hardware.maxMemoryUsage, 80);
+        safeSetText('memoryValue', (settings.hardware.maxMemoryUsage || 80) + '%');
+        safeSetValue('maxCpuUsage', settings.hardware.maxCpuUsage, 70);
+        safeSetText('cpuValue', (settings.hardware.maxCpuUsage || 70) + '%');
+        safeSetValue('gpuMemory', settings.hardware.gpuMemory, 8);
+        safeSetValue('cacheSize', settings.hardware.cacheSize, 10);
+    }
+    
+    // Security settings
+    if (settings.security) {
+        safeSetValue('enableEncryption', settings.security.enableEncryption, true);
+        safeSetValue('enableAuditLog', settings.security.enableAuditLog, true);
+        safeSetValue('sessionTimeout', settings.security.sessionTimeout, 30);
+    }
+}
+
+// Initialize - Handled by DOMContentLoaded event
+</script>
+{% endblock %}

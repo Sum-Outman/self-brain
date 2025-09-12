@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Call Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.success { background-color: #d4edda; color: #155724; }
+        .status.error { background-color: #f8d7da; color: #721c24; }
+        .status.warning { background-color: #fff3cd; color: #856404; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        #logs {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Voice Call Function Test</h1>
+        <p>This page will help you test various components of the voice call function.</p>
+
+        <div class="test-section">
+            <h3>1. Browser Compatibility Test</h3>
+            <div id="browser-test"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Microphone Permission Test</h3>
+            <button onclick="testMicrophone()">Test Microphone Permission</button>
+            <div id="microphone-test"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. PeerJS Server Connection Test</h3>
+            <button onclick="testPeerJS()">Test PeerJS Connection</button>
+            <div id="peerjs-test"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Voice Call Test</h3>
+            <button onclick="startVoiceTest()" id="startVoiceBtn" disabled>Start Voice Test</button>
+            <button onclick="endVoiceTest()" id="endVoiceBtn" disabled>End Voice Test</button>
+            <div id="voice-test"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>5. Log Output</h3>
+            <div id="logs"></div>
+            <button onclick="clearLogs()">Clear Logs</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script>
+        let peer = null;
+        let localStream = null;
+        let logs = [];
+
+        function addLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logs.push(`[${timestamp}] ${message}`);
+            document.getElementById('logs').textContent = logs.join('\n');
+            document.getElementById('logs').scrollTop = document.getElementById('logs').scrollHeight;
+        }
+
+        function clearLogs() {
+            logs = [];
+            document.getElementById('logs').textContent = '';
+        }
+
+        // Browser compatibility test
+        function testBrowser() {
+            const results = [];
+            
+            // Check HTTPS
+            const isHTTPS = location.protocol === 'https:' || location.hostname === 'localhost';
+            results.push(`HTTPS environment: ${isHTTPS ? '✓' : '✗'} ${location.protocol}`);
+            
+            // Check getUserMedia
+            const hasGetUserMedia = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+            results.push(`getUserMedia support: ${hasGetUserMedia ? '✓' : '✗'}`);
+            
+            // Check WebRTC
+            const hasWebRTC = !!(window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection);
+            results.push(`WebRTC support: ${hasWebRTC ? '✓' : '✗'}`);
+            
+            document.getElementById('browser-test').innerHTML = results.join('<br>');
+            
+            if (isHTTPS && hasGetUserMedia && hasWebRTC) {
+                document.getElementById('browser-test').innerHTML += '<div class="status success">Browser compatibility is good</div>';
+            } else {
+                document.getElementById('browser-test').innerHTML += '<div class="status error">Browser is not compatible</div>';
+            }
+        }
+
+        // Microphone permission test
+        async function testMicrophone() {
+            try {
+                addLog('Starting microphone permission test...');
+                
+                // Check devices
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const audioDevices = devices.filter(d => d.kind === 'audioinput');
+                
+                if (audioDevices.length === 0) {
+                    document.getElementById('microphone-test').innerHTML = '<div class="status error">No microphone device detected</div>';
+                    addLog('Error: No microphone device detected');
+                    return;
+                }
+                
+                addLog(`Detected ${audioDevices.length} audio input devices`);
+                
+                // Test permissions
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // Verify audio tracks
+                const audioTracks = stream.getAudioTracks();
+                if (audioTracks.length > 0) {
+                    document.getElementById('microphone-test').innerHTML = '<div class="status success">Microphone permission granted successfully</div>';
+                    addLog(`Microphone permission granted, using device: ${audioTracks[0].label}`);
+                    
+                    // Clean up
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    // Enable voice test button
+                    document.getElementById('startVoiceBtn').disabled = false;
+                } else {
+                    throw new Error('Failed to get audio tracks');
+                }
+                
+            } catch (error) {
+                document.getElementById('microphone-test').innerHTML = `<div class="status error">Microphone permission failed: ${error.message}</div>`;
+                addLog(`Microphone permission test failed: ${error.message}`);
+            }
+        }
+
+        // PeerJS server connection test
+        function testPeerJS() {
+            return new Promise((resolve) => {
+                try {
+                    addLog('Starting PeerJS server connection test...');
+                    
+                    if (peer) {
+                        peer.destroy();
+                    }
+                    
+                    peer = new Peer(undefined, {
+                        host: 'localhost',
+                        port: 9000,
+                        path: '/',
+                        debug: 3,
+                        secure: false,
+                        key: 'peerjs'
+                    });
+                    
+                    peer.on('open', (id) => {
+                        document.getElementById('peerjs-test').innerHTML = `<div class="status success">PeerJS connection successful, ID: ${id}</div>`;
+                        addLog(`PeerJS connection successful, Peer ID: ${id}`);
+                        resolve(true);
+                    });
+                    
+                    peer.on('error', (error) => {
+                        document.getElementById('peerjs-test').innerHTML = `<div class="status error">PeerJS connection failed: ${error.message}</div>`;
+                        addLog(`PeerJS connection failed: ${error.type} - ${error.message}`);
+                        resolve(false);
+                    });
+                    
+                    peer.on('disconnected', () => {
+                        addLog('PeerJS connection disconnected');
+                    });
+                    
+                } catch (error) {
+                    document.getElementById('peerjs-test').innerHTML = `<div class="status error">PeerJS initialization failed: ${error.message}</div>`;
+                    addLog(`PeerJS initialization failed: ${error.message}`);
+                    resolve(false);
+                }
+            });
+        }
+
+        // Voice call test
+        async function startVoiceTest() {
+            try {
+                addLog('Starting voice call test...');
+                
+                // Get audio stream
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                });
+                
+                // Test PeerJS connection
+                const peerConnected = await testPeerJS();
+                if (!peerConnected) {
+                    throw new Error('PeerJS connection failed');
+                }
+                
+                document.getElementById('voice-test').innerHTML = '<div class="status success">Voice call test is ready</div>';
+                addLog('Voice call test is ready');
+                
+                document.getElementById('startVoiceBtn').disabled = true;
+                document.getElementById('endVoiceBtn').disabled = false;
+                
+            } catch (error) {
+                document.getElementById('voice-test').innerHTML = `<div class="status error">Voice test failed: ${error.message}</div>`;
+                addLog(`Voice test failed: ${error.message}`);
+            }
+        }
+
+        function endVoiceTest() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            
+            if (peer) {
+                peer.destroy();
+                peer = null;
+            }
+            
+            document.getElementById('voice-test').innerHTML = '<div class="status warning">Voice test has ended</div>';
+            document.getElementById('startVoiceBtn').disabled = false;
+            document.getElementById('endVoiceBtn').disabled = true;
+            
+            addLog('Voice call test has ended');
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            testBrowser();
+            addLog('Voice call test page loaded');
+            addLog(`Current environment: ${location.protocol}//${location.host}${location.pathname}`);
+        });
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            endVoiceTest();
+        });
+    </script>
+</body>
+</html>

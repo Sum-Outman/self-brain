@@ -1,0 +1,7 @@
+{
+  "description": "测试保存配置功能",
+  "api_endpoint": "https://api.siliconflow.cn/v1",
+  "api_key": "sk-actual-key",
+  "external_model_name": "deepseek-ai/DeepSeek-R1",
+  "model_source": "external"
+}

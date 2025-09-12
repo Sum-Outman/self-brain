@@ -1,0 +1,9 @@
+{
+  "name": "K_programming????",
+  "description": "??????????",
+  "is_local": false,
+  "api_endpoint": "https://api.siliconflow.cn/v1/chat/completions",
+  "api_key": "test-key-123",
+  "external_model_name": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "model_source": "external"
+}

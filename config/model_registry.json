@@ -1,0 +1,124 @@
+{
+    "A_management": {
+        "id": "A_management",
+        "type": "Manager Model",
+        "path": "manager_model/core_system.py",
+        "description": "Main interactive AI model coordinating all sub-models, monitoring task execution, adjusting strategies, and optimizing decisions using knowledge base",
+        "version": "1.0.0",
+        "emotion_capabilities": true,
+        "submodels": ["B_language", "C_audio", "D_image", "E_video", "F_spatial", "G_sensor", "H_computer_control", "I_knowledge", "J_motion", "K_programming"],
+        "model_source": "local",
+        "api_url": "",
+        "api_key": ""
+    },
+    "B_language": {
+        "id": "B_language",
+        "type": "Language Model",
+        "path": "sub_models/B_language/app.py",
+        "description": "Multilingual interaction and emotional reasoning capabilities, enhanced by knowledge base for cross-domain understanding",
+        "version": "1.0.0",
+        "supported_languages": ["zh", "en", "ja", "de", "ru", "zh-TW"],
+        "model_source": "local",
+        "api_url": "",
+        "api_key": ""
+    },
+    "C_audio": {
+        "id": "C_audio",
+        "type": "Audio Processor",
+        "path": "sub_models/C_audio/app.py",
+        "description": "Speech recognition, tone analysis, voice synthesis, music recognition, noise identification, multi-band audio processing, sound effects generation, enhanced by knowledge base for audio understanding",
+        "version": "1.0.0",
+        "sample_rate": 16000,
+        "model_source": "local",
+        "api_url": "",
+        "api_key": ""
+    },
+    "D_image": {
+        "id": "D_image",
+        "type": "Image Processor",
+        "path": "sub_models/D_image/app.py",
+        "description": "Image content recognition, image editing, resolution adjustment, semantic and emotion-based image generation, enhanced by knowledge base for image understanding",
+        "version": "1.0.0",
+        "resolution": "1024x768",
+        "model_source": "local",
+        "api_url": "",
+        "api_key": ""
+    },
+    "E_video": {
+        "id": "E_video",
+        "type": "Video Processor",
+        "path": "sub_models/E_video/app.py",
+        "description": "Video content recognition, video editing, content modification, semantic and emotion-based video generation, enhanced by knowledge base for video understanding",
+        "version": "1.0.0",
+        "fps": 30,
+        "model_source": "local",
+        "api_url": "",
+        "api_key": ""
+    },
+    "F_spatial": {
+        "id": "F_spatial",
+        "type": "Spatial Locator",
+        "path": "sub_models/F_spatial/app.py",
+        "description": "Spatial recognition, visual modeling, positioning, distance perception, object volume recognition, motion tracking, self-location and movement state identification, enhanced by knowledge base for spatial understanding",
+        "version": "1.0.0",
+        "coordinate_system": "3D",
+        "model_source": "local",
+        "api_url": "",
+        "api_key": ""
+    },
+    "G_sensor": {
+        "id": "G_sensor",
+        "type": "Sensor Processor",
+        "path": "sub_models/G_sensor/app.py",
+        "description": "Processing data from temperature, humidity, acceleration, velocity, displacement, 6-axis gyro, pressure, barometric, distance, IR, taste, smoke, and light sensors",
+        "version": "1.0.0",
+        "sensor_types": ["IMU", "GPS", "LiDAR"],
+        "model_source": "local",
+        "api_url": "",
+        "api_key": ""
+    },
+    "H_computer_control": {
+        "id": "H_computer_control",
+        "type": "Computer Controller",
+        "path": "sub_models/H_computer_control/app.py",
+        "description": "Command-based computer control with multi-OS compatibility, fulfilling requirements via MCP integration",
+        "version": "1.0.0",
+        "control_interfaces": ["MCP", "HTTP", "gRPC"],
+        "model_source": "local",
+        "api_url": "",
+        "api_key": ""
+    },
+    "I_knowledge": {
+        "id": "I_knowledge",
+        "type": "Knowledge Expert Model",
+        "path": "sub_models/I_knowledge/app.py",
+        "description": "Comprehensive knowledge systems across all disciplines; assists other models in task completion and provides educational support",
+        "version": "1.0.0",
+        "knowledge_size": "10GB",
+        "model_source": "local",
+        "api_url": "",
+        "api_key": ""
+    },
+    "J_motion": {
+        "id": "J_motion",
+        "type": "Motion Controller",
+        "path": "sub_models/J_motion/app.py",
+        "description": "Complex control based on sensor data, multi-port output, multi-protocol compatibility, external device control",
+        "version": "1.0.0",
+        "dof": 6,
+        "model_source": "local",
+        "api_url": "",
+        "api_key": ""
+    },
+    "K_programming": {
+        "id": "K_programming",
+        "type": "Programming Model",
+        "path": "sub_models/K_programming/app.py",
+        "description": "Programming assistance, autonomous code improvement for local models, system-wide enhancement via knowledge base, enabling AGI self-evolution",
+        "version": "1.0.0",
+        "languages": ["Python", "JavaScript", "Java"],
+        "model_source": "local",
+        "api_url": "",
+        "api_key": ""
+    }
+}

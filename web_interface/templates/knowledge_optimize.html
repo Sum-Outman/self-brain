@@ -1,0 +1,272 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}Optimize Database - Self Brain AGI System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 mb-0">
+                    <i class="bi bi-gear"></i> Optimize Database
+                </h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('knowledge_manage') }}">Knowledge Management</a></li>
+                        <li class="breadcrumb-item active">Optimize Database</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-database-gear"></i> Database Optimization
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="border-start border-secondary ps-3 mb-4">
+                        <h6 class="mb-2"><i class="bi bi-info-circle text-muted"></i> What does database optimization do?</h6>
+                        <ul class="mb-0">
+                            <li><strong>Vacuum:</strong> Reclaims storage space and defragments the database</li>
+                            <li><strong>Reindex:</strong> Rebuilds indexes for faster queries</li>
+                            <li><strong>Cleanup:</strong> Removes temporary files and empty folders</li>
+                            <li><strong>Backup:</strong> Creates a backup before optimization</li>
+                        </ul>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-database-fill text-dark" style="font-size: 2rem;"></i>
+                                    <h6 class="mt-2">Current Database</h6>
+                                    <p class="mb-0" id="db-size">Calculating...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-hdd-stack text-dark" style="font-size: 2rem;"></i>
+                                    <h6 class="mt-2">Knowledge Entries</h6>
+                                    <p class="mb-0" id="entry-count">Calculating...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button class="btn btn-primary btn-lg" id="optimize-btn" onclick="performOptimization()">
+                            <i class="bi bi-gear"></i> Start Optimization
+                        </button>
+                        <a href="{{ url_for('knowledge_manage') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Knowledge Management
+                        </a>
+                    </div>
+
+                    <div id="optimization-progress" class="mt-4" style="display: none;">
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-dark" 
+                                 role="progressbar" 
+                                 id="progress-bar" 
+                                 style="width: 0%">
+                                0%
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <small id="progress-text">Initializing...</small>
+                        </div>
+                    </div>
+
+                    <div id="optimization-result" class="mt-4" style="display: none;">
+                        <div class="border-start border-success ps-3">
+                            <h6><i class="bi bi-check-circle text-success"></i> Optimization Complete!</h6>
+                            <div id="result-details"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-clock-history"></i> Optimization History
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="optimization-history">
+                        <p class="text-muted text-center">Loading history...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-exclamation-triangle text-warning"></i> Important Notes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="small">
+                        <li>Optimization may take several minutes for large databases</li>
+                        <li>A backup is automatically created before optimization</li>
+                        <li>Do not close the browser during optimization</li>
+                        <li>System performance may be temporarily affected</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load initial data
+document.addEventListener('DOMContentLoaded', function() {
+    loadDatabaseStats();
+    loadOptimizationHistory();
+});
+
+// Load database statistics
+function loadDatabaseStats() {
+    fetch('/api/knowledge/stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const stats = data.stats;
+                document.getElementById('entry-count').textContent = stats.total_count + ' entries';
+                document.getElementById('db-size').textContent = formatFileSize(stats.total_size);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading stats:', error);
+        });
+}
+
+// Load optimization history
+function loadOptimizationHistory() {
+    // For now, show a simple message
+    document.getElementById('optimization-history').innerHTML = `
+        <div class="text-center">
+            <i class="bi bi-info-circle text-muted"></i>
+            <p class="text-muted">No optimization history available</p>
+        </div>
+    `;
+}
+
+// Format file size
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Perform optimization
+function performOptimization() {
+    const btn = document.getElementById('optimize-btn');
+    const progress = document.getElementById('optimization-progress');
+    const result = document.getElementById('optimization-result');
+    
+    // Disable button and show progress
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Optimizing...';
+    progress.style.display = 'block';
+    result.style.display = 'none';
+    
+    // Simulate progress
+    let progressValue = 0;
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    
+    const progressInterval = setInterval(() => {
+        progressValue += Math.random() * 15;
+        if (progressValue >= 90) progressValue = 90;
+        
+        progressBar.style.width = progressValue + '%';
+        progressBar.textContent = Math.round(progressValue) + '%';
+        
+        const steps = [
+            'Creating backup...',
+            'Analyzing database structure...',
+            'Rebuilding indexes...',
+            'Vacuuming database...',
+            'Cleaning up temporary files...'
+        ];
+        progressText.textContent = steps[Math.floor(progressValue / 20)] || 'Finalizing...';
+    }, 500);
+    
+    // Perform actual optimization
+    fetch('/api/knowledge/optimize', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        clearInterval(progressInterval);
+        
+        if (data.status === 'success') {
+            progressBar.style.width = '100%';
+            progressBar.textContent = '100%';
+            progressText.textContent = 'Optimization completed successfully!';
+            
+            setTimeout(() => {
+                progress.style.display = 'none';
+                result.style.display = 'block';
+                
+                const details = document.getElementById('result-details');
+                details.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Original Size:</strong> ${formatFileSize(data.original_size || 0)}<br>
+                            <strong>Optimized Size:</strong> ${formatFileSize(data.optimized_size || 0)}<br>
+                            <strong>Space Saved:</strong> ${formatFileSize((data.original_size || 0) - (data.optimized_size || 0))}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Backup Created:</strong> ${data.backup_path || 'Not available'}<br>
+                            <strong>Duration:</strong> ${data.duration || 'Unknown'}<br>
+                            <strong>Status:</strong> <span class="text-success">Completed</span>
+                        </div>
+                    </div>
+                `;
+                
+                // Reload stats
+                loadDatabaseStats();
+                
+            }, 1000);
+        } else {
+            throw new Error(data.message || 'Optimization failed');
+        }
+    })
+    .catch(error => {
+        clearInterval(progressInterval);
+        
+        progress.style.display = 'none';
+        result.style.display = 'block';
+        
+        const details = document.getElementById('result-details');
+        details.innerHTML = `
+            <div class="text-danger">
+                <strong><i class="bi bi-exclamation-triangle"></i> Optimization Failed</strong><br>
+                ${error.message}
+            </div>
+        `;
+    })
+    .finally(() => {
+        // Re-enable button
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-gear"></i> Start Optimization';
+    });
+}
+</script>
+{% endblock %}

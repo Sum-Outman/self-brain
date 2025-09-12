@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+  manager:
+    build: .
+    command: python manager_model/core_system.py
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    depends_on:
+      - model_a
+      - model_b
+      - model_c
+      - model_d
+      - model_e
+      - model_f
+      - model_g
+      - model_h
+      - model_i
+      - model_j
+
+  model_a:
+    build: .
+    command: python sub_models/B_language/app.py
+    ports:
+      - "5001:5001"
+    volumes:
+      - .:/app
+
+  model_b:
+    build: .
+    command: python sub_models/C_audio/app.py
+    ports:
+      - "5002:5002"
+    volumes:
+      - .:/app
+
+  model_c:
+    build: .
+    command: python sub_models/D_image/app.py
+    ports:
+      - "5003:5003"
+    volumes:
+      - .:/app
+
+  model_d:
+    build: .
+    command: python sub_models/E_video/app.py
+    ports:
+      - "5004:5004"
+    volumes:
+      - .:/app
+
+  model_e:
+    build: .
+    command: python sub_models/F_spatial/app.py
+    ports:
+      - "5005:5005"
+    volumes:
+      - .:/app
+
+  model_f:
+    build: .
+    command: python sub_models/G_sensor/app.py
+    ports:
+      - "5006:5006"
+    volumes:
+      - .:/app
+
+  model_g:
+    build: .
+    command: python sub_models/H_computer_control/app.py
+    ports:
+      - "5007:5007"
+    volumes:
+      - .:/app
+
+  model_h:
+    build: .
+    command: python sub_models/I_motion/app.py
+    ports:
+      - "5008:5008"
+    volumes:
+      - .:/app
+
+  model_i:
+    build: .
+    command: python sub_models/J_knowledge/app.py
+    ports:
+      - "5009:5009"
+    volumes:
+      - .:/app
+
+  model_j:
+    build: .
+    command: python sub_models/K_programming/app.py
+    ports:
+      - "5010:5010"
+    volumes:
+      - .:/app
+
+  web_backend:
+    build: .
+    command: python web_interface/backend/app.py
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+
+  web_frontend:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./web_interface/frontend:/usr/share/nginx/html

@@ -1,0 +1,520 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}Knowledge Base Management - Self Brain AGI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h2 mb-4">Knowledge Base Management</h1>
+            <p class="text-secondary">Manage, organize, and maintain your AI training knowledge base</p>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Primary Actions -->
+                        <div class="col-md-4 mb-2">
+                            <a href="{{ url_for('create_knowledge_page') }}" class="btn btn-dark w-100">
+                                <i class="bi bi-plus-circle"></i> Create Knowledge Entry
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <a href="{{ url_for('knowledge_import') }}" class="btn btn-outline-dark w-100">
+                                <i class="bi bi-upload"></i> Import Knowledge
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <a href="/knowledge/backup" class="btn btn-outline-dark w-100">
+                                <i class="bi bi-download"></i> Backup Knowledge
+                            </a>
+                        </div>
+                    </div>
+                    <!-- Maintenance Actions -->
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="border-top pt-3">
+                                <h6 class="text-muted mb-2">Maintenance Tools</h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <a href="/knowledge/clean" class="btn btn-outline-danger w-100">
+                                            <i class="bi bi-trash"></i> Clean Database
+                                        </a>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <button class="btn btn-outline-secondary w-100" onclick="optimizeDatabase()">
+                                            <i class="bi bi-gear"></i> Optimize Database
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="mb-1" id="total-entries">0</h3>
+                    <p class="text-secondary mb-0">Total Entries</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="mb-1" id="total-size">0 MB</h3>
+                    <p class="text-secondary mb-0">Total Size</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="mb-1" id="recent-entries">0</h3>
+                    <p class="text-secondary mb-0">This Week</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="mb-1" id="active-models">0</h3>
+                    <p class="text-secondary mb-0">Active Models</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Search & Filter</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <input type="text" class="form-control" id="search-input" placeholder="Search knowledge entries...">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <select class="form-select" id="category-filter">
+                                <option value="">All Categories</option>
+                                <option value="training-data">Training Data</option>
+                                <option value="model-config">Model Config</option>
+                                <option value="documentation">Documentation</option>
+                                <option value="examples">Examples</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <select class="form-select" id="model-filter">
+                                <option value="">All Models</option>
+                                <option value="A">Model A - Management</option>
+                                <option value="B">Model B - Language</option>
+                                <option value="C">Model C - Audio</option>
+                                <option value="D">Model D - Image</option>
+                                <option value="E">Model E - Video</option>
+                                <option value="F">Model F - Spatial</option>
+                                <option value="G">Model G - Sensor</option>
+                                <option value="H">Model H - Computer</option>
+                                <option value="I">Model I - Motion</option>
+                                <option value="J">Model J - Knowledge</option>
+                                <option value="K">Model K - Programming</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Knowledge Entries Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Knowledge Entries</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="knowledge-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Category</th>
+                                    <th>Model</th>
+                                    <th>Size</th>
+                                    <th>Created</th>
+                                    <th>Updated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="knowledge-tbody">
+                                <!-- Data will be loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav aria-label="Knowledge pagination">
+                        <ul class="pagination justify-content-center" id="pagination">
+                            <!-- Pagination will be generated dynamically -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Knowledge Entry</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-form">
+                    <input type="hidden" id="edit-id">
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control" id="edit-title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Category</label>
+                        <select class="form-select" id="edit-category" required>
+                            <option value="training-data">Training Data</option>
+                            <option value="model-config">Model Config</option>
+                            <option value="documentation">Documentation</option>
+                            <option value="examples">Examples</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Model Association</label>
+                        <select class="form-select" id="edit-model" required>
+                            <option value="A">Model A - Management</option>
+                            <option value="B">Model B - Language</option>
+                            <option value="C">Model C - Audio</option>
+                            <option value="D">Model D - Image</option>
+                            <option value="E">Model E - Video</option>
+                            <option value="F">Model F - Spatial</option>
+                            <option value="G">Model G - Sensor</option>
+                            <option value="H">Model H - Computer</option>
+                            <option value="I">Model I - Motion</option>
+                            <option value="J">Model J - Knowledge</option>
+                            <option value="K">Model K - Programming</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Content</label>
+                        <textarea class="form-control" id="edit-content" rows="8" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-dark" id="save-edit">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this knowledge entry? This action cannot be undone.</p>
+                <input type="hidden" id="delete-id">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-dark" id="confirm-delete">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.pagination {
+    margin-top: 1rem;
+}
+
+.modal-content {
+    border-radius: 0;
+}
+</style>
+
+<script>
+let currentPage = 1;
+let totalPages = 1;
+let knowledgeData = [];
+
+// Load knowledge entries
+function loadKnowledgeEntries(page = 1) {
+    const search = document.getElementById('search-input').value;
+    const category = document.getElementById('category-filter').value;
+    const model = document.getElementById('model-filter').value;
+    
+    fetch(`/api/knowledge?page=${page}&search=${encodeURIComponent(search)}&category=${category}&model=${model}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+        },
+        mode: 'cors',
+        credentials: 'include'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        knowledgeData = data.entries;
+        currentPage = data.page;
+        totalPages = data.pages;
+        
+        renderTable();
+        renderPagination();
+        updateStatistics(data.stats);
+    })
+    .catch(error => {
+        console.error('Error loading knowledge entries:', error);
+        showToast('Error loading knowledge entries: ' + error.message, 'error');
+    });
+}
+
+// Render table
+function renderTable() {
+    const tbody = document.getElementById('knowledge-tbody');
+    tbody.innerHTML = '';
+    
+    knowledgeData.forEach(entry => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${entry.id}</td>
+            <td>${entry.title}</td>
+            <td>${entry.category}</td>
+            <td>Model ${entry.model}</td>
+            <td>${formatFileSize(entry.size)}</td>
+            <td>${formatDate(entry.created_at)}</td>
+            <td>${formatDate(entry.updated_at)}</td>
+            <td>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button class="btn btn-outline-dark btn-sm" onclick="viewEntry(${entry.id})">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-outline-dark btn-sm" onclick="editEntry(${entry.id})">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-outline-dark btn-sm" onclick="deleteEntry(${entry.id})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Render pagination
+function renderPagination() {
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+    
+    // Previous button
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    prevLi.innerHTML = `<a class="page-link" href="#" onclick="loadKnowledgeEntries(${currentPage - 1})">Previous</a>`;
+    pagination.appendChild(prevLi);
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#" onclick="loadKnowledgeEntries(${i})">${i}</a>`;
+        pagination.appendChild(li);
+    }
+    
+    // Next button
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+    nextLi.innerHTML = `<a class="page-link" href="#" onclick="loadKnowledgeEntries(${currentPage + 1})">Next</a>`;
+    pagination.appendChild(nextLi);
+}
+
+// Update statistics
+function updateStatistics(stats) {
+    document.getElementById('total-entries').textContent = stats.total_entries;
+    document.getElementById('total-size').textContent = formatFileSize(stats.total_size);
+    document.getElementById('recent-entries').textContent = stats.recent_entries;
+    document.getElementById('active-models').textContent = stats.active_models;
+}
+
+// Format file size
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Format date
+function formatDate(dateString) {
+    return new Date(dateString).toLocaleDateString();
+}
+
+// View entry
+function viewEntry(id) {
+    window.location.href = `/knowledge/view/${id}`;
+}
+
+// Edit entry
+function editEntry(id) {
+    const entry = knowledgeData.find(e => e.id === id);
+    if (!entry) return;
+    
+    document.getElementById('edit-id').value = entry.id;
+    document.getElementById('edit-title').value = entry.title;
+    document.getElementById('edit-category').value = entry.category;
+    document.getElementById('edit-model').value = entry.model;
+    document.getElementById('edit-content').value = entry.content;
+    
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+}
+
+// Delete entry
+function deleteEntry(id) {
+    document.getElementById('delete-id').value = id;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+// Save edit
+function saveEdit() {
+    const id = document.getElementById('edit-id').value;
+    const data = {
+        title: document.getElementById('edit-title').value,
+        category: document.getElementById('edit-category').value,
+        model: document.getElementById('edit-model').value,
+        content: document.getElementById('edit-content').value
+    };
+    
+    fetch(`/api/knowledge/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showToast('Knowledge entry updated successfully', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+            loadKnowledgeEntries(currentPage);
+        } else {
+            showToast('Error updating entry: ' + result.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error updating knowledge entry', 'error');
+    });
+}
+
+// Confirm delete
+function confirmDelete() {
+    const id = document.getElementById('delete-id').value;
+    
+    fetch(`/api/knowledge/${id}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showToast('Knowledge entry deleted successfully', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+            loadKnowledgeEntries(currentPage);
+        } else {
+            showToast('Error deleting entry: ' + result.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error deleting knowledge entry', 'error');
+    });
+}
+
+// Show toast notification
+function showToast(message, type = 'info') {
+    const toastContainer = document.createElement('div');
+    toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+    toastContainer.innerHTML = `
+        <div class="toast show" role="alert">
+            <div class="toast-header">
+                <strong class="me-auto">${type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Info'}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(toastContainer);
+    
+    setTimeout(() => {
+        document.body.removeChild(toastContainer);
+    }, 3000);
+}
+
+// Optimize database - Navigate to dedicated page
+function optimizeDatabase() {
+    window.location.href = '/knowledge_optimize';
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    loadKnowledgeEntries();
+    
+    // Search and filter listeners
+    document.getElementById('search-input').addEventListener('input', () => loadKnowledgeEntries(1));
+    document.getElementById('category-filter').addEventListener('change', () => loadKnowledgeEntries(1));
+    document.getElementById('model-filter').addEventListener('change', () => loadKnowledgeEntries(1));
+    
+    // Modal listeners
+    document.getElementById('save-edit').addEventListener('click', saveEdit);
+    document.getElementById('confirm-delete').addEventListener('click', confirmDelete);
+});
+</script>
+{% endblock %}

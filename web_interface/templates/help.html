@@ -1,0 +1,614 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}Help & Documentation - Self Brain AGI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h2 mb-4">Help & Documentation</h1>
+            <p class="text-secondary">Comprehensive guide to the Self Brain AGI System</p>
+        </div>
+    </div>
+
+    <!-- Quick Navigation -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Navigation</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 col-lg-4 mb-2">
+                            <a href="#overview" class="btn btn-outline-dark w-100">System Overview</a>
+                        </div>
+                        <div class="col-md-6 col-lg-4 mb-2">
+                            <a href="#models" class="btn btn-outline-dark w-100">Model Specifications</a>
+                        </div>
+                        <div class="col-md-6 col-lg-4 mb-2">
+                            <a href="#training" class="btn btn-outline-dark w-100">Model Training</a>
+                        </div>
+                        <div class="col-md-6 col-lg-4 mb-2">
+                            <a href="#knowledge" class="btn btn-outline-dark w-100">Knowledge Base</a>
+                        </div>
+                        <div class="col-md-6 col-lg-4 mb-2">
+                            <a href="#settings" class="btn btn-outline-dark w-100">System Settings</a>
+                        </div>
+                        <div class="col-md-6 col-lg-4 mb-2">
+                            <a href="#troubleshooting" class="btn btn-outline-dark w-100">Troubleshooting</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Overview -->
+    <section id="overview" class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">System Overview</h4>
+                </div>
+                <div class="card-body">
+                    <h5>Welcome to Self Brain AGI System</h5>
+                    <p class="text-secondary">
+                        This system is designed to create and manage artificial general intelligence models that can learn, adapt, and optimize themselves autonomously. The goal is to establish a human-brain-like AGI with self-awareness, autonomous learning, and self-improvement capabilities.
+                    </p>
+                    
+                    <h6>Core Features</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-check text-dark"></i> <strong>Autonomous Learning:</strong> Models learn and improve without human intervention</li>
+                        <li><i class="bi bi-check text-dark"></i> <strong>Self-Optimization:</strong> Continuous system performance enhancement</li>
+                        <li><i class="bi bi-check text-dark"></i> <strong>Multi-Modal Intelligence:</strong> Language, vision, audio, and sensor processing</li>
+                        <li><i class="bi bi-check text-dark"></i> <strong>Real-Time Monitoring:</strong> Live dashboards for system health and performance</li>
+                    </ul>
+
+                    <h6>System Architecture</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul>
+                                <li><strong>Dashboard:</strong> System status and activities overview</li>
+                                <li><strong>Model Management:</strong> Create, train, and deploy AI models (A-K models)</li>
+                                <li><strong>Knowledge Base:</strong> Store and manage training data</li>
+                                <li><strong>Training Control:</strong> Monitor and control training processes</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul>
+                                <li><strong>System Settings:</strong> Configure system parameters</li>
+                                <li><strong>Real-Time Monitoring:</strong> Live system metrics</li>
+                                <li><strong>Multi-Language Support:</strong> English interface (simplified)</li>
+                                <li><strong>Open Source:</strong> Apache License 2.0</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Model Specifications -->
+    <section id="models" class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Model Specifications (A-K Models)</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-6 mb-3">
+                            <div class="card border">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">A - Management Model</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="small text-secondary"><strong>Primary Function:</strong> Main interactive AI model managing subordinate models</p>
+                                    <ul class="small">
+                                        <li>Emotional analysis and expression capabilities</li>
+                                        <li>Web interface interaction management</li>
+                                        <li>Task coordination for B-K models</li>
+                                        <li>Multi-modal feedback (voice, text, image)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6 mb-3">
+                            <div class="card border">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">B - Large Language Model</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="small text-secondary"><strong>Primary Function:</strong> Multi-language interaction and emotional reasoning</p>
+                                    <ul class="small">
+                                        <li>Multiple language support</li>
+                                        <li>Emotional reasoning capabilities</li>
+                                        <li>Natural language processing</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6 mb-3">
+                            <div class="card border">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">C - Audio Processing Model</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="small text-secondary"><strong>Primary Function:</strong> Advanced audio analysis and synthesis</p>
+                                    <ul class="small">
+                                        <li>Speech recognition and synthesis</li>
+                                        <li>Tone and emotion detection</li>
+                                        <li>Music recognition and generation</li>
+                                        <li>Noise identification and filtering</li>
+                                        <li>Multi-band audio processing</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6 mb-3">
+                            <div class="card border">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">D - Image Vision Model</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="small text-secondary"><strong>Primary Function:</strong> Image analysis and generation</p>
+                                    <ul class="small">
+                                        <li>Image content recognition</li>
+                                        <li>Image modification and enhancement</li>
+                                        <li>Semantic-based image generation</li>
+                                        <li>Resolution and quality adjustment</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6 mb-3">
+                            <div class="card border">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">E - Video Stream Vision Model</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="small text-secondary"><strong>Primary Function:</strong> Video analysis and generation</p>
+                                    <ul class="small">
+                                        <li>Video content recognition</li>
+                                        <li>Video editing and modification</li>
+                                        <li>Semantic-based video generation</li>
+                                        <li>Real-time video processing</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6 mb-3">
+                            <div class="card border">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">F - Binocular Spatial Perception Model</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="small text-secondary"><strong>Primary Function:</strong> 3D spatial awareness and modeling</p>
+                                    <ul class="small">
+                                        <li>3D space recognition and modeling</li>
+                                        <li>Spatial positioning and distance measurement</li>
+                                        <li>Object volume identification</li>
+                                        <li>Moving object tracking and prediction</li>
+                                        <li>Self-positioning and motion state awareness</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6 mb-3">
+                            <div class="card border">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">G - Sensor Perception Model</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="small text-secondary"><strong>Primary Function:</strong> Multi-sensor data processing</p>
+                                    <ul class="small">
+                                        <li>Temperature and humidity sensors</li>
+                                        <li>Acceleration and gyroscope sensors</li>
+                                        <li>Pressure and distance sensors</li>
+                                        <li>Light and infrared sensors</li>
+                                        <li>Smoke and gas detection</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6 mb-3">
+                            <div class="card border">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">H - Computer Control Model</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="small text-secondary"><strong>Primary Function:</strong> System automation and control</p>
+                                    <ul class="small">
+                                        <li>Cross-platform system control</li>
+                                        <li>MCP (Model Control Protocol) implementation</li>
+                                        <li>Windows/Linux/macOS compatibility</li>
+                                        <li>Automated task execution</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6 mb-3">
+                            <div class="card border">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">I - Motion and Actuator Control Model</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="small text-secondary"><strong>Primary Function:</strong> Hardware control and automation</p>
+                                    <ul class="small">
+                                        <li>Multi-port output control</li>
+                                        <li>Multi-protocol communication support</li>
+                                        <li>External device control</li>
+                                        <li>Complex motion sequences</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6 mb-3">
+                            <div class="card border">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">J - Knowledge Base Expert Model</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="small text-secondary"><strong>Primary Function:</strong> Comprehensive knowledge system</p>
+                                    <ul class="small">
+                                        <li>Physics, mathematics, chemistry</li>
+                                        <li>Medicine, law, history</li>
+                                        <li>Psychology, economics, management</li>
+                                        <li>Engineering disciplines</li>
+                                        <li>Self-learning and knowledge enhancement</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6 mb-3">
+                            <div class="card border">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">K - Programming Model</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="small text-secondary"><strong>Primary Function:</strong> Code generation and system optimization</p>
+                                    <ul class="small">
+                                        <li>Autonomous programming capabilities</li>
+                                        <li>Environment optimization</li>
+                                        <li>Self-improvement algorithms</li>
+                                        <li>Knowledge-based code generation</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Model Training -->
+    <section id="training" class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Model Training Guide</h4>
+                </div>
+                <div class="card-body">
+                    <h5>Creating a New Model</h5>
+                    <ol>
+                        <li>Navigate to <strong>Model Management</strong></li>
+                        <li>Click <strong>Create New Model</strong></li>
+                        <li>Configure model parameters:
+                            <ul>
+                                <li><strong>Model Name:</strong> Unique identifier (A-K designation)</li>
+                                <li><strong>Model Type:</strong> Choose architecture</li>
+                                <li><strong>Parameters:</strong> Set hyperparameters</li>
+                                <li><strong>Local/Remote:</strong> Choose local model or external API</li>
+                            </ul>
+                        </li>
+                        <li>Save and initialize the model</li>
+                    </ol>
+
+                    <h5>Training Process</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Individual Training</h6>
+                            <ul>
+                                <li>Select single model for focused training</li>
+                                <li>Configure specific hyperparameters</li>
+                                <li>Monitor progress in real-time</li>
+                                <li>Evaluate performance metrics</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Joint Training</h6>
+                            <ul>
+                                <li>Select multiple models for collaborative training</li>
+                                <li>Shared knowledge base integration</li>
+                                <li>Cross-model optimization</li>
+                                <li>Enhanced performance through collaboration</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h5>Training Parameters</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Parameter</th>
+                                    <th>Description</th>
+                                    <th>Recommended Range</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Epochs</td>
+                                    <td>Number of training iterations</td>
+                                    <td>100-1000</td>
+                                </tr>
+                                <tr>
+                                    <td>Learning Rate</td>
+                                    <td>Step size for gradient descent</td>
+                                    <td>0.0001-0.01</td>
+                                </tr>
+                                <tr>
+                                    <td>Batch Size</td>
+                                    <td>Training samples per iteration</td>
+                                    <td>16-128</td>
+                                </tr>
+                                <tr>
+                                    <td>Validation Split</td>
+                                    <td>Data reserved for validation</td>
+                                    <td>0.1-0.3</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Knowledge Base -->
+    <section id="knowledge" class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Knowledge Base Management</h4>
+                </div>
+                <div class="card-body">
+                    <h5>Knowledge Import</h5>
+                    <p>Import knowledge files directly into the J-Knowledge Base Expert Model:</p>
+                    <ul>
+                        <li>Navigate to <strong>Knowledge Base</strong></li>
+                        <li>Click <strong>Import Knowledge</strong></li>
+                        <li>Select file format (PDF, TXT, JSON, etc.)</li>
+                        <li>Review and confirm import</li>
+                    </ul>
+
+                    <h5>Knowledge Categories</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>Scientific Knowledge</h6>
+                            <ul class="small">
+                                <li>Physics</li>
+                                <li>Mathematics</li>
+                                <li>Chemistry</li>
+                                <li>Biology</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Technical Knowledge</h6>
+                            <ul class="small">
+                                <li>Engineering</li>
+                                <li>Computer Science</li>
+                                <li>Electronics</li>
+                                <li>Mechanics</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Humanities</h6>
+                            <ul class="small">
+                                <li>History</li>
+                                <li>Psychology</li>
+                                <li>Economics</li>
+                                <li>Law</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- System Settings -->
+    <section id="settings" class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">System Settings</h4>
+                </div>
+                <div class="card-body">
+                    <h5>Configuration Options</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Model Configuration</h6>
+                            <ul>
+                                <li>Local vs External API selection</li>
+                                <li>API endpoint configuration</li>
+                                <li>Authentication settings</li>
+                                <li>Performance optimization</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>System Preferences</h6>
+                            <ul>
+                                <li>Real-time monitoring intervals</li>
+                                <li>Notification settings</li>
+                                <li>Data retention policies</li>
+                                <li>Backup configurations</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h5>Connection Testing</h5>
+                    <p>Use the built-in connection tester to verify:</p>
+                    <ul>
+                        <li>Model API connectivity</li>
+                        <li>External service availability</li>
+                        <li>Network latency and performance</li>
+                        <li>Authentication validity</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Troubleshooting -->
+    <section id="troubleshooting" class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Troubleshooting</h4>
+                </div>
+                <div class="card-body">
+                    <h5>Common Issues</h5>
+                    
+                    <div class="accordion" id="troubleshootingAccordion">
+                        <div class="accordion-item">
+                            <h6 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#issue1">
+                                    Model Training Not Starting
+                                </button>
+                            </h6>
+                            <div id="issue1" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                <div class="accordion-body">
+                                    <strong>Possible causes:</strong>
+                                    <ul>
+                                        <li>Insufficient training data</li>
+                                        <li>Invalid model configuration</li>
+                                        <li>Resource constraints (CPU/GPU)</li>
+                                    </ul>
+                                    <strong>Solutions:</strong>
+                                    <ol>
+                                        <li>Verify training data availability</li>
+                                        <li>Check model parameters</li>
+                                        <li>Monitor system resources</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h6 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#issue2">
+                                    API Connection Failed
+                                </button>
+                            </h6>
+                            <div id="issue2" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                <div class="accordion-body">
+                                    <strong>Possible causes:</strong>
+                                    <ul>
+                                        <li>Invalid API key</li>
+                                        <li>Network connectivity issues</li>
+                                        <li>Service endpoint unavailable</li>
+                                    </ul>
+                                    <strong>Solutions:</strong>
+                                    <ol>
+                                        <li>Verify API credentials</li>
+                                        <li>Test network connectivity</li>
+                                        <li>Check service status</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h6 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#issue3">
+                                    Performance Degradation
+                                </button>
+                            </h6>
+                            <div id="issue3" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                <div class="accordion-body">
+                                    <strong>Possible causes:</strong>
+                                    <ul>
+                                        <li>Memory leaks</li>
+                                        <li>Storage space exhaustion</li>
+                                        <li>Network latency</li>
+                                    </ul>
+                                    <strong>Solutions:</strong>
+                                    <ol>
+                                        <li>Restart affected services</li>
+                                        <li>Free up storage space</li>
+                                        <li>Optimize network configuration</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5>System Maintenance</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Daily Tasks</h6>
+                            <ul>
+                                <li>Monitor system health dashboard</li>
+                                <li>Check training progress</li>
+                                <li>Review error logs</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Weekly Tasks</h6>
+                            <ul>
+                                <li>Update knowledge base</li>
+                                <li>Backup critical data</li>
+                                <li>Performance optimization review</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Support Contact -->
+    <section class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Additional Support</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Documentation</h5>
+                            <ul>
+                                <li><a href="#" class="text-dark">API Reference</a></li>
+                                <li><a href="#" class="text-dark">Model Architecture Guide</a></li>
+                                <li><a href="#" class="text-dark">Best Practices</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Community</h5>
+                            <ul>
+                                <li><a href="#" class="text-dark">GitHub Repository</a></li>
+                                <li><a href="#" class="text-dark">Discussion Forums</a></li>
+                                <li><a href="#" class="text-dark">Issue Tracker</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

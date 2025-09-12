@@ -1,0 +1,228 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}Self Brain AGI - Main Control Center{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- System Status Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h2 mb-0">Self Brain AGI System</h1>
+            <p class="text-muted">Autonomous General Intelligence with Self-Learning Capabilities</p>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-cpu fs-3 text-dark"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-title mb-0">Active Models</h6>
+                            <h3 class="mb-0" id="activeModels">11</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-database fs-3 text-dark"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-title mb-0">Knowledge Base</h6>
+                            <h3 class="mb-0" id="knowledgeSize">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-activity fs-3 text-dark"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-title mb-0">System Load</h6>
+                            <h3 class="mb-0" id="systemLoad">0%</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-clock fs-3 text-dark"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-title mb-0">Uptime</h6>
+                            <h3 class="mb-0" id="systemUptime">00:00:00</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Overview -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Model Status Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Core Models</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-check-circle text-dark"></i> A Management Model - Active</li>
+                                <li><i class="bi bi-check-circle text-dark"></i> B Large Language Model - Active</li>
+                                <li><i class="bi bi-check-circle text-dark"></i> C Audio Processing - Active</li>
+                                <li><i class="bi bi-check-circle text-dark"></i> D Image Vision - Active</li>
+                                <li><i class="bi bi-check-circle text-dark"></i> E Video Stream Vision - Active</li>
+                                <li><i class="bi bi-check-circle text-dark"></i> F Binocular Spatial - Active</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Support Models</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-check-circle text-dark"></i> G Sensor Processing - Active</li>
+                                <li><i class="bi bi-check-circle text-dark"></i> H Computer Control - Active</li>
+                                <li><i class="bi bi-check-circle text-dark"></i> I Motion Control - Active</li>
+                                <li><i class="bi bi-check-circle text-dark"></i> J Knowledge Expert - Active</li>
+                                <li><i class="bi bi-check-circle text-dark"></i> K Programming - Active</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="/ai_chat" class="btn btn-outline-dark">
+                            <i class="bi bi-chat-dots"></i> Start AI Chat
+                        </a>
+                        <a href="/model_management" class="btn btn-outline-dark">
+                            <i class="bi bi-gear"></i> Manage Models
+                        </a>
+                        <a href="/training" class="btn btn-outline-dark">
+                            <i class="bi bi-cpu"></i> Training Center
+                        </a>
+                        <a href="/knowledge_manage" class="btn btn-outline-dark">
+                            <i class="bi bi-database"></i> Knowledge Base
+                        </a>
+                        <a href="/system_settings" class="btn btn-outline-dark">
+                            <i class="bi bi-sliders"></i> System Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-time Monitoring -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Real-time System Monitor</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>CPU Usage</h6>
+                            <div class="progress mb-3">
+                                <div class="progress-bar bg-dark" role="progressbar" style="width: 0%" id="cpuProgress">0%</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Memory Usage</h6>
+                            <div class="progress mb-3">
+                                <div class="progress-bar bg-dark" role="progressbar" style="width: 0%" id="memoryProgress">0%</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Disk Usage</h6>
+                            <div class="progress mb-3">
+                                <div class="progress-bar bg-dark" role="progressbar" style="width: 0%" id="diskProgress">0%</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Active Tasks</h6>
+                            <div id="activeTasks">No active tasks</div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Recent Events</h6>
+                            <div id="recentEvents">System initialized</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let systemStats = {
+    cpu: 0,
+    memory: 0,
+    disk: 0,
+    uptime: 0,
+    activeModels: 11,
+    knowledgeSize: 0
+};
+
+function updateSystemStats() {
+    // Simulate system stats updates
+    systemStats.cpu = Math.floor(Math.random() * 30) + 10;
+    systemStats.memory = Math.floor(Math.random() * 40) + 20;
+    systemStats.disk = Math.floor(Math.random() * 20) + 30;
+    
+    document.getElementById('systemLoad').textContent = systemStats.cpu + '%';
+    document.getElementById('cpuProgress').style.width = systemStats.cpu + '%';
+    document.getElementById('cpuProgress').textContent = systemStats.cpu + '%';
+    
+    document.getElementById('memoryProgress').style.width = systemStats.memory + '%';
+    document.getElementById('memoryProgress').textContent = systemStats.memory + '%';
+    
+    document.getElementById('diskProgress').style.width = systemStats.disk + '%';
+    document.getElementById('diskProgress').textContent = systemStats.disk + '%';
+    
+    // Update uptime
+    systemStats.uptime++;
+    const hours = Math.floor(systemStats.uptime / 3600);
+    const minutes = Math.floor((systemStats.uptime % 3600) / 60);
+    const seconds = systemStats.uptime % 60;
+    document.getElementById('systemUptime').textContent = 
+        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+// Update stats every second
+setInterval(updateSystemStats, 1000);
+
+// Initialize
+updateSystemStats();
+</script>
+{% endblock %}

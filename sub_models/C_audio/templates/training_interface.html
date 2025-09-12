@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音频处理模型训练控制面板 - Audio Processing Model Training Control Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #0dcaf0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transition: transform 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), #0a58ca);
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            font-size: 0.85rem;
+            padding: 0.35em 0.65em;
+        }
+        
+        .progress {
+            height: 20px;
+            border-radius: 10px;
+        }
+        
+        .metric-card {
+            text-align: center;
+            padding: 15px;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            text-transform: uppercase;
+        }
+        
+        .btn-training {
+            padding: 12px 24px;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+        
+        .training-controls {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .config-section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .config-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 5px;
+        }
+        
+        .real-time-metrics {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .metric-display {
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .metric-label-sm {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+        
+        .history-item {
+            border-left: 3px solid var(--primary-color);
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .system-info-card {
+            background-color: #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .language-switcher {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        @media (max-width: 768px) {
+            .metric-value {
+                font-size: 1.5rem;
+            }
+            
+            .btn-training {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-soundwave me-2"></i>
+                音频处理模型训练系统 | Audio Processing Model Training System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">
+                            <i class="bi bi-house me-1"></i>
+                            首页 | Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-gear me-1"></i>
+                            设置 | Settings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-question-circle me-1"></i>
+                            帮助 | Help
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 语言切换器 -->
+    <div class="language-switcher">
+        <div class="btn-group">
+            <button class="btn btn-sm btn-outline-primary active" data-lang="zh">
+                中文
+            </button>
+            <button class="btn btn-sm btn-outline-primary" data-lang="en">
+                English
+            </button>
+        </div>
+    </div>
+
+    <div class="container-fluid py-4">
+        <div class="row">
+            <!-- 左侧边栏 - 训练控制 -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-play-circle me-2"></i>训练控制 | Training Control</span>
+                        <span class="status-badge bg-secondary" id="trainingStatus">空闲 | Idle</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="training-controls">
+                            <div class="d-grid gap-2 mb-4">
+                                <button class="btn btn-success btn-training" id="btnStartTraining">
+                                    <i class="bi bi-play-fill me-2"></i>
+                                    开始训练 | Start Training
+                                </button>
+                                <button class="btn btn-danger btn-training" id="btnStopTraining" disabled>
+                                    <i class="bi bi-stop-fill me-2"></i>
+                                    停止训练 | Stop Training
+                                </button>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">训练进度 | Training Progress</label>
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                         role="progressbar" style="width: 0%" id="trainingProgress"></div>
+                                </div>
+                                <div class="mt-2 text-muted small" id="progressText">0% 完成 | 0% Complete</div>
+                            </div>
+
+                            <div class="row text-center mb-3">
+                                <div class="col-6">
+                                    <div class="metric-card">
+                                        <div class="metric-value" id="currentEpoch">0</div>
+                                        <div class="metric-label">当前轮数 | Current Epoch</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="metric-card">
+                                        <div class="metric-value" id="totalEpochs">0</div>
+                                        <div class="metric-label">总轮数 | Total Epochs</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="real-time-metrics">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="metric-display" id="currentLoss">0.0000</div>
+                                        <div class="metric-label-sm">当前损失 | Current Loss</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="metric-display" id="currentAccuracy">0.00%</div>
+                                        <div class="metric-label-sm">当前准确率 | Current Accuracy</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 系统信息 -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-cpu me-2"></i>系统信息 | System Information
+                    </div>
+                    <div class="card-body">
+                        <div class="system-info-card">
+                            <div class="mb-2">
+                                <small class="text-muted">CPU使用率 | CPU Usage</small>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-info" id="cpuUsageBar" style="width: 0%"></div>
+                                </div>
+                                <div class="text-end small" id="cpuUsageText">0%</div>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <small class="text-muted">内存使用 | Memory Usage</small>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-warning" id="memoryUsageBar" style="width: 0%"></div>
+                                </div>
+                                <div class="text-end small" id="memoryUsageText">0% (0/0 GB)</div>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <small class="text-muted">GPU状态 | GPU Status</small>
+                                <div id="gpuStatus" class="small">未检测到GPU | No GPU detected</div>
+                            </div>
+                            
+                            <div class="text-center mt-3">
+                                <button class="btn btn-sm btn-outline-primary" id="btnRefreshSystemInfo">
+                                    <i class="bi bi-arrow-repeat"></i> 刷新 | Refresh
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主要内容区域 -->
+            <div class="col-lg-8">
+                <!-- 训练配置 -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-sliders me-2"></i>训练配置 | Training Configuration
+                    </div>
+                    <div class="card-body">
+                        <div class="config-section">
+                            <h6 class="config-title">模型配置 | Model Configuration</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">模型类型 | Model Type</label>
+                                    <select class="form-select" id="modelType">
+                                        <option value="enhanced_audio">增强音频模型 | Enhanced Audio Model</option>
+                                        <option value="custom">自定义模型 | Custom Model</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">预训练模型 | Pretrained Model</label>
+                                    <select class="form-select" id="pretrainedModel">
+                                        <option value="facebook/wav2vec2-large-960h">Wav2Vec2 Large</option>
+                                        <option value="facebook/wav2vec2-base-960h">Wav2Vec2 Base</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="config-section">
+                            <h6 class="config-title">训练参数 | Training Parameters</h6>
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">训练轮数 | Epochs</label>
+                                    <input type="number" class="form-control" id="epochs" value="20" min="1">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">批次大小 | Batch Size</label>
+                                    <input type="number" class="form-control" id="batchSize" value="32" min="1">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">学习率 | Learning Rate</label>
+                                    <input type="number" class="form-control" id="learningRate" value="0.001" step="0.0001" min="0.0001">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">优化器 | Optimizer</label>
+                                    <select class="form-select" id="optimizer">
+                                        <option value="adamw">AdamW</option>
+                                        <option value="adam">Adam</option>
+                                        <option value="sgd">SGD</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="config-section">
+                            <h6 class="config-title">数据集配置 | Dataset Configuration</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">数据目录 | Data Directory</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="dataDir" value="data/audio">
+                                        <button class="btn btn-outline-secondary" type="button" id="btnBrowseData">
+                                            <i class="bi bi-folder"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">验证集比例 | Validation Ratio</label>
+                                    <input type="number" class="form-control" id="valRatio" value="0.2" step="0.05" min="0.1" max="0.5">
+                                </div>
+                            </div>
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="dataAugmentation" checked>
+                                <label class="form-check-label">启用数据增强 | Enable Data Augmentation</label>
+                            </div>
+                        </div>
+
+                        <div class="text-end">
+                            <button class="btn btn-primary" id="btnSaveConfig">
+                                <i class="bi bi-save me-2"></i>保存配置 | Save Configuration
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 训练图表 -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-graph-up me-2"></i>训练图表 | Training Charts
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <canvas id="lossChart" height="250"></canvas>
+                            </div>
+                            <div class="col-md-6">
+                                <canvas id="accuracyChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 训练历史 -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-clock-history me-2"></i>训练历史 | Training History
+                    </div>
+                    <div class="card-body">
+                        <div id="trainingHistory">
+                            <div class="text-center text-muted py-4">
+                                <i class="bi bi-inbox display-4"></i>
+                                <p>暂无训练历史 | No training history yet</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 这里将添加JavaScript代码来处理训练控制、实时更新和图表显示
+        // JavaScript code will be added here to handle training control, real-time updates, and chart display
+        console.log("Training interface loaded successfully");
+    </script>
+</body>
+</html>

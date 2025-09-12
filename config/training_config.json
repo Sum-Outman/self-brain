@@ -1,0 +1,47 @@
+{
+  "models": {
+    "A": {
+      "script": "sub_models/B_language/train.py",
+      "params": "--epochs=10 --batch=32 --lr=0.001"
+    },
+    "B": {
+      "script": "sub_models/C_audio/train.py",
+      "params": "--epochs=15 --batch=64 --lr=0.0005"
+    },
+    "C": {
+      "script": "sub_models/D_image/train.py",
+      "params": "--epochs=20 --batch=128 --lr=0.001"
+    },
+    "D": {
+      "script": "sub_models/E_video/train.py",
+      "params": "--epochs=12 --batch=32 --lr=0.0008"
+    },
+    "E": {
+      "script": "sub_models/E_spatial/train.py",
+      "params": "--epochs=25 --batch=16 --lr=0.0003"
+    },
+    "F": {
+      "script": "sub_models/G_sensor/train.py",
+      "params": "--epochs=18 --batch=256 --lr=0.0002"
+    },
+    "G": {
+      "script": "sub_models/H_computer_control/train.py",
+      "params": "--epochs=8 --batch=64 --lr=0.001"
+    },
+    "H": {
+      "script": "sub_models/I_motion_control/train.py",
+      "params": "--epochs=30 --batch=8 --lr=0.0001"
+    },
+    "I": {
+      "script": "sub_models/J_knowledge/train.py",
+      "params": "--epochs=50 --batch=128 --lr=0.0005"
+    }
+  },
+  "optimization": {
+    "auto_hyperparam": true,
+    "mixed_precision": true,
+    "early_stopping": true,
+    "data_augmentation": true,
+    "distributed_training": false
+  }
+}

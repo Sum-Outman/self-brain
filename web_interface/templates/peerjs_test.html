@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeerJS Connection Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        #log { max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>PeerJS Connection Test</h1>
+    
+    <div id="status" class="info">Initializing...</div>
+    
+    <div>
+        <button onclick="testConnection()">Test Connection</button>
+        <button onclick="getPeerId()">Get Peer ID</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+    
+    <div id="log"></div>
+
+    <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+    <script>
+        let peer = null;
+        const log = document.getElementById('log');
+        const status = document.getElementById('status');
+
+        function addLog(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            status.className = `status ${type}`;
+            status.textContent = message;
+        }
+
+        function initPeerJS() {
+            try {
+                updateStatus('Connecting to PeerJS server...', 'info');
+                addLog('Starting PeerJS connection initialization...');
+
+                peer = new Peer(undefined, {
+                    host: 'localhost',
+                    port: 9000,
+                    path: '/',
+                    secure: false,
+                    debug: 3,
+                    config: {
+                        iceServers: [
+                            { urls: 'stun:stun.l.google.com:19302' },
+                            { urls: 'stun:stun1.l.google.com:19302' }
+                        ]
+                    }
+                });
+
+                peer.on('open', (id) => {
+                    updateStatus(`Connection successful! Peer ID: ${id}`, 'success');
+                    addLog(`PeerJS connection successful, assigned ID: ${id}`, 'success');
+                });
+
+                peer.on('error', (error) => {
+                    updateStatus(`Connection failed: ${error.type}`, 'error');
+                    addLog(`PeerJS error type: ${error.type}`, 'error');
+                    addLog(`Error message: ${error.message}`, 'error');
+                });
+
+                peer.on('disconnected', () => {
+                    updateStatus('Connection disconnected', 'error');
+                    addLog('PeerJS connection disconnected');
+                });
+
+            } catch (error) {
+                updateStatus('Initialization failed', 'error');
+                addLog(`Initialization exception: ${error.message}`, 'error');
+            }
+        }
+
+        function testConnection() {
+            if (peer) {
+                addLog('Testing connection status...');
+                if (peer.open) {
+                    addLog('Connection normal, PeerJS ready', 'success');
+                } else {
+                    addLog('Connection not ready, please wait or reinitialize', 'error');
+                }
+            } else {
+                addLog('PeerJS not initialized, reinitializing...', 'info');
+                initPeerJS();
+            }
+        }
+
+        function getPeerId() {
+            if (peer && peer.id) {
+                addLog(`Current Peer ID: ${peer.id}`, 'success');
+            } else {
+                addLog('Peer ID not assigned yet, please wait for connection completion', 'error');
+            }
+        }
+
+        function clearLog() {
+            log.innerHTML = '';
+        }
+
+        // Automatically initialize on page load
+        window.addEventListener('load', initPeerJS);
+    </script>
+</body>
+</html>

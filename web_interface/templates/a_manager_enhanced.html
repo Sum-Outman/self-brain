@@ -1,0 +1,384 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}A Management Model Interface - Self Brain AGI System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-cpu"></i> A Management Model Interaction Center</h1>
+        <div>
+            <button class="btn btn-outline-dark" onclick="refreshAll()">
+                <i class="bi bi-arrow-clockwise"></i> Refresh All
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Emotion Status -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-heart"></i> A Management Model Emotional Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="d-block">Happiness</label>
+                        <div class="progress mb-1">
+                            <div class="progress-bar bg-dark" style="width: 75%"></div>
+                        </div>
+                        <small class="text-secondary">75%</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="d-block">Sadness</label>
+                        <div class="progress mb-1">
+                            <div class="progress-bar bg-secondary" style="width: 15%"></div>
+                        </div>
+                        <small class="text-secondary">15%</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="d-block">Anger</label>
+                        <div class="progress mb-1">
+                            <div class="progress-bar bg-dark" style="width: 5%"></div>
+                        </div>
+                        <small class="text-secondary">5%</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="d-block">Fear</label>
+                        <div class="progress mb-1">
+                            <div class="progress-bar bg-secondary" style="width: 10%"></div>
+                        </div>
+                        <small class="text-secondary">10%</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="d-block">Surprise</label>
+                        <div class="progress mb-1">
+                            <div class="progress-bar bg-dark" style="width: 25%"></div>
+                        </div>
+                        <small class="text-secondary">25%</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submodel Status -->
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-server"></i> Subordinate Model Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card border">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="bi bi-circle-fill text-dark"></i>
+                                        Large Language Model
+                                    </h6>
+                                    <p class="card-text small text-secondary">Multi-language interaction and emotional reasoning</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-dark">Active</small>
+                                        <small>95% efficiency</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card border">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="bi bi-circle-fill text-dark"></i>
+                                        Audio Processing Model
+                                    </h6>
+                                    <p class="card-text small text-secondary">Speech recognition and audio synthesis</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-dark">Active</small>
+                                        <small>88% efficiency</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card border">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="bi bi-circle-fill text-secondary"></i>
+                                        Image Vision Model
+                                    </h6>
+                                    <p class="card-text small text-secondary">Image recognition and generation</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-secondary">Training</small>
+                                        <small>72% efficiency</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card border">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="bi bi-circle-fill text-dark"></i>
+                                        Video Stream Model
+                                    </h6>
+                                    <p class="card-text small text-secondary">Video processing and analysis</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-dark">Active</small>
+                                        <small>91% efficiency</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Interface -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-chat-dots"></i> Interactive Chat</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chat-container border rounded p-3 mb-3" id="chatContainer" style="height: 400px; overflow-y: auto;">
+                        <div class="text-center text-secondary py-5">
+                            <i class="bi bi-chat fs-1"></i>
+                            <p>Start a conversation with the A Management Model</p>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="chatInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+                        <button class="btn btn-outline-dark" onclick="sendMessage()">
+                            <i class="bi bi-send"></i> Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Management -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-list-task"></i> Active Tasks</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush" id="activeTasks">
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="mb-1">Process Document Analysis</h6>
+                                    <small class="text-secondary">Assigned to: Large Language Model</small>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-secondary">75%</small>
+                                    <div class="progress mt-1" style="width: 60px;">
+                                        <div class="progress-bar bg-dark" style="width: 75%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="mb-1">Audio Transcription</h6>
+                                    <small class="text-secondary">Assigned to: Audio Processing Model</small>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-secondary">45%</small>
+                                    <div class="progress mt-1" style="width: 60px;">
+                                        <div class="progress-bar bg-secondary" style="width: 45%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-gear"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-dark" onclick="createTask()">
+                            <i class="bi bi-plus-circle"></i> Create New Task
+                        </button>
+                        <button class="btn btn-outline-dark" onclick="viewModelStatus()">
+                            <i class="bi bi-eye"></i> View All Models
+                        </button>
+                        <button class="btn btn-outline-dark" onclick="exportData()">
+                            <i class="bi bi-download"></i> Export Data
+                        </button>
+                        <button class="btn btn-outline-dark" onclick="systemHealth()">
+                            <i class="bi bi-heart-pulse"></i> System Health Check
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Upload -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-upload"></i> File Upload & Processing</h5>
+                </div>
+                <div class="card-body">
+                    <div class="drop-zone border border-secondary border-dashed rounded p-4 text-center mb-3" id="dropZone">
+                        <i class="bi bi-cloud-upload fs-1 text-secondary mb-2"></i>
+                        <h6>Drag & Drop Files Here</h6>
+                        <p class="text-secondary mb-2">Or click to select files</p>
+                        <input type="file" id="fileInput" class="form-control" multiple style="display: none;">
+                        <button class="btn btn-outline-dark" onclick="document.getElementById('fileInput').click()">
+                            <i class="bi bi-folder-plus"></i> Select Files
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <label for="processModel" class="form-label">Process with Model</label>
+                        <select class="form-select" id="processModel">
+                            <option value="">Select Model...</option>
+                            <option value="language">Large Language Model</option>
+                            <option value="audio">Audio Processing Model</option>
+                            <option value="image">Image Vision Model</option>
+                            <option value="video">Video Stream Model</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-outline-dark" onclick="processFiles()">
+                        <i class="bi bi-play"></i> Start Processing
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Chat functionality
+function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    addChatMessage(message, 'user');
+    input.value = '';
+    
+    // Simulate AI response
+    setTimeout(() => {
+        const responses = [
+            "I understand your request. I'll coordinate with the appropriate subordinate models to process this task.",
+            "Processing your input. The Large Language Model is analyzing the text content.",
+            "Task assigned to subordinate models. Current status: processing.",
+            "I've delegated this task to the most suitable model based on your input type."
+        ];
+        const response = responses[Math.floor(Math.random() * responses.length)];
+        addChatMessage(response, 'ai');
+    }, 1000);
+}
+
+function addChatMessage(message, type) {
+    const container = document.getElementById('chatContainer');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `d-flex ${type === 'user' ? 'justify-content-end' : 'justify-content-start'} mb-2`;
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = `p-2 rounded ${type === 'user' ? 'bg-dark text-white' : 'bg-light border'}`;
+    contentDiv.style.maxWidth = '70%';
+    contentDiv.textContent = message;
+    
+    messageDiv.appendChild(contentDiv);
+    container.appendChild(messageDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+function handleKeyPress(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
+}
+
+// File handling
+function setupDropZone() {
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-dark');
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-dark');
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-dark');
+        
+        const files = e.dataTransfer.files;
+        handleFiles(files);
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+    });
+}
+
+function handleFiles(files) {
+    console.log('Files selected:', files.length);
+    // Add file processing logic here
+}
+
+function processFiles() {
+    const model = document.getElementById('processModel').value;
+    if (!model) {
+        alert('Please select a model for processing');
+        return;
+    }
+    
+    console.log('Processing files with model:', model);
+    // Add processing logic here
+}
+
+// Utility functions
+function refreshAll() {
+    console.log('Refreshing all systems...');
+    location.reload();
+}
+
+function createTask() {
+    console.log('Creating new task...');
+    // Add task creation logic
+}
+
+function viewModelStatus() {
+    console.log('Viewing model status...');
+    // Add model status view logic
+}
+
+function exportData() {
+    console.log('Exporting data...');
+    // Add data export logic
+}
+
+function systemHealth() {
+    console.log('Checking system health...');
+    // Add health check logic
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    setupDropZone();
+});
+</script>
+{% endblock %}

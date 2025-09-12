@@ -1,0 +1,21 @@
+{
+  "knowledge": {},
+  "metadata": {},
+  "exported_at": "2025-09-04T12:45:47.773816",
+  "statistics": {
+    "last_updated": "2025-09-04 12:42:09",
+    "knowledge_entries": 0,
+    "queries_processed": 0,
+    "sessions_active": 1,
+    "files_uploaded": 0,
+    "total_storage": 0,
+    "supported_formats": [
+      "text",
+      "document",
+      "image",
+      "audio",
+      "video"
+    ],
+    "current_version": "2.0.0"
+  }
+}

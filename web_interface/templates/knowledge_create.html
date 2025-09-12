@@ -1,0 +1,376 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}Create Knowledge Entry - Self Brain AGI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h2 mb-4">Create Knowledge Entry</h1>
+            <p class="text-secondary">Add new knowledge to enhance your AGI system's capabilities</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Knowledge Entry Form</h5>
+                </div>
+                <div class="card-body">
+                    <form id="knowledge-form">
+                        <!-- Basic Information -->
+                        <div class="mb-4">
+                            <h6 class="text-uppercase text-secondary mb-3">Basic Information</h6>
+                            <div class="row">
+                                <div class="col-md-8 mb-3">
+                                    <label for="title" class="form-label">Title *</label>
+                                    <input type="text" class="form-control" id="title" name="title" required>
+                                    <div class="form-text">Enter a descriptive title for this knowledge entry</div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="category" class="form-label">Category *</label>
+                                    <select class="form-select" id="category" name="category" required>
+                                        <option value="">Select category...</option>
+                                        <option value="training-data">Training Data</option>
+                                        <option value="model-config">Model Configuration</option>
+                                        <option value="documentation">Documentation</option>
+                                        <option value="examples">Examples</option>
+                                        <option value="tutorials">Tutorials</option>
+                                        <option value="research">Research Papers</option>
+                                        <option value="code">Code Snippets</option>
+                                        <option value="datasets">Datasets</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Model Association -->
+                        <div class="mb-4">
+                            <h6 class="text-uppercase text-secondary mb-3">Model Association</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="model" class="form-label">Target Model *</label>
+                                    <select class="form-select" id="model" name="model" required>
+                                        <option value="">Select model...</option>
+                                        <option value="A">Model A - Management</option>
+                                        <option value="B">Model B - Language Processing</option>
+                                        <option value="C">Model C - Audio Processing</option>
+                                        <option value="D">Model D - Image Processing</option>
+                                        <option value="E">Model E - Video Processing</option>
+                                        <option value="F">Model F - Spatial Perception</option>
+                                        <option value="G">Model G - Sensor Integration</option>
+                                        <option value="H">Model H - Computer Control</option>
+                                        <option value="I">Model I - Motion Control</option>
+                                        <option value="J">Model J - Knowledge Expert</option>
+                                        <option value="K">Model K - Programming</option>
+                                    </select>
+                                    <div class="form-text">Select which model this knowledge will benefit</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="priority" class="form-label">Priority Level</label>
+                                    <select class="form-select" id="priority" name="priority">
+                                        <option value="low">Low</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="high">High</option>
+                                        <option value="critical">Critical</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="mb-4">
+                            <h6 class="text-uppercase text-secondary mb-3">Content</h6>
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description *</label>
+                                <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                                <div class="form-text">Provide a brief description of this knowledge entry</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="content" class="form-label">Detailed Content *</label>
+                                <textarea class="form-control" id="content" name="content" rows="8" required></textarea>
+                                <div class="form-text">Enter the full knowledge content, training data, or documentation</div>
+                            </div>
+                        </div>
+
+                        <!-- Tags and Metadata -->
+                        <div class="mb-4">
+                            <h6 class="text-uppercase text-secondary mb-3">Tags & Metadata</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="tags" class="form-label">Tags</label>
+                                    <input type="text" class="form-control" id="tags" name="tags" placeholder="machine-learning, neural-networks, python">
+                                    <div class="form-text">Comma-separated keywords for search and categorization</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="source" class="form-label">Source</label>
+                                    <input type="text" class="form-control" id="source" name="source" placeholder="Research paper, documentation, dataset">
+                                    <div class="form-text">Original source of this knowledge</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- File Upload -->
+                        <div class="mb-4">
+                            <h6 class="text-uppercase text-secondary mb-3">File Upload</h6>
+                            <div class="mb-3">
+                                <label for="files" class="form-label">Attach Files</label>
+                                <input type="file" class="form-control" id="files" name="files" multiple>
+                                <div class="form-text">Upload related files (PDF, TXT, CSV, JSON, images, etc.)</div>
+                            </div>
+                            <div id="file-list" class="mt-2"></div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-dark">
+                                <i class="bi bi-plus-circle"></i> Create Entry
+                            </button>
+                            <button type="button" class="btn btn-outline-dark" onclick="saveAsDraft()">
+                                <i class="bi bi-save"></i> Save as Draft
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="window.history.back()">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Quick Tips -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Quick Tips</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="bi bi-lightbulb text-secondary"></i>
+                            <small>Use descriptive titles for better searchability</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-tags text-secondary"></i>
+                            <small>Add relevant tags to improve discoverability</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-link text-secondary"></i>
+                            <small>Include source references for traceability</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-secondary"></i>
+                            <small>Review content before marking as complete</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Model Descriptions -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Model Descriptions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Model A - Management:</strong>
+                        <small class="text-secondary d-block">Main management model with emotional intelligence</small>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Model B - Language:</strong>
+                        <small class="text-secondary d-block">Multi-language processing and emotional reasoning</small>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Model C - Audio:</strong>
+                        <small class="text-secondary d-block">Audio recognition, synthesis, and processing</small>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Model D - Image:</strong>
+                        <small class="text-secondary d-block">Image recognition, generation, and processing</small>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Model J - Knowledge:</strong>
+                        <small class="text-secondary d-block">Comprehensive expert knowledge across all domains</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-control:focus {
+    border-color: #000;
+    box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.25);
+}
+
+.form-select:focus {
+    border-color: #000;
+    box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.25);
+}
+
+.text-secondary {
+    color: #6c757d !important;
+}
+
+.card {
+    border-radius: 0;
+    border: 1px solid #dee2e6;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.btn {
+    border-radius: 0;
+}
+
+.btn-dark {
+    background-color: #000;
+    border-color: #000;
+}
+
+.btn-dark:hover {
+    background-color: #333;
+    border-color: #333;
+}
+
+.btn-outline-dark {
+    color: #000;
+    border-color: #000;
+}
+
+.btn-outline-dark:hover {
+    background-color: #000;
+    border-color: #000;
+}
+
+#file-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.file-item {
+    padding: 0.5rem;
+    border: 1px solid #dee2e6;
+    margin-bottom: 0.25rem;
+    background-color: #f8f9fa;
+}
+
+.text-uppercase {
+    letter-spacing: 0.05em;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('knowledge-form');
+    const fileInput = document.getElementById('files');
+    const fileList = document.getElementById('file-list');
+
+    // File upload handling
+    fileInput.addEventListener('change', function(e) {
+        fileList.innerHTML = '';
+        
+        Array.from(e.target.files).forEach(file => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item d-flex justify-content-between align-items-center';
+            fileItem.innerHTML = `
+                <span><i class="bi bi-file-earmark"></i> ${file.name}</span>
+                <small class="text-secondary">${formatFileSize(file.size)}</small>
+            `;
+            fileList.appendChild(fileItem);
+        });
+    });
+
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const files = fileInput.files;
+        
+        // Add files to form data
+        for (let i = 0; i < files.length; i++) {
+            formData.append('files[]', files[i]);
+        }
+
+        fetch('/api/knowledge', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                showToast('Knowledge entry created successfully', 'success');
+                setTimeout(() => {
+                    window.location.href = '/knowledge/manage';
+                }, 1500);
+            } else {
+                showToast('Error creating entry: ' + result.error, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error creating knowledge entry', 'error');
+        });
+    });
+
+    // Save as draft
+    window.saveAsDraft = function() {
+        const formData = new FormData(form);
+        formData.append('status', 'draft');
+        
+        fetch('/api/knowledge/draft', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                showToast('Draft saved successfully', 'success');
+            } else {
+                showToast('Error saving draft', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error saving draft', 'error');
+        });
+    };
+
+    // Utility functions
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function showToast(message, type = 'info') {
+        const toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        toastContainer.innerHTML = `
+            <div class="toast show" role="alert">
+                <div class="toast-header">
+                    <strong class="me-auto">${type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Info'}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                </div>
+                <div class="toast-body">
+                    ${message}
+                </div>
+            </div>
+        `;
+        document.body.appendChild(toastContainer);
+        
+        setTimeout(() => {
+            document.body.removeChild(toastContainer);
+        }, 3000);
+    }
+});
+</script>
+{% endblock %}

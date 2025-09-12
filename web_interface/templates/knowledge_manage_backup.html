@@ -1,0 +1,307 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}Knowledge Management System - Knowledge Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h2 mb-2">Knowledge Management System</h1>
+            <p class="text-secondary">View, manage, export, and import your knowledge content</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h4 class="mb-1" id="totalCount">0</h4>
+                    <small class="text-secondary">Total Knowledge Items</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h4 class="mb-1" id="totalSize">0 KB</h4>
+                    <small class="text-secondary">Total Size</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h4 class="mb-1" id="textCount">0</h4>
+                    <small class="text-secondary">Text Files</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h4 class="mb-1" id="documentCount">0</h4>
+                    <small class="text-secondary">Document Files</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h4 class="mb-1" id="imageCount">0</h4>
+                    <small class="text-secondary">Image Files</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h4 class="mb-1" id="audioCount">0</h4>
+                    <small class="text-secondary">Audio Files</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Search & Filter</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Category Filter</label>
+                            <select class="form-select" id="categoryFilter">
+                                <option value="all">All Categories</option>
+                                <option value="other">Other</option>
+                                <option value="categories">Categories</option>
+                                <option value="documents">Documents</option>
+                                <option value="text">Text Files</option>
+                                <option value="code">Code Files</option>
+                                <option value="images">Images</option>
+                                <option value="videos">Videos</option>
+                                <option value="audio">Audio</option>
+                                <option value="data">Data Files</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">File Type</label>
+                            <select class="form-select" id="typeFilter">
+                                <option value="all">All Types</option>
+                                <option value=".txt">Text (.txt)</option>
+                                <option value=".md">Document (.md)</option>
+                                <option value=".json">JSON (.json)</option>
+                                <option value=".pdf">PDF (.pdf)</option>
+                                <option value=".doc">Word (.doc/.docx)</option>
+                                <option value=".xls">Excel (.xls/.xlsx)</option>
+                                <option value=".csv">CSV (.csv)</option>
+                                <option value=".py">Python (.py)</option>
+                                <option value=".js">JavaScript (.js)</option>
+                                <option value=".html">HTML (.html)</option>
+                                <option value=".css">CSS (.css)</option>
+                                <option value=".jpg">JPG Image (.jpg)</option>
+                                <option value=".png">PNG Image (.png)</option>
+                                <option value=".gif">GIF Image (.gif)</option>
+                                <option value=".mp4">MP4 Video (.mp4)</option>
+                                <option value=".mp3">MP3 Audio (.mp3)</option>
+                                <option value=".zip">ZIP Archive (.zip)</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Search</label>
+                            <input type="text" class="form-control" id="searchInput" placeholder="Search filename or description...">
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">&nbsp;</label>
+                            <button class="btn btn-outline-dark w-100" onclick="loadKnowledgeList()">Search</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <!-- Primary Actions -->
+                        <a href="{{ url_for('create_knowledge_page') }}" class="btn btn-dark">
+                            <i class="fas fa-plus"></i> New Knowledge Entry
+                        </a>
+                        <a href="{{ url_for('knowledge_import') }}" class="btn btn-outline-dark">
+                            <i class="bi bi-upload"></i> Import Knowledge
+                        </a>
+                        <button class="btn btn-outline-dark" onclick="refreshData()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh Data
+                        </button>
+                    </div>
+                    
+                    <!-- Batch Operations -->
+                    <div class="d-flex gap-2 flex-wrap mt-3">
+                        <button class="btn btn-outline-dark" id="selectAllBtn" onclick="toggleSelectAll()">
+                            <i class="bi bi-check-square"></i> Select All
+                        </button>
+                        <button class="btn btn-outline-dark" id="exportBtn" onclick="exportSelected()" disabled>
+                            <i class="bi bi-download"></i> Export Selected
+                        </button>
+                        <button class="btn btn-outline-dark" id="deleteBtn" onclick="deleteSelected()" disabled>
+                            <i class="bi bi-trash"></i> Delete Selected
+                        </button>
+                    </div>
+                    
+                    <!-- Maintenance Tools -->
+                    <div class="border-top mt-3 pt-3">
+                        <h6 class="text-muted mb-2">Maintenance Tools</h6>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a href="/knowledge/clean" class="btn btn-outline-danger">
+                                <i class="bi bi-trash"></i> Clean Database
+                            </a>
+                            <button class="btn btn-outline-secondary" onclick="optimizeDatabase()">
+                                <i class="bi bi-gear"></i> Optimize Database
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Knowledge List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Knowledge Files</h5>
+                </div>
+                <div class="card-body">
+                    <div id="loading" class="text-center" style="display: none;">
+                        <div class="spinner-border text-dark" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading...</p>
+                    </div>
+                    <div id="knowledgeList"></div>
+                    <div id="emptyState" class="text-center" style="display: none;">
+                        <i class="bi bi-folder-open" style="font-size: 3rem; color: #666;"></i>
+                        <h4 class="mt-3">No knowledge data</h4>
+                        <p class="text-secondary">Please add knowledge from the import page</p>
+                        <a href="{{ url_for('knowledge_import') }}" class="btn btn-outline-dark">
+                             <i class="bi bi-upload"></i> Start Import
+                         </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="Knowledge pagination">
+                <ul class="pagination justify-content-center" id="pagination"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<style>
+.knowledge-item {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+
+.knowledge-item:hover {
+    border-color: #000000;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666666;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666666;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+    gap: 5px;
+}
+
+@media (max-width: 768px) {
+    .d-flex {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+}
+</style>
+
+<script>
+function optimizeDatabase() {
+    if (confirm('Are you sure you want to optimize the database? This will improve performance but may take a moment.')) {
+        fetch('/api/knowledge/optimize', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Database optimized successfully', 'success');
+                refreshData();
+            } else {
+                showToast('Failed to optimize database: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error optimizing database:', error);
+            showToast('Error optimizing database', 'error');
+        });
+    }
+}
+
+function showToast(message, type = 'info') {
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} alert-dismissible fade show`;
+    toast.style.position = 'fixed';
+    toast.style.top = '20px';
+    toast.style.right = '20px';
+    toast.style.zIndex = '9999';
+    toast.style.minWidth = '300px';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 3000);
+}
+</script>
+{% endblock %}

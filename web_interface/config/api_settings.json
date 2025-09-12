@@ -1,0 +1,5 @@
+{
+  "api_url": "https://api.openai.com/v1",
+  "timeout": 30,
+  "retry_count": 3
+}

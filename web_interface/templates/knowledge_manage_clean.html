@@ -1,0 +1,563 @@
+{% extends "base.html" %}
+
+{% block title %}Knowledge Management - Self Brain AGI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .knowledge-card {
+        margin-bottom: 20px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .knowledge-header {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .knowledge-item {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .knowledge-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .knowledge-content {
+        max-height: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .category-badge {
+        font-size: 0.75rem;
+    }
+    .search-container {
+        position: relative;
+    }
+    .search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .batch-actions {
+        display: none;
+    }
+    .batch-actions.active {
+        display: block;
+    }
+    .selection-checkbox {
+        margin-right: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-book"></i> Knowledge Management</h2>
+                    <p class="text-muted">Manage your knowledge base and training data</p>
+                </div>
+                <div>
+                    <button class="btn btn-outline-primary" onclick="refreshData()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <a href="/knowledge/add" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Knowledge
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="card knowledge-card">
+                <div class="card-body text-center">
+                    <h3 class="text-primary" id="totalCount">0</h3>
+                    <p class="text-muted mb-0">Total Items</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="card knowledge-card">
+                <div class="card-body text-center">
+                    <h3 class="text-success" id="categoryCount">0</h3>
+                    <p class="text-muted mb-0">Categories</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="card knowledge-card">
+                <div class="card-body text-center">
+                    <h3 class="text-info" id="totalSize">0</h3>
+                    <p class="text-muted mb-0">Total Size (KB)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="card knowledge-card">
+                <div class="card-body text-center">
+                    <h3 class="text-warning" id="recentCount">0</h3>
+                    <p class="text-muted mb-0">Recent Items</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="search-container">
+                <input type="text" class="form-control" id="searchInput" placeholder="Search knowledge items..." onkeyup="searchKnowledge(this.value)">
+                <div class="search-results bg-white border rounded shadow-sm" id="searchResults" style="display: none;"></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" id="categoryFilter" onchange="filterByCategory(this.value)">
+                <option value="">All Categories</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Batch Actions -->
+    <div class="row mb-3 batch-actions" id="batchActions">
+        <div class="col-12">
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteSelected()">
+                    <i class="fas fa-trash"></i> Delete Selected
+                </button>
+                <button class="btn btn-sm btn-outline-primary" onclick="exportSelected()">
+                    <i class="fas fa-download"></i> Export Selected
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="clearSelection()">
+                    <i class="fas fa-times"></i> Clear Selection
+                </button>
+                <span class="ms-2 align-self-center">
+                    <strong id="selectedCount">0</strong> items selected
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Knowledge List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card knowledge-card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> Knowledge Items</h5>
+                </div>
+                <div class="card-body">
+                    <div id="loadingSpinner" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <div id="knowledgeList" style="display: none;"></div>
+                    <div id="emptyState" class="text-center text-muted" style="display: none;">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <h5>No Knowledge Items</h5>
+                        <p>Add your first knowledge item to get started.</p>
+                        <a href="/knowledge/add" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Knowledge
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="Knowledge pagination">
+                <ul class="pagination justify-content-center" id="pagination"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let knowledgeItems = [];
+    let selectedItems = new Set();
+    let currentPage = 1;
+    const itemsPerPage = 10;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        loadKnowledgeStats();
+        loadKnowledgeList();
+        loadCategories();
+    });
+
+    // Load knowledge statistics
+    async function loadKnowledgeStats() {
+        try {
+            const response = await fetch('/api/knowledge/stats');
+            const data = await response.json();
+            
+            document.getElementById('totalCount').textContent = data.total_count || 0;
+            document.getElementById('categoryCount').textContent = data.category_count || 0;
+            document.getElementById('totalSize').textContent = Math.round((data.total_size || 0) / 1024);
+            document.getElementById('recentCount').textContent = data.recent_count || 0;
+        } catch (error) {
+            console.error('Failed to load knowledge stats:', error);
+        }
+    }
+
+    // Load knowledge list
+    async function loadKnowledgeList(page = 1) {
+        currentPage = page;
+        
+        try {
+            const response = await fetch(`/api/knowledge/list?page=${page}&limit=${itemsPerPage}`);
+            const data = await response.json();
+            
+            knowledgeItems = data.items || [];
+            displayKnowledgeList(knowledgeItems);
+            displayPagination(data.total_pages || 1, page);
+            
+            document.getElementById('loadingSpinner').style.display = 'none';
+            
+            if (knowledgeItems.length === 0) {
+                document.getElementById('knowledgeList').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'block';
+            } else {
+                document.getElementById('knowledgeList').style.display = 'block';
+                document.getElementById('emptyState').style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Failed to load knowledge list:', error);
+            document.getElementById('loadingSpinner').style.display = 'none';
+        }
+    }
+
+    // Display knowledge list
+    function displayKnowledgeList(items) {
+        const container = document.getElementById('knowledgeList');
+        let html = '';
+        
+        items.forEach(item => {
+            html += `
+                <div class="card knowledge-item mb-3" data-id="${item.id}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-2">
+                                    <input type="checkbox" class="form-check-input selection-checkbox" 
+                                           data-id="${item.id}" onchange="toggleSelection('${item.id}', this.checked)">
+                                    <h5 class="card-title mb-0 ms-2">${item.title}</h5>
+                                </div>
+                                <p class="card-text knowledge-content">${item.content || 'No content'}</p>
+                                <div>
+                                    <span class="badge bg-primary category-badge">${item.category || 'Uncategorized'}</span>
+                                    <small class="text-muted">Created: ${new Date(item.created_at).toLocaleDateString()}</small>
+                                    <small class="text-muted ms-2">Size: ${Math.round((item.size || 0) / 1024)} KB</small>
+                                </div>
+                            </div>
+                            <div class="ms-3">
+                                <div class="btn-group">
+                                    <a href="/knowledge/edit/${item.id}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteKnowledge('${item.id}')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    // Delete knowledge item
+    async function deleteKnowledge(id) {
+        if (confirm('Are you sure you want to delete this knowledge item?')) {
+            try {
+                const response = await fetch(`/api/knowledge/delete/${id}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('Knowledge item deleted successfully');
+                    loadKnowledgeList();
+                    loadKnowledgeStats();
+                } else {
+                    showError(data.message || 'Failed to delete knowledge item');
+                }
+            } catch (error) {
+                console.error('Failed to delete knowledge:', error);
+                showError('Failed to delete knowledge item');
+            }
+        }
+    }
+
+    // Export selected items
+    async function exportSelected() {
+        if (selectedItems.size === 0) {
+            showWarning('Please select items to export');
+            return;
+        }
+        
+        try {
+            const ids = Array.from(selectedItems);
+            showLoading('Preparing export file...');
+            
+            const response = await fetch('/api/knowledge/export_selected', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ids: ids })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Export request failed');
+            }
+            
+            const filename = `knowledge_export_${new Date().toISOString().split('T')[0]}.zip`;
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            hideLoading();
+            showSuccess('Export successful! File download started');
+            
+        } catch (error) {
+            hideLoading();
+            console.error('Export failed:', error);
+            showError('Export failed: ' + error.message);
+        }
+    }
+
+    // Delete selected items
+    async function deleteSelected() {
+        if (selectedItems.size === 0) {
+            showWarning('Please select items to delete');
+            return;
+        }
+        
+        if (confirm(`Are you sure you want to delete ${selectedItems.size} selected items? This action cannot be undone.`)) {
+            try {
+                const ids = Array.from(selectedItems);
+                showLoading('Deleting selected items...');
+                
+                const response = await fetch('/api/knowledge/delete_selected', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ ids: ids })
+                });
+                
+                const result = await response.json();
+                
+                hideLoading();
+                
+                if (result.success) {
+                    showSuccess('Items deleted successfully');
+                    selectedItems.clear();
+                    loadKnowledgeList();
+                    loadKnowledgeStats();
+                    updateSelectionUI();
+                } else {
+                    showError(result.message || 'Failed to delete items');
+                }
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Batch delete error:', error);
+                showError('Failed to delete items: ' + error.message);
+            }
+        }
+    }
+
+    // Toggle selection
+    function toggleSelection(id, isSelected) {
+        if (isSelected) {
+            selectedItems.add(id);
+        } else {
+            selectedItems.delete(id);
+        }
+        updateSelectionUI();
+    }
+
+    // Update selection UI
+    function updateSelectionUI() {
+        const batchActions = document.getElementById('batchActions');
+        const selectedCount = document.getElementById('selectedCount');
+        
+        selectedCount.textContent = selectedItems.size;
+        
+        if (selectedItems.size > 0) {
+            batchActions.classList.add('active');
+        } else {
+            batchActions.classList.remove('active');
+        }
+    }
+
+    // Clear selection
+    function clearSelection() {
+        selectedItems.clear();
+        document.querySelectorAll('.selection-checkbox').forEach(cb => cb.checked = false);
+        updateSelectionUI();
+    }
+
+    // Load categories
+    async function loadCategories() {
+        try {
+            const response = await fetch('/api/knowledge/categories');
+            const data = await response.json();
+            
+            const select = document.getElementById('categoryFilter');
+            data.categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                select.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Failed to load categories:', error);
+        }
+    }
+
+    // Filter by category
+    function filterByCategory(category) {
+        loadKnowledgeList(1);
+    }
+
+    // Search knowledge
+    function searchKnowledge(query) {
+        if (query.length < 2) {
+            document.getElementById('searchResults').style.display = 'none';
+            return;
+        }
+        
+        // Simple search implementation
+        const results = knowledgeItems.filter(item => 
+            item.title.toLowerCase().includes(query.toLowerCase()) ||
+            item.content.toLowerCase().includes(query.toLowerCase())
+        );
+        
+        displaySearchResults(results);
+    }
+
+    // Display search results
+    function displaySearchResults(results) {
+        const container = document.getElementById('searchResults');
+        
+        if (results.length === 0) {
+            container.innerHTML = '<div class="p-3 text-muted">No results found</div>';
+        } else {
+            let html = '';
+            results.slice(0, 5).forEach(item => {
+                html += `
+                    <div class="p-2 border-bottom hover-bg-light" onclick="viewKnowledge('${item.id}')">
+                        <strong>${item.title}</strong>
+                        <div class="small text-muted">${item.category}</div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+        
+        container.style.display = 'block';
+    }
+
+    // View knowledge item
+    function viewKnowledge(id) {
+        window.location.href = `/knowledge/view/${id}`;
+    }
+
+    // Display pagination
+    function displayPagination(totalPages, currentPage) {
+        const container = document.getElementById('pagination');
+        
+        if (totalPages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+        
+        let html = '';
+        
+        // Previous
+        if (currentPage > 1) {
+            html += `<li class="page-item"><a class="page-link" href="#" onclick="loadKnowledgeList(${currentPage - 1})">Previous</a></li>`;
+        }
+        
+        // Pages
+        for (let i = 1; i <= totalPages; i++) {
+            const active = i === currentPage ? 'active' : '';
+            html += `<li class="page-item ${active}"><a class="page-link" href="#" onclick="loadKnowledgeList(${i})">${i}</a></li>`;
+        }
+        
+        // Next
+        if (currentPage < totalPages) {
+            html += `<li class="page-item"><a class="page-link" href="#" onclick="loadKnowledgeList(${currentPage + 1})">Next</a></li>`;
+        }
+        
+        container.innerHTML = html;
+    }
+
+    // Refresh data
+    function refreshData() {
+        loadKnowledgeStats();
+        loadKnowledgeList();
+    }
+
+    // Utility functions
+    function showSuccess(message) {
+        if (typeof showToast === 'function') {
+            showToast(message, 'success');
+        } else {
+            alert(message);
+        }
+    }
+
+    function showError(message) {
+        if (typeof showToast === 'function') {
+            showToast(message, 'error');
+        } else {
+            alert(message);
+        }
+    }
+
+    function showWarning(message) {
+        if (typeof showToast === 'function') {
+            showToast(message, 'warning');
+        } else {
+            alert(message);
+        }
+    }
+
+    function showLoading(message) {
+        if (typeof showToast === 'function') {
+            showToast(message, 'info');
+        }
+    }
+
+    function hideLoading() {
+        // Hide loading indicator
+    }
+</script>
+{% endblock %}
