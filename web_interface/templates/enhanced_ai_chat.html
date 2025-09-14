@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced AI Chat - Real AGI System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #f8f9fa;
+            --secondary-bg: #ffffff;
+            --border-color: #dee2e6;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --accent-color: #0d6efd;
+            --success-color: #198754;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: var(--text-primary);
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header-section {
+            background: var(--secondary-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .model-status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .status-card {
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            text-align: center;
+        }
+
+        .status-healthy { background-color: #d1e7dd; color: #0f5132; }
+        .status-unhealthy { background-color: #f8d7da; color: #842029; }
+        .status-offline { background-color: #fff3cd; color: #664d03; }
+
+        .chat-container {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+            height: 70vh;
+        }
+
+        .chat-main {
+            background: var(--secondary-bg);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .chat-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+        }
+
+        .message.user .message-avatar {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .message.ai .message-avatar {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            background-color: var(--primary-bg);
+        }
+
+        .message.user .message-content {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .message-meta {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .chat-input-section {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .input-textarea {
+            flex: 1;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            resize: none;
+            min-height: 40px;
+            max-height: 120px;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .sidebar-section {
+            background: var(--secondary-bg);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .real-time-data {
+            font-size: 0.9em;
+        }
+
+        .data-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            padding: 5px;
+            background: var(--primary-bg);
+            border-radius: 4px;
+        }
+
+        .device-permissions {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            text-align: center;
+        }
+
+        .permission-item {
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.8em;
+        }
+
+        .permission-granted { background-color: #d1e7dd; color: #0f5132; }
+        .permission-denied { background-color: #f8d7da; color: #842029; }
+
+        .emotion-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 10px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .collaboration-status {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--accent-color);
+            background-color: var(--primary-bg);
+        }
+
+        .voice-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .btn-voice {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            background-color: var(--accent-color);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-voice:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn-voice.recording {
+            background-color: var(--danger-color);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Header Section -->
+        <div class="header-section">
+            <h1 class="h3 mb-3">
+                <i class="fas fa-robot"></i>
+                Enhanced AI Chat - Real AGI System
+            </h1>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="badge bg-success">Real-time Processing</span>
+                    <span class="badge bg-info">Cross-model Collaboration</span>
+                    <span class="badge bg-warning">Hardware Integration</span>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="refreshModelStatus()">
+                        <i class="fas fa-sync-alt"></i> Refresh Status
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Model Status Grid -->
+            <div class="model-status-grid" id="modelStatusGrid">
+                <!-- Status cards will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Main Chat Container -->
+        <div class="chat-container">
+            <!-- Chat Main Area -->
+            <div class="chat-main">
+                <div class="chat-header">
+                    <div>
+                        <h5 class="mb-0">AI Conversation</h5>
+                        <small class="text-muted">Real-time intelligent responses</small>
+                    </div>
+                    <div>
+                        <select class="form-select form-select-sm" id="modelSelect">
+                            <option value="a_management">A Management (Primary)</option>
+                            <option value="b_language">B Language</option>
+                            <option value="c_audio">C Audio</option>
+                            <option value="d_image">D Image</option>
+                            <option value="e_video">E Video</option>
+                            <option value="f_spatial">F Spatial</option>
+                            <option value="g_sensor">G Sensor</option>
+                            <option value="h_computer">H Computer</option>
+                            <option value="i_motion">I Motion</option>
+                            <option value="j_knowledge">J Knowledge</option>
+                            <option value="k_programming">K Programming</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="messages-container" id="messagesContainer">
+                    <!-- Messages will be populated here -->
+                </div>
+
+                <div class="typing-indicator" id="typingIndicator">
+                    <i class="fas fa-circle-notch fa-spin"></i>
+                    AI is thinking...
+                </div>
+
+                <div class="chat-input-section">
+                    <div class="input-group">
+                        <textarea 
+                            class="input-textarea" 
+                            id="messageInput" 
+                            placeholder="Type your message here... (supports natural language, code, images)"
+                            rows="2"
+                        ></textarea>
+                        <button class="btn btn-primary" onclick="sendMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="toggleVoiceInput()">
+                                <i class="fas fa-microphone"></i> Voice
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="toggleVideoCall()">
+                                <i class="fas fa-video"></i> Video
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="toggleScreenShare()">
+                                <i class="fas fa-desktop"></i> Screen
+                            </button>
+                        </div>
+                        <div>
+                            <span class="emotion-indicator" id="emotionIndicator">😊 Neutral</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Real-time Data -->
+                <div class="sidebar-section">
+                    <div class="sidebar-title">
+                        <i class="fas fa-chart-line"></i>
+                        Real-time Data
+                    </div>
+                    <div class="real-time-data" id="realTimeData">
+                        <!-- Real-time data will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Device Permissions -->
+                <div class="sidebar-section">
+                    <div class="sidebar-title">
+                        <i class="fas fa-shield-alt"></i>
+                        Device Permissions
+                    </div>
+                    <div class="device-permissions" id="devicePermissions">
+                        <div class="permission-item" id="cameraPermission">
+                            <i class="fas fa-camera"></i><br>
+                            Camera
+                        </div>
+                        <div class="permission-item" id="microphonePermission">
+                            <i class="fas fa-microphone"></i><br>
+                            Mic
+                        </div>
+                        <div class="permission-item" id="screenPermission">
+                            <i class="fas fa-desktop"></i><br>
+                            Screen
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File Upload -->
+                <div class="sidebar-section">
+                    <div class="sidebar-title">
+                        <i class="fas fa-upload"></i>
+                        File Upload
+                    </div>
+                    <div class="file-upload-area" onclick="triggerFileUpload()">
+                        <i class="fas fa-cloud-upload-alt"></i><br>
+                        Drop files here or click to upload
+                        <input type="file" id="fileInput" style="display: none;" multiple>
+                    </div>
+                </div>
+
+                <!-- Collaboration Status -->
+                <div class="sidebar-section">
+                    <div class="sidebar-title">
+                        <i class="fas fa-project-diagram"></i>
+                        Cross-model Status
+                    </div>
+                    <div class="collaboration-status" id="collaborationStatus">
+                        <!-- Collaboration status will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
+    
+    <script>
+        // Global variables
+        let socket = null;
+        let peer = null;
+        let localStream = null;
+        let currentCall = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            setupSocketIO();
+            setupEventListeners();
+            startRealTimeUpdates();
+        });
+
+        function initializeApp() {
+            refreshModelStatus();
+            testDevicePermissions();
+            loadRealTimeData();
+        }
+
+        function setupSocketIO() {
+            socket = io('http://localhost:5006');
+            
+            socket.on('connect', function() {
+                console.log('Connected to Enhanced AI Chat');
+                addSystemMessage('Connected to real-time AI system');
+            });
+
+            socket.on('message_response', function(data) {
+                hideTypingIndicator();
+                addMessage(data.response.response, 'ai', data.response);
+            });
+
+            socket.on('error', function(data) {
+                console.error('Socket.IO Error:', data);
+                addSystemMessage('Error: ' + data.error, 'error');
+            });
+        }
+
+        function setupEventListeners() {
+            // Message input
+            const messageInput = document.getElementById('messageInput');
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // File upload
+            document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+
+            // Drag and drop
+            const uploadArea = document.querySelector('.file-upload-area');
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.classList.add('border-primary');
+            });
+            uploadArea.addEventListener('dragleave', function() {
+                uploadArea.classList.remove('border-primary');
+            });
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('border-primary');
+                handleFileUpload(e);
+            });
+        }
+
+        // Model Status
+        async function refreshModelStatus() {
+            try {
+                const response = await fetch('/api/health/models');
+                const status = await response.json();
+                
+                const grid = document.getElementById('modelStatusGrid');
+                grid.innerHTML = '';
+                
+                Object.entries(status).forEach(([model, info]) => {
+                    const card = document.createElement('div');
+                    card.className = `status-card status-${info.status}`;
+                    card.innerHTML = `
+                        <strong>${model.toUpperCase()}</strong><br>
+                        ${info.status}<br>
+                        <small>${new Date(info.last_check).toLocaleTimeString()}</small>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Failed to refresh model status:', error);
+            }
+        }
+
+        // Device Permissions
+        async function testDevicePermissions() {
+            try {
+                const response = await fetch('/api/devices/test');
+                const permissions = await response.json();
+                
+                Object.entries(permissions).forEach(([device, granted]) => {
+                    const element = document.getElementById(device + 'Permission');
+                    element.className = `permission-item ${granted ? 'permission-granted' : 'permission-denied'}`;
+                    element.innerHTML = `
+                        <i class="fas fa-${device === 'camera' ? 'camera' : device === 'microphone' ? 'microphone' : 'desktop'}"></i><br>
+                        ${device.charAt(0).toUpperCase() + device.slice(1)}<br>
+                        ${granted ? 'Granted' : 'Denied'}
+                    `;
+                });
+            } catch (error) {
+                console.error('Failed to test device permissions:', error);
+            }
+        }
+
+        // Real-time Data
+        async function loadRealTimeData() {
+            try {
+                const response = await fetch('/api/context/realtime');
+                const data = await response.json();
+                
+                const container = document.getElementById('realTimeData');
+                container.innerHTML = '';
+                
+                // Sensors
+                if (data.sensors && data.sensors.devices) {
+                    Object.entries(data.sensors.devices).forEach(([deviceId, deviceData]) => {
+                        const item = document.createElement('div');
+                        item.className = 'data-item';
+                        item.innerHTML = `
+                            <span>${deviceId}</span>
+                            <span>${deviceData.value || 'N/A'}</span>
+                        `;
+                        container.appendChild(item);
+                    });
+                }
+                
+                // Vision
+                if (data.vision && data.vision.objects) {
+                    const item = document.createElement('div');
+                    item.className = 'data-item';
+                    item.innerHTML = `
+                        <span>Vision Objects</span>
+                        <span>${data.vision.objects.length}</span>
+                    `;
+                    container.appendChild(item);
+                }
+                
+                // Hardware
+                if (data.hardware) {
+                    Object.entries(data.hardware).forEach(([key, value]) => {
+                        const item = document.createElement('div');
+                        item.className = 'data-item';
+                        item.innerHTML = `
+                            <span>${key}</span>
+                            <span>${value}</span>
+                        `;
+                        container.appendChild(item);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load real-time data:', error);
+            }
+        }
+
+        function startRealTimeUpdates() {
+            setInterval(loadRealTimeData, 5000); // Update every 5 seconds
+            setInterval(refreshModelStatus, 30000); // Update every 30 seconds
+        }
+
+        // Message Handling
+        function addMessage(content, type, metadata = null) {
+            const container = document.getElementById('messagesContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.innerHTML = type === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = `
+                ${content}
+                ${metadata ? `<div class="message-meta">
+                    ${metadata.emotion_analysis ? `<span class="emotion-indicator">${metadata.emotion_analysis.primary_emotion}</span>` : ''}
+                    ${new Date().toLocaleTimeString()}
+                </div>` : ''}
+            `;
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(contentDiv);
+            container.appendChild(messageDiv);
+            
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function addSystemMessage(content, type = 'info') {
+            const container = document.getElementById('messagesContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message system';
+            messageDiv.innerHTML = `
+                <div class="alert alert-${type === 'error' ? 'danger' : 'info'}" style="width: 100%; margin: 0;">
+                    <i class="fas fa-info-circle"></i> ${content}
+                </div>
+            `;
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            document.getElementById('typingIndicator').style.display = 'block';
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typingIndicator').style.display = 'none';
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            const modelType = document.getElementById('modelSelect').value;
+            
+            if (!message) return;
+            
+            addMessage(message, 'user');
+            input.value = '';
+            showTypingIndicator();
+            
+            try {
+                const response = await fetch('/api/chat/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        model_type: modelType
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    addMessage(data.response.response, 'ai', data.response);
+                    
+                    // Update emotion indicator
+                    if (data.response.emotion_analysis) {
+                        document.getElementById('emotionIndicator').textContent = 
+                            data.response.emotion_analysis.primary_emotion;
+                    }
+                } else {
+                    addSystemMessage('Error: ' + data.error, 'error');
+                }
+            } catch (error) {
+                console.error('Failed to send message:', error);
+                addSystemMessage('Connection error. Please check if the server is running.', 'error');
+            }
+            
+            hideTypingIndicator();
+        }
+
+        // Voice/Video Functions
+        async function toggleVoiceInput() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                // Voice input implementation would go here
+                addSystemMessage('Voice input activated');
+            } catch (error) {
+                addSystemMessage('Microphone access denied', 'error');
+            }
+        }
+
+        async function toggleVideoCall() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                localStream = stream;
+                addSystemMessage('Video call started');
+                // Video call implementation would go here
+            } catch (error) {
+                addSystemMessage('Camera access denied', 'error');
+            }
+        }
+
+        async function toggleScreenShare() {
+            try {
+                const stream = await navigator.mediaDevices.getDisplayMedia();
+                addSystemMessage('Screen sharing started');
+                // Screen share implementation would go here
+            } catch (error) {
+                addSystemMessage('Screen sharing denied', 'error');
+            }
+        }
+
+        // File Upload
+        function triggerFileUpload() {
+            document.getElementById('fileInput').click();
+        }
+
+        function handleFileUpload(event) {
+            const files = event.target?.files || event.dataTransfer?.files;
+            if (!files) return;
+            
+            Array.from(files).forEach(file => {
+                addSystemMessage(`Uploading: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+                // File processing implementation would go here
+            });
+        }
+
+        // Collaboration
+        async function triggerCollaboration() {
+            try {
+                const response = await fetch('/api/collaboration/trigger', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: 'Triggering cross-model collaboration'
+                    })
+                });
+                
+                const data = await response.json();
+                addSystemMessage('Cross-model collaboration triggered');
+            } catch (error) {
+                console.error('Failed to trigger collaboration:', error);
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                sendMessage();
+            }
+            if (e.ctrlKey && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('messageInput').focus();
+            }
+        });
+    </script>
+</body>
+</html>

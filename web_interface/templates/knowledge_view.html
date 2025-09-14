@@ -253,6 +253,41 @@
 </div>
 
 <script>
+// Load knowledge detail from API
+document.addEventListener('DOMContentLoaded', function() {
+    const knowledgeId = '{{ knowledge_id }}';
+    loadKnowledgeDetail(knowledgeId);
+});
+
+function loadKnowledgeDetail(knowledgeId) {
+    fetch(`/api/knowledge/detail/${knowledgeId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const knowledge = data.knowledge;
+                document.getElementById('knowledgeTitle').textContent = knowledge.title;
+                document.getElementById('knowledgeCategory').textContent = knowledge.category;
+                document.getElementById('knowledgeDate').textContent = knowledge.updated_at ? new Date(knowledge.updated_at).toLocaleDateString() : 'N/A';
+                document.getElementById('knowledgeViews').textContent = knowledge.views || 0;
+                
+                // Update content sections
+                const contentSection = document.querySelector('.knowledge-content');
+                contentSection.innerHTML = `
+                    <section class="mb-4">
+                        <h3>Content</h3>
+                        <div class="content-body">${knowledge.content || 'No content available'}</div>
+                    </section>
+                `;
+            } else {
+                alert('Error loading knowledge: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading knowledge:', error);
+            alert('Failed to load knowledge detail');
+        });
+}
+
 function copyToClipboard() {
     const content = document.querySelector('.knowledge-content').textContent;
     navigator.clipboard.writeText(content).then(() => {
@@ -270,11 +305,5 @@ function shareKnowledge() {
         alert('Link copied to clipboard');
     });
 }
-
-// Simulate loading knowledge data
-document.addEventListener('DOMContentLoaded', function() {
-    // This would typically load from API
-
-});
 </script>
 {% endblock %}

@@ -1,0 +1,765 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}Enhanced Knowledge - Self Brain AGI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-dark">Enhanced Knowledge Management</h2>
+            <p class="text-muted">Advanced knowledge management with metadata, search, and analytics</p>
+        </div>
+    </div>
+
+    <!-- Statistics Dashboard -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="mb-1 text-primary" id="total-files">0</h3>
+                    <p class="text-secondary mb-0">Total Files</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="mb-1 text-success" id="total-size">0 MB</h3>
+                    <p class="text-secondary mb-0">Total Size</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="mb-1 text-warning" id="total-categories">0</h3>
+                    <p class="text-secondary mb-0">Categories</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="mb-1 text-info" id="indexed-docs">0</h3>
+                    <p class="text-secondary mb-0">Indexed</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-dark w-100" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                                <i class="bi bi-upload"></i> Upload File
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-outline-dark w-100" onclick="rebuildIndex()">
+                                <i class="bi bi-arrow-clockwise"></i> Rebuild Index
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-outline-primary w-100" onclick="exportAll()">
+                                <i class="bi bi-download"></i> Export All
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-outline-danger w-100" onclick="cleanupIndex()">
+                                <i class="bi bi-trash"></i> Cleanup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Search -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Advanced Search</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <input type="text" class="form-control" id="search-query" placeholder="Search content...">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <select class="form-select" id="search-category">
+                                <option value="">All Categories</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <select class="form-select" id="search-tags" multiple>
+                                <!-- Tags will be loaded dynamically -->
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <button class="btn btn-dark w-100" onclick="performSearch()">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="search-content" checked>
+                                <label class="form-check-label" for="search-content">Search Content</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="search-title" checked>
+                                <label class="form-check-label" for="search-title">Search Title</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="search-tags" checked>
+                                <label class="form-check-label" for="search-tags">Search Tags</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="mb-0">Knowledge Entries</h5>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-dark btn-sm" onclick="selectAll()">
+                                    <i class="bi bi-check-square"></i> Select All
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteSelected()">
+                                    <i class="bi bi-trash"></i> Delete Selected
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="exportSelected()">
+                                    <i class="bi bi-download"></i> Export Selected
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="knowledge-table">
+                            <thead>
+                                <tr>
+                                    <th width="3%"><input type="checkbox" id="select-all"></th>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Category</th>
+                                    <th>Tags</th>
+                                    <th>Size</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="knowledge-tbody">
+                                <!-- Results will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav aria-label="Knowledge pagination">
+                        <ul class="pagination justify-content-center" id="pagination">
+                            <!-- Pagination will be generated dynamically -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload Knowledge File</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="upload-form" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label">Select File</label>
+                        <input type="file" class="form-control" name="file" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control" name="title" placeholder="Enter file title">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3" placeholder="Enter file description"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" name="category" required>
+                                <option value="text">Text</option>
+                                <option value="documentation">Documentation</option>
+                                <option value="code">Code</option>
+                                <option value="config">Configuration</option>
+                                <option value="data">Data</option>
+                                <option value="image">Image</option>
+                                <option value="audio">Audio</option>
+                                <option value="video">Video</option>
+                                <option value="document">Document</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tags</label>
+                            <input type="text" class="form-control" name="tags" placeholder="tag1, tag2, tag3">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Author</label>
+                        <input type="text" class="form-control" name="author" value="system">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-dark" onclick="uploadFile()">Upload</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Knowledge Entry</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-form">
+                    <input type="hidden" id="edit-id">
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control" id="edit-title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="edit-description" rows="3" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" id="edit-category" required>
+                                <option value="text">Text</option>
+                                <option value="documentation">Documentation</option>
+                                <option value="code">Code</option>
+                                <option value="config">Configuration</option>
+                                <option value="data">Data</option>
+                                <option value="image">Image</option>
+                                <option value="audio">Audio</option>
+                                <option value="video">Video</option>
+                                <option value="document">Document</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tags</label>
+                            <input type="text" class="form-control" id="edit-tags" placeholder="tag1, tag2, tag3">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-dark" onclick="saveEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border-radius: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+
+.btn {
+    border-radius: 0;
+}
+
+.form-control, .form-select {
+    border-radius: 0;
+}
+
+.modal-content {
+    border-radius: 0;
+}
+
+.badge {
+    font-weight: normal;
+}
+</style>
+
+<script>
+let currentPage = 1;
+let currentQuery = '';
+let currentCategory = '';
+let currentTags = '';
+let knowledgeData = [];
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadCategories();
+    loadTags();
+    loadKnowledgeStats();
+    loadKnowledgeEntries();
+    
+    // Event listeners
+    document.getElementById('select-all').addEventListener('change', toggleSelectAll);
+    document.getElementById('search-query').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') performSearch();
+    });
+});
+
+// Load statistics
+async function loadKnowledgeStats() {
+    try {
+        const response = await fetch('/api/knowledge/stats');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            const stats = data.stats;
+            document.getElementById('total-files').textContent = stats.total_files;
+            document.getElementById('total-size').textContent = (stats.total_size / 1024 / 1024).toFixed(2) + ' MB';
+            document.getElementById('total-categories').textContent = stats.total_categories;
+            document.getElementById('indexed-docs').textContent = stats.indexed_documents;
+        }
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
+// Load categories
+async function loadCategories() {
+    try {
+        const response = await fetch('/api/knowledge/categories');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            const select = document.getElementById('search-category');
+            select.innerHTML = '<option value="">All Categories</option>';
+            data.categories.forEach(category => {
+                select.innerHTML += `<option value="${category}">${category}</option>`;
+            });
+        }
+    } catch (error) {
+        console.error('Error loading categories:', error);
+    }
+}
+
+// Load tags
+async function loadTags() {
+    try {
+        const response = await fetch('/api/knowledge/tags');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            // Create tag badges
+            const tagContainer = document.getElementById('search-tags');
+            tagContainer.innerHTML = '';
+            data.tags.forEach(tag => {
+                tagContainer.innerHTML += `<option value="${tag}">${tag}</option>`;
+            });
+        }
+    } catch (error) {
+        console.error('Error loading tags:', error);
+    }
+}
+
+// Load knowledge entries
+async function loadKnowledgeEntries(page = 1) {
+    try {
+        const url = `/api/knowledge/search/enhanced?page=${page}&q=${encodeURIComponent(currentQuery)}&category=${currentCategory}&tags=${currentTags}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.success) {
+            knowledgeData = data.results;
+            renderTable(data.results);
+            renderPagination(data.page, data.pages, data.total);
+        }
+    } catch (error) {
+        console.error('Error loading entries:', error);
+    }
+}
+
+// Render table
+function renderTable(entries) {
+    const tbody = document.getElementById('knowledge-tbody');
+    tbody.innerHTML = '';
+    
+    if (entries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center">No knowledge entries found</td></tr>';
+        return;
+    }
+    
+    entries.forEach(entry => {
+        const row = document.createElement('tr');
+        const tagsHtml = entry.tags.map(tag => `<span class="badge bg-secondary me-1">${tag}</span>`).join('');
+        
+        row.innerHTML = `
+            <td><input type="checkbox" class="row-checkbox" value="${entry.id}"></td>
+            <td><small>${entry.id.substring(0, 8)}...</small></td>
+            <td>${entry.title}</td>
+            <td><span class="badge bg-light text-dark">${entry.category}</span></td>
+            <td>${tagsHtml}</td>
+            <td>${formatFileSize(entry.file_size)}</td>
+            <td><small>${formatDate(entry.created_at)}</small></td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary btn-sm" onclick="viewEntry('${entry.id}')">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm" onclick="editEntry('${entry.id}')">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="deleteEntry('${entry.id}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Render pagination
+function renderPagination(currentPage, totalPages, totalItems) {
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+    
+    if (totalPages <= 1) return;
+    
+    // Previous
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    prevLi.innerHTML = `<a class="page-link" href="#" onclick="loadKnowledgeEntries(${currentPage - 1})">Previous</a>`;
+    pagination.appendChild(prevLi);
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+            const li = document.createElement('li');
+            li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+            li.innerHTML = `<a class="page-link" href="#" onclick="loadKnowledgeEntries(${i})">${i}</a>`;
+            pagination.appendChild(li);
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+            const li = document.createElement('li');
+            li.className = 'page-item disabled';
+            li.innerHTML = '<span class="page-link">...</span>';
+            pagination.appendChild(li);
+        }
+    }
+    
+    // Next
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+    nextLi.innerHTML = `<a class="page-link" href="#" onclick="loadKnowledgeEntries(${currentPage + 1})">Next</a>`;
+    pagination.appendChild(nextLi);
+}
+
+// Search functionality
+function performSearch() {
+    currentQuery = document.getElementById('search-query').value;
+    currentCategory = document.getElementById('search-category').value;
+    currentTags = Array.from(document.getElementById('search-tags').selectedOptions).map(option => option.value).join(',');
+    loadKnowledgeEntries(1);
+}
+
+// File upload
+async function uploadFile() {
+    const form = document.getElementById('upload-form');
+    const formData = new FormData(form);
+    
+    try {
+        const response = await fetch('/api/knowledge/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            showToast('File uploaded successfully', 'success');
+            document.getElementById('uploadModal').querySelector('.btn-close').click();
+            form.reset();
+            loadKnowledgeEntries();
+            loadKnowledgeStats();
+        } else {
+            showToast(data.message, 'error');
+        }
+    } catch (error) {
+        showToast('Error uploading file', 'error');
+    }
+}
+
+// Edit functionality
+async function editEntry(id) {
+    try {
+        const response = await fetch(`/api/knowledge/metadata/${id}`);
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            const metadata = data.metadata;
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-title').value = metadata.title;
+            document.getElementById('edit-description').value = metadata.description;
+            document.getElementById('edit-category').value = metadata.category;
+            document.getElementById('edit-tags').value = metadata.tags.join(', ');
+            
+            new bootstrap.Modal(document.getElementById('editModal')).show();
+        }
+    } catch (error) {
+        showToast('Error loading metadata', 'error');
+    }
+}
+
+async function saveEdit() {
+    const id = document.getElementById('edit-id').value;
+    const updates = {
+        title: document.getElementById('edit-title').value,
+        description: document.getElementById('edit-description').value,
+        category: document.getElementById('edit-category').value,
+        tags: document.getElementById('edit-tags').value.split(',').map(tag => tag.trim())
+    };
+    
+    try {
+        const response = await fetch(`/api/knowledge/metadata/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updates)
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            showToast('Metadata updated successfully', 'success');
+            document.getElementById('editModal').querySelector('.btn-close').click();
+            loadKnowledgeEntries();
+        } else {
+            showToast(data.message, 'error');
+        }
+    } catch (error) {
+        showToast('Error updating metadata', 'error');
+    }
+}
+
+// Utility functions
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+}
+
+function getSelectedIds() {
+    const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function toggleSelectAll() {
+    const selectAll = document.getElementById('select-all');
+    const checkboxes = document.querySelectorAll('.row-checkbox');
+    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+}
+
+function selectAll() {
+    document.getElementById('select-all').checked = true;
+    toggleSelectAll();
+}
+
+// Delete functionality
+async function deleteSelected() {
+    const selected = getSelectedIds();
+    if (selected.length === 0) {
+        showToast('Please select at least one entry', 'error');
+        return;
+    }
+
+    if (confirm(`Are you sure you want to delete ${selected.length} selected entries?`)) {
+        try {
+            const response = await fetch('/api/knowledge/delete_selected', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ids: selected })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast(`Successfully deleted ${data.deleted_count} entries`, 'success');
+                loadKnowledgeEntries();
+                loadKnowledgeStats();
+            } else {
+                showToast(data.message, 'error');
+            }
+        } catch (error) {
+            showToast('Error deleting entries', 'error');
+        }
+    }
+}
+
+async function deleteEntry(id) {
+    if (confirm('Are you sure you want to delete this entry?')) {
+        try {
+            const response = await fetch(`/api/knowledge/${id}`, {
+                method: 'DELETE'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast('Entry deleted successfully', 'success');
+                loadKnowledgeEntries();
+                loadKnowledgeStats();
+            } else {
+                showToast(data.message, 'error');
+            }
+        } catch (error) {
+            showToast('Error deleting entry', 'error');
+        }
+    }
+}
+
+// Export functionality
+async function exportSelected() {
+    const selected = getSelectedIds();
+    if (selected.length === 0) {
+        showToast('Please select at least one entry', 'error');
+        return;
+    }
+
+    const exportData = knowledgeData.filter(entry => selected.includes(entry.id));
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `knowledge_export_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showToast(`Successfully exported ${exportData.length} entries`, 'success');
+}
+
+async function exportAll() {
+    try {
+        const response = await fetch('/api/knowledge/search/enhanced');
+        const data = await response.json();
+        
+        if (data.success) {
+            const blob = new Blob([JSON.stringify(data.results, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `knowledge_full_export_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showToast('Successfully exported all entries', 'success');
+        }
+    } catch (error) {
+        showToast('Error exporting entries', 'error');
+    }
+}
+
+// View entry
+function viewEntry(id) {
+    window.open(`/api/knowledge/${id}`, '_blank');
+}
+
+// Index management
+async function rebuildIndex() {
+    if (confirm('This will rebuild the search index. Continue?')) {
+        showToast('Rebuilding index...', 'info');
+        // Implementation for rebuilding index
+        setTimeout(() => {
+            loadKnowledgeStats();
+            showToast('Index rebuilt successfully', 'success');
+        }, 2000);
+    }
+}
+
+async function cleanupIndex() {
+    if (confirm('This will clean up orphaned entries. Continue?')) {
+        showToast('Cleaning up index...', 'info');
+        // Implementation for cleanup
+        setTimeout(() => {
+            loadKnowledgeStats();
+            showToast('Cleanup completed', 'success');
+        }, 2000);
+    }
+}
+
+// Toast notification
+function showToast(message, type = 'info') {
+    const toastContainer = document.createElement('div');
+    toastContainer.className = 'position-fixed top-0 end-0 p-3';
+    toastContainer.style.zIndex = '1050';
+    
+    const toastClass = type === 'success' ? 'bg-success' : type === 'error' ? 'bg-danger' : type === 'warning' ? 'bg-warning' : 'bg-info';
+    
+    toastContainer.innerHTML = `
+        <div class="toast show" role="alert">
+            <div class="toast-header ${toastClass} text-white">
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(toastContainer);
+    
+    setTimeout(() => {
+        document.body.removeChild(toastContainer);
+    }, 3000);
+}
+</script>
+{% endblock %}

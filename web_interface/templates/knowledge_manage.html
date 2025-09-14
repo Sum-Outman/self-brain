@@ -148,10 +148,30 @@
                     <h5 class="mb-0">Knowledge Entries</h5>
                 </div>
                 <div class="card-body">
+                    <!-- Batch Actions -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-dark btn-sm" onclick="exportSelected()">
+                                    <i class="bi bi-download"></i> Export Selected
+                                </button>
+                                <button type="button" class="btn btn-outline-dark btn-sm" onclick="deleteSelected()">
+                                    <i class="bi bi-trash"></i> Delete Selected
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button type="button" class="btn btn-dark btn-sm" onclick="toggleSelectAll()">
+                                <i class="bi bi-check-square"></i> Select All
+                            </button>
+                        </div>
+                    </div>
+                    
                     <div class="table-responsive">
                         <table class="table table-hover" id="knowledge-table">
-                            <thead>
+                            <thead class="table-light">
                                 <tr>
+                                    <th width="5%"><input type="checkbox" id="select-all" onclick="toggleSelectAll()"></th>
                                     <th>ID</th>
                                     <th>Title</th>
                                     <th>Category</th>
@@ -279,11 +299,16 @@ let knowledgeData = [];
 
 // Load knowledge entries
 function loadKnowledgeEntries(page = 1) {
+    console.log('Loading knowledge entries, page:', page);
+    
     const search = document.getElementById('search-input').value;
     const category = document.getElementById('category-filter').value;
     const model = document.getElementById('model-filter').value;
     
-    fetch(`/api/knowledge?page=${page}&search=${encodeURIComponent(search)}&category=${category}&model=${model}`, {
+    const url = `/api/knowledge?page=${page}&search=${encodeURIComponent(search)}&category=${category}&model=${model}`;
+    console.log('API URL:', url);
+    
+    fetch(url, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
@@ -293,17 +318,20 @@ function loadKnowledgeEntries(page = 1) {
         credentials: 'include'
     })
     .then(response => {
+        console.log('API Response status:', response.status);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         return response.json();
     })
     .then(data => {
+        console.log('API Data received:', data);
         knowledgeData = data.entries;
         currentPage = data.page;
         totalPages = data.pages;
         
-        renderTable();
+        console.log('Rendering table with', data.entries.length, 'entries');
+        renderTable(data.entries);
         renderPagination();
         updateStatistics(data.stats);
     })
@@ -314,36 +342,122 @@ function loadKnowledgeEntries(page = 1) {
 }
 
 // Render table
-function renderTable() {
+function renderTable(entries) {
     const tbody = document.getElementById('knowledge-tbody');
     tbody.innerHTML = '';
     
-    knowledgeData.forEach(entry => {
+    if (entries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center">No knowledge entries found</td></tr>';
+        return;
+    }
+    
+    entries.forEach(entry => {
         const row = document.createElement('tr');
         row.innerHTML = `
+            <td><input type="checkbox" class="row-checkbox" value="${entry.id}"></td>
             <td>${entry.id}</td>
             <td>${entry.title}</td>
-            <td>${entry.category}</td>
-            <td>Model ${entry.model}</td>
+            <td><span class="badge bg-secondary">${entry.category}</span></td>
+            <td><span class="badge bg-light text-dark">${entry.model}</span></td>
             <td>${formatFileSize(entry.size)}</td>
             <td>${formatDate(entry.created_at)}</td>
             <td>${formatDate(entry.updated_at)}</td>
             <td>
-                <div class="btn-group btn-group-sm" role="group">
-                    <button class="btn btn-outline-dark btn-sm" onclick="viewEntry(${entry.id})">
-                        <i class="bi bi-eye"></i>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary btn-sm" onclick="viewEntry('${entry.id}')">
+                        <i class="bi bi-eye"></i> View
                     </button>
-                    <button class="btn btn-outline-dark btn-sm" onclick="editEntry(${entry.id})">
-                        <i class="bi bi-pencil"></i>
+                    <button class="btn btn-outline-warning btn-sm" onclick="editEntry('${entry.id}')">
+                        <i class="bi bi-pencil"></i> Edit
                     </button>
-                    <button class="btn btn-outline-dark btn-sm" onclick="deleteEntry(${entry.id})">
-                        <i class="bi bi-trash"></i>
+                    <button class="btn btn-outline-danger btn-sm" onclick="deleteEntry('${entry.id}')">
+                        <i class="bi bi-trash"></i> Delete
                     </button>
                 </div>
             </td>
         `;
         tbody.appendChild(row);
     });
+}
+
+// Get selected entry IDs
+function getSelectedIds() {
+    const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+// Toggle select all checkboxes
+function toggleSelectAll() {
+    const selectAll = document.getElementById('select-all');
+    const checkboxes = document.querySelectorAll('.row-checkbox');
+    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+}
+
+// Delete selected entries
+function deleteSelected() {
+    const selected = getSelectedIds();
+    if (selected.length === 0) {
+        showToast('Please select at least one entry', 'error');
+        return;
+    }
+
+    if (confirm(`Are you sure you want to delete ${selected.length} selected entries?`)) {
+        fetch('/api/knowledge/delete_selected', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ ids: selected })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                showToast(`Successfully deleted ${result.deleted_count || selected.length} entries`, 'success');
+                loadKnowledgeEntries(currentPage);
+                // Uncheck select all
+                document.getElementById('select-all').checked = false;
+            } else {
+                showToast('Error deleting entries: ' + result.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error deleting selected entries', 'error');
+        });
+    }
+}
+
+// Export selected entries
+function exportSelected() {
+    const selected = getSelectedIds();
+    if (selected.length === 0) {
+        showToast('Please select at least one entry', 'error');
+        return;
+    }
+
+    // Get actual entries data
+    const exportData = knowledgeData.filter(entry => selected.includes(entry.id));
+    
+    if (exportData.length === 0) {
+        showToast('No valid entries to export', 'error');
+        return;
+    }
+
+    // Create export format
+    const exportJson = JSON.stringify(exportData, null, 2);
+    
+    // Create download
+    const blob = new Blob([exportJson], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `knowledge_export_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showToast(`Successfully exported ${exportData.length} entries`, 'success');
 }
 
 // Render pagination
@@ -429,8 +543,8 @@ function saveEdit() {
         content: document.getElementById('edit-content').value
     };
     
-    fetch(`/api/knowledge/${id}`, {
-        method: 'PUT',
+    fetch(`/api/knowledge/update/${id}`, {
+        method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
@@ -443,7 +557,7 @@ function saveEdit() {
             bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
             loadKnowledgeEntries(currentPage);
         } else {
-            showToast('Error updating entry: ' + result.error, 'error');
+            showToast('Error updating entry: ' + result.message, 'error');
         }
     })
     .catch(error => {
@@ -466,7 +580,7 @@ function confirmDelete() {
             bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
             loadKnowledgeEntries(currentPage);
         } else {
-            showToast('Error deleting entry: ' + result.error, 'error');
+            showToast('Error deleting entry: ' + (result.message || result.error || 'Unknown error'), 'error');
         }
     })
     .catch(error => {

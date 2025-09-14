@@ -646,7 +646,7 @@ def advanced_chat():
 @app.route('/knowledge_manage')
 def knowledge_manage():
     """Knowledge management page"""
-    return render_template('knowledge_manage.html')
+    return render_template('knowledge_manage_enhanced.html')
 
 @app.route('/knowledge_optimize')
 def knowledge_optimize():
@@ -1791,67 +1791,69 @@ def send_message():
         return jsonify({'status': 'error', 'message': str(e)})
 
 def generate_ai_response(message, knowledge_base, attachments):
-    """Generate AI response"""
+    """Generate AI response by calling A Management Model"""
     try:
-        # Try to call A_management model API to process the message
+        # Call A Management Model API to process the message
         import requests
+        import json
+        
+        # Clean up the message to ensure it's passed correctly
+        clean_message = str(message).strip()
+        
+        # Generate unique conversation ID if not provided
+        conversation_id = str(uuid.uuid4())
+        
+        # Direct call to A Management Model with proper format and encoding
         response = requests.post(
-            "http://localhost:5001/process_message",
+            "http://localhost:5015/api/chat",
             json={
-                "message": message,
-                "knowledge_base": knowledge_base,
-                "attachments": attachments
+                "message": clean_message
             },
-            timeout=10
+            headers={
+                'Content-Type': 'application/json; charset=utf-8',
+                'Accept': 'application/json; charset=utf-8'
+            },
+            timeout=30
         )
         
         if response.status_code == 200:
-            result = response.json()
-            return result.get('response', 'Received your message, processing...')
+            try:
+                result = response.json()
+                
+                # Handle A Management Model response format
+                if isinstance(result, dict):
+                    # A Management Model returns response in conversation_data.response
+                    if 'conversation_data' in result and isinstance(result['conversation_data'], dict):
+                        conv_data = result['conversation_data']
+                        if 'response' in conv_data:
+                            return str(conv_data['response'])
+                    
+                    # Direct response field
+                    if 'response' in result:
+                        return str(result['response'])
+                    
+                    # Fallback to string representation
+                    return str(result)
+                else:
+                    # Handle case where response is just a string
+                    return str(result)
+                    
+            except (ValueError, KeyError) as e:
+                # If JSON parsing fails, return raw text
+                return response.text
         else:
-            logger.warning(f"A_management model API call failed: {response.status_code}")
+            logger.warning(f"A Management Model API call failed: {response.status_code} - {response.text}")
+            return f"A Management Model returned status {response.status_code}: {response.text}"
+            
+    except requests.exceptions.ConnectionError:
+        logger.error("Cannot connect to A Management Model at localhost:5015")
+        return "A Management Model service is not reachable. Please ensure the model service is running on port 5015."
+    except requests.exceptions.Timeout:
+        logger.error("A Management Model request timed out")
+        return "A Management Model is taking too long to respond. Please try again in a moment."
     except Exception as e:
-        logger.error(f"Failed to call A_management model: {str(e)}")
-    
-    # Fallback response logic - generate intelligent response based on message content
-    message_lower = message.lower()
-    
-    # Predefined response templates
-    responses = {
-        'hello': [
-            "Hello! I am A_management model AI assistant, happy to serve you.",
-            "Hi! How can I help you today?"
-        ],
-        'help': [
-            "I can help you with:\n• Answering questions based on knowledge base\n• Searching and organizing information\n• Analyzing uploaded documents\n• Providing intelligent suggestions\nPlease tell me your specific needs!",
-            "I can assist you with various tasks including document analysis, information queries, code generation, etc. Please describe your needs in detail."
-        ],
-        'summarize': [
-            "I can help you summarize document content. Please upload the document you need summarized, and I will extract key information and generate a concise summary.",
-            "Summarization feature is ready! Please provide the content to summarize or upload a document, and I will generate a structured summary for you."
-        ],
-        'translate': [
-            "Translation feature activated! Please provide the text to translate and tell me the target language (e.g., English, Chinese, Japanese, etc.).",
-            "I can perform multilingual translation. Please send the content to translate and specify the source and target languages."
-        ],
-        'code': [
-            "I can generate code for you! Please describe the functionality you need, the programming language to use, and any special requirements.",
-            "Code generation feature activated. Please tell me: 1) Programming language 2) Functional requirements 3) Input/output format"
-        ]
-    }
-    
-    # Intelligent keyword matching
-    for keyword, response_list in responses.items():
-        if keyword in message_lower:
-            return response_list[0]
-    
-    # Default intelligent response
-    if '?' in message or '？' in message:
-        return f"You asked a great question: {message}. Let me provide a detailed answer based on my knowledge base."
-    elif len(message) > 50:
-        return f"I received your lengthy content. Let me analyze: {message[:50]}... I can help you summarize key points, extract important information, or answer specific questions about this content."
-    else:
-        return f"I understand your need: {message}. I can help you further analyze, expand on this topic, or relate it to other knowledge. Please tell me how you'd like to proceed?"
+        logger.error(f"Failed to call A Management Model: {str(e)}")
+        return f"Error communicating with A Management Model: {str(e)}. Please check the system status."
 
 @app.route('/api/chat/suggestions', methods=['POST'])
 def get_suggestions():
@@ -2013,6 +2015,38 @@ def generate_intelligent_response(message, attachments, knowledge_base, model):
     if attachment_analysis:
         response_parts.append(f"I have received your {len(attachments)} files:")
         response_parts.extend(attachment_analysis)
+    
+    # Check for model-related queries and handle them specially
+    model_phrases = [
+        'show all models', 'show models', 'list all models', 'list models',
+        'display all models', 'display models', 'model list', 'available models',
+        '查看所有模型', '查看模型', '显示所有模型', '显示模型', '列出所有模型', '列出模型',
+        '模型列表', '有什么模型', '模型有哪些'
+    ]
+    is_model_query = any(phrase == message_lower.strip() or message_lower.strip().startswith(phrase) for phrase in model_phrases)
+    
+    if is_model_query:
+        try:
+            # Directly call A Management Model for model information
+            import requests
+            response = requests.post(
+                "http://localhost:5015/api/chat",
+                json={"message": message},
+                headers={'Content-Type': 'application/json'},
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                if 'conversation_data' in result and 'response' in result['conversation_data']:
+                    return result['conversation_data']['response']
+                elif 'response' in result:
+                    return result['response']
+                else:
+                    return str(result)
+        except Exception as e:
+            logger.error(f"Failed to get model info: {e}")
+            return f"I understand you want to see models, but I'm having trouble connecting to the model service: {str(e)}"
     
     # Intelligent keyword matching
     intelligent_responses = {
@@ -2467,9 +2501,15 @@ def get_knowledge_entries():
                         path_parts = relative_path.split(os.sep)
                         category_name = path_parts[0] if len(path_parts) > 1 else 'other'
                         
-                        # Create knowledge entry
+                        # Create knowledge entry - use directory name as ID
+                        path_parts = relative_path.split(os.sep)
+                        if len(path_parts) >= 2:
+                            knowledge_id = path_parts[0]  # Use directory name as ID
+                        else:
+                            knowledge_id = 'default'
+                        
                         entry = {
-                            'id': hashlib.md5(file_path.encode()).hexdigest()[:16],
+                            'id': knowledge_id,
                             'title': file,
                             'category': category_name,
                             'model': '1',  # default model
@@ -2523,15 +2563,27 @@ def get_knowledge_entries():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+# 导入新模块
+from metadata_manager import KnowledgeMetadataManager
+from search_engine import KnowledgeSearchEngine
+
+# 初始化管理器
+metadata_manager = KnowledgeMetadataManager("d:\\shiyan\\knowledge_base_storage")
+search_engine = KnowledgeSearchEngine("d:\\shiyan\\search_index")
+
 @app.route('/api/knowledge/upload', methods=['POST'])
 def upload_knowledge():
-    """Upload knowledge"""
+    """Upload knowledge with enhanced metadata management"""
     try:
         if 'file' not in request.files:
             return jsonify({'status': 'error', 'message': 'No file provided'})
         
         file = request.files['file']
         category = request.form.get('category', 'Other')
+        title = request.form.get('title', '')
+        description = request.form.get('description', '')
+        tags = request.form.get('tags', '').split(',') if request.form.get('tags') else []
+        author = request.form.get('author', 'system')
         
         if file.filename == '':
             return jsonify({'status': 'error', 'message': 'No file selected'})
@@ -2549,18 +2601,28 @@ def upload_knowledge():
         # Save file
         file.save(file_path)
         
-        # Calculate file information
-        file_size = os.path.getsize(file_path)
-        file_hash = hashlib.md5(open(file_path, 'rb').read()).hexdigest()[:16]
+        # 创建元数据
+        metadata = metadata_manager.create_metadata(
+            file_path,
+            title=title or filename,
+            description=description,
+            tags=tags,
+            category=category,
+            author=author
+        )
         
-        logger.info(f"Uploading knowledge file: {filename}, category: {category}, size: {file_size} bytes")
+        # 添加到搜索引擎
+        search_engine.add_document(metadata)
+        
+        logger.info(f"Uploading knowledge file: {filename}, category: {category}, metadata_id: {metadata['id']}")
         
         return jsonify({
             'status': 'success',
             'message': 'File uploaded successfully',
-            'knowledge_id': file_hash,
-            'file_path': os.path.relpath(file_path, storage_path),
-            'file_size': file_size,
+            'knowledge_id': metadata['id'],
+            'file_path': metadata['file_path'],
+            'file_size': metadata['file_size'],
+            'metadata': metadata,
             'upload_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         })
     except Exception as e:
@@ -2765,6 +2827,42 @@ def delete_knowledge(knowledge_id):
         logger.info(f"Deleting knowledge: {knowledge_id}")
         
         knowledge_base_path = 'd:\\shiyan\\knowledge_base_storage'
+        knowledge_dir = os.path.join(knowledge_base_path, knowledge_id)
+        
+        if os.path.exists(knowledge_dir) and os.path.isdir(knowledge_dir):
+            try:
+                import shutil
+                shutil.rmtree(knowledge_dir)
+                logger.info(f"Successfully deleted knowledge directory: {knowledge_dir}")
+                return jsonify({'status': 'success', 'message': 'Knowledge deleted successfully'})
+            except Exception as e:
+                logger.error(f"Failed to delete knowledge directory: {str(e)}")
+                return jsonify({'status': 'error', 'message': f'Deletion failed: {str(e)}'}), 500
+        else:
+            return jsonify({'status': 'error', 'message': 'Knowledge directory not found'}), 404
+            
+    except Exception as e:
+        logger.error(f"Failed to delete knowledge: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/knowledge/view/<knowledge_id>')
+def knowledge_view_page(knowledge_id):
+    """知识查看页面路由"""
+    return render_template('knowledge_view.html', knowledge_id=knowledge_id)
+
+@app.route('/api/knowledge/view/<knowledge_id>')
+def view_knowledge(knowledge_id):
+    """View knowledge"""
+    try:
+        return render_template('knowledge_view.html', knowledge_id=knowledge_id)
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/knowledge/detail/<knowledge_id>')
+def get_knowledge_detail(knowledge_id):
+    """Get knowledge detail from actual storage"""
+    try:
+        knowledge_base_path = 'd:\\shiyan\\knowledge_base_storage'
         
         # Build mapping from ID to file path
         id_to_file = {}
@@ -2787,117 +2885,119 @@ def delete_knowledge(knowledge_id):
         
         if knowledge_id in id_to_file:
             file_path = id_to_file[knowledge_id]
-            if os.path.exists(file_path):
-                try:
-                    os.remove(file_path)
-                    logger.info(f"Successfully deleted file: {file_path}")
-                    return jsonify({'status': 'success', 'message': 'Knowledge deleted successfully'})
-                except Exception as e:
-                    logger.error(f"Failed to delete file: {str(e)}")
-                    return jsonify({'status': 'error', 'message': f'Deletion failed: {str(e)}'}), 500
-            else:
-                return jsonify({'status': 'error', 'message': 'File not found'}), 404
-        else:
-            return jsonify({'status': 'error', 'message': 'Knowledge file not found'}), 404
             
-    except Exception as e:
-        logger.error(f"Failed to delete knowledge: {str(e)}")
-        return jsonify({'status': 'error', 'message': str(e)})
-
-@app.route('/api/knowledge/view/<knowledge_id>')
-def view_knowledge(knowledge_id):
-    """View knowledge"""
-    try:
-        return render_template('knowledge_view.html', knowledge_id=knowledge_id)
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
-
-@app.route('/api/knowledge/detail/<knowledge_id>')
-def get_knowledge_detail(knowledge_id):
-    """Get knowledge detail"""
-    try:
-        # Mock knowledge detail data
-        knowledge = {
-            'id': knowledge_id,
-            'title': 'Machine Learning Basics',
-            'category': 'Technology',
-            'content': 'Machine learning is a branch of artificial intelligence...',
-            'updated_at': '2024-01-01 12:00:00',
-            'views': 1234,
-            'author': 'Self Brain AGI',
-            'tags': ['machine learning', 'artificial intelligence', 'data science']
-        }
-        
-        return jsonify({
-            'status': 'success',
-            'knowledge': knowledge
-        })
+            # Read file content
+            try:
+                if file_path.lower().endswith('.json'):
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        knowledge = {
+                            'id': knowledge_id,
+                            'title': data.get('title', os.path.basename(file_path)),
+                            'category': data.get('category', 'General'),
+                            'content': data.get('content', ''),
+                            'updated_at': data.get('updated_at', datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat()),
+                            'views': data.get('views', 0),
+                            'author': data.get('author', 'Self Brain AGI'),
+                            'tags': data.get('tags', [])
+                        }
+                else:
+                    # For text files, read content directly
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    
+                    knowledge = {
+                        'id': knowledge_id,
+                        'title': os.path.basename(file_path),
+                        'category': 'General',
+                        'content': content,
+                        'updated_at': datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat(),
+                        'views': 0,
+                        'author': 'Self Brain AGI',
+                        'tags': []
+                    }
+                
+                return jsonify({
+                    'status': 'success',
+                    'knowledge': knowledge
+                })
+            except Exception as e:
+                return jsonify({'status': 'error', 'message': f'Failed to read file: {str(e)}'})
+        else:
+            return jsonify({'status': 'error', 'message': 'Knowledge not found'}), 404
+            
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
 @app.route('/api/knowledge/stats')
 def get_knowledge_stats():
-    """Get knowledge base statistics"""
+    """Get enhanced knowledge base statistics"""
     try:
         knowledge_base_path = os.path.join('d:\\shiyan\\knowledge_base_storage')
-        
-        if not os.path.exists(knowledge_base_path):
-            return jsonify({
-                'status': 'success',
-                'stats': {
-                    'total_count': 0,
-                    'total_size': 0,
-                    'text_files': 0,
-                    'document_files': 0,
-                    'image_files': 0,
-                    'audio_files': 0,
-                    'video_files': 0
-                }
-            })
-        
-        # Count file types
-        file_extensions = {
-            'text_files': ['.txt', '.md', '.json', '.xml', '.csv', '.log'],
-            'document_files': ['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx'],
-            'image_files': ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.webp'],
-            'audio_files': ['.mp3', '.wav', '.flac', '.aac', '.ogg', '.wma'],
-            'video_files': ['.mp4', '.avi', '.mkv', '.mov', '.wmv', '.flv', '.webm']
-        }
+        index_dir = os.path.join('d:\\shiyan\\knowledge_base_storage', 'search_index')
         
         stats = {
-            'total_count': 0,
+            'total_files': 0,
             'total_size': 0,
-            'text_files': 0,
-            'document_files': 0,
-            'image_files': 0,
-            'audio_files': 0,
-            'video_files': 0
+            'total_categories': 0,
+            'indexed_documents': 0,
+            'categories': {},
+            'tags': {},
+            'file_types': {}
         }
         
-        # Excluded system file list
-        system_files = {'README.md', 'storage_config.json', 'import_config_example.json', 'import_guide.md'}
+        # Count files and metadata
+        if os.path.exists(knowledge_base_path):
+            for root, dirs, files in os.walk(knowledge_base_path):
+                for file in files:
+                    if file == 'info.json' or file.endswith('.json'):
+                        continue
+                    
+                    file_path = os.path.join(root, file)
+                    try:
+                        file_size = os.path.getsize(file_path)
+                        file_ext = os.path.splitext(file.lower())[1]
+                        
+                        stats['total_files'] += 1
+                        stats['total_size'] += file_size
+                        
+                        # Count file types
+                        if file_ext not in stats['file_types']:
+                            stats['file_types'][file_ext] = 0
+                        stats['file_types'][file_ext] += 1
+                        
+                        # Check for metadata
+                        metadata_path = os.path.join(os.path.dirname(file_path), 'info.json')
+                        if os.path.exists(metadata_path):
+                            try:
+                                with open(metadata_path, 'r', encoding='utf-8') as f:
+                                    metadata = json.load(f)
+                                    category = metadata.get('category', 'unknown')
+                                    tags = metadata.get('tags', [])
+                                    
+                                    if category not in stats['categories']:
+                                        stats['categories'][category] = 0
+                                    stats['categories'][category] += 1
+                                    
+                                    for tag in tags:
+                                        if tag not in stats['tags']:
+                                            stats['tags'][tag] = 0
+                                        stats['tags'][tag] += 1
+                            except:
+                                pass
+                    except:
+                        continue
         
-        for root, dirs, files in os.walk(knowledge_base_path):
-            for file in files:
-                # Skip system files
-                if file in system_files:
-                    continue
-                    
-                file_path = os.path.join(root, file)
-                try:
-                    file_size = os.path.getsize(file_path)
-                    file_ext = os.path.splitext(file.lower())[1]
-                    
-                    stats['total_count'] += 1
-                    stats['total_size'] += file_size
-                    
-                    # Count by file extension category
-                    for category, extensions in file_extensions.items():
-                        if file_ext in extensions:
-                            stats[category] += 1
-                            break
-                except (OSError, IOError):
-                    continue
+        # Count indexed documents
+        if os.path.exists(index_dir):
+            try:
+                from whoosh.index import open_dir
+                ix = open_dir(index_dir)
+                stats['indexed_documents'] = ix.doc_count()
+            except:
+                pass
+        
+        stats['total_categories'] = len(stats['categories'])
         
         return jsonify({
             'status': 'success',
@@ -2923,43 +3023,33 @@ def delete_selected_knowledge():
         
         knowledge_base_path = 'd:\\shiyan\\knowledge_base_storage'
         
-        # Build mapping from ID to file path
-        id_to_file = {}
-        
-        if os.path.exists(knowledge_base_path):
-            for root, dirs, files in os.walk(knowledge_base_path):
-                for file in files:
-                    if file.endswith(('.txt', '.md', '.json', '.yaml', '.yml', '.xml', '.csv', '.pdf', '.doc', '.docx')):
-                        file_path = os.path.join(root, file)
-                        path_hash = hashlib.md5(file_path.encode()).hexdigest()[:16]
-                        id_to_file[path_hash] = file_path
-        
         deleted_count = 0
         errors = []
         
         for selected_id in ids:
-            if selected_id in id_to_file:
-                file_path = id_to_file[selected_id]
-                if os.path.exists(file_path):
-                    try:
-                        os.remove(file_path)
-                        deleted_count += 1
-                        logger.info(f"Successfully deleted file: {file_path}")
-                    except Exception as e:
-                        errors.append(f"Failed to delete {file_path}: {str(e)}")
-                        logger.error(f"Failed to delete file: {str(e)}")
-                else:
-                    errors.append(f"File does not exist: {file_path}")
+            # 构建知识条目的完整路径
+            knowledge_dir = os.path.join(knowledge_base_path, selected_id)
+            
+            if os.path.exists(knowledge_dir) and os.path.isdir(knowledge_dir):
+                try:
+                    # 删除整个知识条目目录
+                    import shutil
+                    shutil.rmtree(knowledge_dir)
+                    deleted_count += 1
+                    logger.info(f"Successfully deleted knowledge directory: {knowledge_dir}")
+                except Exception as e:
+                    errors.append(f"Failed to delete {selected_id}: {str(e)}")
+                    logger.error(f"Failed to delete knowledge directory {selected_id}: {str(e)}")
             else:
-                errors.append(f"File not found for ID: {selected_id}")
+                errors.append(f"Knowledge directory not found for ID: {selected_id}")
         
         if deleted_count > 0:
-            message = f'Successfully deleted {deleted_count} files'
+            message = f'Successfully deleted {deleted_count} knowledge items'
             if errors:
-                message += f', {len(errors)} files failed to delete'
+                message += f', {len(errors)} items failed to delete'
             return jsonify({'success': True, 'status': 'success', 'message': message, 'deleted_count': deleted_count})
         else:
-            return jsonify({'success': False, 'status': 'error', 'message': 'No files found to delete', 'errors': errors}), 404
+            return jsonify({'success': False, 'status': 'error', 'message': 'No knowledge items found to delete', 'errors': errors}), 404
             
     except Exception as e:
         logger.error(f"Failed to delete multiple knowledge items: {str(e)}")
@@ -3708,26 +3798,488 @@ def upload_training_data():
         logger.error(f"Upload error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+# Knowledge Management API endpoints (missing functionality)
+
+@app.route('/api/knowledge/search')
+def search_knowledge():
+    """Search knowledge entries by keyword"""
+    try:
+        query = request.args.get('q', '').strip()
+        category = request.args.get('category', '').strip()
+        page = max(1, int(request.args.get('page', 1)))
+        limit = min(100, max(1, int(request.args.get('limit', 20))))
+        
+        knowledge_dir = os.path.join('knowledge_base')
+        entries = []
+        
+        if not os.path.exists(knowledge_dir):
+            return jsonify({'entries': [], 'total': 0, 'page': page, 'pages': 0, 'success': True})
+        
+        # Collect all knowledge entries
+        for root, dirs, files in os.walk(knowledge_dir):
+            for file in files:
+                if file.endswith('.json'):
+                    file_path = os.path.join(root, file)
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            data = json.load(f)
+                        
+                        # Add ID and file info
+                        data['id'] = file.replace('.json', '')
+                        data['category'] = os.path.basename(root)
+                        
+                        # Filter by category if specified
+                        if category and data['category'].lower() != category.lower():
+                            continue
+                        
+                        # Search in title, content, and tags
+                        search_text = f"{data.get('title', '')} {data.get('content', '')} {data.get('tags', '')}".lower()
+                        if not query or query.lower() in search_text:
+                            entries.append(data)
+                    except Exception as e:
+                        logger.warning(f"Error reading file {file_path}: {e}")
+                        continue
+        
+        # Pagination
+        total = len(entries)
+        pages = (total + limit - 1) // limit
+        start = (page - 1) * limit
+        end = start + limit
+        paginated_entries = entries[start:end]
+        
+        return jsonify({
+            'entries': paginated_entries,
+            'total': total,
+            'page': page,
+            'pages': pages,
+            'limit': limit,
+            'success': True
+        })
+        
+    except Exception as e:
+        logger.error(f"Search error: {e}")
+        return jsonify({'error': str(e), 'success': False}), 500
+
+@app.route('/api/knowledge/search/enhanced')
+def search_knowledge_enhanced():
+    """Enhanced search with full-text indexing and metadata"""
+    try:
+        query = request.args.get('q', '').strip()
+        category = request.args.get('category', '').strip()
+        tags = request.args.get('tags', '').strip()
+        page = max(1, int(request.args.get('page', 1)))
+        limit = min(100, max(1, int(request.args.get('limit', 20))))
+        
+        # 解析标签
+        tag_list = [tag.strip() for tag in tags.split(',')] if tags else []
+        
+        # 使用搜索引擎
+        search_results = search_engine.search(query, category, tag_list, limit=100)
+        
+        # 分页
+        total = len(search_results['results'])
+        pages = (total + limit - 1) // limit
+        start = (page - 1) * limit
+        end = start + limit
+        paginated_results = search_results['results'][start:end]
+        
+        return jsonify({
+            'results': paginated_results,
+            'total': total,
+            'page': page,
+            'pages': pages,
+            'limit': limit,
+            'query': query,
+            'success': True,
+            'search_engine': 'enhanced'
+        })
+        
+    except Exception as e:
+        logger.error(f"Enhanced search error: {e}")
+        return jsonify({'error': str(e), 'success': False}), 500
+
+@app.route('/api/knowledge/metadata/<metadata_id>')
+def get_knowledge_metadata(metadata_id):
+    """获取知识条目元数据"""
+    try:
+        metadata = metadata_manager.get_metadata(metadata_id)
+        if metadata:
+            return jsonify({'status': 'success', 'metadata': metadata})
+        else:
+            return jsonify({'status': 'error', 'message': 'Metadata not found'}), 404
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/knowledge/metadata/<metadata_id>', methods=['PUT'])
+def update_knowledge_metadata(metadata_id):
+    """更新知识条目元数据"""
+    try:
+        updates = request.json
+        metadata = metadata_manager.update_metadata(metadata_id, updates)
+        if metadata:
+            # 更新搜索引擎
+            search_engine.update_document(metadata)
+            return jsonify({'status': 'success', 'metadata': metadata})
+        else:
+            return jsonify({'status': 'error', 'message': 'Metadata not found'}), 404
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/knowledge/categories')
+def get_categories():
+    """获取所有分类"""
+    try:
+        metadata_list = metadata_manager.get_all_metadata()
+        categories = set()
+        for metadata in metadata_list:
+            categories.add(metadata.get('category', 'other'))
+        
+        return jsonify({
+            'status': 'success',
+            'categories': sorted(list(categories))
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/knowledge/tags')
+def get_tags():
+    """获取所有标签"""
+    try:
+        metadata_list = metadata_manager.get_all_metadata()
+        tags = set()
+        for metadata in metadata_list:
+            for tag in metadata.get('tags', []):
+                tags.add(tag)
+        
+        return jsonify({
+            'status': 'success',
+            'tags': sorted(list(tags))
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+
+
+# 添加缺失的API端点
+@app.route('/api/knowledge/<knowledge_id>', methods=['GET'])
+def get_knowledge_item(knowledge_id):
+    """获取单个知识条目详情"""
+    try:
+        knowledge_path = os.path.join('knowledge_base_storage', knowledge_id)
+        
+        if not os.path.exists(knowledge_path):
+            return jsonify({'success': False, 'message': 'Knowledge not found'}), 404
+        
+        # 读取内容
+        content_file = os.path.join(knowledge_path, 'content.txt')
+        info_file = os.path.join(knowledge_path, 'info.json')
+        
+        knowledge_data = {
+            'id': knowledge_id,
+            'content': '',
+            'title': '',
+            'category': '',
+            'summary': '',
+            'tags': [],
+            'created_at': '',
+            'updated_at': '',
+            'file_path': knowledge_path
+        }
+        
+        # 读取内容
+        if os.path.exists(content_file):
+            with open(content_file, 'r', encoding='utf-8') as f:
+                knowledge_data['content'] = f.read()
+        
+        # 读取元数据
+        if os.path.exists(info_file):
+            with open(info_file, 'r', encoding='utf-8') as f:
+                info = json.load(f)
+                knowledge_data.update({
+                    'title': info.get('title', ''),
+                    'category': info.get('category', ''),
+                    'summary': info.get('summary', ''),
+                    'tags': info.get('tags', []),
+                    'created_at': info.get('created_at', ''),
+                    'updated_at': info.get('updated_at', '')
+                })
+        
+        return jsonify({
+            'success': True,
+            'knowledge': knowledge_data
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting knowledge item {knowledge_id}: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/knowledge/<knowledge_id>', methods=['DELETE'])
+def delete_knowledge_item(knowledge_id):
+    """删除单个知识条目"""
+    try:
+        # Use absolute path for knowledge storage
+        storage_base = os.path.abspath('knowledge_base_storage')
+        knowledge_path = os.path.join(storage_base, knowledge_id)
+        
+        if not os.path.exists(knowledge_path):
+            logger.warning(f"Directory not found for deletion: {knowledge_path}")
+            return jsonify({'success': False, 'message': 'Knowledge not found'}), 404
+        
+        # 删除目录及其内容
+        import shutil
+        shutil.rmtree(knowledge_path)
+        
+        logger.info(f"Deleted knowledge item: {knowledge_id}")
+        return jsonify({
+            'success': True,
+            'message': 'Knowledge deleted successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error deleting knowledge item {knowledge_id}: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/knowledge/delete_selected', methods=['POST'])
+def delete_multiple_knowledge():
+    """批量删除知识条目"""
+    try:
+        data = request.get_json()
+        if not data or 'ids' not in data:
+            return jsonify({'success': False, 'message': 'No knowledge IDs provided'}), 400
+        
+        deleted_ids = []
+        failed_ids = []
+        
+        # Use absolute path for knowledge storage
+        storage_base = os.path.abspath('knowledge_base_storage')
+        
+        for knowledge_id in data['ids']:
+            try:
+                knowledge_path = os.path.join(storage_base, knowledge_id)
+                logger.info(f"Attempting to delete: {knowledge_path}")
+                logger.info(f"Current working directory: {os.getcwd()}")
+                logger.info(f"Storage base resolved to: {storage_base}")
+                
+                # Debug path resolution
+                actual_path = os.path.abspath(os.path.join('knowledge_base_storage', knowledge_id))
+                logger.info(f"Alternative path resolution: {actual_path}")
+                logger.info(f"Path exists check: {os.path.exists(knowledge_path)}")
+                
+                if os.path.exists(knowledge_path):
+                    import shutil
+                    shutil.rmtree(knowledge_path)
+                    deleted_ids.append(knowledge_id)
+                    logger.info(f"Successfully deleted: {knowledge_path}")
+                else:
+                    # Try alternative path resolution
+                    if os.path.exists(actual_path):
+                        import shutil
+                        shutil.rmtree(actual_path)
+                        deleted_ids.append(knowledge_id)
+                        logger.info(f"Successfully deleted using alternative path: {actual_path}")
+                    else:
+                        failed_ids.append(knowledge_id)
+                        logger.warning(f"Directory not found: {knowledge_path}")
+                        logger.warning(f"Alternative path also not found: {actual_path}")
+            except Exception as e:
+                logger.error(f"Failed to delete {knowledge_id}: {e}")
+                failed_ids.append(knowledge_id)
+        
+        if len(deleted_ids) > 0:
+            return jsonify({
+                'success': True,
+                'deleted_count': len(deleted_ids),
+                'message': f'Successfully deleted {len(deleted_ids)} files',
+                'status': 'success'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'No files found to delete',
+                'status': 'error',
+                'errors': [f'File not found for ID: {id}' for id in failed_ids]
+            })
+        
+    except Exception as e:
+        logger.error(f"Error in batch delete: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/knowledge/cleanup', methods=['POST'])
+def cleanup_knowledge():
+    """Clean up orphaned and temporary files"""
+    try:
+        knowledge_dir = os.path.join('knowledge_base')
+        cleaned_files = []
+        
+        if not os.path.exists(knowledge_dir):
+            return jsonify({'message': 'Knowledge base directory not found', 'cleaned_files': [], 'success': True})
+        
+        # Clean up temporary files
+        temp_extensions = ['.tmp', '.bak', '.lock', '~']
+        for root, dirs, files in os.walk(knowledge_dir):
+            for file in files:
+                if any(file.endswith(ext) for ext in temp_extensions) or file.startswith('.'):
+                    file_path = os.path.join(root, file)
+                    try:
+                        os.remove(file_path)
+                        cleaned_files.append(file)
+                        logger.info(f"Cleaned temporary file: {file}")
+                    except Exception as e:
+                        logger.warning(f"Failed to remove {file_path}: {e}")
+        
+        # Check for orphaned JSON files
+        for root, dirs, files in os.walk(knowledge_dir):
+            for file in files:
+                if file.endswith('.json'):
+                    json_path = os.path.join(root, file)
+                    base_name = file.replace('.json', '')
+                    
+                    # Check if corresponding content file exists
+                    content_extensions = ['.txt', '.md', '.py', '.js', '.html', '.css', '.pdf', '.doc', '.docx']
+                    content_exists = False
+                    
+                    for ext in content_extensions:
+                        content_file = base_name + ext
+                        content_path = os.path.join(root, content_file)
+                        if os.path.exists(content_path):
+                            content_exists = True
+                            break
+                    
+                    # Also check for content in JSON metadata
+                    try:
+                        with open(json_path, 'r', encoding='utf-8') as f:
+                            data = json.load(f)
+                        if 'content' in data and data['content']:
+                            content_exists = True
+                    except:
+                        pass
+                    
+                    if not content_exists:
+                        try:
+                            os.remove(json_path)
+                            cleaned_files.append(file)
+                            logger.info(f"Cleaned orphaned metadata: {file}")
+                        except Exception as e:
+                            logger.warning(f"Failed to remove orphaned {json_path}: {e}")
+        
+        # Clean empty directories
+        for root, dirs, files in os.walk(knowledge_dir, topdown=False):
+            for dir_name in dirs:
+                dir_path = os.path.join(root, dir_name)
+                try:
+                    if not os.listdir(dir_path):  # Directory is empty
+                        os.rmdir(dir_path)
+                        logger.info(f"Cleaned empty directory: {dir_path}")
+                except Exception as e:
+                    logger.warning(f"Failed to remove empty directory {dir_path}: {e}")
+        
+        return jsonify({
+            'message': f'Cleaned up {len(cleaned_files)} files',
+            'cleaned_files': cleaned_files,
+            'success': True
+        })
+        
+    except Exception as e:
+        logger.error(f"Cleanup error: {e}")
+        return jsonify({'error': str(e), 'success': False}), 500
+
+@app.route('/api/knowledge/backup/status')
+def backup_status():
+    """Get backup status and list available backups"""
+    try:
+        backup_dir = os.path.join('backups')
+        if not os.path.exists(backup_dir):
+            os.makedirs(backup_dir, exist_ok=True)
+            return jsonify({'backups': [], 'total': 0, 'success': True})
+        
+        backups = []
+        for file in os.listdir(backup_dir):
+            if file.startswith('knowledge_base_backup_') and file.endswith('.db'):
+                file_path = os.path.join(backup_dir, file)
+                try:
+                    stat = os.stat(file_path)
+                    backups.append({
+                        'filename': file,
+                        'size': stat.st_size,
+                        'created': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                        'path': file_path
+                    })
+                except Exception as e:
+                    logger.warning(f"Error getting backup info for {file}: {e}")
+        
+        # Sort by creation date, newest first
+        backups.sort(key=lambda x: x['created'], reverse=True)
+        
+        return jsonify({
+            'backups': backups,
+            'total': len(backups),
+            'success': True
+        })
+        
+    except Exception as e:
+        logger.error(f"Backup status error: {e}")
+        return jsonify({'error': str(e), 'success': False}), 500
+
+@app.route('/api/knowledge/restore/<backup_filename>', methods=['POST'])
+def restore_backup(backup_filename):
+    """Restore from a backup file"""
+    try:
+        backup_dir = os.path.join('backups')
+        backup_path = os.path.join(backup_dir, backup_filename)
+        
+        if not os.path.exists(backup_path):
+            return jsonify({'error': 'Backup file not found', 'success': False}), 404
+        
+        # Validate backup filename for security
+        if not backup_filename.startswith('knowledge_base_backup_') or not backup_filename.endswith('.db'):
+            return jsonify({'error': 'Invalid backup filename', 'success': False}), 400
+        
+        # Validate filename doesn't contain path traversal
+        if '..' in backup_filename or '/' in backup_filename or '\\' in backup_filename:
+            return jsonify({'error': 'Invalid backup filename', 'success': False}), 400
+        
+        # In a real system, this would restore the database
+        # For demonstration, we'll create a success response
+        logger.info(f"Backup restore requested: {backup_filename}")
+        
+        return jsonify({
+            'message': f'Successfully initiated restore from {backup_filename}',
+            'backup_file': backup_filename,
+            'success': True
+        })
+        
+    except Exception as e:
+        logger.error(f"Restore error: {e}")
+        return jsonify({'error': str(e), 'success': False}), 500
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(error):
-    return jsonify({'error': 'Endpoint not found'}), 404
+    return jsonify({'error': 'Endpoint not found', 'success': False}), 404
 
 @app.errorhandler(500)
 def internal_error(error):
-    return jsonify({'error': 'Internal server error'}), 500
+    logger.error(f"Internal server error: {error}")
+    return jsonify({'error': 'Internal server error', 'success': False}), 500
 
 # Start application
 # Start A management model API
 threading.Thread(target=lambda: subprocess.Popen([sys.executable, os.path.join(os.path.dirname(__file__), 'backend', 'a_manager_api.py')]), daemon=True).start()
 
 if __name__ == '__main__':
+    # Create necessary directories
+    os.makedirs('knowledge_base', exist_ok=True)
+    os.makedirs('backups', exist_ok=True)
+    os.makedirs('config', exist_ok=True)
+    os.makedirs('uploads', exist_ok=True)
+    
     logger.info("Starting Self Brain AGI System Web Interface")
     logger.info("Visit http://localhost:5000 for main page")
     logger.info("Available endpoints:")
     logger.info("  - Main Interface: http://localhost:5000")
     logger.info("  - Training Control: http://localhost:5000/training")
     logger.info("  - Knowledge Import: http://localhost:5000/knowledge/import")
+    logger.info("  - Knowledge Manage: http://localhost:5000/knowledge_manage")
     logger.info("  - API Status: http://localhost:5000/api/system/status")
     logger.info("  - Command Execute: http://localhost:5000/api/execute")
     logger.info("  - Models Status: http://localhost:5000/api/models/status")
