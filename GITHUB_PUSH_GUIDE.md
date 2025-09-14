@@ -1,101 +1,104 @@
-# GitHub Push Guide - Self Brain AGI
+# GitHub推送完整指南
 
-## Overview
-This guide provides multiple methods to push the Self Brain AGI system to GitHub repository.
+## 当前状态
+- ✅ 代码已提交到本地Git仓库
+- ✅ 包含所有最新功能和修复
+- ✅ 提交了详细的更新日志
 
-## Method 1: GitHub Desktop (Recommended)
+## 推送步骤
 
-1. **Download GitHub Desktop**
-   - Visit: https://desktop.github.com/
-   - Install and sign in with your GitHub account
+### 步骤1：配置Git凭据
+```bash
+# 配置用户名和邮箱
+git config --global user.name "Your GitHub Username"
+git config --global user.email "your.email@example.com"
 
-2. **Clone or Add Repository**
-   - Open GitHub Desktop
-   - Click "File" → "Add Local Repository"
-   - Select the `d:\shiyan` folder
-   - Repository URL: `https://github.com/Sum-Outman/self-brain`
-
-3. **Commit and Push**
-   - Review changes in GitHub Desktop
-   - Add commit message: "feat: Update Self Brain AGI system with enhanced features"
-   - Click "Commit to main"
-   - Click "Push origin"
-
-## Method 2: Git CLI with Personal Access Token
-
-1. **Create Personal Access Token**
-   - Go to GitHub Settings → Developer settings → Personal access tokens
-   - Generate new token with `repo` permissions
-   - Copy the token
-
-2. **Configure Git**
-   ```bash
-   git config --global user.name "Sum-Outman"
-   git config --global user.email "sum.outman@gmail.com"
-   ```
-
-3. **Push with Token**
-   ```bash
-   # Use token in URL
-   git remote set-url origin https://YOUR_TOKEN@github.com/Sum-Outman/self-brain.git
-   git push origin main --force
-   ```
-
-## Method 3: SSH Key Setup
-
-1. **Generate SSH Key**
-   ```bash
-   ssh-keygen -t ed25519 -C "sum.outman@gmail.com"
-   # Press Enter for all prompts
-   ```
-
-2. **Add SSH Key to GitHub**
-   - Copy public key: `cat ~/.ssh/id_ed25519.pub`
-   - Go to GitHub Settings → SSH and GPG keys
-   - Add new SSH key with the copied content
-
-3. **Push via SSH**
-   ```bash
-   git remote set-url origin git@github.com:Sum-Outman/self-brain.git
-   git push origin main --force
-   ```
-
-## Current Status
-- ✅ All changes committed locally
-- ✅ README updated with English content
-- ✅ Documentation simplified
-- ✅ Scripts created for easy deployment
-
-## Files Ready for Push
-- Enhanced management system (A-K models)
-- Updated web interface with simplified English
-- New documentation and guides
-- Training system improvements
-- API documentation
-- Installation guides
-
-## Repository Structure
-```
-self-brain/
-├── manager_model/          # Management system
-├── web_interface/          # Web UI
-├── sub_models/            # A-K model implementations
-├── docs/                  # Documentation
-├── config/               # Configuration files
-├── requirements.txt      # Dependencies
-└── README.md            # Updated documentation
+# 使用个人访问令牌（推荐）
+git config --global credential.helper store
 ```
 
-## Next Steps After Push
-1. Verify GitHub Actions (if configured)
-2. Check repository visibility settings
-3. Update repository description
-4. Add topics/tags to repository
-5. Create release notes
+### 步骤2：验证远程仓库
+```bash
+# 查看当前远程配置
+git remote -v
 
-## Support
-For issues with GitHub push, please:
-1. Check network connectivity
-2. Verify GitHub credentials
-3. Use GitHub Desktop as fallback
-4. Contact repository maintainer if needed
+# 如果远程不存在，添加远程仓库
+git remote add origin https://github.com/Sum-Outman/self-brain.git
+
+# 如果远程已存在，更新URL
+git remote set-url origin https://github.com/Sum-Outman/self-brain.git
+```
+
+### 步骤3：推送代码
+```bash
+# 推送到main分支
+git push -u origin main
+
+# 如果遇到权限问题，使用HTTPS+令牌
+git push https://<your-token>@github.com/Sum-Outman/self-brain.git main
+```
+
+### 步骤4：验证推送
+访问 https://github.com/Sum-Outman/self-brain 查看最新提交
+
+## 常见问题解决
+
+### 1. 网络连接问题
+```bash
+# 测试GitHub连接
+ping github.com
+
+# 使用代理（如果需要）
+git config --global http.proxy http://proxy.company.com:8080
+git config --global https.proxy https://proxy.company.com:8080
+```
+
+### 2. 权限问题
+- 确保GitHub账户有仓库的写入权限
+- 使用个人访问令牌代替密码
+- 在GitHub Settings > Developer settings > Personal access tokens 创建令牌
+
+### 3. 冲突解决
+```bash
+# 如果远程有更新，先拉取再推送
+git pull origin main
+git push origin main
+```
+
+## 一键推送方法
+
+### 使用批处理文件
+双击运行：`push_to_github.bat`
+
+### 使用PowerShell
+在PowerShell中运行：`.\push_to_github.ps1`
+
+## 本次更新包含的内容
+
+### 新文件
+- `api_audit.py` - API端点测试工具
+- `quantum_integration.py` - 量子计算集成
+- `training_manager.py` - 训练系统管理器
+- `start_all_services.bat` - 一键启动脚本
+
+### 主要修复
+- 修复了所有API端点（21个正常工作）
+- 解决了端口冲突问题
+- 增强了GPU检测功能
+- 改进了知识库管理
+
+### 文档更新
+- 完整的部署指南
+- API使用文档
+- 系统配置说明
+
+## 验证推送成功
+
+1. 访问GitHub仓库页面
+2. 检查最新的提交记录
+3. 验证文件是否全部上传
+4. 查看README.md是否更新
+
+---
+
+**提示**：如果推送遇到问题，可以使用GitHub Desktop作为替代方案。
