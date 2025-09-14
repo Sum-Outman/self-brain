@@ -191,7 +191,41 @@ This project is licensed under the **Apache License 2.0** - see the [LICENSE](LI
 | `/api/system/stats` | ✅ 200 OK | Detailed system stats |
 | `/api/models` | ✅ 200 OK | Available models list |
 
+### 🌐 Port Configuration
+| Service | Port | URL |
+|---------|------|-----|
+| Main Web Interface | 5000 | http://localhost:5000 |
+| A Management Model | 5001 | http://localhost:5001 |
+| B Language Model | 5002 | http://localhost:5002 |
+| C Audio Model | 5003 | http://localhost:5003 |
+| D Image Model | 5004 | http://localhost:5004 |
+| E Video Model | 5005 | http://localhost:5005 |
+| F Spatial Model | 5006 | http://localhost:5006 |
+| G Sensor Model | 5007 | http://localhost:5007 |
+| H Computer Control | 5008 | http://localhost:5008 |
+| I Knowledge Model | 5009 | http://localhost:5009 |
+| J Motion Model | 5010 | http://localhost:5010 |
+| K Programming Model | 5011 | http://localhost:5011 |
+| Manager Model API | 5015 | http://localhost:5015 |
+| Working Enhanced Chat | 5016 | http://localhost:5016 |
 
+### 🌐 Updated Port Assignments
+| Service | Port | Status |
+|---------|------|--------|
+| Main Web Interface | 5000 | ✅ Fixed |
+| A Management Model | 5001 | ✅ Fixed |
+| B Language Model | 5002 | ✅ Fixed |
+| C Audio Model | 5003 | ✅ Fixed |
+| D Image Model | 5004 | ✅ Fixed |
+| E Video Model | 5005 | ✅ Fixed |
+| F Spatial Model | 5006 | ✅ Fixed |
+| G Sensor Model | 5007 | ✅ Fixed |
+| H Computer Control | 5008 | ✅ Fixed |
+| I Knowledge Model | 5009 | ✅ Fixed |
+| J Motion Model | 5010 | ✅ Fixed |
+| K Programming Model | 5011 | ✅ Fixed |
+| Manager Model API | 5015 | ✅ Fixed |
+| Working Enhanced Chat | 5016 | ✅ New |
 
 ### 📊 Real-time Metrics | 实时指标
 | English | 中文 |
