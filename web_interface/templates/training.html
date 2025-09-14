@@ -1,155 +1,276 @@
 {% extends "base_monochrome.html" %}
 
-{% block title %}Training Control - Self Brain AGI{% endblock %}
+{% block title %}Training Center - Self Brain AGI{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="container-fluid" style="background-color: #f8f9fa; min-height: 100vh;">
+    <!-- Header -->
     <div class="row">
         <div class="col-12">
-            <h1 class="h2 mb-4">Training Control Panel</h1>
-            <p class="text-secondary">Monitor and control all model training processes</p>
-            <div class="alert alert-primary">
-                <i class="bi bi-info-circle"></i> <strong>🎯 重要提示：</strong> 
-                <strong class="text-danger">🔧 Training Controls - 训练控制中心</strong> 位于下方蓝色卡片区域！
-                <br><small>请先选择训练模式（单独训练/联合训练/微调），然后在下方表单中配置具体参数</small>
+            <div class="border-bottom pb-3 mb-4">
+                <!-- Title removed for cleaner design -->
             </div>
         </div>
     </div>
 
-    <!-- Training Overview -->
+    <!-- Training Status Dashboard -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-secondary">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Training Status Dashboard</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-3">
+                            <div class="border-bottom pb-2">
+                                <small class="text-muted">Current Status</small>
+                                <h4 class="mb-0" id="currentStatus">Idle</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="border-bottom pb-2">
+                                <small class="text-muted">Active Model</small>
+                                <h4 class="mb-0" id="activeModel">None</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="border-bottom pb-2">
+                                <small class="text-muted">Progress</small>
+                                <h4 class="mb-0" id="trainingProgress">0%</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="border-bottom pb-2">
+                                <small class="text-muted">Epoch</small>
+                                <h4 class="mb-0" id="currentEpoch">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-3">
+                            <small class="text-muted">Loss</small>
+                            <h5 class="mb-0" id="currentLoss">-</h5>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <small class="text-muted">Accuracy</small>
+                            <h5 class="mb-0" id="currentAccuracy">-</h5>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <small class="text-muted">Learning Rate</small>
+                            <h5 class="mb-0" id="learningRate">-</h5>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <small class="text-muted">Validation Loss</small>
+                            <h5 class="mb-0" id="validationLoss">-</h5>
+                        </div>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-dark" id="progressBar" role="progressbar" 
+                             style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
     <div class="row mb-4">
         <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h5 class="text-muted">Active Sessions</h5>
-                    <h2 class="display-4 text-dark" id="activeSessions">3</h2>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-4">
+                    <h6 class="text-muted fw-normal mb-2">Active Sessions</h6>
+                    <h2 class="display-6 text-dark mb-0" id="activeSessions">0</h2>
                 </div>
             </div>
         </div>
         <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h5 class="text-muted">Total Epochs</h5>
-                    <h2 class="display-4 text-dark" id="totalEpochs">1,247</h2>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-4">
+                    <h6 class="text-muted fw-normal mb-2">Total Epochs</h6>
+                    <h2 class="display-6 text-dark mb-0" id="totalEpochs">0</h2>
                 </div>
             </div>
         </div>
         <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h5 class="text-muted">Avg Accuracy</h5>
-                    <h2 class="display-4 text-dark" id="avgAccuracy">94.2%</h2>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-4">
+                    <h6 class="text-muted fw-normal mb-2">Average Accuracy</h6>
+                    <h2 class="display-6 text-dark mb-0" id="avgAccuracy">0%</h2>
                 </div>
             </div>
         </div>
         <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h5 class="text-muted">Training Time</h5>
-                    <h2 class="display-4 text-dark" id="trainingTime">48h</h2>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-4">
+                    <h6 class="text-muted fw-normal mb-2">Training Time</h6>
+                    <h2 class="display-6 text-dark mb-0" id="trainingTime">0h</h2>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-lg-8">
-            <!-- Active Training Sessions -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Active Training Sessions</h5>
+        <!-- Training Configuration -->
+        <div class="col-lg-8 mb-4">
+            <div class="card border-secondary">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Training Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Training Mode</label>
+                            <select class="form-select form-select-sm" id="trainingType" onchange="updateTrainingControls()">
+                                <option value="individual">Individual Training</option>
+                                <option value="joint">Joint Training</option>
+                                <option value="fine-tune">Fine-tuning</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Model Selection</label>
+                            <select class="form-select form-select-sm" id="modelSelect">
+                                <option value="">Select Model...</option>
+                                <option value="A_management">Model A - Management</option>
+                                <option value="B_language">Model B - Language</option>
+                                <option value="C_audio">Model C - Audio</option>
+                                <option value="D_image">Model D - Image</option>
+                                <option value="E_video">Model E - Video</option>
+                                <option value="F_spatial">Model F - Spatial</option>
+                                <option value="G_sensor">Model G - Sensor</option>
+                                <option value="H_computer">Model H - Computer</option>
+                                <option value="I_motion">Model I - Motion</option>
+                                <option value="J_knowledge">Model J - Knowledge</option>
+                                <option value="K_programming">Model K - Programming</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-light border mb-3">
+                        <small class="text-muted">Mode: Individual Training</small><br>
+                        <small>Train a single model with focused optimization</small>
+                    </div>
+
+                    <!-- Joint Training Selection -->
+                    <div id="jointTrainingSection" style="display: none;">
+                        <div class="border p-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <small class="fw-bold">Model Selection</small>
+                                <small class="text-muted">
+                                    <span id="selectedCount">0</span> models selected
+                                </small>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-A" value="A_management">
+                                        <label class="form-check-label" for="model-A">Model A - Management</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-B" value="B_language">
+                                        <label class="form-check-label" for="model-B">Model B - Language</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-C" value="C_audio">
+                                        <label class="form-check-label" for="model-C">Model C - Audio</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-D" value="D_image">
+                                        <label class="form-check-label" for="model-D">Model D - Image</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-E" value="E_video">
+                                        <label class="form-check-label" for="model-E">Model E - Video</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-F" value="F_spatial">
+                                        <label class="form-check-label" for="model-F">Model F - Spatial</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-G" value="G_sensor">
+                                        <label class="form-check-label" for="model-G">Model G - Sensor</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-H" value="H_computer">
+                                        <label class="form-check-label" for="model-H">Model H - Computer</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-I" value="I_motion">
+                                        <label class="form-check-label" for="model-I">Model I - Motion</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-J" value="J_knowledge">
+                                        <label class="form-check-label" for="model-J">Model J - Knowledge</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-K" value="K_programming">
+                                        <label class="form-check-label" for="model-K">Model K - Programming</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-sm btn-outline-dark" onclick="selectAllModels()">Select All</button>
+                                <button type="button" class="btn btn-sm btn-outline-dark ms-1" onclick="clearAllModels()">Clear All</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-secondary">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Control Panel</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-dark" id="startTrainingBtn" onclick="startTraining()" disabled>
+                            Start Training
+                        </button>
+                        <button class="btn btn-outline-dark" id="pauseTrainingBtn" onclick="pauseTraining()" disabled>
+                            Pause Training
+                        </button>
+                        <button class="btn btn-outline-dark" id="stopTrainingBtn" onclick="stopTraining()" disabled>
+                            Stop Training
+                        </button>
+                        <button class="btn btn-outline-dark" id="resetTrainingBtn" onclick="resetTraining()" disabled>
+                            Reset Training
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Training Sessions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 text-dark">Training Sessions</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
                                 <tr>
-                                    <th>Model</th>
-                                    <th>Status</th>
-                                    <th>Progress</th>
-                                    <th>Epoch</th>
-                                    <th>Loss</th>
-                                    <th>Accuracy</th>
-                                    <th>Actions</th>
+                                    <th class="border-0">Model</th>
+                                    <th class="border-0">Status</th>
+                                    <th class="border-0">Progress</th>
+                                    <th class="border-0">Epoch</th>
+                                    <th class="border-0">Loss</th>
+                                    <th class="border-0">Accuracy</th>
+                                    <th class="border-0">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="trainingSessions">
                                 <tr>
-                                    <td>
-                                        <strong>A Management Model</strong>
-                                        <small class="text-muted d-block">ID: AM-001</small>
-                                    </td>
-                                    <td><span class="badge bg-dark">Running</span></td>
-                                    <td>
-                                        <div class="progress" style="height: 20px;">
-                                            <div class="progress-bar bg-dark" role="progressbar" style="width: 75%">75%</div>
-                                        </div>
-                                    </td>
-                                    <td>247/300</td>
-                                    <td>0.023</td>
-                                    <td>96.4%</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-dark" onclick="viewModel('AM-001')">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-dark" onclick="pauseModel('AM-001')">
-                                            <i class="bi bi-pause"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-dark" onclick="stopModel('AM-001')">
-                                            <i class="bi bi-stop"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <strong>B Language Model</strong>
-                                        <small class="text-muted d-block">ID: BL-002</small>
-                                    </td>
-                                    <td><span class="badge bg-dark">Running</span></td>
-                                    <td>
-                                        <div class="progress" style="height: 20px;">
-                                            <div class="progress-bar bg-secondary" role="progressbar" style="width: 45%">45%</div>
-                                        </div>
-                                    </td>
-                                    <td>134/300</td>
-                                    <td>0.045</td>
-                                    <td>92.1%</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-dark" onclick="viewModel('BL-002')">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-dark" onclick="pauseModel('BL-002')">
-                                            <i class="bi bi-pause"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-dark" onclick="stopModel('BL-002')">
-                                            <i class="bi bi-stop"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <strong>C Audio Model</strong>
-                                        <small class="text-muted d-block">ID: CV-003</small>
-                                    </td>
-                                    <td><span class="badge bg-secondary">Paused</span></td>
-                                    <td>
-                                        <div class="progress" style="height: 20px;">
-                                            <div class="progress-bar bg-secondary" role="progressbar" style="width: 89%">89%</div>
-                                        </div>
-                                    </td>
-                                    <td>267/300</td>
-                                    <td>0.018</td>
-                                    <td>94.7%</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-dark" onclick="viewModel('CV-003')">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-dark" onclick="resumeModel('CV-003')">
-                                            <i class="bi bi-play"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-dark" onclick="stopModel('CV-003')">
-                                            <i class="bi bi-stop"></i>
-                                        </button>
+                                    <td colspan="7" class="text-center text-muted py-4">
+                                        No active training sessions
                                     </td>
                                 </tr>
                             </tbody>
@@ -157,737 +278,301 @@
                     </div>
                 </div>
             </div>
-
-            <!-- 🎯 Training Controls - 训练控制中心 -->
-            <div class="card mb-4 border-primary shadow-lg">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-gear-fill"></i> 🔧 Training Controls - 训练控制中心</h5>
-                    <small><i class="bi bi-arrow-down-circle"></i> 选择训练模式并配置参数，然后点击下方"开始训练"按钮</small>
-                </div>
-                <div class="card-body">
-                    <div class="row mb-4">
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold text-primary">🎯 训练模式选择</label>
-                            <select class="form-select form-select-lg" id="trainingType" onchange="updateTrainingControls()" required>
-                                <option value="individual" selected>🎯 单独训练</option>
-                                <option value="joint">🔗 联合训练</option>
-                                <option value="fine-tune">⚙️ 微调</option>
-                            </select>
-                        </div>
-                        <div class="col-md-8" id="trainingInfoPanel">
-                            <div class="alert alert-info border-start border-4 border-info" id="individualInfo" style="display: block;">
-                                <i class="bi bi-cpu fs-4"></i> 
-                                <div class="ms-3">
-                                    <strong>单独训练模式</strong>
-                                    <p class="mb-0">选择单个模型进行独立训练，资源需求较低，适合针对性优化。</p>
-                                </div>
-                            </div>
-                            <div class="alert alert-warning border-start border-4 border-warning" id="jointInfo" style="display: none;">
-                                <i class="bi bi-diagram-3 fs-4"></i>
-                                <div class="ms-3">
-                                    <strong>联合训练模式</strong>
-                                    <p class="mb-0">同时训练多个模型，实现模型间协同学习，资源需求较高。</p>
-                                </div>
-                            </div>
-                            <div class="alert alert-secondary border-start border-4 border-secondary" id="fineTuneInfo" style="display: none;">
-                                <i class="bi bi-sliders fs-4"></i>
-                                <div class="ms-3">
-                                    <strong>微调模式</strong>
-                                    <p class="mb-0">基于已有模型进行参数微调，快速适应新任务。</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 快速操作按钮 -->
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-outline-primary" onclick="document.getElementById('trainingType').value='individual'; updateTrainingControls();">
-                                    <i class="bi bi-cpu"></i> 单独训练
-                                </button>
-                                <button class="btn btn-outline-warning" onclick="document.getElementById('trainingType').value='joint'; updateTrainingControls();">
-                                    <i class="bi bi-diagram-3"></i> 联合训练
-                                </button>
-                                <button class="btn btn-outline-secondary" onclick="document.getElementById('trainingType').value='fine-tune'; updateTrainingControls();">
-                                    <i class="bi bi-sliders"></i> 微调
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 🚀 New Training Session - 训练配置表单 -->
-            <div class="card">
-                <div class="card-header bg-dark text-white">
-                    <h5 class="mb-0"><i class="bi bi-play-circle"></i> 🚀 开始新训练会话</h5>
-                    <small>根据上方选择的训练模式，配置具体参数并开始训练</small>
-                </div>
-                <div class="card-body">
-                    <form id="newTrainingForm">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Training Mode</label>
-                                    <select class="form-select" id="trainingMode" required onchange="toggleTrainingMode()">
-                                        <option value="individual">Individual Training</option>
-                                        <option value="joint">Joint Training</option>
-                                        <option value="fine-tune">Fine-tuning</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="individualModelSection">
-                                    <label class="form-label">Select Model</label>
-                                    <select class="form-select" id="modelSelect" required>
-                                        <option value="">Choose a model...</option>
-                                        <option value="A_management">A Management Model</option>
-                                        <option value="B_language">B Language Model</option>
-                                        <option value="C_audio">C Audio Model</option>
-                                        <option value="D_image">D Image Model</option>
-                                        <option value="E_video">E Video Model</option>
-                                        <option value="F_spatial">F Spatial Model</option>
-                                        <option value="G_sensor">G Sensor Model</option>
-                                        <option value="H_computer">H Computer Model</option>
-                                        <option value="I_motion">I Motion Model</option>
-                                        <option value="J_knowledge">J Knowledge Model</option>
-                                        <option value="K_programming">K Programming Model</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="jointModelsSection" style="display: none;">
-                                    <label class="form-label">Select Models for Joint Training</label>
-                                    <div class="border rounded p-3">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <div class="btn-group btn-group-sm" role="group">
-                                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectAllModels()">
-                                                    <i class="bi bi-check-all"></i> 全选
-                                                </button>
-                                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllModels()">
-                                                    <i class="bi bi-x"></i> 清除
-                                                </button>
-                                            </div>
-                                            <span id="selectedCount" class="badge bg-info">已选择: 0个</span>
-                                        </div>
-                                        
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="A_management" id="modelA" name="jointModels" onchange="updateSelectedCount()">
-                                                    <label class="form-check-label" for="modelA">A Management Model</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="B_language" id="modelB" name="jointModels" onchange="updateSelectedCount()">
-                                                    <label class="form-check-label" for="modelB">B Language Model</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="C_audio" id="modelC" name="jointModels" onchange="updateSelectedCount()">
-                                                    <label class="form-check-label" for="modelC">C Audio Model</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="D_image" id="modelD" name="jointModels" onchange="updateSelectedCount()">
-                                                    <label class="form-check-label" for="modelD">D Image Model</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="E_video" id="modelE" name="jointModels" onchange="updateSelectedCount()">
-                                                    <label class="form-check-label" for="modelE">E Video Model</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="F_spatial" id="modelF" name="jointModels" onchange="updateSelectedCount()">
-                                                    <label class="form-check-label" for="modelF">F Spatial Model</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="G_sensor" id="modelG" name="jointModels" onchange="updateSelectedCount()">
-                                                    <label class="form-check-label" for="modelG">G Sensor Model</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="H_computer" id="modelH" name="jointModels" onchange="updateSelectedCount()">
-                                                    <label class="form-check-label" for="modelH">H Computer Model</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="I_motion" id="modelI" name="jointModels" onchange="updateSelectedCount()">
-                                                    <label class="form-check-label" for="modelI">I Motion Model</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="J_knowledge" id="modelJ" name="jointModels" onchange="updateSelectedCount()">
-                                                    <label class="form-check-label" for="modelJ">J Knowledge Model</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="K_programming" id="modelK" name="jointModels" onchange="updateSelectedCount()">
-                                                    <label class="form-check-label" for="modelK">K Programming Model</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <small class="text-muted">选择2个或更多模型进行联合训练</small>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Epochs</label>
-                                    <input type="number" class="form-control" id="epochs" value="100" min="1" max="1000">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Learning Rate</label>
-                                    <input type="number" class="form-control" id="learningRate" value="0.001" step="0.0001" min="0.0001" max="0.01">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Batch Size</label>
-                                    <select class="form-select" id="batchSize">
-                                        <option value="16">16</option>
-                                        <option value="32" selected>32</option>
-                                        <option value="64">64</option>
-                                        <option value="128">128</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-dark">
-                                    <i class="bi bi-play"></i> Start Training
-                                </button>
-                                <button type="button" class="btn btn-outline-dark" onclick="loadPreset()">
-                                    <i class="bi bi-download"></i> Load Preset
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4">
-            <!-- System Resources -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">System Resources</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label">CPU Usage</label>
-                        <div class="progress">
-                            <div class="progress-bar bg-dark" role="progressbar" style="width: 65%">65%</div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Memory Usage</label>
-                        <div class="progress">
-                            <div class="progress-bar bg-secondary" role="progressbar" style="width: 78%">78%</div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">GPU Usage</label>
-                        <div class="progress">
-                            <div class="progress-bar bg-dark" role="progressbar" style="width: 92%">92%</div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Disk Usage</label>
-                        <div class="progress">
-                            <div class="progress-bar bg-secondary" role="progressbar" style="width: 45%">45%</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Training History -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Recent Training History</h5>
-                </div>
-                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
-                    <div class="timeline">
-                        <div class="timeline-item">
-                            <div class="timeline-marker bg-dark"></div>
-                            <div class="timeline-content">
-                                <h6 class="mb-1">A Management Model</h6>
-                                <p class="text-muted small mb-0">Completed 300 epochs - 96.4% accuracy</p>
-                                <small class="text-muted">2 hours ago</small>
-                            </div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-marker bg-secondary"></div>
-                            <div class="timeline-content">
-                                <h6 class="mb-1">B Language Model</h6>
-                                <p class="text-muted small mb-0">Started joint training session</p>
-                                <small class="text-muted">4 hours ago</small>
-                            </div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-marker bg-dark"></div>
-                            <div class="timeline-content">
-                                <h6 class="mb-1">C Audio Model</h6>
-                                <p class="text-muted small mb-0">Fine-tuning completed - 94.7% accuracy</p>
-                                <small class="text-muted">6 hours ago</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
+
+    <!-- Navigation -->
+
 </div>
-{% endblock %}
 
-{% block extra_css %}
-<style>
-        .model-card {
-            transition: transform 0.2s;
-        }
-        .model-card:hover {
-            transform: translateY(-2px);
-        }
-        .progress {
-            height: 20px;
-        }
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1050;
-        }
-        .model-checkbox {
-            cursor: pointer;
-            user-select: none;
-        }
-        .model-checkbox:hover {
-            background-color: #f8f9fa;
-        }
-        .model-checkbox input[type="checkbox"] {
-            margin-right: 8px;
-        }
-        .training-info-card {
-            border-left: 4px solid #007bff;
-            background-color: #f8f9fa;
-        }
-    </style>
-{% endblock %}
-
-{% block extra_js %}
 <script>
-    // Add fetchWithRetry utility function
-    async function fetchWithRetry(url, options = {}, maxRetries = 3) {
-        for (let i = 0; i < maxRetries; i++) {
-            try {
-                const response = await fetch(url, options);
-                if (response.ok) {
-                    return response;
-                }
-                if (i === maxRetries - 1) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-            } catch (error) {
-                if (i === maxRetries - 1) {
-                    throw error;
-                }
-                await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
-            }
-        }
-    }
+let trainingData = [];
+let socket = null;
 
-    document.addEventListener('DOMContentLoaded', function() {
-        initializeTrainingControls();
-        updateRealTimeData();
-    });
-
-    function initializeTrainingControls() {
-        // Form submission
-        document.getElementById('newTrainingForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const mode = document.getElementById('trainingMode').value;
-            let selectedModels = [];
-            
-            if (mode === 'joint') {
-                const checkboxes = document.querySelectorAll('input[name="jointModels"]:checked');
-                checkboxes.forEach(cb => selectedModels.push(cb.value));
-                
-                if (selectedModels.length < 2) {
-                    showNotification('联合训练至少需要选择2个模型', 'error');
-                    return;
-                }
-            } else {
-                const model = document.getElementById('modelSelect').value;
-                if (!model) {
-                    showNotification('请选择一个模型进行训练', 'error');
-                    return;
-                }
-                selectedModels = [model];
-            }
-            
-            startNewTraining();
-        });
-
-        // 初始化Training Controls同步
-        syncFromMainSelect();
-        
-        // Initialize selected count
-        updateSelectedCount();
-
-        // Update real-time data every 5 seconds
-        setInterval(updateRealTimeData, 5000);
-        
-        // Update training status every 3 seconds
-        setInterval(updateStatus, 3000);
-        
-        // Initial status update
-        updateStatus();
-    }
-
-    function updateRealTimeData() {
-        // Simulate real-time updates
-        const metrics = {
-            activeSessions: Math.floor(Math.random() * 5) + 1,
-            totalEpochs: Math.floor(Math.random() * 2000) + 1000,
-            avgAccuracy: (90 + Math.random() * 10).toFixed(1),
-            trainingTime: Math.floor(Math.random() * 72) + 24
-        };
-
-        Object.keys(metrics).forEach(key => {
-            const element = document.getElementById(key);
-            if (element) {
-                let value = metrics[key];
-                if (key === 'avgAccuracy') value += '%';
-                if (key === 'trainingTime') value += 'h';
-                element.textContent = value;
-            }
-        });
-    }
-
-    function toggleTrainingMode() {
-        const mode = document.getElementById('trainingMode').value;
-        const individualSection = document.getElementById('individualModelSection');
-        const jointSection = document.getElementById('jointModelsSection');
-        
-        if (mode === 'joint') {
-            individualSection.style.display = 'none';
-            jointSection.style.display = 'block';
-        } else {
-            individualSection.style.display = 'block';
-            jointSection.style.display = 'none';
-        }
-        
-        // 同步Training Controls
-        syncFromMainSelect();
-    }
-
-    function updateTrainingControls() {
-        const trainingTypeSelect = document.getElementById('trainingType');
-        const modeSelect = document.getElementById('trainingMode');
-        
-        if (trainingTypeSelect && modeSelect) {
-            // 同步两个下拉菜单的值
-            modeSelect.value = trainingTypeSelect.value;
-            toggleTrainingMode();
-            
-            // 更新信息面板
-            document.getElementById('individualInfo').style.display = 'none';
-            document.getElementById('jointInfo').style.display = 'none';
-            document.getElementById('fineTuneInfo').style.display = 'none';
-            
-            if (trainingTypeSelect.value === 'individual') {
-                document.getElementById('individualInfo').style.display = 'block';
-            } else if (trainingTypeSelect.value === 'joint') {
-                document.getElementById('jointInfo').style.display = 'block';
-            } else if (trainingTypeSelect.value === 'fine-tune') {
-                document.getElementById('fineTuneInfo').style.display = 'block';
-            }
-            
-            // 添加视觉反馈
-            showNotification(`已切换到${trainingTypeSelect.options[trainingTypeSelect.selectedIndex].text}`, 'success');
-        }
+// Initialize Socket.IO connection
+function initializeSocket() {
+    if (socket) {
+        socket.disconnect();
     }
     
-    function syncFromMainSelect() {
-        const trainingTypeSelect = document.getElementById('trainingType');
-        const modeSelect = document.getElementById('trainingMode');
-        
-        if (trainingTypeSelect && modeSelect) {
-            trainingTypeSelect.value = modeSelect.value;
-            
-            // 更新信息面板
-            document.getElementById('individualInfo').style.display = 'none';
-            document.getElementById('jointInfo').style.display = 'none';
-            document.getElementById('fineTuneInfo').style.display = 'none';
-            
-            if (modeSelect.value === 'individual') {
-                document.getElementById('individualInfo').style.display = 'block';
-            } else if (modeSelect.value === 'joint') {
-                document.getElementById('jointInfo').style.display = 'block';
-            } else if (modeSelect.value === 'fine-tune') {
-                document.getElementById('fineTuneInfo').style.display = 'block';
-            }
-        }
+    socket = io('/ws/training');
+    
+    socket.on('connect', function() {
+        console.log('Connected to training WebSocket');
+        updateButtonStates();
+    });
+    
+    socket.on('disconnect', function() {
+        console.log('Disconnected from training WebSocket');
+        updateButtonStates();
+    });
+    
+    socket.on('training_status', function(data) {
+        updateTrainingStatus(data);
+    });
+    
+    socket.on('realtime_metrics', function(data) {
+        updateRealtimeMetrics(data);
+    });
+    
+    socket.on('training_complete', function(data) {
+        alert('Training completed for model: ' + data.model_name);
+        resetTrainingControls();
+    });
+    
+    socket.on('training_error', function(data) {
+        alert('Training error: ' + data.error);
+        resetTrainingControls();
+    });
+}
+
+// Update training status
+function updateTrainingStatus(data) {
+    document.getElementById('currentStatus').textContent = data.status || 'Idle';
+    document.getElementById('activeModel').textContent = data.model_name || 'None';
+    document.getElementById('trainingProgress').textContent = (data.progress || 0) + '%';
+    document.getElementById('currentEpoch').textContent = data.current_epoch || 0;
+    
+    const progressBar = document.getElementById('progressBar');
+    if (progressBar) {
+        progressBar.style.width = (data.progress || 0) + '%';
+        progressBar.setAttribute('aria-valuenow', data.progress || 0);
     }
+    
+    updateButtonStates();
+}
 
-    async function startNewTraining() {
-        const mode = document.getElementById('trainingMode').value;
+// Update realtime metrics
+function updateRealtimeMetrics(data) {
+    document.getElementById('currentLoss').textContent = data.loss ? data.loss.toFixed(4) : '-';
+    document.getElementById('currentAccuracy').textContent = data.accuracy ? (data.accuracy * 100).toFixed(1) + '%' : '-';
+    document.getElementById('learningRate').textContent = data.learning_rate ? data.learning_rate.toFixed(6) : '-';
+    document.getElementById('validationLoss').textContent = data.validation_loss ? data.validation_loss.toFixed(4) : '-';
+}
+
+// Update training data from API
+async function updateTrainingData() {
+    try {
+        const response = await fetch('/api/training/status');
+        const data = await response.json();
         
-        let model_ids = [];
-        let model_name = '';
-        
-        if (mode === 'joint') {
-            const checkboxes = document.querySelectorAll('input[name="jointModels"]:checked');
-            checkboxes.forEach(checkbox => {
-                model_ids.push(checkbox.value);
-            });
-            
-            if (model_ids.length < 2) {
-                alert('Please select at least 2 models for joint training.');
-                return;
-            }
-            
-            model_name = model_ids.join('_');
-        } else {
-            const model = document.getElementById('modelSelect').value;
-            if (!model) {
-                alert('Please select a model to train.');
-                return;
-            }
-            model_ids = [model];
-            model_name = model;
+        if (data.status === 'success') {
+            updateStatistics(data);
+            updateSessionsTable(data);
         }
-
-        const apiData = {
-            model_ids: model_ids,
-            mode: mode,
-            epochs: parseInt(document.getElementById('epochs').value),
-            batch_size: parseInt(document.getElementById('batchSize').value),
-            learning_rate: parseFloat(document.getElementById('learningRate').value),
-            compute_device: 'auto'
-        };
-
-        console.log('Starting new training:', apiData);
-
-        try {
-            const response = await fetch('/api/training/start', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(apiData)
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const result = await response.json();
-            
-            if (result.status === 'success') {
-                // Add new training session to table
-                const formData = {
-                    model: model_name,
-                    models: model_ids,
-                    mode: mode,
-                    epochs: apiData.epochs,
-                    session_id: result.session_id
-                };
-                addTrainingSession(formData);
-                
-                // Reset form
-                document.getElementById('newTrainingForm').reset();
-                toggleTrainingMode();
-                
-                // Show success message
-                showNotification('Training started successfully!', 'success');
-            } else {
-                showNotification('Failed to start training: ' + (result.message || 'Unknown error'), 'error');
-            }
-        } catch (error) {
-            console.error('Error starting training:', error);
-            showNotification('Error starting training: ' + error.message, 'error');
-        }
+    } catch (error) {
+        console.error('Error updating training data:', error);
     }
+}
 
-    function showNotification(message, type = 'info') {
-        // Create a simple notification
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type} alert-dismissible fade show`;
-        notification.style.position = 'fixed';
-        notification.style.top = '20px';
-        notification.style.right = '20px';
-        notification.style.zIndex = '9999';
-        notification.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        // Auto-dismiss after 3 seconds
-        setTimeout(() => {
-            notification.remove();
-        }, 3000);
+function updateStatistics(data) {
+    const sessions = data.sessions || [];
+    const activeSessions = sessions.filter(s => s.status === 'running').length;
+    const totalEpochs = sessions.reduce((sum, s) => sum + (s.epoch || 0), 0);
+    const avgAccuracy = sessions.length > 0 ? 
+        (sessions.reduce((sum, s) => sum + (s.accuracy || 0), 0) / sessions.length).toFixed(1) : 0;
+    
+    document.getElementById('activeSessions').textContent = activeSessions;
+    document.getElementById('totalEpochs').textContent = totalEpochs;
+    document.getElementById('avgAccuracy').textContent = avgAccuracy + '%';
+    document.getElementById('trainingTime').textContent = '0h';
+}
+
+function updateSessionsTable(data) {
+    const tbody = document.getElementById('trainingSessions');
+    const sessions = data.sessions || [];
+    
+    if (sessions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No active training sessions</td></tr>';
+        return;
     }
-
-    function addTrainingSession(data) {
-        const tbody = document.getElementById('trainingSessions');
-        const newRow = document.createElement('tr');
-        
-        let modelDisplayName;
-        let modelId;
-        
-        if (data.mode === 'joint') {
-            modelDisplayName = 'Joint Training (' + data.models.map(m => getModelName(m)).join(', ') + ')';
-            modelId = data.models.join('_');
-        } else {
-            modelDisplayName = getModelName(data.model) + ' Model';
-            modelId = data.model;
-        }
-        
-        newRow.innerHTML = `
+    
+    tbody.innerHTML = sessions.map(session => `
+        <tr>
             <td>
-                <strong>${modelDisplayName}</strong>
-                <small class="text-muted d-block">Mode: ${data.mode}</small>
-                <small class="text-muted d-block">ID: ${modelId}-${Date.now()}</small>
+                <strong>${session.model_name || 'Unknown Model'}</strong>
+                <small class="text-muted d-block">ID: ${session.id || 'N/A'}</small>
             </td>
-            <td><span class="badge bg-dark">Starting</span></td>
             <td>
-                <div class="progress" style="height: 20px;">
-                    <div class="progress-bar bg-dark" role="progressbar" style="width: 0%">0%</div>
+                <span class="badge bg-${session.status === 'running' ? 'dark' : 'secondary'}">
+                    ${session.status || 'unknown'}
+                </span>
+            </td>
+            <td>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-dark" role="progressbar" 
+                         style="width: ${session.progress || 0}%">
+                    </div>
+                </div>
+                <small class="text-muted">${session.progress || 0}%</small>
+            </td>
+            <td>${session.epoch || 0}/${session.total_epochs || 0}</td>
+            <td>${session.loss?.toFixed(4) || '0.0000'}</td>
+            <td>${session.accuracy ? (session.accuracy * 100).toFixed(1) + '%' : '0%'}</td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-dark btn-sm" onclick="viewModel('${session.id}')">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-outline-dark btn-sm" onclick="pauseModel('${session.id}')">
+                        <i class="bi bi-pause"></i>
+                    </button>
+                    <button class="btn btn-outline-dark btn-sm" onclick="stopModel('${session.id}')">
+                        <i class="bi bi-stop"></i>
+                    </button>
                 </div>
             </td>
-            <td>0/${data.epochs}</td>
-            <td>-</td>
-            <td>-</td>
-            <td>
-                <button class="btn btn-sm btn-outline-dark" onclick="viewModel('${modelId}')">
-                    <i class="bi bi-eye"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-dark" onclick="pauseModel('${modelId}')">
-                    <i class="bi bi-pause"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-dark" onclick="stopModel('${modelId}')">
-                    <i class="bi bi-stop"></i>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(newRow);
-    }
+        </tr>
+    `).join('');
+}
 
-    async function updateStatus() {
-        try {
-            const response = await fetchWithRetry('/api/training/sessions');
-            const data = await response.json();
-            
-            if (data.sessions && data.sessions.length > 0) {
-                const tbody = document.getElementById('trainingSessions');
-                tbody.innerHTML = '';
-                
-                data.sessions.forEach(session => {
-                    addTrainingSession({
-                        model: session.model_name || session.model_id,
-                        models: session.model_ids || [session.model_id],
-                        mode: session.mode || 'individual',
-                        epochs: session.total_epochs || 100,
-                        session_id: session.session_id
-                    });
-                });
-            }
-        } catch (error) {
-            console.error('Error updating training status:', error);
+function updateButtonStates() {
+    const startBtn = document.getElementById('startTrainingBtn');
+    const pauseBtn = document.getElementById('pauseTrainingBtn');
+    const stopBtn = document.getElementById('stopTrainingBtn');
+    const resetBtn = document.getElementById('resetTrainingBtn');
+    
+    const status = document.getElementById('currentStatus').textContent;
+    
+    if (status === 'Idle') {
+        startBtn.disabled = false;
+        pauseBtn.disabled = true;
+        stopBtn.disabled = true;
+        resetBtn.disabled = false;
+    } else if (status === 'Running') {
+        startBtn.disabled = true;
+        pauseBtn.disabled = false;
+        stopBtn.disabled = false;
+        resetBtn.disabled = true;
+    } else if (status === 'Paused') {
+        startBtn.disabled = false;
+        pauseBtn.disabled = true;
+        stopBtn.disabled = false;
+        resetBtn.disabled = false;
+    }
+}
+
+function updateTrainingControls() {
+    const trainingType = document.getElementById('trainingType').value;
+    const jointSection = document.getElementById('jointTrainingSection');
+    const modelSelect = document.getElementById('modelSelect');
+    
+    if (trainingType === 'joint') {
+        jointSection.style.display = 'block';
+        modelSelect.disabled = true;
+    } else {
+        jointSection.style.display = 'none';
+        modelSelect.disabled = false;
+    }
+}
+
+function selectAllModels() {
+    const checkboxes = document.querySelectorAll('#jointTrainingSection input[type="checkbox"]');
+    checkboxes.forEach(checkbox => checkbox.checked = true);
+    updateSelectedCount();
+}
+
+function clearAllModels() {
+    const checkboxes = document.querySelectorAll('#jointTrainingSection input[type="checkbox"]');
+    checkboxes.forEach(checkbox => checkbox.checked = false);
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const selected = document.querySelectorAll('#jointTrainingSection input[type="checkbox"]:checked');
+    document.getElementById('selectedCount').textContent = selected.length;
+}
+
+function startTraining() {
+    const trainingType = document.getElementById('trainingType').value;
+    let models = [];
+    
+    if (trainingType === 'joint') {
+        const selected = document.querySelectorAll('#jointTrainingSection input[type="checkbox"]:checked');
+        models = Array.from(selected).map(cb => cb.value);
+        if (models.length === 0) {
+            alert('Please select at least one model for joint training');
+            return;
         }
-    }
-
-    function selectAllModels() {
-        const checkboxes = document.querySelectorAll('input[name="jointModels"]');
-        checkboxes.forEach(checkbox => checkbox.checked = true);
-        updateSelectedCount();
-    }
-
-    function clearAllModels() {
-        const checkboxes = document.querySelectorAll('input[name="jointModels"]');
-        checkboxes.forEach(checkbox => checkbox.checked = false);
-        updateSelectedCount();
-    }
-
-    function updateSelectedCount() {
-        const selectedModels = document.querySelectorAll('input[name="jointModels"]:checked');
-        const count = selectedModels.length;
-        document.getElementById('selectedCount').textContent = `已选择: ${count}个`;
-        
-        // 更新徽章颜色
-        const badge = document.getElementById('selectedCount');
-        if (count >= 2) {
-            badge.className = 'badge bg-success';
-        } else if (count === 1) {
-            badge.className = 'badge bg-warning';
-        } else {
-            badge.className = 'badge bg-info';
+    } else {
+        const modelSelect = document.getElementById('modelSelect');
+        if (!modelSelect.value) {
+            alert('Please select a model');
+            return;
         }
-        
-        // 验证是否可以开始训练
-        const startButton = document.querySelector('button[type="submit"]');
-        if (document.getElementById('trainingMode').value === 'joint' && count < 2) {
-            startButton.disabled = true;
-            startButton.title = '联合训练需要选择至少2个模型';
-        } else {
-            startButton.disabled = false;
-            startButton.title = '';
-        }
+        models = [modelSelect.value];
     }
-
-    function getModelName(modelCode) {
-        const modelNames = {
-            'A': 'A Management',
-            'B': 'B Language',
-            'C': 'C Audio',
-            'D': 'D Image',
-            'E': 'E Video',
-            'F': 'F Spatial',
-            'G': 'G Sensor',
-            'H': 'H Computer',
-            'I': 'I Motion',
-            'J': 'J Knowledge',
-            'K': 'K Programming'
-        };
-        return modelNames[modelCode] || modelCode;
-    }
-
-    function viewModel(modelId) {
-        console.log('Viewing model:', modelId);
-        // Redirect to model details page
-        window.location.href = `/model/${modelId}`;
-    }
-
-    function pauseModel(modelId) {
-        console.log('Pausing model:', modelId);
-        // Update UI
-        updateModelStatus(modelId, 'Paused');
-    }
-
-    function resumeModel(modelId) {
-        console.log('Resuming model:', modelId);
-        // Update UI
-        updateModelStatus(modelId, 'Running');
-    }
-
-    function stopModel(modelId) {
-        console.log('Stopping model:', modelId);
-        // Update UI
-        updateModelStatus(modelId, 'Stopped');
-    }
-
-    function updateModelStatus(modelId, status) {
-        // Find and update the model row
-        const rows = document.querySelectorAll('#trainingSessions tr');
-        rows.forEach(row => {
-            if (row.textContent.includes(modelId)) {
-                const statusBadge = row.querySelector('.badge');
-                statusBadge.textContent = status;
-                statusBadge.className = `badge ${status === 'Running' ? 'bg-dark' : 'bg-secondary'}`;
-            }
+    
+    if (socket) {
+        socket.emit('start_training', {
+            models: models,
+            training_type: trainingType
         });
     }
+}
 
-    function loadPreset() {
-        console.log('Loading training preset...');
-        // Load default preset values
-        document.getElementById('epochs').value = 200;
-        document.getElementById('learningRate').value = 0.001;
-        document.getElementById('batchSize').value = 32;
+function pauseTraining() {
+    if (socket) {
+        socket.emit('pause_training');
     }
+}
+
+function stopTraining() {
+    if (socket && confirm('Are you sure you want to stop the current training?')) {
+        socket.emit('stop_training');
+    }
+}
+
+function resetTraining() {
+    if (socket) {
+        socket.emit('reset_training');
+    }
+}
+
+function resetTrainingControls() {
+    document.getElementById('currentStatus').textContent = 'Idle';
+    document.getElementById('activeModel').textContent = 'None';
+    document.getElementById('trainingProgress').textContent = '0%';
+    document.getElementById('currentEpoch').textContent = '0';
+    document.getElementById('currentLoss').textContent = '-';
+    document.getElementById('currentAccuracy').textContent = '-';
+    document.getElementById('learningRate').textContent = '-';
+    document.getElementById('validationLoss').textContent = '-';
+    
+    const progressBar = document.getElementById('progressBar');
+    if (progressBar) {
+        progressBar.style.width = '0%';
+        progressBar.setAttribute('aria-valuenow', 0);
+    }
+    
+    updateButtonStates();
+}
+
+function viewModel(id) {
+    console.log('View model:', id);
+}
+
+function pauseModel(id) {
+    console.log('Pause model:', id);
+}
+
+function stopModel(id) {
+    console.log('Stop model:', id);
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSocket();
+    updateTrainingData();
+    
+    // Update data every 5 seconds
+    setInterval(updateTrainingData, 5000);
+    
+    // Add event listeners for model selection
+    const checkboxes = document.querySelectorAll('#jointTrainingSection input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedCount);
+    });
+});
 </script>
 {% endblock %}

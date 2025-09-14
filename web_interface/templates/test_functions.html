@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Function Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>JavaScript Function Test</h1>
+        <div id="testResults"></div>
+        
+        <div class="mt-4">
+            <button class="btn btn-primary" onclick="runTests()">Run All Tests</button>
+            <button class="btn btn-secondary" onclick="window.clearChat()">Test clearChat</button>
+            <button class="btn btn-info" onclick="window.toggleVoice()">Test toggleVoice</button>
+            <button class="btn btn-success" onclick="window.startRealTimeVoice()">Test startRealTimeVoice</button>
+            <button class="btn btn-warning" onclick="window.startRealTimeVideo()">Test startRealTimeVideo</button>
+        </div>
+    </div>
+
+    <script>
+        // Copy of the functions from ai_chat.html
+        window.clearChat = function() {
+            console.log('clearChat called');
+            return 'clearChat function exists';
+        };
+
+        window.toggleVoice = function() {
+            console.log('toggleVoice called');
+            return 'toggleVoice function exists';
+        };
+
+        window.startRealTimeVoice = function() {
+            console.log('startRealTimeVoice called');
+            return 'startRealTimeVoice function exists';
+        };
+
+        window.startRealTimeVideo = function() {
+            console.log('startRealTimeVideo called');
+            return 'startRealTimeVideo function exists';
+        };
+
+        window.sendMessage = function() {
+            console.log('sendMessage called');
+            return 'sendMessage function exists';
+        };
+
+        function runTests() {
+            const results = document.getElementById('testResults');
+            results.innerHTML = '';
+            
+            const functions = ['clearChat', 'toggleVoice', 'startRealTimeVoice', 'startRealTimeVideo', 'sendMessage'];
+            
+            functions.forEach(func => {
+                const div = document.createElement('div');
+                div.className = 'test-result';
+                
+                if (typeof window[func] === 'function') {
+                    div.className += ' success';
+                    div.innerHTML = `<i class="bi bi-check-circle"></i> ${func}: OK`;
+                } else {
+                    div.className += ' error';
+                    div.innerHTML = `<i class="bi bi-x-circle"></i> ${func}: NOT FOUND`;
+                }
+                
+                results.appendChild(div);
+            });
+        }
+
+        // Run tests on page load
+        document.addEventListener('DOMContentLoaded', runTests);
+    </script>
+</body>
+</html>

@@ -201,34 +201,27 @@
                             <i class="bi bi-house-door"></i> Home
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'dashboard' %}active fw-bold{% endif %}" href="/dashboard">
-                            <i class="bi bi-speedometer2"></i> Dashboard
-                        </a>
-                    </li>
+
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'knowledge_manage' %}active fw-bold{% endif %}" href="/knowledge_manage">
                             <i class="bi bi-database"></i> Knowledge
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'ai_chat' %}active fw-bold{% endif %}" href="/ai_chat">
-                            <i class="bi bi-chat-dots"></i> AI Chat
-                        </a>
-                    </li>
+
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'training' %}active fw-bold{% endif %}" href="/training">
                             <i class="bi bi-cpu"></i> Training
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'model_management' %}active fw-bold{% endif %}" href="/model_management">
-                            <i class="bi bi-gear"></i> Models
-                        </a>
-                    </li>
+
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'system_settings' %}active fw-bold{% endif %}" href="/system_settings">
                             <i class="bi bi-sliders"></i> Settings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'upload_page' %}active fw-bold{% endif %}" href="/upload">
+                            <i class="bi bi-cloud-upload"></i> Upload Data
                         </a>
                     </li>
                     <li class="nav-item">
@@ -239,8 +232,8 @@
                 </ul>
                 
                 <div class="d-flex align-items-center">
-                    <span class="badge bg-secondary">
-                        <i class="bi bi-circle-fill" style="font-size: 8px;"></i> System Online
+                    <span id="systemStatus" class="text-success fw-bold" style="font-size: inherit;">
+                        <i class="bi bi-circle-fill" style="font-size: 12px;"></i> System Online
                     </span>
                 </div>
             </div>
@@ -308,12 +301,10 @@
                         return response;
                     } catch (error) {
                         if (error.name === 'AbortError' || error.message?.includes('net::ERR_ABORTED')) {
-                            console.warn(`Attempt ${attempt} aborted for ${url}:`, error.message);
                             if (attempt === maxRetries) {
                                 throw new Error(`Request aborted after ${maxRetries} attempts`);
                             }
                         } else {
-                            console.warn(`Attempt ${attempt} failed for ${url}:`, error.message);
                             if (attempt === maxRetries) {
                                 throw error;
                             }
@@ -325,7 +316,6 @@
             },
 
             handleApiError: function(error, context) {
-                console.error(`API Error in ${context}:`, error);
                 // Don't show toast for aborted requests during development
                 if (!error.message?.includes('net::ERR_ABORTED') && !error.message?.includes('Request aborted')) {
                     showToast(`Error: ${error.message || 'Connection failed'}`, 'error', 5000);
@@ -390,10 +380,24 @@
             }
         }
 
+        // System status management
+        function updateSystemStatus(connected) {
+            const statusElement = document.getElementById('systemStatus');
+            if (!statusElement) return;
+            
+            if (connected) {
+                statusElement.className = 'text-success fw-bold';
+                statusElement.innerHTML = '<i class="bi bi-circle-fill" style="font-size: 12px;"></i> System Online';
+            } else {
+                statusElement.className = 'text-danger fw-bold';
+                statusElement.innerHTML = '<i class="bi bi-circle-fill" style="font-size: 12px;"></i> System Offline';
+            }
+        }
+
         // Initialize Socket.IO with enhanced error handling
         function initializeSocket() {
             if (typeof io === 'undefined') {
-                console.warn('Socket.IO library not available');
+                updateSystemStatus(false);
                 return null;
             }
             
@@ -413,41 +417,35 @@
                 });
                 
                 socket.on('connect', () => {
-                    console.log('Connected to server');
-                    showToast('System connected', 'success', 3000);
+                    updateSystemStatus(true);
                 });
                 
                 socket.on('disconnect', (reason) => {
-                    console.log('Disconnected from server:', reason);
+                    updateSystemStatus(false);
                     if (reason === 'io server disconnect') {
                         socket.connect();
                     }
                 });
                 
                 socket.on('connect_error', (error) => {
-                    console.warn('Socket.IO connection error:', error.message || error);
-                    // Don't show toast for expected errors during development
-                    if (!error.message?.includes('net::ERR_ABORTED')) {
-                        showToast('Connection issue detected', 'warning', 2000);
-                    }
+                    updateSystemStatus(false);
                 });
                 
                 socket.on('connect_timeout', () => {
-                    console.warn('Socket.IO connection timeout');
+                    updateSystemStatus(false);
                 });
                 
                 socket.on('reconnect', (attemptNumber) => {
-                    console.log('Reconnected after', attemptNumber, 'attempts');
+                    updateSystemStatus(true);
                 });
                 
                 socket.on('reconnect_failed', () => {
-                    console.error('Failed to reconnect to server');
-                    showToast('Connection failed - please refresh page', 'error', 5000);
+                    updateSystemStatus(false);
                 });
                 
                 return socket;
             } catch (error) {
-                console.warn('Socket.IO initialization failed:', error);
+                updateSystemStatus(false);
                 return null;
             }
         }
@@ -455,9 +453,11 @@
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             window.socket = initializeSocket();
+            // Remove HTTP connection monitoring to reduce network noise
+            // Status is now managed by Socket.IO events only
+            updateSystemStatus(window.socket && window.socket.connected);
         });
     </script>
-</body>
-</html>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

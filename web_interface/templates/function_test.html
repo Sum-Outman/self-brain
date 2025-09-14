@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Function Test - Self Brain AGI</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .test-card { border: 1px solid #dee2e6; border-radius: 0; }
+        .test-header { background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; }
+        .btn-test { margin: 0.25rem; }
+        .result-success { color: #28a745; }
+        .result-error { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card test-card">
+                    <div class="card-header test-header">
+                        <h4 class="mb-0"><i class="bi bi-gear"></i> JavaScript Function Test</h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">Testing all required JavaScript functions for the Self Brain AGI chat interface.</p>
+                        
+                        <div class="mb-3">
+                            <h6>Function Status:</h6>
+                            <div id="functionStatus" class="row">
+                                <div class="col-md-6 mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <span>window.clearChat</span>
+                                        <span id="clearChatStatus" class="fw-bold">Testing...</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <span>window.sendMessage</span>
+                                        <span id="sendMessageStatus" class="fw-bold">Testing...</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <span>window.toggleVoice</span>
+                                        <span id="toggleVoiceStatus" class="fw-bold">Testing...</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <span>window.startRealTimeVoice</span>
+                                        <span id="startRealTimeVoiceStatus" class="fw-bold">Testing...</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <span>window.startRealTimeVideo</span>
+                                        <span id="startRealTimeVideoStatus" class="fw-bold">Testing...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <h6>Test Actions:</h6>
+                            <button class="btn btn-outline-dark btn-sm btn-test" onclick="testAllFunctions()">
+                                <i class="bi bi-play"></i> Test All Functions
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm btn-test" onclick="testAPIEndpoints()">
+                                <i class="bi bi-link"></i> Test API Endpoints
+                            </button>
+                            <button class="btn btn-outline-success btn-sm btn-test" onclick="clearResults()">
+                                <i class="bi bi-eraser"></i> Clear Results
+                            </button>
+                        </div>
+
+                        <div id="testResults" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Test functions
+        const testFunctions = {
+            clearChat: () => typeof window.clearChat === 'function',
+            sendMessage: () => typeof window.sendMessage === 'function',
+            toggleVoice: () => typeof window.toggleVoice === 'function',
+            startRealTimeVoice: () => typeof window.startRealTimeVoice === 'function',
+            startRealTimeVideo: () => typeof window.startRealTimeVideo === 'function'
+        };
+
+        const apiEndpoints = [
+            '/api/chat/history',
+            '/api/chat/message',
+            '/api/chat/clear'
+        ];
+
+        function updateFunctionStatus() {
+            Object.keys(testFunctions).forEach(funcName => {
+                const status = testFunctions[funcName]();
+                const element = document.getElementById(funcName + 'Status');
+                if (element) {
+                    element.textContent = status ? '✓ Available' : '✗ Missing';
+                    element.className = status ? 'fw-bold result-success' : 'fw-bold result-error';
+                }
+            });
+        }
+
+        function testAllFunctions() {
+            const results = document.getElementById('testResults');
+            results.innerHTML = '<div class="alert alert-info"><i class="bi bi-hourglass-split"></i> Testing functions...</div>';
+            
+            setTimeout(() => {
+                let html = '<h6>Function Test Results:</h6><ul class="list-group">';
+                let allPassed = true;
+                
+                Object.keys(testFunctions).forEach(funcName => {
+                    const status = testFunctions[funcName]();
+                    const icon = status ? '<i class="bi bi-check-circle text-success"></i>' : '<i class="bi bi-x-circle text-danger"></i>';
+                    const text = status ? 'Available' : 'Missing';
+                    const className = status ? 'list-group-item-success' : 'list-group-item-danger';
+                    
+                    html += `<li class="list-group-item ${className}">${icon} ${funcName}: ${text}</li>`;
+                    if (!status) allPassed = false;
+                });
+                
+                html += '</ul>';
+                
+                if (allPassed) {
+                    html += '<div class="alert alert-success mt-3"><i class="bi bi-check-circle"></i> All functions are available!</div>';
+                } else {
+                    html += '<div class="alert alert-danger mt-3"><i class="bi bi-exclamation-triangle"></i> Some functions are missing!</div>';
+                }
+                
+                results.innerHTML = html;
+                updateFunctionStatus();
+            }, 500);
+        }
+
+        async function testAPIEndpoints() {
+            const results = document.getElementById('testResults');
+            results.innerHTML = '<div class="alert alert-info"><i class="bi bi-hourglass-split"></i> Testing API endpoints...</div>';
+            
+            let html = '<h6>API Endpoint Test Results:</h6><ul class="list-group">';
+            
+            for (const endpoint of apiEndpoints) {
+                try {
+                    const response = await fetch(endpoint, { method: endpoint === '/api/chat/history' ? 'GET' : 'POST' });
+                    const icon = response.ok ? '<i class="bi bi-check-circle text-success"></i>' : '<i class="bi bi-x-circle text-danger"></i>';
+                    const className = response.ok ? 'list-group-item-success' : 'list-group-item-danger';
+                    html += `<li class="list-group-item ${className}">${icon} ${endpoint}: ${response.status} ${response.statusText}</li>`;
+                } catch (error) {
+                    html += `<li class="list-group-item list-group-item-danger"><i class="bi bi-x-circle text-danger"></i> ${endpoint}: ${error.message}</li>`;
+                }
+            }
+            
+            html += '</ul>';
+            results.innerHTML = html;
+        }
+
+        function clearResults() {
+            document.getElementById('testResults').innerHTML = '';
+            updateFunctionStatus();
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateFunctionStatus();
+            setTimeout(testAllFunctions, 1000);
+        });
+    </script>
+</body>
+</html>

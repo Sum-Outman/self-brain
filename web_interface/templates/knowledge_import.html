@@ -338,7 +338,7 @@ function processFiles(files, category, options = {}) {
 }
 
 function processJsonConfig(config) {
-    console.log('Processing JSON config:', config);
+    
     addLog('JSON configuration processed successfully', 'success');
 }
 
@@ -379,19 +379,19 @@ function updateHistory() {
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', function() {
-    // Add file input change handlers
-    document.getElementById('singleFileInput').addEventListener('change', function(e) {
-        console.log('Files selected:', e.target.files.length);
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add file input change handlers
+        document.getElementById('singleFileInput').addEventListener('change', function(e) {
+            // File selection handled by uploadSingleFiles
+        });
+        
+        document.getElementById('folderInput').addEventListener('change', function(e) {
+            // Folder selection handled by importFromFolder
+        });
+        
+        document.getElementById('zipInput').addEventListener('change', function(e) {
+            // ZIP selection handled by importFromZip
+        });
     });
-    
-    document.getElementById('folderInput').addEventListener('change', function(e) {
-        console.log('Folder files selected:', e.target.files.length);
-    });
-    
-    document.getElementById('zipInput').addEventListener('change', function(e) {
-        console.log('ZIP file selected:', e.target.files[0]?.name);
-    });
-});
 </script>
 {% endblock %}

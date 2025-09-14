@@ -1,0 +1,197 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}Training Monitor - Self Brain AGI{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="background-color: #f8f9fa; min-height: 100vh;">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="border-bottom pb-3 mb-4">
+                <h1 class="text-dark mb-1">Training Monitor</h1>
+                <p class="text-muted mb-0">Real-time training session monitoring and system status</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-4">
+                    <h6 class="text-muted fw-normal mb-2">Active Sessions</h6>
+                    <h2 class="display-6 text-dark mb-0" id="activeSessions">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-4">
+                    <h6 class="text-muted fw-normal mb-2">Total Epochs</h6>
+                    <h2 class="display-6 text-dark mb-0" id="totalEpochs">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-4">
+                    <h6 class="text-muted fw-normal mb-2">Average Accuracy</h6>
+                    <h2 class="display-6 text-dark mb-0" id="avgAccuracy">0%</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-4">
+                    <h6 class="text-muted fw-normal mb-2">Training Time</h6>
+                    <h2 class="display-6 text-dark mb-0" id="trainingTime">0h</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Training Sessions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 text-dark">Training Sessions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="border-0">Model</th>
+                                    <th class="border-0">Status</th>
+                                    <th class="border-0">Progress</th>
+                                    <th class="border-0">Epoch</th>
+                                    <th class="border-0">Loss</th>
+                                    <th class="border-0">Accuracy</th>
+                                    <th class="border-0">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trainingSessions">
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-4">
+                                        No active training sessions
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="text-center">
+                <a href="/training_control" class="btn btn-outline-dark">
+                    <i class="bi bi-gear"></i> Training Control Panel
+                </a>
+                <a href="/" class="btn btn-outline-secondary ms-2">
+                    <i class="bi bi-house"></i> Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let trainingData = [];
+
+async function updateTrainingData() {
+    try {
+        const response = await fetch('/api/training/status');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            updateStatistics(data);
+            updateSessionsTable(data);
+        }
+    } catch (error) {
+        console.error('Error updating training data:', error);
+    }
+}
+
+function updateStatistics(data) {
+    const sessions = data.sessions || [];
+    const activeSessions = sessions.filter(s => s.status === 'running').length;
+    const totalEpochs = sessions.reduce((sum, s) => sum + (s.epoch || 0), 0);
+    const avgAccuracy = sessions.length > 0 ? 
+        (sessions.reduce((sum, s) => sum + (s.accuracy || 0), 0) / sessions.length).toFixed(1) : 0;
+    
+    document.getElementById('activeSessions').textContent = activeSessions;
+    document.getElementById('totalEpochs').textContent = totalEpochs;
+    document.getElementById('avgAccuracy').textContent = avgAccuracy + '%';
+    document.getElementById('trainingTime').textContent = '0h';
+}
+
+function updateSessionsTable(data) {
+    const tbody = document.getElementById('trainingSessions');
+    const sessions = data.sessions || [];
+    
+    if (sessions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No active training sessions</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = sessions.map(session => `
+        <tr>
+            <td>
+                <strong>${session.model_name || 'Unknown Model'}</strong>
+                <small class="text-muted d-block">ID: ${session.id || 'N/A'}</small>
+            </td>
+            <td>
+                <span class="badge bg-${session.status === 'running' ? 'dark' : 'secondary'}">
+                    ${session.status || 'unknown'}
+                </span>
+            </td>
+            <td>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-dark" role="progressbar" 
+                         style="width: ${session.progress || 0}%">
+                    </div>
+                </div>
+                <small class="text-muted">${session.progress || 0}%</small>
+            </td>
+            <td>${session.epoch || 0}/${session.total_epochs || 0}</td>
+            <td>${session.loss?.toFixed(4) || '0.0000'}</td>
+            <td>${session.accuracy ? (session.accuracy * 100).toFixed(1) + '%' : '0%'}</td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-dark btn-sm" onclick="viewModel('${session.id}')">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-outline-dark btn-sm" onclick="pauseModel('${session.id}')">
+                        <i class="bi bi-pause"></i>
+                    </button>
+                    <button class="btn btn-outline-dark btn-sm" onclick="stopModel('${session.id}')">
+                        <i class="bi bi-stop"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function viewModel(id) {
+    console.log('View model:', id);
+}
+
+function pauseModel(id) {
+    console.log('Pause model:', id);
+}
+
+function stopModel(id) {
+    console.log('Stop model:', id);
+}
+
+// Update data every 5 seconds
+setInterval(updateTrainingData, 5000);
+updateTrainingData();
+</script>
+{% endblock %}

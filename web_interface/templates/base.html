@@ -53,32 +53,20 @@
                             Home
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="/dashboard">
-                            Dashboard
-                        </a>
-                    </li>
+
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'knowledge_manage' %}active{% endif %}" href="/knowledge_manage">
                             Knowledge
                         </a>
                     </li>
                     
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'ai_chat' %}active{% endif %}" href="/ai_chat">
-                            AI Chat
-                        </a>
-                    </li>
+
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'training' %}active{% endif %}" href="/training">
                             Training Control
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'model_management' %}active{% endif %}" href="/model_management">
-                            Model Management
-                        </a>
-                    </li>
+
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'system_settings' %}active{% endif %}" href="/system_settings">
                             System Settings
@@ -127,24 +115,24 @@
         
         function initializeSocket() {
             if (typeof io === 'undefined') {
-                console.warn('Socket.IO library not loaded');
                 return null;
             }
             
             try {
                 if (!window.globalSocket) {
                     window.globalSocket = io(window.location.origin, {
-                        transports: ['polling', 'websocket'],
-                        timeout: 10000,
+                        transports: ['websocket', 'polling'],
+                        timeout: 15000,
                         reconnection: true,
-                        reconnectionDelay: 1000,
-                        reconnectionAttempts: 5
+                        reconnectionDelay: 3000,
+                        reconnectionAttempts: 2,
+                        reconnectionDelayMax: 10000,
+                        randomizationFactor: 0.5,
+                        forceNew: false
                     });
-                    console.log('Socket.IO connection established');
                 }
                 return window.globalSocket;
             } catch (error) {
-                console.warn('Socket.IO initialization failed:', error);
                 return null;
             }
         }
@@ -216,27 +204,35 @@
             }
         }
         
-        // Auto-reconnect mechanism
-        function setupAutoReconnect() {
+        // Optimized auto-reconnect mechanism - reduce network noise
+        function setupSilentReconnect() {
             if (window.socket) {
+                let reconnectAttempts = 0;
+                const maxReconnectAttempts = 3;
+                
                 window.socket.on('disconnect', () => {
-                    console.log('Socket.IO disconnected, attempting to reconnect...');
-                    setTimeout(() => {
-                        if (!window.socket.connected) {
-                            window.socket.connect();
-                        }
-                    }, 3000);
+                    reconnectAttempts++;
+                    if (reconnectAttempts <= maxReconnectAttempts) {
+                        setTimeout(() => {
+                            if (!window.socket.connected) {
+                                try {
+                                    window.socket.connect();
+                                } catch (e) {
+                                    // Silent failure
+                                }
+                            }
+                        }, 5000);
+                    }
                 });
                 
                 window.socket.on('connect', () => {
-                    console.log('Socket.IO reconnected');
-                    showToast('System reconnected', 'success', 3000);
+                    reconnectAttempts = 0; // Reset counter
                 });
             }
         }
         
-        // Initialize auto-reconnect
-        setupAutoReconnect();
+        // Initialize silent reconnect
+        setupSilentReconnect();
         
         // Global utility functions
         window.utils = {

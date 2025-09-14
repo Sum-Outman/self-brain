@@ -9,7 +9,7 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}" class="text-dark">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="{{ url_for('model_management') }}" class="text-dark">Model Management</a></li>
+                    <li class="breadcrumb-item"><a href="/system_settings#models" class="text-dark" onclick="setTimeout(() => document.getElementById('models-tab').click(), 100)">Model Management</a></li>
                     <li class="breadcrumb-item active text-secondary">Model Details</li>
                 </ol>
             </nav>

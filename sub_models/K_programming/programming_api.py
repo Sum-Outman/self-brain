@@ -404,4 +404,11 @@ if __name__ == '__main__':
     maintenance_thread.start()
     
     # Start API service
-    app.run(host='0.0.0.0', port=5010)
+    import sys
+    port = int(os.environ.get('PORT', 5011))
+    for arg in sys.argv:
+        if arg.startswith('--port='):
+            port = int(arg.split('=')[1])
+        elif arg == '--port' and len(sys.argv) > sys.argv.index(arg) + 1:
+            port = int(sys.argv[sys.argv.index(arg) + 1])
+    app.run(host='0.0.0.0', port=port)

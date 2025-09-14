@@ -3,58 +3,41 @@
 <div align="center">
   <img src="icons/self_brain.svg" alt="Self Brain Logo" width="200"/>
   
-  **🧠 下一代自主人工智能系统 | Next-Generation Autonomous AI System**
+  **🧠 Next-Generation Autonomous AI System**
   
   [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
   [![Python](https://img.shields.io/badge/Python-3.8+-green.svg)](https://python.org)
   [![AGI](https://img.shields.io/badge/Type-AGI%20System-red.svg)]()
   
-  📧 **联系邮箱 | Contact**: silencecrowtom@qq.com
+  📧 **Contact**: silencecrowtom@qq.com
 </div>
 
 ---
 
-## 🌟 项目简介 | Project Overview
+## 🌟 Project Overview | 项目简介
 
-### 中文简介
-Self Brain是一个革命性的自主人工智能系统，具备自我学习、自我优化和跨领域协作能力。系统集成了11个专业子模型，涵盖语言、视觉、音频、推理等多个维度，通过先进的训练控制机制实现真正的通用人工智能。
+**Self Brain is a revolutionary autonomous AI system with self-learning, self-optimization, and cross-domain collaboration capabilities. The system integrates 11 specialized sub-models covering language, vision, audio, reasoning, and more dimensions, achieving true Artificial General Intelligence through advanced training control mechanisms.**
 
-### English Introduction
-Self Brain is a revolutionary autonomous AI system with self-learning, self-optimization, and cross-domain collaboration capabilities. The system integrates 11 specialized sub-models covering language, vision, audio, reasoning, and more dimensions, achieving true Artificial General Intelligence through advanced training control mechanisms.
+**自我大脑是一个革命性的自主人工智能系统，具备自我学习、自我优化和跨领域协作能力。系统集成11个专业子模型，涵盖语言、视觉、音频、推理等多个维度，通过先进的训练控制机制实现真正的人工通用智能。**
 
 ---
 
-## 🎯 核心特性 | Core Features
+## 🎯 Core Features | 核心特性
 
-| 中文特性 | English Features |
-|---------|------------------|
-| **🔄 自主训练控制** | **🔄 Autonomous Training Control** |
-| **🤝 跨模型协作** | **🤝 Cross-Model Collaboration** |
-| **📊 实时性能监控** | **📊 Real-time Performance Monitoring** |
-| **🎨 多模态处理** | **🎨 Multimodal Processing** |
-| **🧩 插件化架构** | **🧩 Plugin Architecture** |
-| **⚡ 动态资源分配** | **⚡ Dynamic Resource Allocation** |
+| English | 中文 |
+|---------|------|
+| **🔄 Autonomous Training Control** | **🔄 自主训练控制** |
+| **🤝 Cross-Model Collaboration** | **🤝 跨模型协作** |
+| **📊 Real-time Performance Monitoring** | **📊 实时性能监控** |
+| **🎨 Multimodal Processing** | **🎨 多模态处理** |
+| **🧩 Plugin Architecture** | **🧩 插件架构** |
+| **⚡ Dynamic Resource Allocation** | **⚡ 动态资源分配** |
 
 ---
 
-## 🏗️ 系统架构 | System Architecture
+## 🏗️ System Architecture | 系统架构
 
-### 中文架构说明
-```
-Self Brain AGI 系统架构：
-├── 🎛️ 管理模型 (A_management) - 中央协调器
-├── 🗣️ 语言模型 (B_language) - 自然语言处理
-├── 🔊 音频模型 (C_audio) - 声音分析与合成
-├── 👁️ 图像模型 (D_image) - 计算机视觉
-├── 🎬 视频模型 (E_video) - 视频理解
-├── 🎯 空间模型 (F_spatial) - 3D空间感知
-├── 📡 传感器模型 (G_sensor) - IoT数据处理
-├── 🧠 知识模型 (I_knowledge) - 知识图谱
-├── 🏃 运动模型 (J_motion) - 运动控制
-└── 💻 编程模型 (K_programming) - 代码生成与理解
-```
-
-### English Architecture
+### English Version
 ```
 Self Brain AGI System Architecture:
 ├── 🎛️ Management Model (A_management) - Central Coordinator
@@ -69,182 +52,129 @@ Self Brain AGI System Architecture:
 └── 💻 Programming Model (K_programming) - Code Generation & Understanding
 ```
 
----
-
-## 🚀 快速开始 | Quick Start
-
-### 中文快速部署
-
-#### 系统要求
-- Python 3.8+
-- Windows/Linux/macOS
-- 4GB RAM（开发环境）
-- 2GB 可用磁盘空间
-
-#### 安装步骤
-```bash
-# 1. 克隆项目
-git clone [repository-url]
-cd self-brain
-
-# 2. 创建虚拟环境
-python -m venv myenv
-source myenv/bin/activate  # Linux/Mac
-# 或
-myenv\Scripts\activate     # Windows
-
-# 3. 安装依赖
-pip install -r requirements.txt
-
-# 4. 启动系统
-python start_system.py
+### 中文版
+```
+自我大脑AGI系统架构：
+├── 🎛️ 管理模型 (A_management) - 中央协调器
+├── 🗣️ 语言模型 (B_language) - 自然语言处理
+├── 🔊 音频模型 (C_audio) - 声音分析与合成
+├── 👁️ 图像模型 (D_image) - 计算机视觉
+├── 🎬 视频模型 (E_video) - 视频理解
+├── 🎯 空间模型 (F_spatial) - 3D空间感知
+├── 📡 传感器模型 (G_sensor) - 物联网数据处理
+├── 🧠 知识模型 (I_knowledge) - 知识图谱
+├── 🏃 运动模型 (J_motion) - 运动控制
+└── 💻 编程模型 (K_programming) - 代码生成与理解
 ```
 
-#### 访问界面
-启动后访问：http://localhost:5000
+---
 
-### English Quick Start
+## 🚀 Quick Start | 快速开始
 
-#### System Requirements
-- Python 3.8+
-- Windows/Linux/macOS
-- 4GB RAM (Development Environment)
-- 2GB Available Disk Space
+#### System Requirements | 系统要求
+| English | 中文 |
+|---------|------|
+| Python 3.8+ | Python 3.8+ |
+| Windows/Linux/macOS | Windows/Linux/macOS |
+| 4GB RAM (Development Environment) | 4GB 内存（开发环境） |
+| 2GB Available Disk Space | 2GB 可用磁盘空间 |
 
-#### Installation Steps
+#### Installation Steps | 安装步骤
 ```bash
-# 1. Clone the project
+# 1. Clone the project | 克隆项目
 git clone [repository-url]
 cd self-brain
 
-# 2. Create virtual environment
+# 2. Create virtual environment | 创建虚拟环境
 python -m venv myenv
 source myenv/bin/activate  # Linux/Mac
 # or
 myenv\Scripts\activate     # Windows
 
-# 3. Install dependencies
+# 3. Install dependencies | 安装依赖
 pip install -r requirements.txt
 
-# 4. Start the system
+# 4. Start the system | 启动系统
 python start_system.py
 ```
 
-#### Access Interface
-After startup, visit: http://localhost:5000
+#### Access Interface | 访问界面
+**English**: After startup, visit: http://localhost:5000
+**中文**: 启动后访问：http://localhost:5000
 
 ---
 
-## 🎮 使用指南 | Usage Guide
+## 🎮 Usage Guide | 使用指南
 
-### 中文使用场景
-
-#### 1. 单模型训练
+#### 1. Start Management System | 启动管理系统
 ```bash
-# 启动单个模型训练
-curl -X POST http://localhost:5000/api/training/start \
-  -H "Content-Type: application/json" \
-  -d '{"model_ids":["A_management"],"mode":"individual"}'
+# Start the management model service | 启动管理模型服务
+python manager_model/app.py
+# Access: http://localhost:5015
 ```
 
-#### 2. 联合训练
+#### 2. Start Web Interface | 启动Web界面
 ```bash
-# 多模型协同训练
-curl -X POST http://localhost:5000/api/training/start \
-  -H "Content-Type: application/json" \
-  -d '{"model_ids":["B_language","C_audio"],"mode":"joint"}'
+# Start the web interface | 启动Web界面
+python web_interface/app.py
+# Access: http://localhost:5000
 ```
 
-#### 3. 实时状态监控
-```bash
-# 查看训练状态
-curl http://localhost:5000/api/training/status
-```
-
-### English Usage Scenarios
-
-#### 1. Single Model Training
-```bash
-# Start single model training
-curl -X POST http://localhost:5000/api/training/start \
-  -H "Content-Type: application/json" \
-  -d '{"model_ids":["A_management"],"mode":"individual"}'
-```
-
-#### 2. Joint Training
-```bash
-# Multi-model collaborative training
-curl -X POST http://localhost:5000/api/training/start \
-  -H "Content-Type: application/json" \
-  -d '{"model_ids":["B_language","C_audio"],"mode":"joint"}'
-```
-
-#### 3. Real-time Monitoring
-```bash
-# Check training status
-curl http://localhost:5000/api/training/status
-```
+#### 3. API Endpoints | API端点
+| English | 中文 |
+|---------|------|
+| `curl http://localhost:5015/api/health` | 健康检查 |
+| `curl http://localhost:5015/api/stats` | 简化系统统计 |
+| `curl http://localhost:5015/api/system/stats` | 详细系统统计 |
+| `curl http://localhost:5015/api/models/status` | 模型状态 |
+| `curl http://localhost:5015/api/models` | 可用模型列表 |
 
 ---
 
-## 🔧 开发配置 | Development Configuration
+## 🔧 Development Configuration | 开发配置
 
-### 中文配置
+### English Version
 ```python
-# 训练配置示例
-training_config = {
-    "mode": "joint",           # individual/joint/transfer/fine_tune/pretraining
-    "epochs": 50,              # 训练轮次
-    "batch_size": 32,        # 批次大小
-    "learning_rate": 0.001,    # 学习率
-    "collaboration_level": 0.8  # 协作强度
+# System configuration example
+system_config = {
+    "management_port": 5015,
+    "web_interface_port": 5000,
+    "log_level": "INFO",
+    "max_concurrent_tasks": 100,
+    "auto_restart": true
 }
 ```
 
-### English Configuration
+### 中文版
 ```python
-# Training configuration example
-training_config = {
-    "mode": "joint",           # individual/joint/transfer/fine_tune/pretraining
-    "epochs": 50,              # Training epochs
-    "batch_size": 32,          # Batch size
-    "learning_rate": 0.001,    # Learning rate
-    "collaboration_level": 0.8  # Collaboration strength
+# 系统配置示例
+system_config = {
+    "management_port": 5015,      # 管理服务端口
+    "web_interface_port": 5000,  # Web界面端口
+    "log_level": "INFO",         # 日志级别
+    "max_concurrent_tasks": 100, # 最大并发任务数
+    "auto_restart": true         # 自动重启
 }
 ```
 
 ---
 
-## 📊 性能指标 | Performance Metrics
+## 📊 Performance Metrics | 性能指标
 
-| 中文指标 | English Metric | 数值 | Value |
-|----------|----------------|------|-------|
-| 模型数量 | Model Count | 11 | 11 |
-| 训练模式 | Training Modes | 5种 | 5 types |
-| 响应时间 | Response Time | <100ms | <100ms |
-| 内存占用 | Memory Usage | 32-64MB | 32-64MB |
-| CPU占用 | CPU Usage | 1-2% | 1-2% |
+| Metric | Value | 指标 | 数值 |
+|--------|--------|------|------|
+| Active Models | 10 | 活跃模型 | 10 |
+| API Response Time | <100ms | API响应时间 | <100毫秒 |
+| Memory Usage | 32-64MB | 内存使用 | 32-64MB |
+| CPU Usage | 1-2% | CPU使用率 | 1-2% |
+| System Uptime | Real-time tracking | 系统运行时间 | 实时追踪 |
+| Failed Tasks | 0 (current) | 失败任务 | 0（当前） |
 
 ---
 
-## 🤝 贡献指南 | Contributing
+## 🤝 Contributing | 贡献指南
 
-### 中文贡献方式
-我们欢迎所有形式的贡献！
-
-#### 如何贡献
-1. 🍴 Fork 本项目
-2. 🌿 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 💾 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 📤 推送分支 (`git push origin feature/AmazingFeature`)
-5. 🔄 创建 Pull Request
-
-#### 报告问题
-- 🐛 Bug报告：使用Issue模板
-- 💡 功能建议：标记为enhancement
-- 📚 文档改进：标记为documentation
-
-### English Contribution
+### English Version
 We welcome all forms of contribution!
 
 #### How to Contribute
@@ -259,45 +189,89 @@ We welcome all forms of contribution!
 - 💡 Feature requests: Mark as enhancement
 - 📚 Documentation: Mark as documentation
 
----
+### 中文版
+我们欢迎各种形式的贡献！
 
-## 📄 许可证 | License
+#### 如何贡献
+1. 🍴 复刻项目
+2. 🌿 创建功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 💾 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 📤 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 🔄 打开拉取请求
 
-### 中文
-本项目采用 **Apache License 2.0** 开源许可证。
-
-### English
-This project is licensed under the **Apache License 2.0** - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 致谢 | Acknowledgments
-
-### 中文致谢
-- **创作团队邮箱**: silencecrowtom@qq.com
-- **开源社区**: 感谢所有开源贡献者的支持
-- **技术社区**: 感谢技术社区的知识分享
-
-### English Acknowledgments
-- **Creative Team Email**: silencecrowtom@qq.com
-- **Open Source Community**: Thanks to all open source contributors
-- **Technical Community**: Thanks for knowledge sharing from technical communities
+#### 报告问题
+- 🐛 错误报告：使用问题模板
+- 💡 功能请求：标记为增强
+- 📚 文档：标记为文档
 
 ---
 
-## 🔗 相关链接 | Related Links
+## 📄 License | 许可证
 
-- **📧 邮箱联系 | Email**: silencecrowtom@qq.com
-- **🐛 问题反馈 | Issues**: [GitHub Issues](https://github.com/[username]/self-brain/issues)
-- **📖 文档 | Documentation**: [GitHub Wiki](https://github.com/[username]/self-brain/wiki)
-- **💬 讨论 | Discussions**: [GitHub Discussions](https://github.com/[username]/self-brain/discussions)
+**English**: This project is licensed under the **Apache License 2.0** - see the [LICENSE](LICENSE) file for details.
+
+**中文**: 本项目采用 **Apache License 2.0** 许可证 - 详见 [LICENSE](LICENSE) 文件。
+
+---
+
+## 🙏 Acknowledgments | 致谢
+
+| English | 中文 |
+|---------|------|
+| **Creative Team Email**: silencecrowtom@qq.com | **创意团队邮箱**: silencecrowtom@qq.com |
+| **Open Source Community**: Thanks to all open source contributors | **开源社区**: 感谢所有开源贡献者 |
+| **Technical Community**: Thanks for knowledge sharing from technical communities | **技术社区**: 感谢技术社区的知识分享 |
+
+---
+
+## 🔗 Related Links | 相关链接
+
+| English | 中文 |
+|---------|------|
+| 📧 **Email**: silencecrowtom@qq.com | 📧 **邮箱**: silencecrowtom@qq.com |
+| 🐛 **Issues**: [GitHub Issues](https://github.com/[username]/self-brain/issues) | 🐛 **问题**: [GitHub Issues](https://github.com/[username]/self-brain/issues) |
+| 📖 **Documentation**: [GitHub Wiki](https://github.com/[username]/self-brain/wiki) | 📖 **文档**: [GitHub Wiki](https://github.com/[username]/self-brain/wiki) |
+| 💬 **Discussions**: [GitHub Discussions](https://github.com/[username]/self-brain/discussions) | 💬 **讨论**: [GitHub Discussions](https://github.com/[username]/self-brain/discussions) |
+
+---
+
+## ✅ Current System Status | 当前系统状态
+
+**Last Updated**: September 14, 2025 | **最后更新**: 2025年9月14日
+
+### 🟢 System Health | 系统健康
+| English | 中文 |
+|---------|------|
+| **Management Service**: Running on http://localhost:5015 | **管理服务**: 运行于 http://localhost:5015 |
+| **Web Interface**: Running on http://localhost:5000 | **Web界面**: 运行于 http://localhost:5000 |
+| **API Status**: All endpoints operational | **API状态**: 所有端点运行正常 |
+| **Memory Usage**: 32-64MB | **内存使用**: 32-64MB |
+| **CPU Usage**: 1-2% | **CPU使用**: 1-2% |
+
+### 🔄 Available Endpoints | 可用端点
+| Endpoint | Status | Description | 端点 | 状态 | 描述 |
+|----------|--------|-------------|------|------|------|
+| `/api/health` | ✅ 200 OK | Health check endpoint | `/api/health` | ✅ 200 OK | 健康检查端点 |
+| `/api/stats` | ✅ 200 OK | Simplified system statistics | `/api/stats` | ✅ 200 OK | 简化系统统计 |
+| `/api/system/stats` | ✅ 200 OK | Detailed system statistics | `/api/system/stats` | ✅ 200 OK | 详细系统统计 |
+| `/api/models/status` | ✅ 200 OK | All models status | `/api/models/status` | ✅ 200 OK | 所有模型状态 |
+| `/api/models` | ✅ 200 OK | Available models list | `/api/models` | ✅ 200 OK | 可用模型列表 |
+
+### 📊 Real-time Metrics | 实时指标
+| English | 中文 |
+|---------|------|
+| **Active Models**: 10 | **活跃模型**: 10 |
+| **Total Tasks**: 0 | **总任务**: 0 |
+| **Successful Tasks**: 0 | **成功任务**: 0 |
+| **Failed Tasks**: 0 | **失败任务**: 0 |
+| **System Uptime**: Real-time tracking | **系统运行时间**: 实时追踪 |
 
 ---
 
 <div align="center">
   <br>
   <br>
-  <b>Self Brain - 让AI拥有真正的自我 | Giving AI True Self-Awareness</b>
+  <b>Self Brain - Giving AI True Self-Awareness</b>
   <br>
   <br>
   <i>Made with ❤️ by the Self Brain Team</i>

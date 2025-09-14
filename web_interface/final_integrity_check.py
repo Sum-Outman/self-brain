@@ -31,7 +31,7 @@ class FinalIntegrityChecker:
         pages = [
             ('/', 'Home'),
             ('/dashboard', 'Dashboard'),
-            ('/ai_chat', 'AI Chat'),
+
             ('/advanced_chat', 'Advanced Chat'),
             ('/knowledge_base', 'Knowledge Base'),
             ('/model_management', 'Model Management'),
@@ -190,7 +190,7 @@ class FinalIntegrityChecker:
         critical_functions = [
             'page_/',
             'page_/dashboard',
-            'page_/ai_chat',
+
             'page_/knowledge_base',
             'api_/api/system/status',
             'api_/api/models',

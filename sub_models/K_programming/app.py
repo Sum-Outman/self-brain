@@ -768,8 +768,8 @@ try {{
                             'replace': f'# TODO: Refactor {func_name} function to reduce complexity\ndef {func_name}('
                         }
                     })
-        except Exception as e:
-            logger.error(f"Error generating improvement for complex function {func_name}: {str(e)}")
+            except Exception as e:
+                logger.error(f"Error generating improvement for complex function {func_name}: {str(e)}")
         return improvements
 
     def _generate_requirement_improvements(

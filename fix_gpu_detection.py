@@ -68,7 +68,7 @@ def restart_flask_app():
         # 启动新的Flask应用
         print("启动新的Flask应用...")
         subprocess.Popen([sys.executable, 'web_interface/app.py'], 
-                        cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                        cwd=os.path.dirname(os.path.abspath(__file__)))
         
         print("✅ Flask应用已重启")
         print("   等待10秒让应用完全启动...")

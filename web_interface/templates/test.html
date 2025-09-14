@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Function Test</title>
+</head>
+<body>
+    <h1>Function Availability Test</h1>
+    <button onclick="testFunctions()">Test Functions</button>
+    <div id="results"></div>
+
+    <script>
+        function testFunctions() {
+            const results = document.getElementById('results');
+            const functions = ['clearChat', 'sendMessage', 'toggleVoice', 'startRealTimeVoice', 'startRealTimeVideo'];
+            
+            results.innerHTML = '';
+            
+            functions.forEach(func => {
+                const available = typeof window[func] === 'function';
+                const div = document.createElement('div');
+                div.textContent = `${func}: ${available ? 'Available' : 'Not Available'}`;
+                div.style.color = available ? 'green' : 'red';
+                results.appendChild(div);
+            });
+        }
+        
+        // Test immediately
+        window.onload = testFunctions;
+    </script>
+</body>
+</html>
