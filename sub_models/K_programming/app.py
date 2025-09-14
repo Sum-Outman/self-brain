@@ -1373,3 +1373,57 @@ try {{
         })
 
         return suggestions
+
+
+# Flask API endpoints for the programming model
+programming_model = ProgrammingModel()
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    return jsonify({
+        "status": "healthy",
+        "model": "K_programming",
+        "timestamp": time.time()
+    })
+
+@app.route('/generate', methods=['POST'])
+def generate_code():
+    """Generate code based on requirements"""
+    data = request.json
+    if not data or 'description' not in data or 'language' not in data:
+        return jsonify({"error": "Missing description or language"}), 400
+    
+    result = programming_model.generate_code(
+        data['description'], 
+        data['language'], 
+        data.get('context', '')
+    )
+    return jsonify(result)
+
+@app.route('/analyze', methods=['POST'])
+def analyze_code():
+    """Analyze code quality"""
+    data = request.json
+    if not data or 'code' not in data or 'language' not in data:
+        return jsonify({"error": "Missing code or language"}), 400
+    
+    result = programming_model.analyze_code(data['code'], data['language'])
+    return jsonify(result)
+
+@app.route('/status', methods=['GET'])
+def get_status():
+    """Get model status"""
+    return jsonify({
+        "status": "success",
+        "model": "K_programming",
+        "info": {
+            "supported_languages": programming_model.supported_languages,
+            "last_updated": time.strftime("%Y-%m-%d %H:%M:%S")
+        }
+    })
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5011))
+    print(f"K Programming Model running on http://0.0.0.0:{port}")
+    app.run(host='0.0.0.0', port=port, debug=False)

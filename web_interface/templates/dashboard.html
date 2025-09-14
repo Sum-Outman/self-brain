@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - A Management Model{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 mb-0 text-gray-800">System Dashboard</h1>
+            <p class="text-muted">Real-time overview of your AI management system</p>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Active Models</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="active-models">11</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-robot fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total Conversations</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-conversations">156</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-comments fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">System Uptime</div>
+                            <div class="row no-gutters align-items-center">
+                                <div class="col-auto">
+                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800" id="system-uptime">2d 3h</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Response Time</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="response-time">< 200ms</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tachometer-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Resources -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">System Resources</h6>
+                </div>
+                <div class="card-body">
+                    <h4 class="small font-weight-bold">CPU Usage <span class="float-right" id="cpu-percent">45%</span></h4>
+                    <div class="progress mb-4">
+                        <div class="progress-bar bg-danger" role="progressbar" style="width: 45%" id="cpu-bar"></div>
+                    </div>
+                    <h4 class="small font-weight-bold">Memory Usage <span class="float-right" id="memory-percent">62%</span></h4>
+                    <div class="progress mb-4">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 62%" id="memory-bar"></div>
+                    </div>
+                    <h4 class="small font-weight-bold">GPU Usage <span class="float-right" id="gpu-percent">78%</span></h4>
+                    <div class="progress mb-4">
+                        <div class="progress-bar bg-info" role="progressbar" style="width: 78%" id="gpu-bar"></div>
+                    </div>
+                    <h4 class="small font-weight-bold">Disk Usage <span class="float-right" id="disk-percent">35%</span></h4>
+                    <div class="progress">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 35%" id="disk-bar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Activities</h6>
+                </div>
+                <div class="card-body">
+                    <div id="recent-activities">
+                        <div class="activity-item mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-play-circle text-success"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="small text-gray-500">2 minutes ago</div>
+                                    Model A_management started successfully
+                                </div>
+                            </div>
+                        </div>
+                        <div class="activity-item mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-check-circle text-info"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="small text-gray-500">5 minutes ago</div>
+                                    Training session completed
+                                </div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-database text-warning"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="small text-gray-500">10 minutes ago</div>
+                                    Knowledge base updated with new entries
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="/model_management" class="btn btn-primary btn-block">
+                                <i class="fas fa-cogs me-2"></i>Manage Models
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="/knowledge_manage" class="btn btn-success btn-block">
+                                <i class="fas fa-book me-2"></i>Knowledge Base
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="/training" class="btn btn-info btn-block">
+                                <i class="fas fa-graduation-cap me-2"></i>Training Center
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="/" class="btn btn-secondary btn-block">
+                                <i class="fas fa-home me-2"></i>Back to Home
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateDashboardData() {
+    fetch('/api/dashboard/data')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const metrics = data.data;
+                
+                // Update metrics
+                document.getElementById('active-models').textContent = metrics.active_models;
+                document.getElementById('total-conversations').textContent = metrics.total_conversations;
+                document.getElementById('system-uptime').textContent = metrics.system_uptime;
+                document.getElementById('response-time').textContent = metrics.response_time;
+                
+                // Update progress bars
+                document.getElementById('cpu-percent').textContent = metrics.cpu_usage + '%';
+                document.getElementById('cpu-bar').style.width = metrics.cpu_usage + '%';
+                
+                document.getElementById('memory-percent').textContent = metrics.memory_usage + '%';
+                document.getElementById('memory-bar').style.width = metrics.memory_usage + '%';
+                
+                document.getElementById('gpu-percent').textContent = metrics.gpu_usage + '%';
+                document.getElementById('gpu-bar').style.width = metrics.gpu_usage + '%';
+                
+                document.getElementById('disk-percent').textContent = metrics.disk_usage + '%';
+                document.getElementById('disk-bar').style.width = metrics.disk_usage + '%';
+            }
+        })
+        .catch(error => console.error('Error updating dashboard:', error));
+}
+
+// Update dashboard every 10 seconds
+setInterval(updateDashboardData, 10000);
+
+// Initial load
+updateDashboardData();
+</script>
+{% endblock %}

@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+
+{% block title %}Model Management - A Management Model{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 mb-0 text-gray-800">Model Management</h1>
+            <p class="text-muted">Manage and monitor all AI models in your system</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" onclick="refreshModelStatus()">
+                <i class="fas fa-sync-alt me-2"></i>Refresh Status
+            </button>
+        </div>
+    </div>
+
+    <!-- Model Overview -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Models</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-models">11</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-robot fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Active Models</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="active-models-count">11</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                System Load</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="system-load">Normal</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tachometer-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Response Time</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="avg-response-time">< 200ms</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Models List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">All Models</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="modelsTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Model ID</th>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Endpoint</th>
+                                    <th>Version</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="models-tbody">
+                                <!-- Models will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Details Modal -->
+    <div class="modal fade" id="modelDetailsModal" tabindex="-1" role="dialog" aria-labelledby="modelDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modelDetailsModalLabel">Model Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="model-details-content">
+                    <!-- Model details will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const models = [
+    {
+        id: 'A_management',
+        name: 'A Management Model',
+        type: 'management',
+        status: 'active',
+        endpoint: 'http://localhost:5001',
+        version: '1.0.0',
+        description: 'Core management and coordination system'
+    },
+    {
+        id: 'B_language',
+        name: 'Large Language Model',
+        type: 'language',
+        status: 'active',
+        endpoint: 'http://localhost:5002',
+        version: '1.0.0',
+        description: 'Multi-language interaction and emotional reasoning'
+    },
+    {
+        id: 'C_audio',
+        name: 'Audio Processing Model',
+        type: 'audio',
+        status: 'active',
+        endpoint: 'http://localhost:5003',
+        version: '1.0.0',
+        description: 'Speech recognition, tone recognition, audio synthesis'
+    },
+    {
+        id: 'D_image',
+        name: 'Image Visual Processing Model',
+        type: 'image',
+        status: 'active',
+        endpoint: 'http://localhost:5004',
+        version: '1.0.0',
+        description: 'Image content recognition, modification, and generation'
+    },
+    {
+        id: 'E_video',
+        name: 'Video Stream Visual Processing Model',
+        type: 'video',
+        status: 'active',
+        endpoint: 'http://localhost:5005',
+        version: '1.0.0',
+        description: 'Video content recognition, editing, and generation'
+    },
+    {
+        id: 'F_spatial',
+        name: 'Spatial Locator Model',
+        type: 'spatial',
+        status: 'active',
+        endpoint: 'http://localhost:5006',
+        version: '1.0.0',
+        description: 'Spatial recognition, visual modeling, positioning'
+    },
+    {
+        id: 'G_sensor',
+        name: 'Sensor Processor Model',
+        type: 'sensor',
+        status: 'active',
+        endpoint: 'http://localhost:5007',
+        version: '1.0.0',
+        description: 'Process various sensor data inputs'
+    },
+    {
+        id: 'H_computer_control',
+        name: 'Computer Controller Model',
+        type: 'control',
+        status: 'active',
+        endpoint: 'http://localhost:5008',
+        version: '1.0.0',
+        description: 'Command-based computer control with multi-OS compatibility'
+    },
+    {
+        id: 'I_knowledge',
+        name: 'Knowledge Base Expert Model',
+        type: 'knowledge',
+        status: 'active',
+        endpoint: 'http://localhost:5009',
+        version: '1.0.0',
+        description: 'Comprehensive knowledge system to assist other models'
+    },
+    {
+        id: 'J_motion',
+        name: 'Motion and Actuator Control Model',
+        type: 'motion',
+        status: 'active',
+        endpoint: 'http://localhost:5010',
+        version: '1.0.0',
+        description: 'Perform complex control based on perception data'
+    },
+    {
+        id: 'K_programming',
+        name: 'Programming Model',
+        type: 'programming',
+        status: 'active',
+        endpoint: 'http://localhost:5011',
+        version: '1.0.0',
+        description: 'Programming assistance and autonomous code improvement'
+    }
+];
+
+function loadModels() {
+    const tbody = document.getElementById('models-tbody');
+    tbody.innerHTML = '';
+    
+    models.forEach(model => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><strong>${model.id}</strong></td>
+            <td>${model.name}</td>
+            <td><span class="badge bg-secondary">${model.type}</span></td>
+            <td>
+                <span class="badge bg-${model.status === 'active' ? 'success' : 'danger'}">
+                    ${model.status.toUpperCase()}
+                </span>
+            </td>
+            <td><small>${model.endpoint}</small></td>
+            <td>${model.version}</td>
+            <td>
+                <button class="btn btn-sm btn-info" onclick="showModelDetails('${model.id}')">
+                    <i class="fas fa-info-circle"></i> Details
+                </button>
+                <button class="btn btn-sm btn-warning" onclick="restartModel('${model.id}')">
+                    <i class="fas fa-redo"></i> Restart
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function showModelDetails(modelId) {
+    const model = models.find(m => m.id === modelId);
+    if (model) {
+        const content = document.getElementById('model-details-content');
+        content.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6><strong>Model ID:</strong></h6>
+                    <p>${model.id}</p>
+                    
+                    <h6><strong>Name:</strong></h6>
+                    <p>${model.name}</p>
+                    
+                    <h6><strong>Type:</strong></h6>
+                    <p><span class="badge bg-secondary">${model.type}</span></p>
+                    
+                    <h6><strong>Status:</strong></h6>
+                    <p><span class="badge bg-${model.status === 'active' ? 'success' : 'danger'}">${model.status.toUpperCase()}</span></p>
+                </div>
+                <div class="col-md-6">
+                    <h6><strong>Endpoint:</strong></h6>
+                    <p><code>${model.endpoint}</code></p>
+                    
+                    <h6><strong>Version:</strong></h6>
+                    <p>${model.version}</p>
+                    
+                    <h6><strong>Description:</strong></h6>
+                    <p>${model.description}</p>
+                </div>
+            </div>
+        `;
+        
+        const modal = new bootstrap.Modal(document.getElementById('modelDetailsModal'));
+        modal.show();
+    }
+}
+
+function restartModel(modelId) {
+    if (confirm(`Are you sure you want to restart ${modelId}?`)) {
+        // Simulate restart
+        window.notificationSystem.show(`Restarting ${modelId}...`, 'info', 2000);
+        setTimeout(() => {
+            window.notificationSystem.show(`${modelId} restarted successfully`, 'success', 2000);
+        }, 2000);
+    }
+}
+
+function refreshModelStatus() {
+    loadModels();
+    window.notificationSystem.show('Model status refreshed', 'success', 2000);
+}
+
+// Initialize
+loadModels();
+
+// Auto-refresh every 30 seconds
+setInterval(loadModels, 30000);
+</script>
+{% endblock %}

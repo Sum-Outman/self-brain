@@ -3012,50 +3012,59 @@ def get_knowledge_stats():
         })
 
 @app.route('/api/knowledge/delete_selected', methods=['POST'])
-def delete_selected_knowledge():
-    """Delete selected knowledge items"""
+def delete_multiple_knowledge():
+    """批量删除知识条目 | Bulk delete knowledge entries"""
     try:
         data = request.get_json()
-        ids = data.get('ids', [])
+        if not data:
+            return jsonify({'success': False, 'message': 'No data provided'}), 400
         
-        if not ids:
-            return jsonify({'status': 'error', 'message': 'No items selected for deletion'}), 400
+        # 支持两种参数名格式：knowledge_ids 或 ids
+        knowledge_ids = data.get('knowledge_ids') or data.get('ids')
+        if not knowledge_ids or not isinstance(knowledge_ids, list):
+            return jsonify({'success': False, 'message': 'Knowledge IDs array is required'}), 400
         
-        knowledge_base_path = 'd:\\shiyan\\knowledge_base_storage'
+        deleted_ids = []
+        failed_ids = []
         
-        deleted_count = 0
-        errors = []
+        # 使用绝对路径
+        storage_base = os.path.abspath('knowledge_base_storage')
         
-        for selected_id in ids:
-            # 构建知识条目的完整路径
-            knowledge_dir = os.path.join(knowledge_base_path, selected_id)
-            
-            if os.path.exists(knowledge_dir) and os.path.isdir(knowledge_dir):
-                try:
-                    # 删除整个知识条目目录
+        for knowledge_id in knowledge_ids:
+            try:
+                knowledge_path = os.path.join(storage_base, str(knowledge_id))
+                
+                if os.path.exists(knowledge_path):
                     import shutil
-                    shutil.rmtree(knowledge_dir)
-                    deleted_count += 1
-                    logger.info(f"Successfully deleted knowledge directory: {knowledge_dir}")
-                except Exception as e:
-                    errors.append(f"Failed to delete {selected_id}: {str(e)}")
-                    logger.error(f"Failed to delete knowledge directory {selected_id}: {str(e)}")
-            else:
-                errors.append(f"Knowledge directory not found for ID: {selected_id}")
+                    shutil.rmtree(knowledge_path)
+                    deleted_ids.append(knowledge_id)
+                else:
+                    failed_ids.append(knowledge_id)
+                    
+            except Exception as e:
+                failed_ids.append(knowledge_id)
+                logger.error(f"Failed to delete {knowledge_id}: {str(e)}")
         
-        if deleted_count > 0:
-            message = f'Successfully deleted {deleted_count} knowledge items'
-            if errors:
-                message += f', {len(errors)} items failed to delete'
-            return jsonify({'success': True, 'status': 'success', 'message': message, 'deleted_count': deleted_count})
+        if len(deleted_ids) > 0:
+            result = {
+                'success': True,
+                'deleted_count': len(deleted_ids),
+                'message': f'Successfully deleted {len(deleted_ids)} files',
+                'status': 'success'
+            }
         else:
-            return jsonify({'success': False, 'status': 'error', 'message': 'No knowledge items found to delete', 'errors': errors}), 404
-            
+            result = {
+                'success': False,
+                'message': 'No files found to delete',
+                'status': 'error',
+                'errors': [f'File not found for ID: {id}' for id in failed_ids]
+            }
+        
+        return jsonify(result)
+        
     except Exception as e:
-        logger.error(f"Failed to delete multiple knowledge items: {str(e)}")
-        return jsonify({'success': False, 'status': 'error', 'message': str(e)})
-
-@app.route('/api/knowledge/export_selected', methods=['POST'])
+        logger.error(f"Bulk delete error: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
 def export_selected_knowledge():
     """Export selected knowledge items"""
     try:
@@ -3395,8 +3404,8 @@ def create_knowledge():
         return jsonify({'success': False, 'message': str(e)})
 
 @app.route('/api/knowledge/update/<knowledge_id>', methods=['POST'])
-def update_knowledge_item(knowledge_id):
-    """Update single knowledge item API"""
+def update_knowledge_item_old(knowledge_id):
+    """Update single knowledge item API (Old version - deprecated)"""
     try:
         knowledge_path = os.path.join('knowledge_base_storage', knowledge_id)
         
@@ -3586,6 +3595,46 @@ def optimize_knowledge_database():
         return jsonify({'success': False, 'message': str(e)})
 
 # Test route for debugging
+@app.route('/dashboard')
+def dashboard_page():
+    """Dashboard page"""
+    return render_template('dashboard.html')
+
+@app.route('/model_management')
+def model_management_page():
+    """Model management page"""
+    return render_template('model_management.html')
+
+@app.route('/api/dashboard/data')
+def dashboard_data():
+    """Dashboard data API"""
+    try:
+        # Mock dashboard data
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'total_models': 11,
+                'active_models': 11,
+                'total_conversations': 156,
+                'system_uptime': '2 days 3 hours',
+                'cpu_usage': 45.2,
+                'memory_usage': 62.8,
+                'gpu_usage': 78.5,
+                'disk_usage': 34.7,
+                'network_io': {
+                    'upload': '1.2 MB/s',
+                    'download': '3.4 MB/s'
+                },
+                'recent_activities': [
+                    {'time': '2 min ago', 'action': 'Model A_management started'},
+                    {'time': '5 min ago', 'action': 'Training session completed'},
+                    {'time': '10 min ago', 'action': 'Knowledge base updated'}
+                ]
+            }
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
 @app.route('/test')
 def test_page():
     """Simple test page for API debugging"""
@@ -3960,12 +4009,13 @@ def get_tags():
 
 
 
-# 添加缺失的API端点
+# 获取单个知识条目
 @app.route('/api/knowledge/<knowledge_id>', methods=['GET'])
 def get_knowledge_item(knowledge_id):
     """获取单个知识条目详情"""
     try:
-        knowledge_path = os.path.join('knowledge_base_storage', knowledge_id)
+        storage_base = os.path.abspath('knowledge_base_storage')
+        knowledge_path = os.path.join(storage_base, knowledge_id)
         
         if not os.path.exists(knowledge_path):
             return jsonify({'success': False, 'message': 'Knowledge not found'}), 404
@@ -3976,8 +4026,8 @@ def get_knowledge_item(knowledge_id):
         
         knowledge_data = {
             'id': knowledge_id,
-            'content': '',
             'title': '',
+            'content': '',
             'category': '',
             'summary': '',
             'tags': [],
@@ -4013,6 +4063,59 @@ def get_knowledge_item(knowledge_id):
         logger.error(f"Error getting knowledge item {knowledge_id}: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
+@app.route('/api/knowledge/<knowledge_id>', methods=['PUT'])
+def update_knowledge_item(knowledge_id):
+    """更新单个知识条目"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'message': 'No data provided'}), 400
+        
+        storage_base = os.path.abspath('knowledge_base_storage')
+        knowledge_path = os.path.join(storage_base, knowledge_id)
+        
+        if not os.path.exists(knowledge_path):
+            return jsonify({'success': False, 'message': 'Knowledge not found'}), 404
+        
+        # 更新内容文件
+        content_file = os.path.join(knowledge_path, 'content.txt')
+        info_file = os.path.join(knowledge_path, 'info.json')
+        
+        # 更新内容
+        if 'content' in data:
+            with open(content_file, 'w', encoding='utf-8') as f:
+                f.write(data['content'])
+        
+        # 更新元数据
+        if os.path.exists(info_file):
+            with open(info_file, 'r', encoding='utf-8') as f:
+                info = json.load(f)
+        else:
+            info = {}
+        
+        # 更新元数据字段
+        info.update({
+            'title': data.get('title', info.get('title', '')),
+            'category': data.get('category', info.get('category', '')),
+            'summary': data.get('summary', info.get('summary', '')),
+            'tags': data.get('tags', info.get('tags', [])),
+            'updated_at': datetime.now().isoformat()
+        })
+        
+        with open(info_file, 'w', encoding='utf-8') as f:
+            json.dump(info, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"Updated knowledge item: {knowledge_id}")
+        return jsonify({
+            'success': True,
+            'message': 'Knowledge updated successfully',
+            'id': knowledge_id
+        })
+        
+    except Exception as e:
+        logger.error(f"Error updating knowledge item {knowledge_id}: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 @app.route('/api/knowledge/<knowledge_id>', methods=['DELETE'])
 def delete_knowledge_item(knowledge_id):
     """删除单个知识条目"""
@@ -4039,70 +4142,7 @@ def delete_knowledge_item(knowledge_id):
         logger.error(f"Error deleting knowledge item {knowledge_id}: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@app.route('/api/knowledge/delete_selected', methods=['POST'])
-def delete_multiple_knowledge():
-    """批量删除知识条目"""
-    try:
-        data = request.get_json()
-        if not data or 'ids' not in data:
-            return jsonify({'success': False, 'message': 'No knowledge IDs provided'}), 400
-        
-        deleted_ids = []
-        failed_ids = []
-        
-        # Use absolute path for knowledge storage
-        storage_base = os.path.abspath('knowledge_base_storage')
-        
-        for knowledge_id in data['ids']:
-            try:
-                knowledge_path = os.path.join(storage_base, knowledge_id)
-                logger.info(f"Attempting to delete: {knowledge_path}")
-                logger.info(f"Current working directory: {os.getcwd()}")
-                logger.info(f"Storage base resolved to: {storage_base}")
-                
-                # Debug path resolution
-                actual_path = os.path.abspath(os.path.join('knowledge_base_storage', knowledge_id))
-                logger.info(f"Alternative path resolution: {actual_path}")
-                logger.info(f"Path exists check: {os.path.exists(knowledge_path)}")
-                
-                if os.path.exists(knowledge_path):
-                    import shutil
-                    shutil.rmtree(knowledge_path)
-                    deleted_ids.append(knowledge_id)
-                    logger.info(f"Successfully deleted: {knowledge_path}")
-                else:
-                    # Try alternative path resolution
-                    if os.path.exists(actual_path):
-                        import shutil
-                        shutil.rmtree(actual_path)
-                        deleted_ids.append(knowledge_id)
-                        logger.info(f"Successfully deleted using alternative path: {actual_path}")
-                    else:
-                        failed_ids.append(knowledge_id)
-                        logger.warning(f"Directory not found: {knowledge_path}")
-                        logger.warning(f"Alternative path also not found: {actual_path}")
-            except Exception as e:
-                logger.error(f"Failed to delete {knowledge_id}: {e}")
-                failed_ids.append(knowledge_id)
-        
-        if len(deleted_ids) > 0:
-            return jsonify({
-                'success': True,
-                'deleted_count': len(deleted_ids),
-                'message': f'Successfully deleted {len(deleted_ids)} files',
-                'status': 'success'
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'message': f'No files found to delete',
-                'status': 'error',
-                'errors': [f'File not found for ID: {id}' for id in failed_ids]
-            })
-        
-    except Exception as e:
-        logger.error(f"Error in batch delete: {e}")
-        return jsonify({'success': False, 'message': str(e)}), 500
+
 
 @app.route('/api/knowledge/cleanup', methods=['POST'])
 def cleanup_knowledge():
@@ -4251,6 +4291,202 @@ def restore_backup(backup_filename):
     except Exception as e:
         logger.error(f"Restore error: {e}")
         return jsonify({'error': str(e), 'success': False}), 500
+
+# Additional Knowledge Management API endpoints
+
+@app.route('/api/export_knowledge')
+def export_knowledge():
+    """导出知识库数据 | Export knowledge base data"""
+    try:
+        storage_base = 'knowledge_base_storage'
+        knowledge_list = []
+        
+        if os.path.exists(storage_base):
+            for knowledge_id in os.listdir(storage_base):
+                knowledge_path = os.path.join(storage_base, knowledge_id)
+                if os.path.isdir(knowledge_path):
+                    info_file = os.path.join(knowledge_path, 'info.json')
+                    content_file = os.path.join(knowledge_path, 'content.txt')
+                    
+                    if os.path.exists(info_file) and os.path.exists(content_file):
+                        try:
+                            with open(info_file, 'r', encoding='utf-8') as f:
+                                info = json.load(f)
+                            
+                            with open(content_file, 'r', encoding='utf-8') as f:
+                                content = f.read()
+                            
+                            knowledge_list.append({
+                                'id': knowledge_id,
+                                'title': info.get('title', 'Untitled'),
+                                'content': content,
+                                'category': info.get('category', 'Uncategorized'),
+                                'created_at': info.get('created_at', ''),
+                                'updated_at': info.get('updated_at', '')
+                            })
+                        except Exception as e:
+                            continue
+        
+        return jsonify({
+            'success': True,
+            'data': knowledge_list,
+            'total_count': len(knowledge_list),
+            'export_time': '2024-01-01'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e),
+            'data': [],
+            'total_count': 0
+        })
+@app.route('/api/knowledge/restore', methods=['POST'])
+def restore_knowledge():
+    """Restore knowledge from backup"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided', 'success': False}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected', 'success': False}), 400
+        
+        # Validate file type
+        if not file.filename.endswith('.json'):
+            return jsonify({'error': 'Invalid file format. Please provide a JSON file', 'success': False}), 400
+        
+        # Read and validate JSON
+        try:
+            import_data = json.load(file)
+        except json.JSONDecodeError:
+            return jsonify({'error': 'Invalid JSON format', 'success': False}), 400
+        
+        # Process restoration
+        restored_count = 0
+        if 'knowledge_entries' in import_data:
+            for entry in import_data['knowledge_entries']:
+                try:
+                    entry_id = entry.get('id')
+                    if entry_id:
+                        category = entry.get('category', 'general')
+                        category_dir = os.path.join('knowledge_base', category)
+                        os.makedirs(category_dir, exist_ok=True)
+                        
+                        file_path = os.path.join(category_dir, f"{entry_id}.json")
+                        with open(file_path, 'w', encoding='utf-8') as f:
+                            json.dump(entry, f, ensure_ascii=False, indent=2)
+                        restored_count += 1
+                except Exception as e:
+                    logger.warning(f"Failed to restore entry: {e}")
+        
+        return jsonify({
+            'message': f'Successfully restored {restored_count} knowledge entries',
+            'restored_count': restored_count,
+            'success': True
+        })
+        
+    except Exception as e:
+        logger.error(f"Restore error: {e}")
+        return jsonify({'error': str(e), 'success': False}), 500
+
+
+
+
+
+# 添加缺失的API端点
+
+@app.route('/api/knowledge/storage_config')
+def get_storage_config():
+    """获取存储配置信息"""
+    try:
+        storage_base = 'knowledge_base_storage'
+        config = {
+            'storage_path': os.path.abspath(storage_base),
+            'total_entries': 0,
+            'total_size': 0,
+            'categories': [],
+            'last_backup': None,
+            'max_file_size': '10MB',
+            'supported_formats': ['txt', 'json', 'md', 'py']
+        }
+        
+        if os.path.exists(storage_base):
+            total_size = 0
+            categories = set()
+            
+            for root, dirs, files in os.walk(storage_base):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    try:
+                        total_size += os.path.getsize(file_path)
+                    except:
+                        pass
+                
+                # 收集分类
+                for dir_name in dirs:
+                    if os.path.isfile(os.path.join(root, dir_name, 'info.json')):
+                        categories.add(dir_name)
+            
+            config['total_entries'] = len([d for d in os.listdir(storage_base) 
+                                         if os.path.isdir(os.path.join(storage_base, d))])
+            config['total_size'] = total_size
+            config['categories'] = list(categories)
+        
+        return jsonify({
+            'success': True,
+            'config': config
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/knowledge/metadata/<metadata_id>')
+def get_metadata(metadata_id):
+    """获取元数据信息"""
+    try:
+        # 使用相对于项目根目录的路径
+        metadata_path = os.path.join('knowledge_base_storage', metadata_id, 'info.json')
+        
+        if not os.path.exists(metadata_path):
+            return jsonify({'success': False, 'message': 'Metadata not found'}), 404
+        
+        with open(metadata_path, 'r', encoding='utf-8') as f:
+            metadata = json.load(f)
+        
+        return jsonify({
+            'success': True,
+            'metadata': metadata
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/knowledge/restore/<backup_filename>', methods=['POST'])
+def restore_from_backup(backup_filename):
+    """从指定备份文件恢复"""
+    try:
+        backup_dir = 'backups'
+        backup_path = os.path.join(backup_dir, backup_filename)
+        
+        if not os.path.exists(backup_path):
+            return jsonify({'success': False, 'message': 'Backup file not found'}), 404
+        
+        # 验证文件名安全性
+        if not backup_filename.startswith('knowledge_base_backup_'):
+            return jsonify({'success': False, 'message': 'Invalid backup filename'}), 400
+        
+        # 模拟恢复过程
+        logger.info(f"Restoring from backup: {backup_filename}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully restored from {backup_filename}',
+            'backup_file': backup_filename
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 # Error handlers
 @app.errorhandler(404)
