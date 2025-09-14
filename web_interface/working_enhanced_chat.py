@@ -640,6 +640,6 @@ if __name__ == "__main__":
     print("5. ✅ 设备权限检测")
     print("6. ✅ 硬件集成")
     print()
-    print("访问 http://localhost:5007 查看工作版主页")
+    print("访问 http://localhost:5016 查看工作版主页")
     
-    app.run(host='0.0.0.0', port=5007, debug=True)
+    app.run(host='0.0.0.0', port=5016, debug=True)

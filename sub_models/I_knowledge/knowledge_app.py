@@ -631,7 +631,7 @@ if __name__ == '__main__':
     print("📊 统计信息：http://localhost:8003/api/statistics")
     print("=" * 50)
     
-    app.run(host='0.0.0.0', port=8003, debug=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=5009, debug=True, use_reloader=False)
 
 # 在现有导入之后添加多媒体支持
 from flask import Flask, request, jsonify, render_template, send_from_directory, session
@@ -1182,4 +1182,4 @@ if __name__ == '__main__':
     print("🎉 系统已全面上线，欢迎使用！")
     print("=" * 60)
     
-    app.run(host='0.0.0.0', port=8003, debug=True)
+    app.run(host='0.0.0.0', port=5009, debug=True)

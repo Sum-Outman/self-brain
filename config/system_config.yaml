@@ -3,19 +3,19 @@
 
 # 端口配置 - Port Configuration
 ports:
-  manager: 5000
-  language: 5001
-  audio: 5002
-  image: 5003
-  video: 5004
-  spatial: 5005
-  sensor: 5006
-  computer_control: 5007
-  knowledge: 5008
-  motion: 5009
-  programming: 5010
-  web_backend: 8000
-  web_frontend: 8080
+  manager: 5015
+  language: 5002
+  audio: 5003
+  image: 5004
+  video: 5005
+  spatial: 5006
+  sensor: 5007
+  computer_control: 5008
+  knowledge: 5009
+  motion: 5010
+  programming: 5011
+  web_backend: 5000
+  web_frontend: 5000
 
 # 模型配置 - Model Configuration
 models:
@@ -108,7 +108,7 @@ security:
   
   # CORS配置 - CORS Configuration
   cors:
-    allowed_origins: ["http://localhost:8080", "http://127.0.0.1:8080"]
+    allowed_origins: ["http://localhost:5000", "http://127.0.0.1:5000", "http://localhost:5015", "http://127.0.0.1:5015"]
     allowed_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     allowed_headers: ["*"]
     allow_credentials: true

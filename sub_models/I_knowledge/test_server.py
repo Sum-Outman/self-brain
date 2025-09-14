@@ -26,4 +26,4 @@ if __name__ == '__main__':
     test_thread.start()
     
     # 启动Flask应用
-    app.run(host='0.0.0.0', port=8003, debug=False)
+    app.run(host='0.0.0.0', port=5009, debug=False)

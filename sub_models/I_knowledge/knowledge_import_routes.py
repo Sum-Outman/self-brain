@@ -702,4 +702,4 @@ if __name__ == '__main__':
     print("📊 统计信息：http://localhost:8003/api/statistics")
     print("=" * 50)
     
-    app.run(host='0.0.0.0', port=8003, debug=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=5009, debug=True, use_reloader=False)

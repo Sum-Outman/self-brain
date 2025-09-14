@@ -66,7 +66,7 @@ class MotionController:
         """Modbus TCP设备控制实现"""
         try:
             if not self.modbus_client or not self.modbus_client.is_socket_open():
-                self.modbus_client = ModbusTcpClient('127.0.0.1', port=502)
+                self.modbus_client = ModbusTcpClient('127.0.0.1', port=5010)
                 self.modbus_client.connect()
             
             # Parse command (example: "write_register:40001=100")
