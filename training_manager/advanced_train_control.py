@@ -157,10 +157,13 @@ class AdvancedTrainingController:
             "knowledge_sharing_events": 0
         }
         
-        # Training queue
+        # Training control
         self.training_queue = deque()
         self.is_training = False
         self.training_thread = None
+        self.pause_event = threading.Event()
+        self.pause_event.set()  # Initially not paused
+        self.training_lock = threading.Lock()
         
         # Model registry - Enhanced
         self.model_registry = self._initialize_enhanced_model_registry()
@@ -827,14 +830,45 @@ class AdvancedTrainingController:
             
             # Record training result
             self.performance_metrics["total_trainings"] += 1
-            if result["status"] == "success":
+            training_success = result["status"] == "success"
+            if training_success:
                 self.performance_metrics["successful_trainings"] += 1
             else:
                 self.performance_metrics["failed_trainings"] += 1
             
+            # Create training record
+            training_record = {
+                "training_id": training_id,
+                "mode": mode.value,
+                "models": model_names,
+                "config": config,
+                "status": result["status"],
+                "start_time": self.training_status["start_time"],
+                "end_time": datetime.now().isoformat(),
+                "duration": result.get("duration", 0),
+                "message": result.get("message", "Training completed"),
+                "metrics": {
+                    "final_loss": result.get("final_loss", 0.0),
+                    "final_accuracy": result.get("final_accuracy", 0.0),
+                    "epochs_completed": self.training_status["current_epoch"]
+                }
+            }
+            
+            # Add to training history
+            self.training_history.append(training_record)
+            
+            # Update model registry with training session info
+            for model_name in model_names:
+                if model_name in self.model_registry:
+                    self.model_registry[model_name]["training_history"].append(training_record)
+                    self.model_registry[model_name]["last_trained"] = datetime.now().isoformat()
+                    self.model_registry[model_name]["training_sessions"] += 1
+                    if training_success:
+                        self.model_registry[model_name]["total_training_time"] += result.get("duration", 0)
+            
             # Update training status
             self.training_status["current_status"] = (
-                TrainingStatus.COMPLETED.value if result["status"] == "success" 
+                TrainingStatus.COMPLETED.value if training_success 
                 else TrainingStatus.FAILED.value
             )
             self.training_status["end_time"] = datetime.now().isoformat()
@@ -857,6 +891,150 @@ class AdvancedTrainingController:
             self.training_status["end_time"] = datetime.now().isoformat()
             self.is_training = False
             self.performance_metrics["failed_trainings"] += 1
+
+    def reset_training(self, session_id: Optional[str] = None) -> Dict[str, Any]:
+        """Reset training session - Enhanced version"""
+        try:
+            with self.training_lock:
+                # Stop any ongoing training
+                if self.is_training and self.training_thread and self.training_thread.is_alive():
+                    self.stop_training()
+                    time.sleep(1)  # Allow thread to stop gracefully
+                
+                # Reset training status
+                self.training_status.update({
+                    "current_mode": TrainingMode.INDIVIDUAL.value,
+                    "current_status": TrainingStatus.IDLE.value,
+                    "active_models": [],
+                    "progress": 0.0,
+                    "current_epoch": 0,
+                    "total_epochs": 0,
+                    "start_time": None,
+                    "end_time": None,
+                    "metrics": {},
+                    "collaboration_level": "basic",
+                    "knowledge_assist_enabled": False,
+                    "knowledge_model_id": None
+                })
+                
+                # Clear training queue
+                self.training_queue.clear()
+                
+                # Reset pause state
+                self.pause_event.set()
+                
+                # Reset collaboration statistics
+                self.collaboration_stats = {
+                    "total_collaborations": 0,
+                    "successful_collaborations": 0,
+                    "model_interactions": defaultdict(int),
+                    "knowledge_sharing_events": 0
+                }
+                
+                # Clear training thread reference
+                self.training_thread = None
+                self.is_training = False
+                
+                # Force garbage collection
+                gc.collect()
+                
+                logger.info(f"Training reset completed for session: {session_id or 'default'}")
+                
+                return {
+                    "status": "success",
+                    "message": "Training session reset successfully",
+                    "session_id": session_id or "default"
+                }
+                
+        except Exception as e:
+            error_msg = str(e)
+            logger.error(f"Training reset failed: {error_msg}")
+            return {
+                "status": "error",
+                "message": f"Training reset failed: {error_msg}"
+            }
+
+    def get_training_metrics(self) -> Dict[str, Any]:
+        """Get comprehensive training metrics - Enhanced version"""
+        try:
+            # Calculate system metrics
+            cpu_percent = psutil.cpu_percent(interval=1)
+            memory = psutil.virtual_memory()
+            disk = psutil.disk_usage('/')
+            
+            # GPU metrics (if available)
+            gpu_metrics = {}
+            try:
+                import torch
+                if torch.cuda.is_available():
+                    gpu_metrics = {
+                        "gpu_count": torch.cuda.device_count(),
+                        "gpu_memory_used": torch.cuda.memory_allocated() / (1024**3),  # GB
+                        "gpu_memory_total": torch.cuda.get_device_properties(0).total_memory / (1024**3),  # GB
+                        "gpu_utilization": 0.0  # Placeholder for actual GPU utilization
+                    }
+            except ImportError:
+                gpu_metrics = {"gpu_available": False}
+            
+            # Training-specific metrics
+            training_metrics = {
+                "current_status": self.training_status["current_status"],
+                "current_mode": self.training_status["current_mode"],
+                "active_models": self.training_status["active_models"],
+                "progress": self.training_status["progress"],
+                "current_epoch": self.training_status["current_epoch"],
+                "total_epochs": self.training_status["total_epochs"],
+                "start_time": self.training_status["start_time"],
+                "elapsed_time": None
+            }
+            
+            # Calculate elapsed time
+            if self.training_status["start_time"]:
+                start_time = datetime.fromisoformat(self.training_status["start_time"])
+                elapsed = datetime.now() - start_time
+                training_metrics["elapsed_time"] = str(elapsed).split('.')[0]  # Remove microseconds
+            
+            # Performance metrics
+            performance_metrics = dict(self.performance_metrics)
+            
+            # Collaboration metrics
+            collaboration_metrics = dict(self.collaboration_stats)
+            
+            # Model registry summary
+            model_summary = {}
+            for model_name, model_info in self.model_registry.items():
+                model_summary[model_name] = {
+                    "status": model_info["current_status"],
+                    "last_trained": model_info["last_trained"],
+                    "training_sessions": model_info["training_sessions"],
+                    "collaboration_score": model_info["collaboration_score"],
+                    "knowledge_utilization": model_info["knowledge_utilization"]
+                }
+            
+            return {
+                "status": "success",
+                "timestamp": datetime.now().isoformat(),
+                "system": {
+                    "cpu_percent": cpu_percent,
+                    "memory_percent": memory.percent,
+                    "memory_available_gb": memory.available / (1024**3),
+                    "disk_percent": disk.percent,
+                    "disk_free_gb": disk.free / (1024**3)
+                },
+                "gpu": gpu_metrics,
+                "training": training_metrics,
+                "performance": performance_metrics,
+                "collaboration": collaboration_metrics,
+                "models": model_summary
+            }
+            
+        except Exception as e:
+            error_msg = str(e)
+            logger.error(f"Failed to get training metrics: {error_msg}")
+            return {
+                "status": "error",
+                "message": f"Failed to get training metrics: {error_msg}"
+            }
     
     def _execute_individual_training(self, training_id: str, model_names: List[str], 
                                    config: Dict[str, Any]) -> Dict[str, Any]:
@@ -972,7 +1150,7 @@ class AdvancedTrainingController:
         return self._execute_individual_training(training_id, model_names, pretraining_config)
     
     def _simulate_model_training(self, model_name: str, epochs: int, config: Dict[str, Any]) -> Dict[str, Any]:
-        """Simulate model training process"""
+        """Simulate model training process with pause/resume support"""
         try:
             # Simulate training duration based on model type and epochs
             base_duration = 60  # 60 seconds base
@@ -994,14 +1172,21 @@ class AdvancedTrainingController:
             if self.training_status.get("cancel_requested", False):
                 return {"status": "cancelled", "message": "Training cancelled"}
             
-            # Simulate epoch progress
+            # Simulate epoch progress with pause support
             for epoch in range(epochs):
+                # Check for pause
+                self.pause_event.wait()  # This will block if paused
+                
+                # Check if training was cancelled while paused
+                if self.training_status.get("cancel_requested", False):
+                    return {"status": "cancelled", "message": "Training cancelled"}
+                
                 # Update epoch progress
                 self.training_status["current_epoch"] = epoch + 1
                 self.training_status["progress"] = ((epoch + 1) / epochs) * 100
                 
                 # Simulate training for each batch
-                time.sleep(0.1)  # Simulate training time
+                time.sleep(1.0)  # Increase sleep time to make training longer for testing
                 
                 # Check if training was cancelled
                 if self.training_status.get("cancel_requested", False):
@@ -1022,17 +1207,25 @@ class AdvancedTrainingController:
     
     def pause_training(self) -> Dict[str, Any]:
         """Pause current training"""
-        if self.is_training:
-            self.training_status["current_status"] = TrainingStatus.PAUSED.value
-            return {"status": "success", "message": "Training paused"}
-        return {"status": "error", "message": "No active training to pause"}
+        with self.training_lock:
+            if self.is_training and self.training_status["current_status"] == TrainingStatus.TRAINING.value:
+                self.pause_event.clear()  # Pause the training
+                self.training_status["current_status"] = TrainingStatus.PAUSED.value
+                return {"status": "success", "message": "Training paused"}
+            elif self.training_status["current_status"] == TrainingStatus.PAUSED.value:
+                return {"status": "error", "message": "Training already paused"}
+            else:
+                return {"status": "error", "message": "No active training to pause"}
     
     def resume_training(self) -> Dict[str, Any]:
         """Resume paused training"""
-        if self.training_status["current_status"] == TrainingStatus.PAUSED.value:
-            self.training_status["current_status"] = TrainingStatus.TRAINING.value
-            return {"status": "success", "message": "Training resumed"}
-        return {"status": "error", "message": "No paused training to resume"}
+        with self.training_lock:
+            if self.training_status["current_status"] == TrainingStatus.PAUSED.value:
+                self.pause_event.set()  # Resume the training
+                self.training_status["current_status"] = TrainingStatus.TRAINING.value
+                return {"status": "success", "message": "Training resumed"}
+            else:
+                return {"status": "error", "message": "No paused training to resume"}
     
     def stop_training(self) -> Dict[str, Any]:
         """Stop current training"""

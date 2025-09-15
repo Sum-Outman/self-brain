@@ -1,0 +1,297 @@
+version: '3.8'
+
+services:
+  # Production Management Service
+  manager:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: self-brain-manager-prod
+    command: gunicorn --bind 0.0.0.0:5000 --workers=4 --timeout=120 manager_model.app:app
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./models:/app/models
+    environment:
+      - PYTHONPATH=/app
+      - FLASK_ENV=production
+      - GUNICORN_CMD_ARGS=--max-requests 1000 --max-requests-jitter 100
+    depends_on:
+      - d_image
+      - e_video
+      - f_spatial
+      - g_sensor
+      - h_computer_control
+      - i_knowledge
+      - j_motion
+      - k_programming
+    networks:
+      - self-brain-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Production Image Processing Service
+  d_image:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: self-brain-d-image-prod
+    command: gunicorn --bind 0.0.0.0:5004 --workers=2 --timeout=120 sub_models.D_image.app:app
+    ports:
+      - "5004:5004"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+      - PORT=5004
+      - GUNICORN_CMD_ARGS=--max-requests 1000 --max-requests-jitter 100
+    networks:
+      - self-brain-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Production Video Processing Service
+  e_video:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: self-brain-e-video-prod
+    command: gunicorn --bind 0.0.0.0:5005 --workers=2 --timeout=120 sub_models.E_video.app:app
+    ports:
+      - "5005:5005"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+      - PORT=5005
+      - GUNICORN_CMD_ARGS=--max-requests 1000 --max-requests-jitter 100
+    networks:
+      - self-brain-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Production Spatial Positioning Service
+  f_spatial:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: self-brain-f-spatial-prod
+    command: gunicorn --bind 0.0.0.0:5006 --workers=2 --timeout=120 sub_models.F_spatial.app:app
+    ports:
+      - "5006:5006"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+      - PORT=5006
+      - GUNICORN_CMD_ARGS=--max-requests 1000 --max-requests-jitter 100
+    networks:
+      - self-brain-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Production Sensor Service
+  g_sensor:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: self-brain-g-sensor-prod
+    command: gunicorn --bind 0.0.0.0:5007 --workers=2 --timeout=120 sub_models.G_sensor.app:app
+    ports:
+      - "5007:5007"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+      - PORT=5007
+      - GUNICORN_CMD_ARGS=--max-requests 1000 --max-requests-jitter 100
+    networks:
+      - self-brain-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5007/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Production Computer Control Service
+  h_computer_control:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: self-brain-h-control-prod
+    command: gunicorn --bind 0.0.0.0:5008 --workers=2 --timeout=120 sub_models.H_computer_control.app:app
+    ports:
+      - "5008:5008"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+      - PORT=5008
+      - GUNICORN_CMD_ARGS=--max-requests 1000 --max-requests-jitter 100
+    networks:
+      - self-brain-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5008/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Production Knowledge Service
+  i_knowledge:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: self-brain-i-knowledge-prod
+    command: gunicorn --bind 0.0.0.0:5009 --workers=2 --timeout=120 sub_models.I_knowledge.app:app
+    ports:
+      - "5009:5009"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+      - PORT=5009
+      - GUNICORN_CMD_ARGS=--max-requests 1000 --max-requests-jitter 100
+    networks:
+      - self-brain-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5009/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Production Motion Control Service
+  j_motion:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: self-brain-j-motion-prod
+    command: gunicorn --bind 0.0.0.0:5010 --workers=2 --timeout=120 sub_models.J_motion.app:app
+    ports:
+      - "5010:5010"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+      - PORT=5010
+      - GUNICORN_CMD_ARGS=--max-requests 1000 --max-requests-jitter 100
+    networks:
+      - self-brain-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5010/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Production Programming Service
+  k_programming:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: self-brain-k-programming-prod
+    command: gunicorn --bind 0.0.0.0:5011 --workers=2 --timeout=120 sub_models.K_programming.app:app
+    ports:
+      - "5011:5011"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+      - PORT=5011
+      - GUNICORN_CMD_ARGS=--max-requests 1000 --max-requests-jitter 100
+    networks:
+      - self-brain-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5011/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Production Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: self-brain-nginx-prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - web_interface
+    networks:
+      - self-brain-network
+    restart: unless-stopped
+
+  # Monitoring (Optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: self-brain-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - self-brain-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: self-brain-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    networks:
+      - self-brain-network
+    restart: unless-stopped
+
+networks:
+  self-brain-network:
+    driver: bridge
+
+volumes:
+  data:
+  logs:
+  models:
+  grafana-storage:

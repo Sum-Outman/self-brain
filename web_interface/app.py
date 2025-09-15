@@ -1017,9 +1017,13 @@ def start_training():
         model_ids = data.get('model_ids', [])
         if not isinstance(model_ids, list) or not model_ids:
             return jsonify({'status': 'error', 'message': 'model_ids must be a non-empty list'}), 400
-        
-        print(f"DEBUG: Starting training with models: {model_ids}")
-        
+
+        training_name = data.get('name', '').strip()
+        if not training_name:
+            return jsonify({'status': 'error', 'message': 'Training name is required'}), 400
+
+        print(f"DEBUG: Starting training '{training_name}' with models: {model_ids}")
+
         mode_str = data.get('mode', 'joint')
         valid_modes = {'individual', 'joint', 'transfer', 'fine_tune'}
         if mode_str not in valid_modes:
@@ -1036,10 +1040,15 @@ def start_training():
         mode = mode_mapping.get(mode_str, TrainingMode.JOINT)
         
         training_config = {
+            'name': training_name,
             'epochs': data.get('epochs', 10),
             'batch_size': data.get('batch_size', 32),
             'learning_rate': data.get('learning_rate', 0.001),
+            'validation_split': data.get('validation_split', 0.2),
+            'early_stopping': data.get('early_stopping', True),
             'knowledge_assisted': data.get('knowledge_assisted', False),
+            'real_time_monitoring': data.get('real_time_monitoring', True),
+            'save_checkpoints': data.get('save_checkpoints', True),
             'collaboration_level': data.get('collaboration_level', 'basic'),
             'training_type': data.get('training_type', 'supervised'),
             'compute_device': data.get('compute_device', 'auto')
@@ -1074,15 +1083,24 @@ def start_training():
         logger.error(error_msg)
         return jsonify({'status': 'error', 'message': str(e)})
 
-@app.route('/api/training/stop/<session_id>', methods=['POST'])
-def stop_training(session_id):
+@app.route('/api/training/stop', methods=['POST'])
+def stop_training():
     """Stop training API"""
     try:
-        success = training_control.stop_training(session_id)
-        if success:
-            return jsonify({'status': 'success'})
+        data = request.get_json()
+        session_id = data.get('session_id')
+        
+        if session_id:
+            # Stop specific session
+            result = training_control.stop_training(session_id)
         else:
-            return jsonify({'status': 'error', 'message': 'Failed to stop training'})
+            # Stop all training
+            result = training_control.stop_training()
+            
+        if result['status'] == 'success':
+            return jsonify({'status': 'success', 'message': result.get('message', 'Training stopped')})
+        else:
+            return jsonify({'status': 'error', 'message': result.get('message', 'Failed to stop training')})
     except Exception as e:
         logger.error(f"Failed to stop training: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
@@ -1135,28 +1153,36 @@ def stop_model(model_id):
         logger.error(f"Failed to stop model: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
 
-@app.route('/api/training/pause/<session_id>', methods=['POST'])
-def pause_training(session_id):
+@app.route('/api/training/pause', methods=['POST'])
+def pause_training():
     """Pause training API"""
     try:
-        success = training_control.pause_training(session_id)
-        if success:
-            return jsonify({'status': 'success'})
+        data = request.get_json()
+        session_id = data.get('session_id')
+        
+        if session_id:
+            result = training_control.pause_training(session_id)
         else:
-            return jsonify({'status': 'error', 'message': 'Failed to pause training'})
+            result = training_control.pause_training()
+            
+        return jsonify(result)
     except Exception as e:
         logger.error(f"Failed to pause training: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
 
-@app.route('/api/training/resume/<session_id>', methods=['POST'])
-def resume_training(session_id):
+@app.route('/api/training/resume', methods=['POST'])
+def resume_training():
     """Resume training API"""
     try:
-        success = training_control.resume_training(session_id)
-        if success:
-            return jsonify({'status': 'success'})
+        data = request.get_json()
+        session_id = data.get('session_id')
+        
+        if session_id:
+            result = training_control.resume_training(session_id)
         else:
-            return jsonify({'status': 'error', 'message': 'Failed to resume training'})
+            result = training_control.resume_training()
+            
+        return jsonify(result)
     except Exception as e:
         logger.error(f"Failed to resume training: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
@@ -1590,6 +1616,78 @@ def get_training_history():
         logger.error(f"Failed to get training history: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
 
+@app.route('/api/training/logs')
+def get_training_logs():
+    """Get training logs API"""
+    try:
+        # Get training history and format as logs
+        history = training_control.get_training_history()
+        logs = []
+        
+        for session in history:
+            log = {
+                'id': session.get('training_id', session.get('id', '')),
+                'name': f"Training {session.get('training_id', 'Unnamed')}",
+                'model': session.get('models', [session.get('model_name', '')])[0] if session.get('models') else session.get('model_name', ''),
+                'models': session.get('models', []),
+                'status': session.get('status', 'unknown'),
+                'device': session.get('device', 'auto'),
+                'progress': 100 if session.get('status') == 'success' else 0,
+                'epoch': session.get('metrics', {}).get('epochs_completed', 0),
+                'total_epochs': session.get('config', {}).get('epochs', 0),
+                'loss': session.get('metrics', {}).get('final_loss', 0),
+                'accuracy': session.get('metrics', {}).get('final_accuracy', 0),
+                'start_time': session.get('start_time', ''),
+                'end_time': session.get('end_time', ''),
+                'duration': session.get('duration', 0),
+                'created_at': session.get('start_time', ''),
+                'updated_at': session.get('end_time', ''),
+                'mode': session.get('mode', 'individual'),
+                'message': session.get('message', '')
+            }
+            logs.append(log)
+        
+        # Sort by created_at descending
+        logs.sort(key=lambda x: x['created_at'], reverse=True)
+        
+        return jsonify({'status': 'success', 'logs': logs})
+    except Exception as e:
+        logger.error(f"Failed to get training logs: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/training/logs/<log_id>')
+def get_training_log_detail(log_id):
+    """Get specific training log details API"""
+    try:
+        history = training_control.get_training_history()
+        log = next((h for h in history if h.get('id') == log_id), None)
+        
+        if not log:
+            return jsonify({'status': 'error', 'message': 'Log not found'}), 404
+        
+        return jsonify({'status': 'success', 'log': log})
+    except Exception as e:
+        logger.error(f"Failed to get training log detail: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/models/list')
+def get_models_list():
+    """Get available models list API"""
+    try:
+        # Mock available models - in real implementation, this would come from model registry
+        models = [
+            {'id': 'model_a', 'name': 'Model A', 'type': 'transformer'},
+            {'id': 'model_b', 'name': 'Model B', 'type': 'cnn'},
+            {'id': 'model_c', 'name': 'Model C', 'type': 'rnn'},
+            {'id': 'model_d', 'name': 'Model D', 'type': 'lstm'},
+            {'id': 'model_e', 'name': 'Model E', 'type': 'bert'}
+        ]
+        
+        return jsonify({'status': 'success', 'models': models})
+    except Exception as e:
+        logger.error(f"Failed to get models list: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)})
+
 @app.route('/api/training/config', methods=['GET', 'POST'])
 def handle_training_config():
     """Handle training configuration API"""
@@ -1623,6 +1721,33 @@ def handle_training_config():
             
     except Exception as e:
         logger.error(f"Failed to handle training config: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/training/reset', methods=['POST'])
+def reset_training():
+    """Reset training session API"""
+    try:
+        data = request.get_json()
+        session_id = data.get('session_id')
+        
+        if session_id:
+            result = training_control.reset_training(session_id)
+        else:
+            result = training_control.reset_training()
+            
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Failed to reset training: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/training/metrics')
+def get_training_metrics():
+    """Get training metrics API"""
+    try:
+        metrics = training_control.get_training_metrics()
+        return jsonify({'status': 'success', 'metrics': metrics})
+    except Exception as e:
+        logger.error(f"Failed to get training metrics: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
 
 @app.route('/api/training/config/reset', methods=['POST'])
@@ -3749,26 +3874,7 @@ def model_interaction():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/training/start', methods=['POST'])
-def start_training_session():
-    """Start training API"""
-    return jsonify({
-        'status': 'training_started',
-        'progress': 0,
-        'message': 'Training session initiated',
-        'timestamp': datetime.now().isoformat()
-    })
 
-@app.route('/api/training/status')
-def training_status():
-    """Training status API"""
-    return jsonify({
-        'status': 'active',
-        'progress': 85,
-        'current_model': 'Model optimization',
-        'eta': '2 minutes',
-        'timestamp': datetime.now().isoformat()
-    })
 
 @app.route('/api/models/status')
 def models_status():

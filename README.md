@@ -1,248 +1,251 @@
 # Self Brain AGI 🧠
 
-<div align="center">
-  <img src="icons/self_brain.svg" alt="Self Brain Logo" width="200"/>
-  
-  **Next-Generation Autonomous AI System**
-  
-  [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-  [![Python](https://img.shields.io/badge/Python-3.8+-green.svg)](https://python.org)
-  [![AGI](https://img.shields.io/badge/Type-AGI%20System-red.svg)]()
-  
-  📧 **Contact**: silencecrowtom@qq.com
-</div>
-
----
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Python](https://img.shields.io/badge/Python-3.8+-green.svg)](https://www.python.org/)
+[![Docker](https://img.shields.io/badge/Docker-Supported-blue.svg)](https://www.docker.com/)
+[![AGI](https://img.shields.io/badge/Type-AGI%20System-red.svg)](https://github.com/Sum-Outman/self-brain)
 
 ## 🌟 Project Overview
 
-Self Brain is a revolutionary autonomous AI system with self-learning, self-optimization, and cross-domain collaboration capabilities. The system integrates 10 specialized sub-models (A-K) covering language, vision, audio, reasoning, and more dimensions, achieving true Artificial General Intelligence through advanced training control mechanisms.
+**Self Brain** is a revolutionary autonomous AI system with self-learning, self-optimization, and cross-domain collaboration capabilities. The system integrates 10 specialized sub-models (A-K) covering language, vision, audio, reasoning, and more dimensions, achieving true Artificial General Intelligence through advanced training control mechanisms.
 
----
+### 🎯 Key Innovations
 
-## 🎯 Core Features
-
-- **🔄 Autonomous Training Control**
-- **🤝 Cross-Model Collaboration**
-- **📊 Real-time Performance Monitoring**
-- **🎨 Multimodal Processing**
-- **🧩 Plugin Architecture**
-- **⚡ Dynamic Resource Allocation**
-
----
+- **🔄 Autonomous Training Control**: Self-optimizing learning algorithms
+- **🤝 Cross-Model Collaboration**: Seamless inter-model communication
+- **📊 Real-time Performance Monitoring**: Live system health tracking
+- **🎨 Multimodal Processing**: Vision, audio, text, and sensor data
+- **🧩 Plugin Architecture**: Extensible modular design
+- **⚡ Dynamic Resource Allocation**: Intelligent resource management
 
 ## 🏗️ System Architecture
 
 ```
 Self Brain AGI System Architecture:
-├── A_management - Central Coordinator
-├── B_language - Natural Language Processing
-├── C_audio - Sound Analysis & Synthesis
-├── D_image - Computer Vision
-├── E_video - Video Understanding
-├── F_spatial - 3D Spatial Awareness
-├── G_sensor - IoT Data Processing
-├── H_computer_control - System Automation
-├── I_knowledge - Knowledge Graph
-├── J_motion - Motion Control
-└── K_programming - Code Generation & Understanding
+├── A_management - Central Coordinator (Port 5001)
+├── B_language - Natural Language Processing (Port 5002)
+├── C_audio - Sound Analysis & Synthesis (Port 5003)
+├── D_image - Computer Vision (Port 5004)
+├── E_video - Video Understanding (Port 5005)
+├── F_spatial - 3D Spatial Awareness (Port 5006)
+├── G_sensor - IoT Data Processing (Port 5007)
+├── H_computer_control - System Automation (Port 5008)
+├── I_knowledge - Knowledge Graph (Port 5009)
+├── J_motion - Motion Control (Port 5010)
+└── K_programming - Code Generation (Port 5011)
 ```
-
----
 
 ## 🚀 Quick Start
 
 ### System Requirements
-- Python 3.8+
-- Windows/Linux/macOS
-- 4GB RAM (Development Environment)
-- 2GB Available Disk Space
+- **Python**: 3.8+
+- **OS**: Windows/Linux/macOS
+- **RAM**: 4GB+ (Development), 8GB+ (Production)
+- **Disk**: 2GB+ available space
+- **Docker**: 20.10+ (Recommended)
 
-### Installation Steps
+### 🐳 Docker Deployment (Recommended)
+
 ```bash
 # 1. Clone the repository
 git clone https://github.com/Sum-Outman/self-brain.git
 cd self-brain
 
-# 2. Create virtual environment
+# 2. One-command deployment
+./docker-deploy.sh prod    # Production environment
+# or
+./docker-deploy.sh dev     # Development environment
+
+# 3. Access the system
+# Main Interface: http://localhost:5000
+# Individual Services: http://localhost:5001-5011
+# Monitoring: http://localhost:3000 (Grafana)
+```
+
+### 🐍 Native Installation
+
+```bash
+# 1. Create virtual environment
 python -m venv myenv
 source myenv/bin/activate  # Linux/Mac
 # or
 myenv\Scripts\activate     # Windows
 
-# 3. Install dependencies
+# 2. Install dependencies
 pip install -r requirements.txt
 
-# 4. Start the system
+# 3. Start the system
 python start_system.py
+
+# 4. Access Interface
+# Main Web Interface: http://localhost:5000
 ```
-
-### Access Interface
-After startup, visit: http://localhost:5000
-
----
 
 ## 🎮 Usage Guide
 
-### Start Management System
-```bash
-# Start the management model service
-python manager_model/app.py
-# Access: http://localhost:5015
-```
+### Service Access Points
 
-### Start Web Interface
-```bash
-# Start the web interface
-python web_interface/app.py
-# Access: http://localhost:5000
-```
+| Service | Port | URL | Description |
+|---------|------|-----|-------------|
+| **Main Interface** | 5000 | http://localhost:5000 | Primary web dashboard |
+| **A Management** | 5001 | http://localhost:5001 | Central coordinator |
+| **B Language** | 5002 | http://localhost:5002 | NLP processing |
+| **C Audio** | 5003 | http://localhost:5003 | Audio analysis |
+| **D Image** | 5004 | http://localhost:5004 | Computer vision |
+| **E Video** | 5005 | http://localhost:5005 | Video processing |
+| **F Spatial** | 5006 | http://localhost:5006 | 3D positioning |
+| **G Sensor** | 5007 | http://localhost:5007 | IoT data processing |
+| **H Control** | 5008 | http://localhost:5008 | System automation |
+| **I Knowledge** | 5009 | http://localhost:5009 | Knowledge management |
+| **J Motion** | 5010 | http://localhost:5010 | Motion control |
+| **K Programming** | 5011 | http://localhost:5011 | Code generation |
 
 ### API Endpoints
-- `curl http://localhost:5015/api/health` - Health check
-- `curl http://localhost:5015/api/stats` - System stats
-- `curl http://localhost:5015/api/system/stats` - Detailed system stats
-- `curl http://localhost:5015/api/models` - Available models list
 
----
+```bash
+# Health checks
+curl http://localhost:5000/api/health
+curl http://localhost:5001/api/health
 
-## 🔧 Development Configuration
+# System statistics
+curl http://localhost:5000/api/stats
+curl http://localhost:5000/api/system/stats
 
-```python
-# System configuration example
-system_config = {
-    "management_port": 5015,
-    "web_interface_port": 5000,
-    "log_level": "INFO",
-    "max_concurrent_tasks": 100,
-    "auto_restart": true
-}
+# Model information
+curl http://localhost:5000/api/models
 ```
 
----
+## 🔧 Configuration
+
+### Environment Variables
+
+Create `.env` file in project root:
+
+```bash
+# Flask settings
+FLASK_ENV=production
+FLASK_DEBUG=0
+SECRET_KEY=your-secret-key
+
+# Service ports
+PORT=5000
+A_MANAGEMENT_PORT=5001
+B_LANGUAGE_PORT=5002
+C_AUDIO_PORT=5003
+D_IMAGE_PORT=5004
+E_VIDEO_PORT=5005
+F_SPATIAL_PORT=5006
+G_SENSOR_PORT=5007
+H_CONTROL_PORT=5008
+I_KNOWLEDGE_PORT=5009
+J_MOTION_PORT=5010
+K_PROGRAMMING_PORT=5011
+```
+
+### Docker Configuration
+
+#### Development Environment
+```bash
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+#### Production Environment
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+#### Management Commands
+```bash
+./docker-deploy.sh dev      # Development
+./docker-deploy.sh prod     # Production
+./docker-deploy.sh stop     # Stop all
+./docker-deploy.sh logs     # View logs
+./docker-deploy.sh health   # Health check
+./docker-deploy.sh clean    # Clean up
+```
 
 ## 📊 Performance Metrics
 
 | Metric | Value |
 |--------|--------|
-| Active Models | 10 |
-| API Response Time | <100ms |
-| Memory Usage | 32-64MB |
-| CPU Usage | 1-2% |
-| System Uptime | Real-time |
-| Failed Tasks | 0 |
+| **Active Models** | 10 |
+| **API Response Time** | <100ms |
+| **Memory Usage** | 32-64MB per service |
+| **CPU Usage** | 1-2% per service |
+| **System Uptime** | Real-time monitoring |
+| **Failed Tasks** | 0 |
 
----
+## 🧪 Testing
+
+### Automated Testing
+```bash
+# Run system validation
+python system_validation.py
+
+# Test individual services
+python test_simple_a_management.py
+python test_merged_system.py
+```
+
+### Manual Testing
+```bash
+# Check service health
+./docker-deploy.sh health
+
+# Test API endpoints
+curl -X GET http://localhost:5000/api/health
+curl -X GET http://localhost:5000/api/models
+```
 
 ## 🤝 Contributing
 
-We welcome all forms of contribution!
+We welcome all forms of contribution! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-### How to Contribute
+### Contribution Types
+- 🐛 **Bug Reports**: Submit via GitHub Issues
+- 💡 **Feature Requests**: Use GitHub Discussions
+- 🔧 **Code Contributions**: Follow our PR process
+- 📖 **Documentation**: Help improve guides and docs
+
+### Development Process
 1. 🍴 Fork the project
 2. 🌿 Create feature branch (`git checkout -b feature/AmazingFeature`)
 3. 💾 Commit changes (`git commit -m 'Add some AmazingFeature'`)
 4. 📤 Push to branch (`git push origin feature/AmazingFeature`)
 5. 🔄 Open Pull Request
 
-
-
----
-
 ## 📄 License
 
 This project is licensed under the **Apache License 2.0** - see the [LICENSE](LICENSE) file for details.
 
----
-
 ## 🙏 Acknowledgments
 
-- **Creative Team Email**: silencecrowtom@qq.com
-- **Open Source Community**: Thanks to all open source contributors
-- **Technical Community**: Thanks for knowledge sharing from technical communities
-
----
+- **Creative Team**: silencecrowtom@qq.com
+- **Open Source Community**: Thanks to all contributors
+- **Technical Community**: Knowledge sharing from technical communities
 
 ## 🔗 Related Links
 
-- 📧 **Email**: silencecrowtom@qq.com
+- 📧 **Email**: [silencecrowtom@qq.com](mailto:silencecrowtom@qq.com)
 - 🐛 **Issues**: [GitHub Issues](https://github.com/Sum-Outman/self-brain/issues)
 - 📖 **Documentation**: [GitHub Wiki](https://github.com/Sum-Outman/self-brain/wiki)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/Sum-Outman/self-brain/discussions)
 
----
-
 ## ✅ Current System Status
 
-**Last Updated**: September 14, 2025
+**Last Updated**: $(date)
 
-### 🟢 System Health
-- **Management Service**: Running on http://localhost:5015
-- **Web Interface**: Running on http://localhost:5000
-- **API Status**: All endpoints operational
-- **Memory Usage**: 32-64MB
-- **CPU Usage**: 1-2%
-
-### 🔄 Available Endpoints
-| Endpoint | Status | Description |
-|----------|--------|-------------|
-| `/api/health` | ✅ 200 OK | Health check endpoint |
-| `/api/stats` | ✅ 200 OK | System statistics |
-| `/api/system/stats` | ✅ 200 OK | Detailed system stats |
-| `/api/models` | ✅ 200 OK | Available models list |
-
-### 🌐 Port Configuration
-| Service | Port | URL |
-|---------|------|-----|
-| Main Web Interface | 5000 | http://localhost:5000 |
-| A Management Model | 5001 | http://localhost:5001 |
-| B Language Model | 5002 | http://localhost:5002 |
-| C Audio Model | 5003 | http://localhost:5003 |
-| D Image Model | 5004 | http://localhost:5004 |
-| E Video Model | 5005 | http://localhost:5005 |
-| F Spatial Model | 5006 | http://localhost:5006 |
-| G Sensor Model | 5007 | http://localhost:5007 |
-| H Computer Control | 5008 | http://localhost:5008 |
-| I Knowledge Model | 5009 | http://localhost:5009 |
-| J Motion Model | 5010 | http://localhost:5010 |
-| K Programming Model | 5011 | http://localhost:5011 |
-| Manager Model API | 5015 | http://localhost:5015 |
-| Working Enhanced Chat | 5016 | http://localhost:5016 |
-
-### 🌐 Updated Port Assignments
-| Service | Port | Status |
-|---------|------|--------|
-| Main Web Interface | 5000 | ✅ Fixed |
-| A Management Model | 5001 | ✅ Fixed |
-| B Language Model | 5002 | ✅ Fixed |
-| C Audio Model | 5003 | ✅ Fixed |
-| D Image Model | 5004 | ✅ Fixed |
-| E Video Model | 5005 | ✅ Fixed |
-| F Spatial Model | 5006 | ✅ Fixed |
-| G Sensor Model | 5007 | ✅ Fixed |
-| H Computer Control | 5008 | ✅ Fixed |
-| I Knowledge Model | 5009 | ✅ Fixed |
-| J Motion Model | 5010 | ✅ Fixed |
-| K Programming Model | 5011 | ✅ Fixed |
-| Manager Model API | 5015 | ✅ Fixed |
-| Working Enhanced Chat | 5016 | ✅ New |
-
-### 📊 Real-time Metrics | 实时指标
-| English | 中文 |
-|---------|------|
-| **System Load**: Real-time monitoring | **系统负载**: 实时监控 |
-| **Memory Usage**: 32-64MB | **内存使用**: 32-64MB |
-| **CPU Usage**: 1-2% | **CPU使用**: 1-2% |
-| **Network Status**: All services connected | **网络状态**: 所有服务已连接 |
-| **Model Health**: All 10 models operational | **模型健康**: 所有10个模型运行正常 |
+🟢 **System Health**
+- Management Service: ✅ Running on http://localhost:5001
+- Web Interface: ✅ Running on http://localhost:5000
+- API Status: ✅ All endpoints operational
+- Memory Usage: 32-64MB per service
+- CPU Usage: 1-2% per service
+- Docker Support: ✅ Full containerization
+- Training System: ✅ Fully operational
 
 ---
 
-<div align="center">
-  <br>
-  <br>
-  <b>Self Brain - Giving AI True Self-Awareness</b>
-  <br>
-  <br>
-  <i>Made with ❤️ by the Self Brain Team</i>
-</div>
+<p align="center">
+  <strong>⭐ Star this repository if you find it helpful! ⭐</strong>
+</p>

@@ -11,18 +11,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import serial
-import paho.mqtt.client as mqtt
-from pymodbus.client import ModbusTcpClient
 import time
 import threading
 
 class MotionController:
     def __init__(self):
         self.protocols = {
-            'RS485': self._control_rs485,
-            'MQTT': self._control_mqtt,
-            'ModbusTCP': self._control_modbus_tcp
+            'simulation': self._control_simulation,
+            'virtual': self._control_virtual
         }
         # Sensor data cache
         self.sensor_data = {}
@@ -35,61 +31,19 @@ class MotionController:
         self.data_listener_thread = threading.Thread(target=self._data_listener)
         self.data_listener_thread.daemon = True
         self.data_listener_thread.start()
-        
-        # Modbus client
-        self.modbus_client = None
     
     def control_device(self, protocol, command):
         if protocol in self.protocols:
             return self.protocols[protocol](command)
         return {"error": "Unsupported protocol"}
     
-    def _control_rs485(self, command):
-        # RS485 device control implementation
-        try:
-            ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
-            ser.write(command.encode())
-            response = ser.readline().decode()
-            ser.close()
-            return {"status": "success", "response": response}
-        except Exception as e:
-            return {"error": str(e)}
+    def _control_simulation(self, command):
+        # Simulation device control implementation
+        return {"status": "success", "response": f"Simulation command executed: {command}"}
     
-    def _control_mqtt(self, command):
-        # MQTT device control implementation
-        client = mqtt.Client()
-        client.connect("iot.eclipse.org", 1883, 60)
-        client.publish("motion/control", command)
-        return {"status": "command_sent"}
-    
-    def _control_modbus_tcp(self, command):
-        """Modbus TCP设备控制实现"""
-        try:
-            if not self.modbus_client or not self.modbus_client.is_socket_open():
-                self.modbus_client = ModbusTcpClient('127.0.0.1', port=5010)
-                self.modbus_client.connect()
-            
-            # Parse command (example: "write_register:40001=100")
-            parts = command.split(':')
-            if len(parts) != 2:
-                return {"error": "Invalid Modbus command format"}
-                
-            action, params = parts[0], parts[1]
-            
-            if action == 'write_register':
-                addr, value = params.split('=')
-                result = self.modbus_client.write_register(int(addr), int(value))
-                return {"status": "success", "response": str(result)}
-                
-            elif action == 'read_register':
-                result = self.modbus_client.read_holding_registers(int(params), 1)
-                return {"status": "success", "value": result.registers[0]}
-                
-            else:
-                return {"error": "Unsupported Modbus action"}
-                
-        except Exception as e:
-            return {"error": str(e)}
+    def _control_virtual(self, command):
+        # Virtual device control implementation
+        return {"status": "success", "response": f"Virtual command executed: {command}"}
     
     def update_sensor_data(self, sensor_type, data):
         """Update sensor data"""
@@ -142,8 +96,5 @@ class MotionController:
         self._publish_device_status(device_id, status)
     
     def _publish_device_status(self, device_id, status):
-        """Publish device status to MQTT"""
-        client = mqtt.Client()
-        client.connect("localhost", 1883, 60)
-        client.publish(f"motion/device/{device_id}/status", status)
-        client.disconnect()
+        """Publish device status"""
+        print(f"Device {device_id} status: {status}")
