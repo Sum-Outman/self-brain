@@ -148,7 +148,7 @@
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <label class="form-label">Model Selection</label>
-                            <select class="form-select form-select-sm" id="modelSelect">
+                            <select class="form-select form-select-sm border-secondary" id="modelSelect">
                                 <option value="">Select Model...</option>
                                 <option value="A_management">Model A - Management</option>
                                 <option value="B_language">Model B - Language</option>
@@ -157,9 +157,9 @@
                                 <option value="E_video">Model E - Video</option>
                                 <option value="F_spatial">Model F - Spatial</option>
                                 <option value="G_sensor">Model G - Sensor</option>
-                                <option value="H_computer">Model H - Computer</option>
-                                <option value="I_motion">Model I - Motion</option>
-                                <option value="J_knowledge">Model J - Knowledge</option>
+                                <option value="H_computer_control">Model H - Computer Control</option>
+                                <option value="I_knowledge">Model I - Knowledge</option>
+                                <option value="J_motion">Model J - Motion</option>
                                 <option value="K_programming">Model K - Programming</option>
                             </select>
                         </div>
@@ -212,16 +212,16 @@
                                         <label class="form-check-label" for="model-G">Model G - Sensor</label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="model-H" value="H_computer">
-                                        <label class="form-check-label" for="model-H">Model H - Computer</label>
+                                        <input class="form-check-input" type="checkbox" id="model-H" value="H_computer_control">
+                                        <label class="form-check-label" for="model-H">Model H - Computer Control</label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="model-I" value="I_motion">
-                                        <label class="form-check-label" for="model-I">Model I - Motion</label>
+                                        <input class="form-check-input" type="checkbox" id="model-I" value="I_knowledge">
+                                        <label class="form-check-label" for="model-I">Model I - Knowledge</label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="model-J" value="J_knowledge">
-                                        <label class="form-check-label" for="model-J">Model J - Knowledge</label>
+                                        <input class="form-check-input" type="checkbox" id="model-J" value="J_motion">
+                                        <label class="form-check-label" for="model-J">Model J - Motion</label>
                                     </div>
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="model-K" value="K_programming">
@@ -317,24 +317,24 @@
             </div>
             
             <!-- Command Line Terminal -->
-            <div class="col-lg-6 mb-4">
-                <div class="card border-secondary">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0">Command Line Terminal</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div id="commandLineTerminal" class="bg-dark text-white border overflow-auto" style="height: 300px; padding: 10px; font-family: monospace; font-size: 12px;">
-                            <div class="text-green-400"><span class="text-blue-400">system@selfbrain</span>:<span class="text-yellow-400">~</span>$ <span class="text-white">Initializing training environment...</span></div>
-                        </div>
-                        <div class="p-2 border-top">
-                            <div class="input-group">
-                                <span class="input-group-text bg-dark text-white" id="terminalPrompt">></span>
-                                <input type="text" id="terminalInput" class="form-control form-control-sm" placeholder="Enter command..." onkeypress="handleTerminalInput(event)">
+                            <div class="col-lg-6 mb-4">
+                                <div class="card border-secondary">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Command Line Terminal</h5>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div id="commandLineTerminal" class="bg-black text-white border overflow-auto" style="height: 300px; padding: 10px; font-family: monospace; font-size: 12px;">
+                                            <div><span class="text-gray-400">system@selfbrain</span>:<span class="text-gray-500">~</span>$ <span>Initializing training environment...</span></div>
+                                        </div>
+                                        <div class="p-2 border-top">
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light text-dark border-secondary" id="terminalPrompt">></span>
+                                                <input type="text" id="terminalInput" class="form-control form-control-sm border-secondary" placeholder="Enter command..." onkeypress="handleTerminalInput(event)">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 </div>
 
@@ -348,48 +348,75 @@ function initializeSocket() {
         socket.disconnect();
     }
     
-    socket = io('/ws/training');
-    
-    socket.on('connect', function() {
-        console.log('Connected to training WebSocket');
-        updateButtonStates();
-        addLogEntry('Connected to training WebSocket server');
-        addTerminalOutput('Connected to training controller');
-    });
-    
-    socket.on('disconnect', function() {
-        console.log('Disconnected from training WebSocket');
-        updateButtonStates();
-        addLogEntry('Disconnected from training WebSocket server');
-        addTerminalOutput('Connection lost to training controller');
-    });
-    
-    socket.on('training_status', function(data) {
-        updateTrainingStatus(data);
-    });
-    
-    socket.on('realtime_metrics', function(data) {
-        updateRealtimeMetrics(data);
-    });
-    
-    socket.on('training_log', function(data) {
-        addLogEntry(data.message);
-        addTerminalOutput(data.message);
-    });
-    
-    socket.on('training_complete', function(data) {
-        addLogEntry(`Training completed for model: ${data.model_name}`);
-        addTerminalOutput(`[SUCCESS] Training completed for model: ${data.model_name}`);
-        alert('Training completed for model: ' + data.model_name);
-        resetTrainingControls();
-    });
-    
-    socket.on('training_error', function(data) {
-        addLogEntry(`Error: ${data.error}`, true);
-        addTerminalOutput(`[ERROR] ${data.error}`, true);
-        alert('Training error: ' + data.error);
-        resetTrainingControls();
-    });
+    // Try to connect to training WebSocket with proper configuration
+    try {
+        // Use the correct namespace that matches the backend
+        socket = io({ 
+            transports: ['websocket', 'polling'],
+            timeout: 10000,
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionAttempts: 10,
+            reconnectionDelayMax: 5000
+        });
+        
+        socket.on('connect', function() {
+            console.log('Connected to training WebSocket');
+            updateButtonStates();
+            addLogEntry('Connected to training WebSocket server');
+            addTerminalOutput('Connected to training controller');
+        });
+        
+        socket.on('disconnect', function() {
+            console.log('Disconnected from training WebSocket');
+            updateButtonStates();
+            addLogEntry('Disconnected from training WebSocket server');
+            addTerminalOutput('Connection lost to training controller');
+        });
+        
+        socket.on('training_status', function(data) {
+            updateTrainingStatus(data);
+        });
+        
+        socket.on('realtime_metrics', function(data) {
+            updateRealtimeMetrics(data);
+        });
+        
+        socket.on('training_log', function(data) {
+            addLogEntry(data.message);
+            addTerminalOutput(data.message);
+        });
+        
+        socket.on('training_complete', function(data) {
+            addLogEntry(`Training completed for model: ${data.model_name}`);
+            addTerminalOutput(`[SUCCESS] Training completed for model: ${data.model_name}`);
+            alert('Training completed for model: ' + data.model_name);
+            resetTrainingControls();
+        });
+        
+        socket.on('training_error', function(data) {
+            addLogEntry(`Error: ${data.error}`, true);
+            addTerminalOutput(`[ERROR] ${data.error}`, true);
+            alert('Training error: ' + data.error);
+            resetTrainingControls();
+        });
+        
+        socket.on('connect_error', function(error) {
+            console.error('Connection error:', error);
+            addLogEntry('Failed to connect to training WebSocket server');
+            addTerminalOutput('Connection error: Failed to connect to training controller');
+        });
+        
+        socket.on('connect_timeout', function() {
+            console.error('Connection timeout');
+            addLogEntry('Connection timeout to training WebSocket server');
+            addTerminalOutput('Connection timeout: Failed to connect to training controller');
+        });
+    } catch (error) {
+        console.error('Error initializing WebSocket:', error);
+        addLogEntry('Error initializing training WebSocket connection');
+        addTerminalOutput('Error: Failed to initialize training controller connection');
+    }
 }
 
 // Add log entry to the training log
@@ -419,8 +446,8 @@ function addTerminalOutput(message, isError = false) {
     
     // Add new prompt line
     const promptLine = document.createElement('div');
-    promptLine.className = 'text-green-400';
-    promptLine.innerHTML = `<span class="text-blue-400">system@selfbrain</span>:<span class="text-yellow-400">~</span>$ <span id="commandCursor">_</span>`;
+    promptLine.className = 'text-white';
+    promptLine.innerHTML = `<span class="text-gray-400">system@selfbrain</span>:<span class="text-gray-500">~</span>$ <span id="commandCursor">_</span>`;
     terminalElement.appendChild(promptLine);
     
     terminalElement.scrollTop = terminalElement.scrollHeight;
@@ -448,8 +475,8 @@ function handleTerminalInput(event) {
             // Add command to terminal
             const terminalElement = document.getElementById('commandLineTerminal');
             const commandLine = document.createElement('div');
-            commandLine.className = 'text-green-400';
-            commandLine.innerHTML = `<span class="text-blue-400">system@selfbrain</span>:<span class="text-yellow-400">~</span>$ <span class="text-white">${command}</span>`;
+            commandLine.className = 'text-white';
+            commandLine.innerHTML = `<span class="text-gray-400">system@selfbrain</span>:<span class="text-gray-500">~</span>$ <span class="text-white">${command}</span>`;
             
             // Remove last prompt line
             const lines = terminalElement.children;
@@ -656,9 +683,12 @@ function updateTrainingControls() {
     if (trainingType === 'joint') {
         jointSection.style.display = 'block';
         modelSelect.disabled = true;
+        document.getElementById('startTrainingBtn').disabled = false; // Enable start button when in joint mode
     } else {
         jointSection.style.display = 'none';
         modelSelect.disabled = false;
+        // Only enable start button in individual mode if a model is selected
+        document.getElementById('startTrainingBtn').disabled = !modelSelect.value;
     }
 }
 
@@ -711,11 +741,12 @@ function startTraining() {
     addTerminalOutput(`Configuration: Type=${trainingType}, Device=${trainingDevice}, Models=[${models.join(', ')}]`);
     
     if (socket) {
+        // Send the correct parameters that the backend expects
         socket.emit('start_training', {
-            models: models,
-            training_type: trainingType,
             task_name: trainingTaskName,
-            device: trainingDevice
+            device: trainingDevice,
+            models: models,
+            training_type: trainingType
         });
     }
 }
@@ -740,6 +771,7 @@ function resetTraining() {
     addLogEntry('Reset training requested');
     addTerminalOutput('[COMMAND] Resetting training');
     if (socket) {
+        // Use the correct event name that the backend uses
         socket.emit('reset_training');
     }
 }
@@ -789,8 +821,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add event listeners for model selection
     const checkboxes = document.querySelectorAll('#jointTrainingSection input[type="checkbox"]');
     checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', updateSelectedCount);
+        checkbox.addEventListener('change', function() {
+            updateSelectedCount();
+            // Update start button state based on selected models in joint mode
+            if (document.getElementById('trainingType').value === 'joint') {
+                const selected = document.querySelectorAll('#jointTrainingSection input[type="checkbox"]:checked');
+                document.getElementById('startTrainingBtn').disabled = selected.length === 0;
+            }
+        });
     });
+    
+    // Add event listener for training type change
+    document.getElementById('trainingType').addEventListener('change', updateTrainingControls);
+    
+    // Add event listener for model selection change in individual mode
+    document.getElementById('modelSelect').addEventListener('change', updateTrainingControls);
+    
+    // Initialize button states
+    updateTrainingControls();
+    updateSelectedCount();
 });
 </script>
 {% endblock %}

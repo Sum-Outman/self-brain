@@ -191,7 +191,23 @@ This project is licensed under the **Apache License 2.0** - see the [LICENSE](LI
 | `/api/system/stats` | ✅ 200 OK | Detailed system stats |
 | `/api/models` | ✅ 200 OK | Available models list |
 
-
+### 🌐 Updated Port Assignments
+| Service | Port | Status |
+|---------|------|--------|
+| Main Web Interface | 5000 | 
+| A Management Model | 5001 | 
+| B Language Model | 5002 | 
+| C Audio Model | 5003 | 
+| D Image Model | 5004 | 
+| E Video Model | 5005 | 
+| F Spatial Model | 5006 | 
+| G Sensor Model | 5007 | 
+| H Computer Control | 5008 | 
+| I Knowledge Model | 5009 | 
+| J Motion Model | 5010 | 
+| K Programming Model | 5011 | 
+| Manager Model API | 5015 | 
+| Working Enhanced Chat | 5016 | 
 
 ### 📊 Real-time Metrics | 实时指标
 | English | 中文 |

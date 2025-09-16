@@ -18,6 +18,7 @@ import threading
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from core_system_merged import get_unified_system
+from training_control import training_controller
 
 # 设置日志
 logging.basicConfig(
@@ -461,35 +462,81 @@ Bees not only fly, but are among nature's most skilled aviators!"""
             'error_type': type(e).__name__
         }), 500
 
-@app.route('/api/training/<action>', methods=['POST'])
-def control_training(action):
-    """控制训练过程"""
+@app.route('/api/training/start', methods=['POST'])
+def start_training():
+    """开始训练过程"""
     try:
-        if action not in ['start', 'stop']:
+        data = request.get_json() or {}
+        models = data.get('models', [])
+        params = data.get('params', {})
+        lang = data.get('lang', 'en')
+        timestamp = data.get('timestamp', datetime.now().isoformat())
+        
+        logger.info(f"开始训练: 模型={models}, 参数={params}")
+        
+        result = training_controller.start_training(models, params, lang)
+        
+        if result.get('status') == 'success':
+            return jsonify({
+                'status': 'success',
+                'action': 'start',
+                'message': result.get('message', 'Training started successfully'),
+                'timestamp': timestamp
+            })
+        else:
             return jsonify({
                 'status': 'error',
-                'message': 'Invalid action. Use start or stop'
+                'message': result.get('error', 'Failed to start training'),
+                'timestamp': timestamp
             }), 400
         
+    except Exception as e:
+        logger.error(f"开始训练失败: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/training/stop', methods=['POST'])
+def stop_training():
+    """停止训练过程"""
+    try:
         data = request.get_json() or {}
         timestamp = data.get('timestamp', datetime.now().isoformat())
         
-        logger.info(f"训练控制: {action}")
+        logger.info("停止训练")
         
-        if action == 'start':
-            message = "Training session initiated for all models. Progress will be monitored."
-        else:
-            message = "Training session stopped. All models are now in idle state."
+        # 调用训练控制器的stop_training方法
+        training_controller.stop_event.set()
         
         return jsonify({
             'status': 'success',
-            'action': action,
-            'message': message,
+            'action': 'stop',
+            'message': 'Training stopped successfully',
             'timestamp': timestamp
         })
         
     except Exception as e:
-        logger.error(f"训练控制失败: {e}")
+        logger.error(f"停止训练失败: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/training/progress', methods=['GET'])
+def get_training_progress():
+    """获取训练进度"""
+    try:
+        progress = training_controller.get_training_progress()
+        progress['timestamp'] = datetime.now().isoformat()
+        
+        return jsonify({
+            'status': 'success',
+            'data': progress
+        })
+        
+    except Exception as e:
+        logger.error(f"获取训练进度失败: {e}")
         return jsonify({
             'status': 'error',
             'message': str(e)
@@ -551,29 +598,58 @@ def export_data():
 
 @app.route('/api/models', methods=['GET'])
 def get_models():
-    """获取所有可用模型"""
+    """获取模型列表"""
     try:
+        logger.info("获取模型列表")
+        
+        # 尝试从统一系统获取模型列表
         if unified_system and hasattr(unified_system, 'submodel_registry'):
             models = list(unified_system.submodel_registry.keys())
-            return jsonify({
-                'status': 'success',
-                'models': models,
-                'count': len(models)
-            })
         else:
-            # 返回默认模型列表
-            default_models = [
-                'A_management', 'B_language', 'C_vision', 'D_audio',
-                'E_reasoning', 'F_emotion', 'G_sensor', 'H_computer_control',
+            # 默认模型列表
+            models = [
+                'A_management', 'B_language', 'C_audio', 'D_image', 
+                'E_video', 'F_spatial', 'G_sensor', 'H_computer_control',
                 'I_knowledge', 'J_motion', 'K_programming'
             ]
-            return jsonify({
-                'status': 'success',
-                'models': default_models,
-                'count': len(default_models)
-            })
+        
+        return jsonify({
+            'status': 'success',
+            'models': models,
+            'count': len(models)
+        })
+        
     except Exception as e:
         logger.error(f"获取模型列表失败: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/models/status', methods=['GET'])
+def get_all_models_status():
+    """获取所有模型的状态"""
+    try:
+        logger.info("获取所有模型状态")
+        
+        # 从训练控制器获取模型状态
+        if hasattr(training_controller, 'model_status'):
+            model_status = training_controller.model_status
+        else:
+            # 默认模型状态
+            model_status = {
+                'A_management': 'idle', 'B_language': 'idle', 'C_audio': 'idle', 'D_image': 'idle', 
+                'E_video': 'idle', 'F_spatial': 'idle', 'G_sensor': 'idle', 'H_computer_control': 'idle',
+                'I_knowledge': 'idle', 'J_motion': 'idle', 'K_programming': 'idle'
+            }
+        
+        return jsonify({
+            'status': 'success',
+            'model_status': model_status
+        })
+        
+    except Exception as e:
+        logger.error(f"获取模型状态失败: {e}")
         return jsonify({
             'status': 'error',
             'message': str(e)
@@ -1002,7 +1078,7 @@ def initialize_app():
 if __name__ == '__main__':
     initialize_app()
     
-    port = int(os.environ.get('PORT', 5015))
+    port = int(os.environ.get('PORT', 5001))
     host = os.environ.get('HOST', '0.0.0.0')
     debug = os.environ.get('DEBUG', 'false').lower() == 'true'
     

@@ -415,6 +415,59 @@
             </div>
         </div>
 
+        <!-- External API Configuration Modal -->
+        <div class="modal fade" id="externalApiModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Configure External API for Model <span id="currentModelId"></span></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="externalApiForm">
+                            <input type="hidden" id="modelIdInput">
+                            
+                            <div class="mb-3">
+                                <label for="apiProvider" class="form-label">API Provider</label>
+                                <select class="form-select" id="apiProvider" onchange="onApiProviderChange()">
+                                    <option value="openai">OpenAI</option>
+                                    <option value="anthropic">Anthropic</option>
+                                    <option value="google">Google AI</option>
+                                    <option value="huggingface">Hugging Face</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="apiKey" class="form-label">API Key / Token</label>
+                                <input type="password" class="form-control" id="apiKey" placeholder="Enter your API key" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="apiModel" class="form-label">Model Name</label>
+                                <input type="text" class="form-control" id="apiModel" placeholder="e.g., gpt-4o" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="apiEndpoint" class="form-label">API Endpoint</label>
+                                <input type="url" class="form-control" id="apiEndpoint" placeholder="Enter API endpoint URL" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="apiTimeout" class="form-label">Timeout (seconds)</label>
+                                <input type="number" class="form-control" id="apiTimeout" value="30" min="5" max="300">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-outline-info" onclick="testExternalApi()">Test Connection</button>
+                        <button type="button" class="btn btn-outline-primary" onclick="saveExternalApiConfig()">Save & Switch</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- API Configuration -->
         <div class="tab-pane fade" id="api" role="tabpanel">
             <div class="row">
@@ -1018,4 +1071,7 @@ function importModels() {
 // Initialize model counts on page load
 updateModelCounts();
 </script>
+
+<!-- External API Configuration Script -->
+<script src="/static/js/external_api_config.js"></script>
 {% endblock %}

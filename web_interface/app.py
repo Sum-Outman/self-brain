@@ -1398,6 +1398,117 @@ def detect_api_endpoint():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
+@app.route('/api/models/<model_id>/switch-external', methods=['POST'])
+def switch_model_to_external(model_id):
+    """Switch a model to use external API"""
+    try:
+        data = request.get_json()
+        api_config = data.get('api_config', {})
+        
+        # Validate required API config parameters
+        if not api_config.get('api_endpoint') or not api_config.get('api_key') or not api_config.get('model_name'):
+            return jsonify({'status': 'error', 'message': 'Missing required API configuration parameters'})
+        
+        # Get existing model configuration
+        model_config = training_control.get_model_configuration(model_id)
+        if not model_config:
+            return jsonify({'status': 'error', 'message': 'Model not found'})
+        
+        # Update model configuration to use external API
+        updated_config = {
+            **model_config,
+            'model_source': 'external',
+            'external_api': api_config
+        }
+        
+        # Update model configuration
+        training_control.update_model_configuration(model_id, updated_config)
+        
+        # Switch to external model in the model registry
+        try:
+            from manager_model.model_registry import get_model_registry
+            model_registry = get_model_registry()
+            success = model_registry.switch_to_external(model_id, api_config)
+            
+            if success:
+                # Restart the model service with new configuration
+                training_control.stop_model_service(model_id)
+                training_control.start_model_service(model_id)
+                
+                logger.info(f"Model {model_id} successfully switched to external API")
+                return jsonify({
+                    'status': 'success', 
+                    'message': 'Model successfully switched to external API',
+                    'config': updated_config
+                })
+            else:
+                return jsonify({'status': 'error', 'message': 'Failed to switch to external API in model registry'})
+        except Exception as e:
+            logger.error(f"Error switching model to external: {str(e)}")
+            # Try to revert the configuration
+            try:
+                original_config = {**model_config, 'model_source': 'local'}
+                if 'external_api' in original_config:
+                    del original_config['external_api']
+                training_control.update_model_configuration(model_id, original_config)
+            except:
+                pass
+            return jsonify({'status': 'error', 'message': str(e)})
+            
+    except Exception as e:
+        logger.error(f"Failed to switch model to external API: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/models/<model_id>/switch-local', methods=['POST'])
+def switch_model_to_local(model_id):
+    """Switch a model back to local implementation"""
+    try:
+        # Get existing model configuration
+        model_config = training_control.get_model_configuration(model_id)
+        if not model_config:
+            return jsonify({'status': 'error', 'message': 'Model not found'})
+        
+        # Update model configuration to use local implementation
+        updated_config = {**model_config, 'model_source': 'local'}
+        if 'external_api' in updated_config:
+            del updated_config['external_api']
+        
+        # Update model configuration
+        training_control.update_model_configuration(model_id, updated_config)
+        
+        # Switch to local model in the model registry
+        try:
+            from manager_model.model_registry import get_model_registry
+            model_registry = get_model_registry()
+            success = model_registry.switch_to_local(model_id)
+            
+            if success:
+                # Restart the model service with new configuration
+                training_control.stop_model_service(model_id)
+                training_control.start_model_service(model_id)
+                
+                logger.info(f"Model {model_id} successfully switched back to local implementation")
+                return jsonify({
+                    'status': 'success', 
+                    'message': 'Model successfully switched back to local implementation',
+                    'config': updated_config
+                })
+            else:
+                return jsonify({'status': 'error', 'message': 'Failed to switch to local implementation in model registry'})
+        except Exception as e:
+            logger.error(f"Error switching model to local: {str(e)}")
+            # Try to revert the configuration
+            try:
+                original_config = {**model_config, 'model_source': 'external'}
+                training_control.update_model_configuration(model_id, original_config)
+            except:
+                pass
+            return jsonify({'status': 'error', 'message': str(e)})
+            
+    except Exception as e:
+        logger.error(f"Failed to switch model to local implementation: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)})
+
 @app.route('/api/system/resources')
 def get_system_resources():
     """Get system resources API"""
@@ -1800,14 +1911,17 @@ def generate_ai_response(message, knowledge_base, attachments):
         # Clean up the message to ensure it's passed correctly
         clean_message = str(message).strip()
         
-        # Generate unique conversation ID if not provided
+        # Generate unique conversation ID
         conversation_id = str(uuid.uuid4())
         
-        # Direct call to A Management Model with proper format and encoding
+        # Direct call to A Management Model with additional parameters
         response = requests.post(
             "http://localhost:5015/api/chat",
             json={
-                "message": clean_message
+                "message": clean_message,
+                "conversation_id": conversation_id,
+                "knowledge_base": knowledge_base,
+                "attachments": attachments if attachments else []
             },
             headers={
                 'Content-Type': 'application/json; charset=utf-8',
@@ -1820,19 +1934,27 @@ def generate_ai_response(message, knowledge_base, attachments):
             try:
                 result = response.json()
                 
-                # Handle A Management Model response format
+                # Enhanced response handling for A Management Model
                 if isinstance(result, dict):
-                    # A Management Model returns response in conversation_data.response
+                    # Case 1: Response in conversation_data.response
                     if 'conversation_data' in result and isinstance(result['conversation_data'], dict):
                         conv_data = result['conversation_data']
                         if 'response' in conv_data:
                             return str(conv_data['response'])
                     
-                    # Direct response field
+                    # Case 2: Direct response field
                     if 'response' in result:
                         return str(result['response'])
                     
-                    # Fallback to string representation
+                    # Case 3: Return any available content
+                    if 'content' in result:
+                        return str(result['content'])
+                    
+                    # Case 4: Fallback to message field
+                    if 'message' in result:
+                        return str(result['message'])
+                    
+                    # Final fallback to string representation
                     return str(result)
                 else:
                     # Handle case where response is just a string
@@ -1840,6 +1962,7 @@ def generate_ai_response(message, knowledge_base, attachments):
                     
             except (ValueError, KeyError) as e:
                 # If JSON parsing fails, return raw text
+                logger.error(f"Error parsing A Management Model response: {str(e)}")
                 return response.text
         else:
             logger.warning(f"A Management Model API call failed: {response.status_code} - {response.text}")
@@ -1853,6 +1976,7 @@ def generate_ai_response(message, knowledge_base, attachments):
         return "A Management Model is taking too long to respond. Please try again in a moment."
     except Exception as e:
         logger.error(f"Failed to call A Management Model: {str(e)}")
+        return f"An unexpected error occurred while processing your request: {str(e)}"    
         return f"Error communicating with A Management Model: {str(e)}. Please check the system status."
 
 @app.route('/api/chat/suggestions', methods=['POST'])
