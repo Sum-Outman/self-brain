@@ -1017,13 +1017,9 @@ def start_training():
         model_ids = data.get('model_ids', [])
         if not isinstance(model_ids, list) or not model_ids:
             return jsonify({'status': 'error', 'message': 'model_ids must be a non-empty list'}), 400
-
-        training_name = data.get('name', '').strip()
-        if not training_name:
-            return jsonify({'status': 'error', 'message': 'Training name is required'}), 400
-
-        print(f"DEBUG: Starting training '{training_name}' with models: {model_ids}")
-
+        
+        print(f"DEBUG: Starting training with models: {model_ids}")
+        
         mode_str = data.get('mode', 'joint')
         valid_modes = {'individual', 'joint', 'transfer', 'fine_tune'}
         if mode_str not in valid_modes:
@@ -1040,15 +1036,10 @@ def start_training():
         mode = mode_mapping.get(mode_str, TrainingMode.JOINT)
         
         training_config = {
-            'name': training_name,
             'epochs': data.get('epochs', 10),
             'batch_size': data.get('batch_size', 32),
             'learning_rate': data.get('learning_rate', 0.001),
-            'validation_split': data.get('validation_split', 0.2),
-            'early_stopping': data.get('early_stopping', True),
             'knowledge_assisted': data.get('knowledge_assisted', False),
-            'real_time_monitoring': data.get('real_time_monitoring', True),
-            'save_checkpoints': data.get('save_checkpoints', True),
             'collaboration_level': data.get('collaboration_level', 'basic'),
             'training_type': data.get('training_type', 'supervised'),
             'compute_device': data.get('compute_device', 'auto')
@@ -1083,24 +1074,15 @@ def start_training():
         logger.error(error_msg)
         return jsonify({'status': 'error', 'message': str(e)})
 
-@app.route('/api/training/stop', methods=['POST'])
-def stop_training():
+@app.route('/api/training/stop/<session_id>', methods=['POST'])
+def stop_training(session_id):
     """Stop training API"""
     try:
-        data = request.get_json()
-        session_id = data.get('session_id')
-        
-        if session_id:
-            # Stop specific session
-            result = training_control.stop_training(session_id)
+        success = training_control.stop_training(session_id)
+        if success:
+            return jsonify({'status': 'success'})
         else:
-            # Stop all training
-            result = training_control.stop_training()
-            
-        if result['status'] == 'success':
-            return jsonify({'status': 'success', 'message': result.get('message', 'Training stopped')})
-        else:
-            return jsonify({'status': 'error', 'message': result.get('message', 'Failed to stop training')})
+            return jsonify({'status': 'error', 'message': 'Failed to stop training'})
     except Exception as e:
         logger.error(f"Failed to stop training: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
@@ -1153,36 +1135,28 @@ def stop_model(model_id):
         logger.error(f"Failed to stop model: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
 
-@app.route('/api/training/pause', methods=['POST'])
-def pause_training():
+@app.route('/api/training/pause/<session_id>', methods=['POST'])
+def pause_training(session_id):
     """Pause training API"""
     try:
-        data = request.get_json()
-        session_id = data.get('session_id')
-        
-        if session_id:
-            result = training_control.pause_training(session_id)
+        success = training_control.pause_training(session_id)
+        if success:
+            return jsonify({'status': 'success'})
         else:
-            result = training_control.pause_training()
-            
-        return jsonify(result)
+            return jsonify({'status': 'error', 'message': 'Failed to pause training'})
     except Exception as e:
         logger.error(f"Failed to pause training: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
 
-@app.route('/api/training/resume', methods=['POST'])
-def resume_training():
+@app.route('/api/training/resume/<session_id>', methods=['POST'])
+def resume_training(session_id):
     """Resume training API"""
     try:
-        data = request.get_json()
-        session_id = data.get('session_id')
-        
-        if session_id:
-            result = training_control.resume_training(session_id)
+        success = training_control.resume_training(session_id)
+        if success:
+            return jsonify({'status': 'success'})
         else:
-            result = training_control.resume_training()
-            
-        return jsonify(result)
+            return jsonify({'status': 'error', 'message': 'Failed to resume training'})
     except Exception as e:
         logger.error(f"Failed to resume training: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
@@ -1616,78 +1590,6 @@ def get_training_history():
         logger.error(f"Failed to get training history: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
 
-@app.route('/api/training/logs')
-def get_training_logs():
-    """Get training logs API"""
-    try:
-        # Get training history and format as logs
-        history = training_control.get_training_history()
-        logs = []
-        
-        for session in history:
-            log = {
-                'id': session.get('training_id', session.get('id', '')),
-                'name': f"Training {session.get('training_id', 'Unnamed')}",
-                'model': session.get('models', [session.get('model_name', '')])[0] if session.get('models') else session.get('model_name', ''),
-                'models': session.get('models', []),
-                'status': session.get('status', 'unknown'),
-                'device': session.get('device', 'auto'),
-                'progress': 100 if session.get('status') == 'success' else 0,
-                'epoch': session.get('metrics', {}).get('epochs_completed', 0),
-                'total_epochs': session.get('config', {}).get('epochs', 0),
-                'loss': session.get('metrics', {}).get('final_loss', 0),
-                'accuracy': session.get('metrics', {}).get('final_accuracy', 0),
-                'start_time': session.get('start_time', ''),
-                'end_time': session.get('end_time', ''),
-                'duration': session.get('duration', 0),
-                'created_at': session.get('start_time', ''),
-                'updated_at': session.get('end_time', ''),
-                'mode': session.get('mode', 'individual'),
-                'message': session.get('message', '')
-            }
-            logs.append(log)
-        
-        # Sort by created_at descending
-        logs.sort(key=lambda x: x['created_at'], reverse=True)
-        
-        return jsonify({'status': 'success', 'logs': logs})
-    except Exception as e:
-        logger.error(f"Failed to get training logs: {str(e)}")
-        return jsonify({'status': 'error', 'message': str(e)})
-
-@app.route('/api/training/logs/<log_id>')
-def get_training_log_detail(log_id):
-    """Get specific training log details API"""
-    try:
-        history = training_control.get_training_history()
-        log = next((h for h in history if h.get('id') == log_id), None)
-        
-        if not log:
-            return jsonify({'status': 'error', 'message': 'Log not found'}), 404
-        
-        return jsonify({'status': 'success', 'log': log})
-    except Exception as e:
-        logger.error(f"Failed to get training log detail: {str(e)}")
-        return jsonify({'status': 'error', 'message': str(e)})
-
-@app.route('/api/models/list')
-def get_models_list():
-    """Get available models list API"""
-    try:
-        # Mock available models - in real implementation, this would come from model registry
-        models = [
-            {'id': 'model_a', 'name': 'Model A', 'type': 'transformer'},
-            {'id': 'model_b', 'name': 'Model B', 'type': 'cnn'},
-            {'id': 'model_c', 'name': 'Model C', 'type': 'rnn'},
-            {'id': 'model_d', 'name': 'Model D', 'type': 'lstm'},
-            {'id': 'model_e', 'name': 'Model E', 'type': 'bert'}
-        ]
-        
-        return jsonify({'status': 'success', 'models': models})
-    except Exception as e:
-        logger.error(f"Failed to get models list: {str(e)}")
-        return jsonify({'status': 'error', 'message': str(e)})
-
 @app.route('/api/training/config', methods=['GET', 'POST'])
 def handle_training_config():
     """Handle training configuration API"""
@@ -1721,33 +1623,6 @@ def handle_training_config():
             
     except Exception as e:
         logger.error(f"Failed to handle training config: {str(e)}")
-        return jsonify({'status': 'error', 'message': str(e)})
-
-@app.route('/api/training/reset', methods=['POST'])
-def reset_training():
-    """Reset training session API"""
-    try:
-        data = request.get_json()
-        session_id = data.get('session_id')
-        
-        if session_id:
-            result = training_control.reset_training(session_id)
-        else:
-            result = training_control.reset_training()
-            
-        return jsonify(result)
-    except Exception as e:
-        logger.error(f"Failed to reset training: {str(e)}")
-        return jsonify({'status': 'error', 'message': str(e)})
-
-@app.route('/api/training/metrics')
-def get_training_metrics():
-    """Get training metrics API"""
-    try:
-        metrics = training_control.get_training_metrics()
-        return jsonify({'status': 'success', 'metrics': metrics})
-    except Exception as e:
-        logger.error(f"Failed to get training metrics: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
 
 @app.route('/api/training/config/reset', methods=['POST'])
@@ -3137,59 +3012,50 @@ def get_knowledge_stats():
         })
 
 @app.route('/api/knowledge/delete_selected', methods=['POST'])
-def delete_multiple_knowledge():
-    """批量删除知识条目 | Bulk delete knowledge entries"""
+def delete_selected_knowledge():
+    """Delete selected knowledge items"""
     try:
         data = request.get_json()
-        if not data:
-            return jsonify({'success': False, 'message': 'No data provided'}), 400
+        ids = data.get('ids', [])
         
-        # 支持两种参数名格式：knowledge_ids 或 ids
-        knowledge_ids = data.get('knowledge_ids') or data.get('ids')
-        if not knowledge_ids or not isinstance(knowledge_ids, list):
-            return jsonify({'success': False, 'message': 'Knowledge IDs array is required'}), 400
+        if not ids:
+            return jsonify({'status': 'error', 'message': 'No items selected for deletion'}), 400
         
-        deleted_ids = []
-        failed_ids = []
+        knowledge_base_path = 'd:\\shiyan\\knowledge_base_storage'
         
-        # 使用绝对路径
-        storage_base = os.path.abspath('knowledge_base_storage')
+        deleted_count = 0
+        errors = []
         
-        for knowledge_id in knowledge_ids:
-            try:
-                knowledge_path = os.path.join(storage_base, str(knowledge_id))
-                
-                if os.path.exists(knowledge_path):
+        for selected_id in ids:
+            # 构建知识条目的完整路径
+            knowledge_dir = os.path.join(knowledge_base_path, selected_id)
+            
+            if os.path.exists(knowledge_dir) and os.path.isdir(knowledge_dir):
+                try:
+                    # 删除整个知识条目目录
                     import shutil
-                    shutil.rmtree(knowledge_path)
-                    deleted_ids.append(knowledge_id)
-                else:
-                    failed_ids.append(knowledge_id)
-                    
-            except Exception as e:
-                failed_ids.append(knowledge_id)
-                logger.error(f"Failed to delete {knowledge_id}: {str(e)}")
+                    shutil.rmtree(knowledge_dir)
+                    deleted_count += 1
+                    logger.info(f"Successfully deleted knowledge directory: {knowledge_dir}")
+                except Exception as e:
+                    errors.append(f"Failed to delete {selected_id}: {str(e)}")
+                    logger.error(f"Failed to delete knowledge directory {selected_id}: {str(e)}")
+            else:
+                errors.append(f"Knowledge directory not found for ID: {selected_id}")
         
-        if len(deleted_ids) > 0:
-            result = {
-                'success': True,
-                'deleted_count': len(deleted_ids),
-                'message': f'Successfully deleted {len(deleted_ids)} files',
-                'status': 'success'
-            }
+        if deleted_count > 0:
+            message = f'Successfully deleted {deleted_count} knowledge items'
+            if errors:
+                message += f', {len(errors)} items failed to delete'
+            return jsonify({'success': True, 'status': 'success', 'message': message, 'deleted_count': deleted_count})
         else:
-            result = {
-                'success': False,
-                'message': 'No files found to delete',
-                'status': 'error',
-                'errors': [f'File not found for ID: {id}' for id in failed_ids]
-            }
-        
-        return jsonify(result)
-        
+            return jsonify({'success': False, 'status': 'error', 'message': 'No knowledge items found to delete', 'errors': errors}), 404
+            
     except Exception as e:
-        logger.error(f"Bulk delete error: {str(e)}")
-        return jsonify({'success': False, 'message': str(e)}), 500
+        logger.error(f"Failed to delete multiple knowledge items: {str(e)}")
+        return jsonify({'success': False, 'status': 'error', 'message': str(e)})
+
+@app.route('/api/knowledge/export_selected', methods=['POST'])
 def export_selected_knowledge():
     """Export selected knowledge items"""
     try:
@@ -3344,6 +3210,130 @@ def handle_all_models_status():
     except Exception as e:
         logger.error(f"Failed to get all models status: {str(e)}")
         emit('error', {'message': str(e)})
+
+@socketio.on('start_training')
+def handle_start_training(data):
+    """Handle start training request with task name and device support"""
+    try:
+        # Extract training parameters including task_name and device
+        # Support both parameter formats for compatibility
+        task_name = data.get('task_name', 'Unnamed Training Task')
+        
+        # Get device parameter - new feature
+        device = data.get('device', 'gpu')
+        
+        # Handle parameter format differences
+        if 'models' in data and 'training_type' in data:
+            # New parameter format from training.html
+            training_mode = data['training_type']
+            selected_models = data['models']
+            epochs = data.get('epochs', 10)
+            batch_size = data.get('batch_size', 32)
+            learning_rate = data.get('learning_rate', 0.001)
+        else:
+            # Original parameter format
+            training_mode = data.get('training_mode', 'individual')
+            selected_models = data.get('selected_models', [])
+            epochs = data.get('epochs', 10)
+            batch_size = data.get('batch_size', 32)
+            learning_rate = data.get('learning_rate', 0.001)
+        
+        # Log training start with task name and device
+        logger.info(f"Starting training task '{task_name}' with mode: {training_mode}, device: {device}")
+        
+        # Send training start event to training manager with device info
+        socketio.emit('training_started', {
+            'task_name': task_name,
+            'training_mode': training_mode,
+            'selected_models': selected_models,
+            'epochs': epochs,
+            'batch_size': batch_size,
+            'learning_rate': learning_rate,
+            'device': device,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+        # Acknowledge the start training request
+        emit('training_start_ack', {
+            'status': 'success',
+            'message': f'Training task "{task_name}" started successfully on {device}',
+            'task_name': task_name,
+            'device': device
+        })
+        
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f"Failed to start training: {error_msg}")
+        emit('error', {'message': f'Failed to start training: {error_msg}'})
+
+@socketio.on('pause_training')
+def handle_pause_training():
+    """Handle pause training request"""
+    try:
+        # Send pause event to training manager
+        socketio.emit('training_pause')
+        logger.info("Training paused")
+        emit('training_pause_ack', {'status': 'success', 'message': 'Training paused'})
+    except Exception as e:
+        logger.error(f"Failed to pause training: {str(e)}")
+        emit('error', {'message': f'Failed to pause training: {str(e)}'})
+
+@socketio.on('resume_training')
+def handle_resume_training():
+    """Handle resume training request"""
+    try:
+        # Send resume event to training manager
+        socketio.emit('training_resume')
+        logger.info("Training resumed")
+        emit('training_resume_ack', {'status': 'success', 'message': 'Training resumed'})
+    except Exception as e:
+        logger.error(f"Failed to resume training: {str(e)}")
+        emit('error', {'message': f'Failed to resume training: {str(e)}'})
+
+@socketio.on('stop_training')
+def handle_stop_training():
+    """Handle stop training request"""
+    try:
+        # Send stop event to training manager
+        socketio.emit('training_stop')
+        logger.info("Training stopped")
+        emit('training_stop_ack', {'status': 'success', 'message': 'Training stopping...'})
+    except Exception as e:
+        logger.error(f"Failed to stop training: {str(e)}")
+        emit('error', {'message': f'Failed to stop training: {str(e)}'})
+
+@socketio.on('training_log')
+def handle_training_log(log_data):
+    """Handle training log data and broadcast to all clients"""
+    try:
+        # Extract log details
+        message = log_data.get('message', '')
+        level = log_data.get('level', 'info')
+        timestamp = log_data.get('timestamp', datetime.now().isoformat())
+        task_name = log_data.get('task_name', '')
+        
+        # Format log for broadcast
+        formatted_log = {
+            'message': message,
+            'level': level,
+            'timestamp': timestamp,
+            'task_name': task_name
+        }
+        
+        # Broadcast to all connected clients
+        socketio.emit('training_log_update', formatted_log)
+        
+        # Also log to server console with proper formatting
+        log_msg = f"[TRAINING] [{task_name}] {message}"
+        if level == 'error':
+            logger.error(log_msg)
+        elif level == 'warning':
+            logger.warning(log_msg)
+        else:
+            logger.info(log_msg)
+            
+    except Exception as e:
+        logger.error(f"Failed to process training log: {str(e)}")
 
 # Background task: periodically broadcast system status
 def background_broadcast():
@@ -3529,8 +3519,8 @@ def create_knowledge():
         return jsonify({'success': False, 'message': str(e)})
 
 @app.route('/api/knowledge/update/<knowledge_id>', methods=['POST'])
-def update_knowledge_item_old(knowledge_id):
-    """Update single knowledge item API (Old version - deprecated)"""
+def update_knowledge_item(knowledge_id):
+    """Update single knowledge item API"""
     try:
         knowledge_path = os.path.join('knowledge_base_storage', knowledge_id)
         
@@ -3720,46 +3710,6 @@ def optimize_knowledge_database():
         return jsonify({'success': False, 'message': str(e)})
 
 # Test route for debugging
-@app.route('/dashboard')
-def dashboard_page():
-    """Dashboard page"""
-    return render_template('dashboard.html')
-
-@app.route('/model_management')
-def model_management_page():
-    """Model management page"""
-    return render_template('model_management.html')
-
-@app.route('/api/dashboard/data')
-def dashboard_data():
-    """Dashboard data API"""
-    try:
-        # Mock dashboard data
-        return jsonify({
-            'status': 'success',
-            'data': {
-                'total_models': 11,
-                'active_models': 11,
-                'total_conversations': 156,
-                'system_uptime': '2 days 3 hours',
-                'cpu_usage': 45.2,
-                'memory_usage': 62.8,
-                'gpu_usage': 78.5,
-                'disk_usage': 34.7,
-                'network_io': {
-                    'upload': '1.2 MB/s',
-                    'download': '3.4 MB/s'
-                },
-                'recent_activities': [
-                    {'time': '2 min ago', 'action': 'Model A_management started'},
-                    {'time': '5 min ago', 'action': 'Training session completed'},
-                    {'time': '10 min ago', 'action': 'Knowledge base updated'}
-                ]
-            }
-        })
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
-
 @app.route('/test')
 def test_page():
     """Simple test page for API debugging"""
@@ -3874,7 +3824,26 @@ def model_interaction():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/training/start', methods=['POST'])
+def start_training_session():
+    """Start training API"""
+    return jsonify({
+        'status': 'training_started',
+        'progress': 0,
+        'message': 'Training session initiated',
+        'timestamp': datetime.now().isoformat()
+    })
 
+@app.route('/api/training/status')
+def training_status():
+    """Training status API"""
+    return jsonify({
+        'status': 'active',
+        'progress': 85,
+        'current_model': 'Model optimization',
+        'eta': '2 minutes',
+        'timestamp': datetime.now().isoformat()
+    })
 
 @app.route('/api/models/status')
 def models_status():
@@ -4115,13 +4084,12 @@ def get_tags():
 
 
 
-# 获取单个知识条目
+# 添加缺失的API端点
 @app.route('/api/knowledge/<knowledge_id>', methods=['GET'])
 def get_knowledge_item(knowledge_id):
     """获取单个知识条目详情"""
     try:
-        storage_base = os.path.abspath('knowledge_base_storage')
-        knowledge_path = os.path.join(storage_base, knowledge_id)
+        knowledge_path = os.path.join('knowledge_base_storage', knowledge_id)
         
         if not os.path.exists(knowledge_path):
             return jsonify({'success': False, 'message': 'Knowledge not found'}), 404
@@ -4132,8 +4100,8 @@ def get_knowledge_item(knowledge_id):
         
         knowledge_data = {
             'id': knowledge_id,
-            'title': '',
             'content': '',
+            'title': '',
             'category': '',
             'summary': '',
             'tags': [],
@@ -4169,59 +4137,6 @@ def get_knowledge_item(knowledge_id):
         logger.error(f"Error getting knowledge item {knowledge_id}: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@app.route('/api/knowledge/<knowledge_id>', methods=['PUT'])
-def update_knowledge_item(knowledge_id):
-    """更新单个知识条目"""
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'success': False, 'message': 'No data provided'}), 400
-        
-        storage_base = os.path.abspath('knowledge_base_storage')
-        knowledge_path = os.path.join(storage_base, knowledge_id)
-        
-        if not os.path.exists(knowledge_path):
-            return jsonify({'success': False, 'message': 'Knowledge not found'}), 404
-        
-        # 更新内容文件
-        content_file = os.path.join(knowledge_path, 'content.txt')
-        info_file = os.path.join(knowledge_path, 'info.json')
-        
-        # 更新内容
-        if 'content' in data:
-            with open(content_file, 'w', encoding='utf-8') as f:
-                f.write(data['content'])
-        
-        # 更新元数据
-        if os.path.exists(info_file):
-            with open(info_file, 'r', encoding='utf-8') as f:
-                info = json.load(f)
-        else:
-            info = {}
-        
-        # 更新元数据字段
-        info.update({
-            'title': data.get('title', info.get('title', '')),
-            'category': data.get('category', info.get('category', '')),
-            'summary': data.get('summary', info.get('summary', '')),
-            'tags': data.get('tags', info.get('tags', [])),
-            'updated_at': datetime.now().isoformat()
-        })
-        
-        with open(info_file, 'w', encoding='utf-8') as f:
-            json.dump(info, f, ensure_ascii=False, indent=2)
-        
-        logger.info(f"Updated knowledge item: {knowledge_id}")
-        return jsonify({
-            'success': True,
-            'message': 'Knowledge updated successfully',
-            'id': knowledge_id
-        })
-        
-    except Exception as e:
-        logger.error(f"Error updating knowledge item {knowledge_id}: {e}")
-        return jsonify({'success': False, 'message': str(e)}), 500
-
 @app.route('/api/knowledge/<knowledge_id>', methods=['DELETE'])
 def delete_knowledge_item(knowledge_id):
     """删除单个知识条目"""
@@ -4248,7 +4163,70 @@ def delete_knowledge_item(knowledge_id):
         logger.error(f"Error deleting knowledge item {knowledge_id}: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
-
+@app.route('/api/knowledge/delete_selected', methods=['POST'])
+def delete_multiple_knowledge():
+    """批量删除知识条目"""
+    try:
+        data = request.get_json()
+        if not data or 'ids' not in data:
+            return jsonify({'success': False, 'message': 'No knowledge IDs provided'}), 400
+        
+        deleted_ids = []
+        failed_ids = []
+        
+        # Use absolute path for knowledge storage
+        storage_base = os.path.abspath('knowledge_base_storage')
+        
+        for knowledge_id in data['ids']:
+            try:
+                knowledge_path = os.path.join(storage_base, knowledge_id)
+                logger.info(f"Attempting to delete: {knowledge_path}")
+                logger.info(f"Current working directory: {os.getcwd()}")
+                logger.info(f"Storage base resolved to: {storage_base}")
+                
+                # Debug path resolution
+                actual_path = os.path.abspath(os.path.join('knowledge_base_storage', knowledge_id))
+                logger.info(f"Alternative path resolution: {actual_path}")
+                logger.info(f"Path exists check: {os.path.exists(knowledge_path)}")
+                
+                if os.path.exists(knowledge_path):
+                    import shutil
+                    shutil.rmtree(knowledge_path)
+                    deleted_ids.append(knowledge_id)
+                    logger.info(f"Successfully deleted: {knowledge_path}")
+                else:
+                    # Try alternative path resolution
+                    if os.path.exists(actual_path):
+                        import shutil
+                        shutil.rmtree(actual_path)
+                        deleted_ids.append(knowledge_id)
+                        logger.info(f"Successfully deleted using alternative path: {actual_path}")
+                    else:
+                        failed_ids.append(knowledge_id)
+                        logger.warning(f"Directory not found: {knowledge_path}")
+                        logger.warning(f"Alternative path also not found: {actual_path}")
+            except Exception as e:
+                logger.error(f"Failed to delete {knowledge_id}: {e}")
+                failed_ids.append(knowledge_id)
+        
+        if len(deleted_ids) > 0:
+            return jsonify({
+                'success': True,
+                'deleted_count': len(deleted_ids),
+                'message': f'Successfully deleted {len(deleted_ids)} files',
+                'status': 'success'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'No files found to delete',
+                'status': 'error',
+                'errors': [f'File not found for ID: {id}' for id in failed_ids]
+            })
+        
+    except Exception as e:
+        logger.error(f"Error in batch delete: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/knowledge/cleanup', methods=['POST'])
 def cleanup_knowledge():
@@ -4397,202 +4375,6 @@ def restore_backup(backup_filename):
     except Exception as e:
         logger.error(f"Restore error: {e}")
         return jsonify({'error': str(e), 'success': False}), 500
-
-# Additional Knowledge Management API endpoints
-
-@app.route('/api/export_knowledge')
-def export_knowledge():
-    """导出知识库数据 | Export knowledge base data"""
-    try:
-        storage_base = 'knowledge_base_storage'
-        knowledge_list = []
-        
-        if os.path.exists(storage_base):
-            for knowledge_id in os.listdir(storage_base):
-                knowledge_path = os.path.join(storage_base, knowledge_id)
-                if os.path.isdir(knowledge_path):
-                    info_file = os.path.join(knowledge_path, 'info.json')
-                    content_file = os.path.join(knowledge_path, 'content.txt')
-                    
-                    if os.path.exists(info_file) and os.path.exists(content_file):
-                        try:
-                            with open(info_file, 'r', encoding='utf-8') as f:
-                                info = json.load(f)
-                            
-                            with open(content_file, 'r', encoding='utf-8') as f:
-                                content = f.read()
-                            
-                            knowledge_list.append({
-                                'id': knowledge_id,
-                                'title': info.get('title', 'Untitled'),
-                                'content': content,
-                                'category': info.get('category', 'Uncategorized'),
-                                'created_at': info.get('created_at', ''),
-                                'updated_at': info.get('updated_at', '')
-                            })
-                        except Exception as e:
-                            continue
-        
-        return jsonify({
-            'success': True,
-            'data': knowledge_list,
-            'total_count': len(knowledge_list),
-            'export_time': '2024-01-01'
-        })
-        
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': str(e),
-            'data': [],
-            'total_count': 0
-        })
-@app.route('/api/knowledge/restore', methods=['POST'])
-def restore_knowledge():
-    """Restore knowledge from backup"""
-    try:
-        if 'file' not in request.files:
-            return jsonify({'error': 'No file provided', 'success': False}), 400
-        
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({'error': 'No file selected', 'success': False}), 400
-        
-        # Validate file type
-        if not file.filename.endswith('.json'):
-            return jsonify({'error': 'Invalid file format. Please provide a JSON file', 'success': False}), 400
-        
-        # Read and validate JSON
-        try:
-            import_data = json.load(file)
-        except json.JSONDecodeError:
-            return jsonify({'error': 'Invalid JSON format', 'success': False}), 400
-        
-        # Process restoration
-        restored_count = 0
-        if 'knowledge_entries' in import_data:
-            for entry in import_data['knowledge_entries']:
-                try:
-                    entry_id = entry.get('id')
-                    if entry_id:
-                        category = entry.get('category', 'general')
-                        category_dir = os.path.join('knowledge_base', category)
-                        os.makedirs(category_dir, exist_ok=True)
-                        
-                        file_path = os.path.join(category_dir, f"{entry_id}.json")
-                        with open(file_path, 'w', encoding='utf-8') as f:
-                            json.dump(entry, f, ensure_ascii=False, indent=2)
-                        restored_count += 1
-                except Exception as e:
-                    logger.warning(f"Failed to restore entry: {e}")
-        
-        return jsonify({
-            'message': f'Successfully restored {restored_count} knowledge entries',
-            'restored_count': restored_count,
-            'success': True
-        })
-        
-    except Exception as e:
-        logger.error(f"Restore error: {e}")
-        return jsonify({'error': str(e), 'success': False}), 500
-
-
-
-
-
-# 添加缺失的API端点
-
-@app.route('/api/knowledge/storage_config')
-def get_storage_config():
-    """获取存储配置信息"""
-    try:
-        storage_base = 'knowledge_base_storage'
-        config = {
-            'storage_path': os.path.abspath(storage_base),
-            'total_entries': 0,
-            'total_size': 0,
-            'categories': [],
-            'last_backup': None,
-            'max_file_size': '10MB',
-            'supported_formats': ['txt', 'json', 'md', 'py']
-        }
-        
-        if os.path.exists(storage_base):
-            total_size = 0
-            categories = set()
-            
-            for root, dirs, files in os.walk(storage_base):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    try:
-                        total_size += os.path.getsize(file_path)
-                    except:
-                        pass
-                
-                # 收集分类
-                for dir_name in dirs:
-                    if os.path.isfile(os.path.join(root, dir_name, 'info.json')):
-                        categories.add(dir_name)
-            
-            config['total_entries'] = len([d for d in os.listdir(storage_base) 
-                                         if os.path.isdir(os.path.join(storage_base, d))])
-            config['total_size'] = total_size
-            config['categories'] = list(categories)
-        
-        return jsonify({
-            'success': True,
-            'config': config
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-@app.route('/api/knowledge/metadata/<metadata_id>')
-def get_metadata(metadata_id):
-    """获取元数据信息"""
-    try:
-        # 使用相对于项目根目录的路径
-        metadata_path = os.path.join('knowledge_base_storage', metadata_id, 'info.json')
-        
-        if not os.path.exists(metadata_path):
-            return jsonify({'success': False, 'message': 'Metadata not found'}), 404
-        
-        with open(metadata_path, 'r', encoding='utf-8') as f:
-            metadata = json.load(f)
-        
-        return jsonify({
-            'success': True,
-            'metadata': metadata
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-@app.route('/api/knowledge/restore/<backup_filename>', methods=['POST'])
-def restore_from_backup(backup_filename):
-    """从指定备份文件恢复"""
-    try:
-        backup_dir = 'backups'
-        backup_path = os.path.join(backup_dir, backup_filename)
-        
-        if not os.path.exists(backup_path):
-            return jsonify({'success': False, 'message': 'Backup file not found'}), 404
-        
-        # 验证文件名安全性
-        if not backup_filename.startswith('knowledge_base_backup_'):
-            return jsonify({'success': False, 'message': 'Invalid backup filename'}), 400
-        
-        # 模拟恢复过程
-        logger.info(f"Restoring from backup: {backup_filename}")
-        
-        return jsonify({
-            'success': True,
-            'message': f'Successfully restored from {backup_filename}',
-            'backup_file': backup_filename
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
 
 # Error handlers
 @app.errorhandler(404)

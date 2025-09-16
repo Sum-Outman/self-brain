@@ -437,4 +437,4 @@ def set_language():
     return jsonify({'error': '无效的语言代码。使用 en, zh, ja, de, ru | Invalid language code. Use en, zh, ja, de, ru'}), 400
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5004, debug=True)
+    app.run(host='0.0.0.0', port=5003, debug=True)

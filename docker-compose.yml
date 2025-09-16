@@ -1,217 +1,116 @@
 version: '3.8'
 
 services:
-  # Management Service
   manager:
     build: .
-    container_name: self-brain-manager
-    command: python manager_model/app.py
+    command: python manager_model/core_system.py
     ports:
       - "5000:5000"
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
-      - ./models:/app/models
-    environment:
-      - PYTHONPATH=/app
-      - FLASK_ENV=production
+      - .:/app
     depends_on:
-      - d_image
-      - e_video
-      - f_spatial
-      - g_sensor
-      - h_computer_control
-      - i_knowledge
-      - j_motion
-      - k_programming
-    networks:
-      - self-brain-network
-    restart: unless-stopped
+      - model_a
+      - model_b
+      - model_c
+      - model_d
+      - model_e
+      - model_f
+      - model_g
+      - model_h
+      - model_i
+      - model_j
 
-  # D Image Processing Service
-  d_image:
+  model_a:
     build: .
-    container_name: self-brain-d-image
+    command: python sub_models/B_language/app.py
+    ports:
+      - "5001:5001"
+    volumes:
+      - .:/app
+
+  model_b:
+    build: .
+    command: python sub_models/C_audio/app.py
+    ports:
+      - "5002:5002"
+    volumes:
+      - .:/app
+
+  model_c:
+    build: .
     command: python sub_models/D_image/app.py
+    ports:
+      - "5003:5003"
+    volumes:
+      - .:/app
+
+  model_d:
+    build: .
+    command: python sub_models/E_video/app.py
     ports:
       - "5004:5004"
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
-    environment:
-      - PYTHONPATH=/app
-      - PORT=5004
-    networks:
-      - self-brain-network
-    restart: unless-stopped
+      - .:/app
 
-  # E Video Processing Service
-  e_video:
+  model_e:
     build: .
-    container_name: self-brain-e-video
-    command: python sub_models/E_video/app.py
+    command: python sub_models/F_spatial/app.py
     ports:
       - "5005:5005"
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
-    environment:
-      - PYTHONPATH=/app
-      - PORT=5005
-    networks:
-      - self-brain-network
-    restart: unless-stopped
+      - .:/app
 
-  # F Spatial Positioning Service
-  f_spatial:
+  model_f:
     build: .
-    container_name: self-brain-f-spatial
-    command: python sub_models/F_spatial/app.py
+    command: python sub_models/G_sensor/app.py
     ports:
       - "5006:5006"
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
-    environment:
-      - PYTHONPATH=/app
-      - PORT=5006
-    networks:
-      - self-brain-network
-    restart: unless-stopped
+      - .:/app
 
-  # G Sensor Service
-  g_sensor:
+  model_g:
     build: .
-    container_name: self-brain-g-sensor
-    command: python sub_models/G_sensor/app.py
+    command: python sub_models/H_computer_control/app.py
     ports:
       - "5007:5007"
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
-    environment:
-      - PYTHONPATH=/app
-      - PORT=5007
-    networks:
-      - self-brain-network
-    restart: unless-stopped
+      - .:/app
 
-  # H Computer Control Service
-  h_computer_control:
+  model_h:
     build: .
-    container_name: self-brain-h-control
-    command: python sub_models/H_computer_control/app.py
+    command: python sub_models/I_motion/app.py
     ports:
       - "5008:5008"
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
-    environment:
-      - PYTHONPATH=/app
-      - PORT=5008
-    networks:
-      - self-brain-network
-    restart: unless-stopped
+      - .:/app
 
-  # I Knowledge Service
-  i_knowledge:
+  model_i:
     build: .
-    container_name: self-brain-i-knowledge
-    command: python sub_models/I_knowledge/app.py
+    command: python sub_models/J_knowledge/app.py
     ports:
       - "5009:5009"
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
-    environment:
-      - PYTHONPATH=/app
-      - PORT=5009
-    networks:
-      - self-brain-network
-    restart: unless-stopped
+      - .:/app
 
-  # J Motion Control Service
-  j_motion:
+  model_j:
     build: .
-    container_name: self-brain-j-motion
-    command: python sub_models/J_motion/app.py
+    command: python sub_models/K_programming/app.py
     ports:
       - "5010:5010"
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
-    environment:
-      - PYTHONPATH=/app
-      - PORT=5010
-    networks:
-      - self-brain-network
-    restart: unless-stopped
+      - .:/app
 
-  # K Programming Service
-  k_programming:
+  web_backend:
     build: .
-    container_name: self-brain-k-programming
-    command: python sub_models/K_programming/app.py
+    command: python web_interface/backend/app.py
     ports:
-      - "5011:5011"
+      - "8000:8000"
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
-    environment:
-      - PYTHONPATH=/app
-      - PORT=5011
-    networks:
-      - self-brain-network
-    restart: unless-stopped
+      - .:/app
 
-  # Web Interface
-  web_interface:
-    build: .
-    container_name: self-brain-web
-    command: python web_interface/app.py
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
-      - ./uploads:/app/uploads
-    environment:
-      - PYTHONPATH=/app
-      - FLASK_ENV=production
-    depends_on:
-      - d_image
-      - e_video
-      - f_spatial
-      - g_sensor
-      - h_computer_control
-      - i_knowledge
-      - j_motion
-      - k_programming
-    networks:
-      - self-brain-network
-    restart: unless-stopped
-
-  # Nginx Reverse Proxy (Optional)
-  nginx:
+  web_frontend:
     image: nginx:alpine
-    container_name: self-brain-nginx
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:80"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
-    depends_on:
-      - web_interface
-    networks:
-      - self-brain-network
-    restart: unless-stopped
-
-networks:
-  self-brain-network:
-    driver: bridge
-
-volumes:
-  data:
-  logs:
-  models:
+      - ./web_interface/frontend:/usr/share/nginx/html

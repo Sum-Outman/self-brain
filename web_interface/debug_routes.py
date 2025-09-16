@@ -45,7 +45,7 @@ if __name__ == "__main__":
     
     # Start a test server
     print("\n=== Starting Test Server ===")
-    threading.Thread(target=lambda: app.run(host='127.0.0.1', port=5000, debug=False), daemon=True).start()
+    threading.Thread(target=lambda: app.run(host='127.0.0.1', port=5002, debug=False), daemon=True).start()
     
     # Test the endpoint
     test_endpoint()

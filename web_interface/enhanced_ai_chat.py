@@ -453,4 +453,4 @@ if __name__ == "__main__":
     print()
     print("访问 http://localhost:5006 查看增强版主页")
     
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5006, debug=True)

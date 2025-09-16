@@ -335,4 +335,4 @@ if __name__ == '__main__':
     maintenance_thread.start()
     
     # 启动API服务
-    app.run(host='0.0.0.0', port=5007)
+    app.run(host='0.0.0.0', port=5006)

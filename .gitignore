@@ -20,6 +20,7 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
@@ -47,7 +48,6 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
-cover/
 
 # Translations
 *.mo
@@ -70,7 +70,6 @@ instance/
 docs/_build/
 
 # PyBuilder
-.pybuilder/
 target/
 
 # Jupyter Notebook
@@ -85,12 +84,6 @@ ipython_config.py
 
 # pipenv
 Pipfile.lock
-
-# poetry
-poetry.lock
-
-# pdm
-.pdm.toml
 
 # PEP 582
 __pypackages__/
@@ -110,6 +103,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+myenv/
 
 # Spyder project settings
 .spyderproject
@@ -129,17 +123,114 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# pytype static type analyzer
-.pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# PyCharm
-.idea/
-
-# VS Code
+# IDE
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+*.tmp
+*.temp
+*.bak
+*.backup
+*.log
+processed/
+uploads/
+*.csv
+data_bus_storage/
+knowledge_base_storage/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.coverage.*
+*.cover
+.hypothesis/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+.hypothesis
+
+# Large files and datasets
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+*.bin
+*.dat
+*.data
+
+# Model files (if too large)
+*.pkl
+*.pickle
+*.h5
+*.model
+*.weights
+*.pt
+*.pth
+*.onnx
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+
+# Cache
+.cache/
+.pytest_cache/
+__pycache__/
+
+# Virtual environments
+myenv/
+.venv/
+venv/
+env/
+
+# IDE settings
+.vscode/
+.idea/
+*.swp
+*.swo
 
 # OS generated files
 .DS_Store
@@ -150,52 +241,21 @@ cython_debug/
 ehthumbs.db
 Thumbs.db
 
-# Data files
-data/
-logs/
-models/
+# Project specific
+processed/
 uploads/
-temp/
-*.csv
-*.json
-*.pkl
-*.pth
-*.pt
-*.h5
-*.hdf5
-*.onnx
-*.pb
-*.tflite
-*.engine
-
-# Training files
-trainable_a_manager.py
-*.training
-*.backup
-*.temp
-
-# Docker
-.dockerignore
-
-# Backup files
-backups/
-*.bak
-*.backup
-
-# Cache
-.cache/
-*.cache
-
-# Large files
-*.zip
-*.tar.gz
-*.rar
-
-# Node modules (if any)
-node_modules/
-
-# SSL certificates
-ssl/
-*.pem
-*.crt
-*.key
+data_bus_storage/
+knowledge_base_storage/
+language_resources/
+__pycache__/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.coverage.*
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+.hypothesis

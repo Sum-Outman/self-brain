@@ -25,4 +25,4 @@ if __name__ == '__main__':
             print(f"{route}: {response.status_code}")
     
     print("\n启动服务器...")
-    app.run(host='0.0.0.0', port=5009, debug=True)
+    app.run(host='0.0.0.0', port=8004, debug=True)

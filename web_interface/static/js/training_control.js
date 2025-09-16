@@ -155,18 +155,6 @@ class TrainingController {
             });
         }
 
-        // Training type change
-        const typeSelect = document.getElementById('trainingSubType');
-        if (typeSelect) {
-            typeSelect.addEventListener('change', () => this.updateTrainingControls());
-        }
-
-        // Compute device change
-        const deviceSelect = document.getElementById('computeDevice');
-        if (deviceSelect) {
-            deviceSelect.addEventListener('change', () => this.updateDeviceInfo());
-        }
-
         // Form submission
         const form = document.getElementById('trainingForm');
         if (form) {
@@ -229,43 +217,6 @@ class TrainingController {
         }
     }
 
-    updateDeviceInfo() {
-        const device = document.getElementById('computeDevice')?.value || 'auto';
-        const deviceInfo = {
-            'auto': 'Automatically detect and use the best available device',
-            'cpu': 'Use CPU for training (slower but more stable)',
-            'gpu': 'Use GPU for training (faster when available)',
-            'cuda': 'Use NVIDIA CUDA GPU (best performance with NVIDIA hardware)',
-            'mps': 'Use Apple Metal Performance Shaders (optimized for Apple Silicon)'
-        };
-        
-        this.appendToConsole(`Device changed to: ${device} - ${deviceInfo[device]}`, 'info');
-    }
-
-    appendToConsole(message, type = 'info') {
-        const console = document.getElementById('trainingConsole');
-        if (!console) return;
-
-        const timestamp = new Date().toLocaleTimeString();
-        const typeClass = type === 'error' ? 'text-danger' : 
-                         type === 'success' ? 'text-success' : 
-                         type === 'warning' ? 'text-warning' : 'text-muted';
-        
-        const logEntry = document.createElement('div');
-        logEntry.innerHTML = `<span class="text-muted">[${timestamp}]</span> <span class="${typeClass}">${message}</span>`;
-        console.appendChild(logEntry);
-        
-        // Auto-scroll to bottom
-        console.scrollTop = console.scrollHeight;
-    }
-
-    clearConsole() {
-        const console = document.getElementById('trainingConsole');
-        if (console) {
-            console.innerHTML = '<div class="text-muted">Console cleared. Ready for new training session...</div>';
-        }
-    }
-
     // Set up parameter sliders
     setupParameterSliders() {
         const sliders = [
@@ -294,30 +245,18 @@ class TrainingController {
         e.preventDefault();
         
         const mode = document.getElementById('trainingMode').value;
-        const trainingType = document.getElementById('trainingSubType')?.value || 'supervised';
-        const computeDevice = document.getElementById('computeDevice')?.value || 'auto';
         const epochs = parseInt(document.getElementById('epochs').value);
         const learningRate = parseFloat(document.getElementById('learningRate').value);
         const batchSize = parseInt(document.getElementById('batchSize').value);
-        const validationSplit = parseFloat(document.getElementById('validationSplit')?.value || 0.2);
-        const earlyStopping = document.getElementById('earlyStopping')?.checked || false;
-        const knowledgeAssisted = document.getElementById('knowledgeAssisted')?.checked || false;
-        const realTimeMonitoring = document.getElementById('realTimeMonitoring')?.checked || false;
-        const saveCheckpoints = document.getElementById('saveCheckpoints')?.checked || false;
 
         const trainingData = {
             model_ids: this.selectedModels,
             mode: mode,
-            training_type: trainingType,
-            compute_device: computeDevice,
             epochs: epochs,
             learning_rate: learningRate,
             batch_size: batchSize,
-            validation_split: validationSplit,
-            early_stopping: earlyStopping,
-            knowledge_assisted: knowledgeAssisted,
-            real_time_monitoring: realTimeMonitoring,
-            save_checkpoints: saveCheckpoints
+            training_type: 'supervised',
+            compute_device: 'auto'
         };
 
         try {
@@ -405,8 +344,6 @@ class TrainingController {
             'stopped': 'bi-stop-circle'
         };
 
-        const device = session.compute_device || session.device || 'auto';
-
         div.innerHTML = `
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -421,11 +358,6 @@ class TrainingController {
             <div class="mt-2">
                 <small class="text-muted">
                     Models: ${session.models.map(m => m.name).join(', ')}
-                </small>
-            </div>
-            <div class="mt-2">
-                <small class="text-muted">
-                    Device: <span class="badge bg-secondary">${device.toUpperCase()}</span>
                 </small>
             </div>
             <div class="mt-2">
@@ -654,11 +586,6 @@ class TrainingController {
     }
 
     // Utility methods
-    stopTraining() {
-        this.appendToConsole('Stopping all training sessions...', 'warning');
-        // TODO: Implement actual training stop logic
-    }
-
     formatDuration(seconds) {
         if (seconds < 60) return `${seconds} seconds`;
         if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes`;

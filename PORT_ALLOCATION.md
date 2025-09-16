@@ -20,7 +20,6 @@
 | **Quantum Integration** | 5013 | ✅ Active | Quantum computing interface |
 | **Standalone A Manager** | 5014 | ✅ New | Independent A management |
 | **Manager Model API** | 5015 | ✅ New | Manager model standalone |
-| **Working Enhanced Chat** | 5016 | ✅ New | Enhanced AI chat interface |
 | **Development Server** | 8080 | ✅ Reserved | Development/debugging |
 | **Backup Services** | 8000-8010 | ✅ Reserved | Backup and testing |
 
@@ -45,7 +44,6 @@
 - **Quantum Integration**: 5013 (moved from 5011)
 - **Standalone A Manager**: 5014 (new)
 - **Manager Model API**: 5015 (new)
-- **Working Enhanced Chat**: 5016 (new)
 
 ## Usage Instructions
 
