@@ -348,6 +348,170 @@ def save_training_results(model: nn.Module, history: Dict, results: Dict,
     
     logger.info(f"Model and training results saved: {save_path}")
 
+def train_jointly(models: List[nn.Module], train_loaders: List[DataLoader], 
+                  val_loaders: List[DataLoader], epochs: int = 10, 
+                  lrs: List[float] = None, device: str = 'cpu', 
+                  loss_weights: List[float] = None) -> Dict:
+    """Train multiple models jointly
+    Args:
+        models: List of models to train jointly
+        train_loaders: List of training data loaders
+        val_loaders: List of validation data loaders
+        epochs: Number of epochs
+        lrs: List of learning rates for each model
+        device: Training device
+        loss_weights: List of weights for each model's loss
+    Returns:
+        Joint training history dictionary
+    """
+    # Check input consistency
+    if len(models) != len(train_loaders) or len(models) != len(val_loaders):
+        raise ValueError("Number of models, train loaders, and val loaders must match")
+    
+    # Initialize default learning rates if not provided
+    if lrs is None:
+        lrs = [0.001] * len(models)
+    elif len(lrs) != len(models):
+        raise ValueError("Number of learning rates must match number of models")
+    
+    # Initialize default loss weights if not provided
+    if loss_weights is None:
+        loss_weights = [1.0] * len(models)
+    elif len(loss_weights) != len(models):
+        raise ValueError("Number of loss weights must match number of models")
+    
+    # Normalize loss weights
+    total_weight = sum(loss_weights)
+    loss_weights = [w / total_weight for w in loss_weights]
+    
+    # Set up optimizers and schedulers
+    optimizers = []
+    schedulers = []
+    criteria = []
+    
+    for i, model in enumerate(models):
+        model.to(device)
+        optimizers.append(optim.Adam(model.parameters(), lr=lrs[i]))
+        schedulers.append(optim.lr_scheduler.ReduceLROnPlateau(optimizers[i], 
+                                                             mode='min', factor=0.5, patience=3))
+        criteria.append(nn.CrossEntropyLoss())
+    
+    # Initialize joint training history
+    joint_history = {
+        'joint_loss': [],
+        'individual_losses': [[] for _ in range(len(models))],
+        'val_loss': [],
+        'val_accuracies': [[] for _ in range(len(models))],
+        'learning_rates': [[] for _ in range(len(models))]
+    }
+    
+    for epoch in range(epochs):
+        # Training phase
+        for model in models:
+            model.train()
+        
+        running_joint_loss = 0.0
+        running_individual_losses = [0.0] * len(models)
+        
+        # Get minimum length of loaders to ensure all models train for the same number of batches
+        min_loader_len = min(len(loader) for loader in train_loaders)
+        
+        for batch_idx in range(min_loader_len):
+            # Zero gradients for all optimizers
+            for optimizer in optimizers:
+                optimizer.zero_grad()
+            
+            batch_losses = []
+            
+            # Forward pass through each model
+            for i in range(len(models)):
+                train_iter = iter(train_loaders[i])
+                inputs, targets = next(train_iter)
+                inputs = inputs.to(device)
+                targets = targets.to(device)
+                
+                outputs = models[i](inputs)
+                loss = criteria[i](outputs, targets)
+                batch_losses.append(loss)
+                
+                # Apply loss weight
+                if i == 0:  # First model's loss is added directly
+                    joint_loss = loss * loss_weights[i]
+                else:  # Subsequent losses are added with their weights
+                    joint_loss += loss * loss_weights[i]
+                
+                running_individual_losses[i] += loss.item()
+            
+            # Backward pass and optimize
+            joint_loss.backward()
+            for optimizer in optimizers:
+                optimizer.step()
+            
+            running_joint_loss += joint_loss.item()
+        
+        # Validation phase
+        for model in models:
+            model.eval()
+        
+        val_joint_loss = 0.0
+        val_individual_losses = [0.0] * len(models)
+        val_correct = [0] * len(models)
+        val_total = [0] * len(models)
+        
+        with torch.no_grad():
+            min_val_loader_len = min(len(loader) for loader in val_loaders)
+            
+            for batch_idx in range(min_val_loader_len):
+                # Forward pass through each model for validation
+                for i in range(len(models)):
+                    val_iter = iter(val_loaders[i])
+                    inputs, targets = next(val_iter)
+                    inputs = inputs.to(device)
+                    targets = targets.to(device)
+                    
+                    outputs = models[i](inputs)
+                    loss = criteria[i](outputs, targets)
+                    val_individual_losses[i] += loss.item()
+                    
+                    _, predicted = torch.max(outputs.data, 1)
+                    val_total[i] += targets.numel()
+                    val_correct[i] += (predicted == targets).sum().item()
+            
+            # Calculate joint validation loss
+            for i in range(len(models)):
+                avg_individual_val_loss = val_individual_losses[i] / min_val_loader_len
+                val_joint_loss += avg_individual_val_loss * loss_weights[i]
+            
+            # Update learning rates based on individual model validation loss
+            for i in range(len(models)):
+                avg_individual_val_loss = val_individual_losses[i] / min_val_loader_len
+                schedulers[i].step(avg_individual_val_loss)
+        
+        # Record history
+        avg_joint_loss = running_joint_loss / min_loader_len
+        avg_val_joint_loss = val_joint_loss
+        
+        joint_history['joint_loss'].append(avg_joint_loss)
+        joint_history['val_loss'].append(avg_val_joint_loss)
+        
+        for i in range(len(models)):
+            avg_individual_loss = running_individual_losses[i] / min_loader_len
+            joint_history['individual_losses'][i].append(avg_individual_loss)
+            
+            avg_val_accuracy = 100 * val_correct[i] / val_total[i] if val_total[i] > 0 else 0
+            joint_history['val_accuracies'][i].append(avg_val_accuracy)
+            
+            current_lr = optimizers[i].param_groups[0]['lr']
+            joint_history['learning_rates'][i].append(current_lr)
+        
+        # Log epoch results
+        logger.info(f'Epoch {epoch+1}/{epochs}, Joint Loss: {avg_joint_loss:.4f}, Val Loss: {avg_val_joint_loss:.4f}')
+        for i in range(len(models)):
+            logger.info(f'  Model {i+1}: Train Loss: {joint_history["individual_losses"][i][-1]:.4f}, ' +
+                       f'Val Acc: {joint_history["val_accuracies"][i][-1]:.2f}%, LR: {joint_history["learning_rates"][i][-1]:.8f}')
+    
+    return joint_history
+
 def main():
     """Main training function"""
     # Set device
@@ -373,8 +537,8 @@ def main():
     num_classes = len(train_dataset.task_type_map) if train_dataset.task_type_map else 12
     model = ProgrammingModel(input_size=6, hidden_size=128, num_classes=num_classes, num_layers=3)
     
-    # Train model
-    logger.info("Starting programming model training")
+    # Train model (single model training)
+    logger.info("Starting programming model training (single model mode)")
     history = train_model(model, train_loader, val_loader, epochs=20, lr=0.001, device=device)
     
     # Evaluate model
@@ -386,6 +550,39 @@ def main():
     
     logger.info("Programming model training completed")
     logger.info(f"Final evaluation results - Loss: {results['loss']:.4f}, Accuracy: {results['accuracy']:.2f}%")
+    
+    # Example: Joint training with multiple models (uncomment to use)
+    # This is just an example - in practice, you would want to load different types of models
+    # from different modules
+    
+    # # Prepare models for joint training
+    # model2 = ProgrammingModel(input_size=6, hidden_size=128, num_classes=num_classes, num_layers=3)
+    # model3 = ProgrammingModel(input_size=6, hidden_size=128, num_classes=num_classes, num_layers=3)
+    # models = [model, model2, model3]
+    # 
+    # # Prepare loaders for each model
+    # # Note: In a real scenario, each model might have its own specific dataset
+    # train_loaders = [train_loader, train_loader, train_loader]
+    # val_loaders = [val_loader, val_loader, val_loader]
+    # 
+    # # Set loss weights for each model
+    # loss_weights = [0.5, 0.3, 0.2]  # Adjust according to your requirements
+    # 
+    # # Joint training
+    # logger.info("Starting joint training of multiple programming models")
+    # joint_history = train_jointly(models, train_loaders, val_loaders, 
+    #                              epochs=15, lrs=[0.001, 0.001, 0.001], 
+    #                              device=device, loss_weights=loss_weights)
+    # 
+    # # Evaluate each model after joint training
+    # for i, m in enumerate(models):
+    #     logger.info(f"Evaluating model {i+1} after joint training")
+    #     model_results = evaluate_model(m, test_loader, device=device)
+    #     logger.info(f"Model {i+1} - Loss: {model_results['loss']:.4f}, Accuracy: {model_results['accuracy']:.2f}%")
+    #     
+    #     # Save individual model results
+    #     save_training_results(m, joint_history, model_results, 
+    #                          save_path=f'models/k_programming_model_joint_{i+1}.pth')
 
 if __name__ == '__main__':
     main()

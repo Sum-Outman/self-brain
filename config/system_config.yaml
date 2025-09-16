@@ -16,6 +16,13 @@ ports:
   programming: 5010
   web_backend: 8000
   web_frontend: 8080
+  manager_api: 5015
+
+# 增强学习配置 - Enhanced Learning Configuration
+enhanced_learning:
+  config_path: "config/enhanced_learning_config.json"
+  enable_auto_config: true
+  learning_strategy: "adaptive"
 
 # 模型配置 - Model Configuration
 models:

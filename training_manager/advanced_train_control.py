@@ -25,6 +25,9 @@ import re
 import gettext
 import locale
 import random
+import os
+import yaml
+from config.config_loader import get_config, get_config_loader  # Import config loader functions
 
 # Setup logging
 logging.basicConfig(
@@ -118,6 +121,9 @@ class AdvancedTrainingController:
         """
         # Load configuration
         self.config = self._load_config(config_path)
+        
+        # Load system config from config/system_config.yaml
+        self.system_config = get_config_loader(config_path="config/system_config.yaml").to_dict()
         
         # Training status
         self.training_status = {
@@ -497,6 +503,26 @@ class AdvancedTrainingController:
             "data_cache": deque(maxlen=1000),
             "event_queue": deque(maxlen=500)
         }
+    
+    def _ensure_data_directories(self):
+        """Ensure training data directories exist based on system configuration"""
+        try:
+            # Create main data directory if it doesn't exist
+            main_data_path = self.system_config.get('training', {}).get('data_paths', {}).get('main', 'data/training')
+            if main_data_path:
+                os.makedirs(main_data_path, exist_ok=True)
+                self._add_training_log(f"Main data directory ensured: {main_data_path}")
+            
+            # Create model-specific data directories
+            for model_name in self.system_config.get('training', {}).get('data_paths', {}):
+                if model_name != 'main':
+                    model_data_path = self.system_config['training']['data_paths'][model_name]
+                    if model_data_path:
+                        os.makedirs(model_data_path, exist_ok=True)
+                        self._add_training_log(f"Model data directory ensured: {model_data_path}")
+        except Exception as e:
+            self._add_training_log(f"Failed to create data directories: {str(e)}", is_error=True)
+            logger.error(f"Failed to create data directories: {str(e)}")
     
     def get_system_health(self) -> Dict[str, Any]:
         """Get system health status - Enhanced version"""
@@ -1016,10 +1042,137 @@ class AdvancedTrainingController:
         # Use individual training mode for pretraining
         return self._execute_individual_training(training_id, model_names, pretraining_config)
     
-    def _simulate_model_training(self, model_name: str, epochs: int, config: Dict[str, Any]) -> Dict[str, Any]:
-        """Simulate model training process"""
+    def _load_training_data(self, model_name: str):
+        """Load training data from configured paths"""
         try:
-            # Simulate training duration based on model type and epochs
+            # Get model-specific data path from system config
+            model_data_path = self.system_config.get('training', {}).get('data_paths', {}).get(model_name.lower(), '')
+            
+            # If no specific path, use main data path
+            if not model_data_path:
+                model_data_path = self.system_config.get('training', {}).get('data_paths', {}).get('main', 'data/training')
+                self._add_training_log(f"Using main data path for {model_name}: {model_data_path}")
+            else:
+                self._add_training_log(f"Using model-specific data path for {model_name}: {model_data_path}")
+            
+            # Create directory if it doesn't exist
+            os.makedirs(model_data_path, exist_ok=True)
+            
+            # Check if there are any data files
+            data_files = []
+            for ext in ['json', 'csv', 'txt', 'parquet', 'npy', 'npz']:
+                data_files.extend(Path(model_data_path).glob(f'*.{ext}'))
+            
+            if not data_files:
+                # No data files found, create sample data
+                sample_data = self._generate_sample_data(model_name)
+                sample_file = os.path.join(model_data_path, 'sample_training_data.json')
+                with open(sample_file, 'w', encoding='utf-8') as f:
+                    json.dump(sample_data, f, ensure_ascii=False, indent=2)
+                self._add_training_log(f"No data files found, created sample data: {sample_file}")
+                return sample_data
+            
+            # Load first found data file
+            data_file = data_files[0]
+            self._add_training_log(f"Loading training data from: {data_file}")
+            
+            # Load based on file extension
+            if data_file.suffix == '.json':
+                with open(data_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            elif data_file.suffix == '.csv':
+                import pandas as pd
+                df = pd.read_csv(data_file)
+                return df.to_dict('records')
+            elif data_file.suffix in ['.npy', '.npz']:
+                import numpy as np
+                if data_file.suffix == '.npy':
+                    data = np.load(str(data_file))
+                    return data.tolist() if isinstance(data, np.ndarray) else data.item()
+                else:
+                    with np.load(str(data_file)) as data:
+                        return {k: v.tolist() if isinstance(v, np.ndarray) else v for k, v in data.items()}
+            else:
+                # Default to text file
+                with open(data_file, 'r', encoding='utf-8') as f:
+                    return f.readlines()
+        except Exception as e:
+            self._add_training_log(f"Failed to load training data: {str(e)}", is_error=True)
+            logger.error(f"Failed to load training data: {str(e)}")
+            # Return sample data as fallback
+            return self._generate_sample_data(model_name)
+    
+    def _generate_sample_data(self, model_name: str) -> List[Dict[str, Any]]:
+        """Generate sample training data for a model"""
+        sample_sizes = {
+            'A_management': 100,
+            'B_language': 200,
+            'C_audio': 150,
+            'D_image': 150,
+            'E_video': 100,
+            'F_spatial': 100,
+            'G_sensor': 200,
+            'H_computer_control': 100,
+            'I_knowledge': 200,
+            'J_motion': 150,
+            'K_programming': 150
+        }
+        
+        sample_size = sample_sizes.get(model_name, 100)
+        sample_data = []
+        
+        # Generate model-specific sample data
+        if model_name == 'B_language':
+            texts = [
+                "This is a sample text for language model training",
+                "Another example of text data",
+                "Language models can process and generate human language",
+                "Training data is essential for machine learning models",
+                "The quick brown fox jumps over the lazy dog"
+            ]
+            for i in range(sample_size):
+                sample_data.append({
+                    'id': i,
+                    'text': random.choice(texts) + f" (example {i})",
+                    'label': random.choice([0, 1, 2]),
+                    'metadata': {
+                        'source': 'sample',
+                        'timestamp': datetime.now().isoformat()
+                    }
+                })
+        else:
+            # Generic sample data for other models
+            for i in range(sample_size):
+                sample_data.append({
+                    'id': i,
+                    'input': f"Sample input {i}",
+                    'output': f"Sample output {i}",
+                    'label': random.choice([0, 1]) if random.random() > 0.3 else 0,
+                    'metadata': {
+                        'model': model_name,
+                        'source': 'sample',
+                        'timestamp': datetime.now().isoformat()
+                    }
+                })
+        
+        return sample_data
+    
+    def _simulate_model_training(self, model_name: str, epochs: int, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Simulate model training process using system configuration"""
+        try:
+            # Ensure data directories exist
+            self._ensure_data_directories()
+            
+            # Load training parameters from system configuration
+            system_training_config = self.system_config.get('training', {})
+            
+            # Override with config parameters if provided
+            epochs = config.get('epochs', system_training_config.get('epochs', 50))
+            batch_size = config.get('batch_size', system_training_config.get('batch_size', 32))
+            learning_rate = config.get('learning_rate', system_training_config.get('learning_rate', 0.001))
+            validation_split = config.get('validation_split', system_training_config.get('validation_split', 0.2))
+            
+            # Set base duration based on model complexity
             base_duration = 60  # 60 seconds base
             model_type = self.config["models"][model_name]["model_type"]
             
@@ -1027,7 +1180,7 @@ class AdvancedTrainingController:
             training_type = "self-supervised"
             if config.get("mode") == "pretraining":
                 epochs = max(epochs, 50)  # Pretraining at least 50 epochs
-                learning_rate = min(config.get("learning_rate", 0.001), 0.0001)  # Pretraining uses smaller learning rate
+                learning_rate = min(learning_rate, 0.0001)  # Pretraining uses smaller learning rate
                 training_type = "pretraining"
                 self._add_training_log(f"Starting {training_type} for {model_name}")
             elif config.get("mode") == "transfer":
@@ -1039,60 +1192,146 @@ class AdvancedTrainingController:
             else:
                 self._add_training_log(f"Starting {training_type} training for {model_name}")
             
-            self._add_training_log(f"Configuration: {epochs} epochs, {config.get('batch_size', 32)} batch size")
+            # Load training data
+            training_data = self._load_training_data(model_name)
+            data_size = len(training_data) if isinstance(training_data, list) else 100
+            
+            # Split data into training and validation sets
+            train_size = int(data_size * (1 - validation_split))
+            
+            self._add_training_log(f"Configuration: {epochs} epochs, {batch_size} batch size, {learning_rate} learning rate")
+            self._add_training_log(f"Data size: {data_size} samples, Training: {train_size} samples, Validation: {data_size - train_size} samples")
             
             # Check if training was cancelled
             if self.training_status.get("cancel_requested", False):
                 self._add_training_log(f"Training for {model_name} cancelled")
                 return {"status": "cancelled", "message": "Training cancelled"}
-            
-            # Simulate epoch progress
+
+            # Split data into training and validation sets
+            if isinstance(training_data, list) and len(training_data) > 0:
+                random.shuffle(training_data)
+                train_data = training_data[:train_size]
+                val_data = training_data[train_size:]
+                self._add_training_log(f"Data split complete: {len(train_data)} training samples, {len(val_data)} validation samples")
+            else:
+                train_data = []
+                val_data = []
+                self._add_training_log("Warning: No valid data to split")
+
+            # Initialize training metrics
+            metrics = {
+                "train_accuracy": 0.5 + random.random() * 0.4,  # Random accuracy between 0.5 and 0.9
+                "train_loss": 1.0 - random.random() * 0.7,      # Random loss between 0.3 and 1.0
+                "val_accuracy": 0.5 + random.random() * 0.3,    # Validation accuracy slightly lower
+                "val_loss": 1.0 - random.random() * 0.6,        # Validation loss slightly higher
+                "precision": 0.5 + random.random() * 0.4,
+                "recall": 0.5 + random.random() * 0.4,
+                "f1": 0.5 + random.random() * 0.4,
+                "training_time": base_duration * epochs / 100,
+                "samples_processed": len(train_data) * epochs if train_data else random.randint(1000, 10000)
+            }
+
+            # Simulate epoch-wise training with validation
+            best_val_accuracy = metrics["val_accuracy"]
+            patience = 5  # Early stopping patience
+            no_improvement_count = 0
+
             for epoch in range(epochs):
                 # Update epoch progress
-                self.training_status["current_epoch"] = epoch + 1
-                self.training_status["progress"] = ((epoch + 1) / epochs) * 100
+                current_epoch = epoch + 1
+                self.training_status["current_epoch"] = current_epoch
+                self.training_status["progress"] = (current_epoch / epochs) * 100
+
+                # Simulate training on batches
+                total_batches = max(1, (len(train_data) + batch_size - 1) // batch_size) if train_data else 1
                 
-                # Simulate training metrics
-                current_loss = random.uniform(0.01, 0.5) * (1 - epoch/epochs)
-                current_accuracy = 0.5 + random.uniform(0, 0.45) * (epoch/epochs)
+                for batch_idx in range(total_batches):
+                    # Update batch progress
+                    batch_progress = ((batch_idx + 1) / total_batches) * 100
+                    self.training_status["batch_progress"] = batch_progress
+                    
+                    # Simulate batch processing time
+                    time.sleep(0.05)  # Shorter sleep for batches
+
+                # Simulate validation
+                current_val_accuracy = metrics["val_accuracy"] + (random.random() - 0.45) * 0.02
+                current_val_loss = metrics["val_loss"] - (random.random() - 0.5) * 0.05
                 
-                # Update metrics
+                metrics["val_accuracy"] = current_val_accuracy
+                metrics["val_loss"] = current_val_loss
+
+                # Update metrics with learning rate decay
+                if current_epoch % 10 == 0:
+                    learning_rate *= 0.9  # Decay learning rate
+                    self._add_training_log(f"Learning rate decayed to: {learning_rate:.6f}")
+
+                # Update training metrics (simulate improvement)
+                metrics["train_accuracy"] = min(metrics["train_accuracy"] + random.random() * 0.02, 0.95)
+                metrics["train_loss"] = max(metrics["train_loss"] - random.random() * 0.03, 0.1)
+
+                # Update metrics dictionary
                 self.training_status["metrics"] = {
-                    "loss": current_loss,
-                    "accuracy": current_accuracy,
-                    "learning_rate": config.get("learning_rate", 0.001)
+                    "train_loss": metrics["train_loss"],
+                    "train_accuracy": metrics["train_accuracy"],
+                    "val_loss": metrics["val_loss"],
+                    "val_accuracy": metrics["val_accuracy"],
+                    "learning_rate": learning_rate
                 }
-                
-                # Add log entry every few epochs
-                if (epoch + 1) % 5 == 0 or epoch == epochs - 1:
-                    self._add_training_log(f"Epoch {epoch+1}/{epochs} - Loss: {current_loss:.4f}, Accuracy: {current_accuracy:.2%}")
-                
-                # Simulate training for each batch
-                time.sleep(0.1)  # Simulate training time
-                
+
+                # Add epoch log with validation metrics
+                if current_epoch % 5 == 0 or current_epoch == epochs:
+                    epoch_log = f"Epoch {current_epoch}/{epochs} - "
+                    epoch_log += f"Train: Accuracy: {metrics['train_accuracy']:.4f}, Loss: {metrics['train_loss']:.4f} - "
+                    epoch_log += f"Validation: Accuracy: {metrics['val_accuracy']:.4f}, Loss: {metrics['val_loss']:.4f}"
+                    self._add_training_log(epoch_log)
+
+                # Check for early stopping
+                if current_val_accuracy > best_val_accuracy:
+                    best_val_accuracy = current_val_accuracy
+                    no_improvement_count = 0
+                    if current_epoch % 5 == 0:
+                        self._add_training_log(f"New best validation accuracy: {best_val_accuracy:.4f}")
+                else:
+                    no_improvement_count += 1
+                    if no_improvement_count >= patience and current_epoch >= 10:
+                        self._add_training_log(f"Early stopping triggered after {patience} epochs without improvement")
+                        break
+
+                # Simulate training time
+                time.sleep(0.1)  # Sleep for simulation
+
                 # Check if training was cancelled
                 if self.training_status.get("cancel_requested", False):
                     self._add_training_log(f"Training for {model_name} cancelled")
                     return {"status": "cancelled", "message": "Training cancelled"}
-            
+
             # Simulate training duration
-            duration = base_duration + (epochs * 2) + random.randint(10, 30)
-            
-            # Generate final metrics
-            final_loss = random.uniform(0.01, 0.2)
-            final_accuracy = random.uniform(0.85, 0.99)
-            
-            self._add_training_log(f"Training for {model_name} completed - Final Loss: {final_loss:.4f}, Final Accuracy: {final_accuracy:.2%}")
-            
+            duration = base_duration + (current_epoch * 2) + random.randint(10, 30)
+
+            # Update model registry with training results
+            model_key = model_name.lower()
+            if model_key in self.model_registry:
+                self.model_registry[model_key].update({
+                    "last_trained": datetime.now().isoformat(),
+                    "training_metrics": metrics,
+                    "best_val_accuracy": best_val_accuracy,
+                    "epochs_trained": current_epoch
+                })
+
+            # Log completion
+            self._add_training_log(f"Training for {model_name} completed - Best validation accuracy: {best_val_accuracy:.4f}")
+
             return {
                 "status": "success",
                 "duration": duration,
-                "final_loss": final_loss,
-                "final_accuracy": final_accuracy
+                "metrics": metrics,
+                "best_val_accuracy": best_val_accuracy,
+                "epochs_completed": current_epoch
             }
-            
+
         except Exception as e:
             self._add_training_log(f"Error in training {model_name}: {str(e)}", is_error=True)
+            logger.error(f"Training failed for {model_name}: {str(e)}")
             return {"status": "error", "message": str(e)}
     
     def pause_training(self) -> Dict[str, Any]:

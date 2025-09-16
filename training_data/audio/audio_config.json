@@ -1,0 +1,26 @@
+{
+  "files": [
+    "audio_0.json",
+    "audio_1.json",
+    "audio_2.json",
+    "audio_3.json",
+    "audio_4.json",
+    "audio_5.json",
+    "audio_6.json",
+    "audio_7.json",
+    "audio_8.json",
+    "audio_9.json"
+  ],
+  "labels": [
+    0,
+    1,
+    2,
+    0,
+    1,
+    2,
+    0,
+    1,
+    2,
+    0
+  ]
+}

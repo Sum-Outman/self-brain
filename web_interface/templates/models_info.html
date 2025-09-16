@@ -1,0 +1,1379 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}Models Information - Self Brain AGI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h2 mb-0">System Models</h1>
+            <p class="text-muted">Overview of all AI models and their status</p>
+        </div>
+    </div>
+
+    <!-- Models Summary Dashboard -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-0" id="total-models">11</h5>
+                    <p class="text-muted small mb-0">Total Models</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-0 text-success" id="online-models">11</h5>
+                    <p class="text-muted small mb-0">Online Models</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-0 text-warning" id="training-models">0</h5>
+                    <p class="text-muted small mb-0">Training Models</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-0 text-danger" id="error-models">0</h5>
+                    <p class="text-muted small mb-0">Models with Errors</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Models Table -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Models List</h5>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="refreshModels()">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="exportModelConfig()">
+                                <i class="bi bi-download"></i> Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="models-table">
+                            <thead>
+                                <tr>
+                                    <th>Model ID</th>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Source</th>
+                                    <th>Connection</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Model A -->
+                                <tr>
+                                    <td>A_management</td>
+                                    <td>A Management Model</td>
+                                    <td>Central Coordinator</td>
+                                    <td>
+                                        <span class="badge bg-success">Online</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">Local</span>
+                                    </td>
+                                    <td id="conn-A_management">
+                                        <span class="text-success">Connected</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group" aria-label="Basic example">
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="viewModelDetails('A_management')">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="switchToApi('A_management')">
+                                                <i class="bi bi-link-45deg"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="restartModel('A_management')">
+                                                <i class="bi bi-arrow-repeat"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Model B -->
+                                <tr>
+                                    <td>B_language</td>
+                                    <td>B Language Model</td>
+                                    <td>Natural Language Processing</td>
+                                    <td>
+                                        <span class="badge bg-success">Online</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">Local</span>
+                                    </td>
+                                    <td id="conn-B_language">
+                                        <span class="text-success">Connected</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group" aria-label="Basic example">
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="viewModelDetails('B_language')">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="switchToApi('B_language')">
+                                                <i class="bi bi-link-45deg"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="restartModel('B_language')">
+                                                <i class="bi bi-arrow-repeat"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Model C -->
+                                <tr>
+                                    <td>C_audio</td>
+                                    <td>C Audio Model</td>
+                                    <td>Sound Analysis & Synthesis</td>
+                                    <td>
+                                        <span class="badge bg-success">Online</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">Local</span>
+                                    </td>
+                                    <td id="conn-C_audio">
+                                        <span class="text-success">Connected</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group" aria-label="Basic example">
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="viewModelDetails('C_audio')">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="switchToApi('C_audio')">
+                                                <i class="bi bi-link-45deg"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="restartModel('C_audio')">
+                                                <i class="bi bi-arrow-repeat"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Model D -->
+                                <tr>
+                                    <td>D_image</td>
+                                    <td>D Image Model</td>
+                                    <td>Computer Vision</td>
+                                    <td>
+                                        <span class="badge bg-success">Online</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">Local</span>
+                                    </td>
+                                    <td id="conn-D_image">
+                                        <span class="text-success">Connected</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group" aria-label="Basic example">
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="viewModelDetails('D_image')">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="switchToApi('D_image')">
+                                                <i class="bi bi-link-45deg"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="restartModel('D_image')">
+                                                <i class="bi bi-arrow-repeat"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Model E -->
+                                <tr>
+                                    <td>E_video</td>
+                                    <td>E Video Model</td>
+                                    <td>Video Understanding</td>
+                                    <td>
+                                        <span class="badge bg-success">Online</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">Local</span>
+                                    </td>
+                                    <td id="conn-E_video">
+                                        <span class="text-success">Connected</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group" aria-label="Basic example">
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="viewModelDetails('E_video')">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="switchToApi('E_video')">
+                                                <i class="bi bi-link-45deg"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="restartModel('E_video')">
+                                                <i class="bi bi-arrow-repeat"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Model F -->
+                                <tr>
+                                    <td>F_spatial</td>
+                                    <td>F Spatial Model</td>
+                                    <td>3D Spatial Awareness</td>
+                                    <td>
+                                        <span class="badge bg-success">Online</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">Local</span>
+                                    </td>
+                                    <td id="conn-F_spatial">
+                                        <span class="text-success">Connected</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group" aria-label="Basic example">
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="viewModelDetails('F_spatial')">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="switchToApi('F_spatial')">
+                                                <i class="bi bi-link-45deg"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="restartModel('F_spatial')">
+                                                <i class="bi bi-arrow-repeat"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Model G -->
+                                <tr>
+                                    <td>G_sensor</td>
+                                    <td>G Sensor Model</td>
+                                    <td>IoT Data Processing</td>
+                                    <td>
+                                        <span class="badge bg-success">Online</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">Local</span>
+                                    </td>
+                                    <td id="conn-G_sensor">
+                                        <span class="text-success">Connected</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group" aria-label="Basic example">
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="viewModelDetails('G_sensor')">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="switchToApi('G_sensor')">
+                                                <i class="bi bi-link-45deg"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="restartModel('G_sensor')">
+                                                <i class="bi bi-arrow-repeat"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Model H -->
+                                <tr>
+                                    <td>H_computer_control</td>
+                                    <td>H Computer Control</td>
+                                    <td>System Automation</td>
+                                    <td>
+                                        <span class="badge bg-success">Online</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">Local</span>
+                                    </td>
+                                    <td id="conn-H_computer_control">
+                                        <span class="text-success">Connected</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group" aria-label="Basic example">
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="viewModelDetails('H_computer_control')">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="switchToApi('H_computer_control')">
+                                                <i class="bi bi-link-45deg"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="restartModel('H_computer_control')">
+                                                <i class="bi bi-arrow-repeat"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Model I -->
+                                <tr>
+                                    <td>I_knowledge</td>
+                                    <td>I Knowledge Model</td>
+                                    <td>Knowledge Graph</td>
+                                    <td>
+                                        <span class="badge bg-success">Online</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">Local</span>
+                                    </td>
+                                    <td id="conn-I_knowledge">
+                                        <span class="text-success">Connected</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group" aria-label="Basic example">
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="viewModelDetails('I_knowledge')">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="switchToApi('I_knowledge')">
+                                                <i class="bi bi-link-45deg"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="restartModel('I_knowledge')">
+                                                <i class="bi bi-arrow-repeat"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Model J -->
+                                <tr>
+                                    <td>J_motion</td>
+                                    <td>J Motion Model</td>
+                                    <td>Motion Control</td>
+                                    <td>
+                                        <span class="badge bg-success">Online</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">Local</span>
+                                    </td>
+                                    <td id="conn-J_motion">
+                                        <span class="text-success">Connected</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group" aria-label="Basic example">
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="viewModelDetails('J_motion')">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="switchToApi('J_motion')">
+                                                <i class="bi bi-link-45deg"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="restartModel('J_motion')">
+                                                <i class="bi bi-arrow-repeat"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Model K -->
+                                <tr>
+                                    <td>K_programming</td>
+                                    <td>K Programming Model</td>
+                                    <td>Code Generation & Understanding</td>
+                                    <td>
+                                        <span class="badge bg-success">Online</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">Local</span>
+                                    </td>
+                                    <td id="conn-K_programming">
+                                        <span class="text-success">Connected</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group" aria-label="Basic example">
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="viewModelDetails('K_programming')">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="switchToApi('K_programming')">
+                                                <i class="bi bi-link-45deg"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-dark btn-sm" onclick="restartModel('K_programming')">
+                                                <i class="bi bi-arrow-repeat"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Configuration Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">API Provider Settings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="apiProvider" class="form-label">Default API Provider</label>
+                            <select class="form-select" id="apiProvider" onchange="onApiProviderChange()">
+                                <option value="openai">OpenAI</option>
+                                <option value="anthropic">Anthropic</option>
+                                <option value="google">Google</option>
+                                <option value="huggingface">HuggingFace</option>
+                                <option value="siliconflow">SiliconFlow</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="defaultModel" class="form-label">Default Model</label>
+                            <select class="form-select" id="defaultModel">
+                                <option value="gpt-4o">GPT-4o</option>
+                                <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+                                <option value="gemini-pro">Gemini Pro</option>
+                                <option value="meta-llama/Llama-3-70b-chat-hf">Llama 3 70B</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="apiKey" class="form-label">API Key</label>
+                            <input type="password" class="form-control" id="apiKey" placeholder="Enter your API key">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="apiEndpoint" class="form-label">API Endpoint</label>
+                            <input type="text" class="form-control" id="apiEndpoint" placeholder="https://api.example.com/v1/chat/completions">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-outline-dark" onclick="testExternalApiConnection()">
+                                <i class="bi bi-plug"></i> Test Connection
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-outline-dark" onclick="saveApiSettings()">
+                                <i class="bi bi-save"></i> Save Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Architecture Visualization -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">System Architecture</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="d-inline-block p-3 border rounded">
+                            <h6>A Management Model</h6>
+                            <p class="text-muted small">Central Coordinator</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row justify-content-center">
+                        <div class="col-md-2 mb-3">
+                            <div class="p-2 border rounded text-center">
+                                <p class="mb-1">B Language</p>
+                                <p class="text-muted small">NLP</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="p-2 border rounded text-center">
+                                <p class="mb-1">C Audio</p>
+                                <p class="text-muted small">Sound Processing</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="p-2 border rounded text-center">
+                                <p class="mb-1">D Image</p>
+                                <p class="text-muted small">Vision</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="p-2 border rounded text-center">
+                                <p class="mb-1">E Video</p>
+                                <p class="text-muted small">Video Analysis</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="p-2 border rounded text-center">
+                                <p class="mb-1">F Spatial</p>
+                                <p class="text-muted small">3D Awareness</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row justify-content-center">
+                        <div class="col-md-2 mb-3">
+                            <div class="p-2 border rounded text-center">
+                                <p class="mb-1">G Sensor</p>
+                                <p class="text-muted small">IoT Data</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="p-2 border rounded text-center">
+                                <p class="mb-1">H Control</p>
+                                <p class="text-muted small">Automation</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="p-2 border rounded text-center">
+                                <p class="mb-1">I Knowledge</p>
+                                <p class="text-muted small">Knowledge Graph</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="p-2 border rounded text-center">
+                                <p class="mb-1">J Motion</p>
+                                <p class="text-muted small">Motion Control</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="p-2 border rounded text-center">
+                                <p class="mb-1">K Programming</p>
+                                <p class="text-muted small">Code Generation</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- External API Configuration Modal -->
+<div class="modal fade" id="externalApiModal" tabindex="-1" aria-labelledby="externalApiModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="externalApiModalLabel">Configure External API - <span id="modalModelId"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="externalApiForm">
+                    <div class="mb-3">
+                        <label for="modalApiProvider" class="form-label">API Provider</label>
+                        <select class="form-select" id="modalApiProvider" onchange="updateModalApiEndpoint()">
+                            <option value="openai">OpenAI</option>
+                            <option value="anthropic">Anthropic</option>
+                            <option value="google">Google</option>
+                            <option value="huggingface">HuggingFace</option>
+                            <option value="siliconflow">SiliconFlow</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modalApiKey" class="form-label">API Key</label>
+                        <input type="password" class="form-control" id="modalApiKey" placeholder="Enter your API key">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modalApiEndpoint" class="form-label">API Endpoint</label>
+                        <input type="text" class="form-control" id="modalApiEndpoint" placeholder="https://api.example.com/v1/chat/completions">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modalApiModel" class="form-label">API Model Name</label>
+                        <input type="text" class="form-control" id="modalApiModel" placeholder="gpt-4o, claude-3-opus-20240229, etc.">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modalApiTimeout" class="form-label">Timeout (seconds)</label>
+                        <input type="number" class="form-control" id="modalApiTimeout" value="30" min="5" max="300">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-outline-dark" onclick="testModalApiConnection()">Test Connection</button>
+                <button type="button" class="btn btn-dark" onclick="saveModalApiConfig()">Save & Switch</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Model Details Modal -->
+<div class="modal fade" id="modelDetailsModal" tabindex="-1" aria-labelledby="modelDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modelDetailsModalLabel">Model Details - <span id="detailModelName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modelDetailsContent">
+                    <!-- Model details will be loaded here dynamically -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Global variables
+    let currentModelId = null;
+    
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeSocket();
+        loadModelStatus();
+        setupEventListeners();
+    });
+    
+    // Setup event listeners
+    function setupEventListeners() {
+        // Socket.IO event listeners
+        if (window.socket) {
+            window.socket.on('model_status_update', function(data) {
+                updateModelStatus(data);
+            });
+            
+            window.socket.on('connection_status', function(data) {
+                updateConnectionStatus(data);
+            });
+        }
+    }
+    
+    // Load initial model status
+    function loadModelStatus() {
+        fetch('/api/models')
+            .then(response => response.json())
+            .then(data => {
+                updateModelTable(data.models);
+                updateSummaryStats(data);
+            })
+            .catch(error => {
+                console.error('Error loading model status:', error);
+                showNotification('Failed to load model status. Please try again later.', 'error');
+            });
+    }
+    
+    // Update model table with data
+    function updateModelTable(models) {
+        // In a real implementation, this would dynamically update the table rows
+        // For now, we'll just use the static data in the template
+        models.forEach(model => {
+            const connElement = document.getElementById(`conn-${model.id}`);
+            if (connElement) {
+                if (model.connected) {
+                    connElement.innerHTML = '<span class="text-success">Connected</span>';
+                } else {
+                    connElement.innerHTML = '<span class="text-danger">Disconnected</span>';
+                }
+            }
+        });
+    }
+    
+    // Update summary statistics
+    function updateSummaryStats(data) {
+        const totalModels = document.getElementById('total-models');
+        const onlineModels = document.getElementById('online-models');
+        const trainingModels = document.getElementById('training-models');
+        const errorModels = document.getElementById('error-models');
+        
+        if (totalModels) totalModels.textContent = data.total || 11;
+        if (onlineModels) onlineModels.textContent = data.online || 11;
+        if (trainingModels) trainingModels.textContent = data.training || 0;
+        if (errorModels) errorModels.textContent = data.error || 0;
+    }
+    
+    // Update model status when receiving updates
+    function updateModelStatus(data) {
+        // Implementation would depend on the actual data structure
+        console.log('Model status update:', data);
+    }
+    
+    // Update connection status
+    function updateConnectionStatus(data) {
+        const connElement = document.getElementById(`conn-${data.model_id}`);
+        if (connElement) {
+            if (data.connected) {
+                connElement.innerHTML = '<span class="text-success">Connected</span>';
+            } else {
+                connElement.innerHTML = '<span class="text-danger">Disconnected</span>';
+            }
+        }
+    }
+    
+    // Refresh models list
+    function refreshModels() {
+        const refreshButton = document.querySelector('button[onclick="refreshModels()"]');
+        const originalText = refreshButton.innerHTML;
+        
+        refreshButton.innerHTML = '<i class="bi bi-arrow-clockwise fa-spin"></i> Refreshing...';
+        refreshButton.disabled = true;
+        
+        loadModelStatus();
+        
+        // Reset button after a delay
+        setTimeout(() => {
+            refreshButton.innerHTML = originalText;
+            refreshButton.disabled = false;
+        }, 1500);
+    }
+    
+    // Export model configuration
+    function exportModelConfig() {
+        fetch('/api/models/export')
+            .then(response => {
+                if (!response.ok) throw new Error('Export failed');
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'model_registry.json';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                showNotification('Model configuration exported successfully', 'success');
+            })
+            .catch(error => {
+                console.error('Export error:', error);
+                showNotification('Failed to export model configuration', 'error');
+            });
+    }
+    
+    // View model details
+    function viewModelDetails(modelId) {
+        currentModelId = modelId;
+        const modelDetailsContent = document.getElementById('modelDetailsContent');
+        const detailModelName = document.getElementById('detailModelName');
+        
+        if (detailModelName) {
+            // Set the model name based on modelId
+            const modelNameMap = {
+                'A_management': 'A Management Model',
+                'B_language': 'B Language Model',
+                'C_audio': 'C Audio Model',
+                'D_image': 'D Image Model',
+                'E_video': 'E Video Model',
+                'F_spatial': 'F Spatial Model',
+                'G_sensor': 'G Sensor Model',
+                'H_computer_control': 'H Computer Control',
+                'I_knowledge': 'I Knowledge Model',
+                'J_motion': 'J Motion Model',
+                'K_programming': 'K Programming Model'
+            };
+            
+            detailModelName.textContent = modelNameMap[modelId] || modelId;
+        }
+        
+        if (modelDetailsContent) {
+            // Show loading state
+            modelDetailsContent.innerHTML = '<div class="text-center py-5"><i class="bi bi-hourglass-split"></i> Loading model details...</div>';
+            
+            // Fetch model details
+            fetch(`/api/models/${modelId}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderModelDetails(data);
+                })
+                .catch(error => {
+                    console.error('Error loading model details:', error);
+                    modelDetailsContent.innerHTML = '<div class="text-center py-5 text-danger"><i class="bi bi-exclamation-circle"></i> Failed to load model details</div>';
+                });
+        }
+        
+        // Show the modal
+        const modelDetailsModal = new bootstrap.Modal(document.getElementById('modelDetailsModal'));
+        modelDetailsModal.show();
+    }
+    
+    // Render model details
+    function renderModelDetails(data) {
+        const modelDetailsContent = document.getElementById('modelDetailsContent');
+        if (!modelDetailsContent) return;
+        
+        // Create a simple details view
+        let detailsHtml = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-muted">Basic Information</h6>
+                    <dl class="row">
+                        <dt class="col-sm-4">ID:</dt>
+                        <dd class="col-sm-8">${data.id || 'N/A'}</dd>
+                        <dt class="col-sm-4">Type:</dt>
+                        <dd class="col-sm-8">${data.type || 'N/A'}</dd>
+                        <dt class="col-sm-4">Version:</dt>
+                        <dd class="col-sm-8">${data.version || 'N/A'}</dd>
+                        <dt class="col-sm-4">Status:</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-${data.status === 'online' ? 'success' : 'danger'}">${data.status || 'unknown'}</span>
+                        </dd>
+                        <dt class="col-sm-4">Source:</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-${data.model_source === 'local' ? 'secondary' : 'primary'}">${data.model_source || 'local'}</span>
+                        </dd>
+                    </dl>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-muted">Connection Details</h6>
+                    <dl class="row">
+                        <dt class="col-sm-4">Path:</dt>
+                        <dd class="col-sm-8 text-truncate" style="max-width: 100%;">${data.path || 'N/A'}</dd>
+                        <dt class="col-sm-4">API URL:</dt>
+                        <dd class="col-sm-8 text-truncate" style="max-width: 100%;">${data.api_url || 'N/A'}</dd>
+                        <dt class="col-sm-4">Port:</dt>
+                        <dd class="col-sm-8">${data.port || 'N/A'}</dd>
+                        <dt class="col-sm-4">Response Time:</dt>
+                        <dd class="col-sm-8">${data.response_time || 'N/A'}</dd>
+                    </dl>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <h6 class="text-muted">Description</h6>
+                <p>${data.description || 'No description available'}</p>
+            </div>
+        `;
+        
+        modelDetailsContent.innerHTML = detailsHtml;
+    }
+    
+    // Switch to external API
+    function switchToApi(modelId) {
+        currentModelId = modelId;
+        const modalModelId = document.getElementById('modalModelId');
+        
+        if (modalModelId) {
+            modalModelId.textContent = modelId;
+        }
+        
+        // Reset form fields
+        document.getElementById('modalApiProvider').value = 'openai';
+        document.getElementById('modalApiKey').value = '';
+        document.getElementById('modalApiEndpoint').value = '';
+        document.getElementById('modalApiModel').value = '';
+        document.getElementById('modalApiTimeout').value = 30;
+        
+        // Update API endpoint based on provider
+        updateModalApiEndpoint();
+        
+        // Show the modal
+        const externalApiModal = new bootstrap.Modal(document.getElementById('externalApiModal'));
+        externalApiModal.show();
+    }
+    
+    // Update modal API endpoint based on provider selection
+    function updateModalApiEndpoint() {
+        const provider = document.getElementById('modalApiProvider').value;
+        const endpointInput = document.getElementById('modalApiEndpoint');
+        const modelInput = document.getElementById('modalApiModel');
+        
+        // Set default endpoints and models for each provider
+        const defaultConfig = {
+            'openai': {
+                endpoint: 'https://api.openai.com/v1/chat/completions',
+                model: 'gpt-4o'
+            },
+            'anthropic': {
+                endpoint: 'https://api.anthropic.com/v1/messages',
+                model: 'claude-3-opus-20240229'
+            },
+            'google': {
+                endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
+                model: 'gemini-pro'
+            },
+            'huggingface': {
+                endpoint: 'https://api-inference.huggingface.co/models/meta-llama/Llama-3-70b-chat-hf',
+                model: 'meta-llama/Llama-3-70b-chat-hf'
+            },
+            'siliconflow': {
+                endpoint: 'https://api.siliconflow.cn/v1/chat/completions',
+                model: 'Qwen/Qwen2-72B-Instruct'
+            }
+        };
+        
+        if (defaultConfig[provider]) {
+            endpointInput.value = defaultConfig[provider].endpoint;
+            modelInput.value = defaultConfig[provider].model;
+        }
+    }
+    
+    // Test modal API connection
+    function testModalApiConnection() {
+        const provider = document.getElementById('modalApiProvider').value;
+        const apiKey = document.getElementById('modalApiKey').value;
+        const endpoint = document.getElementById('modalApiEndpoint').value;
+        const model = document.getElementById('modalApiModel').value;
+        
+        if (!apiKey) {
+            showNotification('Please enter an API key', 'warning');
+            return;
+        }
+        
+        // Show loading state
+        const testButton = document.querySelector('button[onclick="testModalApiConnection()"]');
+        const originalText = testButton.innerHTML;
+        testButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Testing...';
+        testButton.disabled = true;
+        
+        // Test connection
+        fetch('/api/models/test-connection', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                provider: provider,
+                api_key: apiKey,
+                endpoint: endpoint,
+                model: model
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            testButton.innerHTML = originalText;
+            testButton.disabled = false;
+            
+            if (data.success) {
+                showNotification('Connection test successful!', 'success');
+            } else {
+                showNotification(`Connection failed: ${data.error || 'Unknown error'}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Connection test error:', error);
+            testButton.innerHTML = originalText;
+            testButton.disabled = false;
+            showNotification('Connection test failed. Please try again.', 'error');
+        });
+    }
+    
+    // Save modal API configuration
+    function saveModalApiConfig() {
+        const provider = document.getElementById('modalApiProvider').value;
+        const apiKey = document.getElementById('modalApiKey').value;
+        const endpoint = document.getElementById('modalApiEndpoint').value;
+        const model = document.getElementById('modalApiModel').value;
+        const timeout = document.getElementById('modalApiTimeout').value;
+        
+        if (!apiKey) {
+            showNotification('Please enter an API key', 'warning');
+            return;
+        }
+        
+        if (!currentModelId) {
+            showNotification('No model selected', 'error');
+            return;
+        }
+        
+        // Show loading state
+        const saveButton = document.querySelector('button[onclick="saveModalApiConfig()"]');
+        const originalText = saveButton.innerHTML;
+        saveButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+        saveButton.disabled = true;
+        
+        // Save configuration
+        fetch(`/api/models/${currentModelId}/switch-external`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                provider: provider,
+                api_key: apiKey,
+                endpoint: endpoint,
+                model: model,
+                timeout: parseInt(timeout)
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            saveButton.innerHTML = originalText;
+            saveButton.disabled = false;
+            
+            if (data.success) {
+                showNotification('Successfully switched to external API', 'success');
+                
+                // Close the modal
+                const externalApiModal = bootstrap.Modal.getInstance(document.getElementById('externalApiModal'));
+                externalApiModal.hide();
+                
+                // Refresh models list
+                setTimeout(refreshModels, 1000);
+            } else {
+                showNotification(`Switch failed: ${data.error || 'Unknown error'}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Switch API error:', error);
+            saveButton.innerHTML = originalText;
+            saveButton.disabled = false;
+            showNotification('Failed to switch to external API. Please try again.', 'error');
+        });
+    }
+    
+    // Restart model
+    function restartModel(modelId) {
+        if (!confirm(`Are you sure you want to restart ${modelId}? This may temporarily disrupt service.`)) {
+            return;
+        }
+        
+        // Show loading state
+        showNotification(`Restarting ${modelId}...`, 'info');
+        
+        // Restart the model
+        fetch(`/api/models/${modelId}/restart`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(`${modelId} restarted successfully`, 'success');
+                
+                // Refresh models list after a delay
+                setTimeout(refreshModels, 3000);
+            } else {
+                showNotification(`Failed to restart ${modelId}: ${data.error || 'Unknown error'}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Restart error:', error);
+            showNotification(`Failed to restart ${modelId}. Please try again.`, 'error');
+        });
+    }
+    
+    // Test external API connection from main settings
+    function testExternalApiConnection() {
+        const provider = document.getElementById('apiProvider').value;
+        const apiKey = document.getElementById('apiKey').value;
+        const endpoint = document.getElementById('apiEndpoint').value;
+        const model = document.getElementById('defaultModel').value;
+        
+        if (!apiKey) {
+            showNotification('Please enter an API key', 'warning');
+            return;
+        }
+        
+        // Show loading state
+        const testButton = document.querySelector('button[onclick="testExternalApiConnection()"]');
+        const originalText = testButton.innerHTML;
+        testButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Testing...';
+        testButton.disabled = true;
+        
+        // Test connection
+        fetch('/api/models/test-connection', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                provider: provider,
+                api_key: apiKey,
+                endpoint: endpoint,
+                model: model
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            testButton.innerHTML = originalText;
+            testButton.disabled = false;
+            
+            if (data.success) {
+                showNotification('Connection test successful!', 'success');
+            } else {
+                showNotification(`Connection failed: ${data.error || 'Unknown error'}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Connection test error:', error);
+            testButton.innerHTML = originalText;
+            testButton.disabled = false;
+            showNotification('Connection test failed. Please try again.', 'error');
+        });
+    }
+    
+    // Save API settings
+    function saveApiSettings() {
+        const provider = document.getElementById('apiProvider').value;
+        const apiKey = document.getElementById('apiKey').value;
+        const endpoint = document.getElementById('apiEndpoint').value;
+        const model = document.getElementById('defaultModel').value;
+        
+        // Show loading state
+        const saveButton = document.querySelector('button[onclick="saveApiSettings()"]');
+        const originalText = saveButton.innerHTML;
+        saveButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+        saveButton.disabled = true;
+        
+        // Save settings
+        fetch('/api/system/settings/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                api_provider: provider,
+                api_key: apiKey,
+                api_endpoint: endpoint,
+                default_model: model
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            saveButton.innerHTML = originalText;
+            saveButton.disabled = false;
+            
+            if (data.success) {
+                showNotification('API settings saved successfully', 'success');
+            } else {
+                showNotification(`Failed to save settings: ${data.error || 'Unknown error'}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Save settings error:', error);
+            saveButton.innerHTML = originalText;
+            saveButton.disabled = false;
+            showNotification('Failed to save API settings. Please try again.', 'error');
+        });
+    }
+    
+    // Handle API provider change
+    function onApiProviderChange() {
+        const provider = document.getElementById('apiProvider').value;
+        const endpointInput = document.getElementById('apiEndpoint');
+        const modelInput = document.getElementById('defaultModel');
+        
+        // Set default endpoints and models for each provider
+        const defaultConfig = {
+            'openai': {
+                endpoint: 'https://api.openai.com/v1/chat/completions',
+                model: 'gpt-4o'
+            },
+            'anthropic': {
+                endpoint: 'https://api.anthropic.com/v1/messages',
+                model: 'claude-3-opus-20240229'
+            },
+            'google': {
+                endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
+                model: 'gemini-pro'
+            },
+            'huggingface': {
+                endpoint: 'https://api-inference.huggingface.co/models/meta-llama/Llama-3-70b-chat-hf',
+                model: 'meta-llama/Llama-3-70b-chat-hf'
+            },
+            'siliconflow': {
+                endpoint: 'https://api.siliconflow.cn/v1/chat/completions',
+                model: 'Qwen/Qwen2-72B-Instruct'
+            }
+        };
+        
+        if (defaultConfig[provider]) {
+            endpointInput.value = defaultConfig[provider].endpoint;
+            
+            // Update model dropdown options
+            updateModelDropdown(provider);
+            
+            // Set the default model
+            modelInput.value = defaultConfig[provider].model;
+        }
+    }
+    
+    // Update model dropdown based on provider
+    function updateModelDropdown(provider) {
+        const modelInput = document.getElementById('defaultModel');
+        if (!modelInput) return;
+        
+        // Clear existing options
+        modelInput.innerHTML = '';
+        
+        // Define models for each provider
+        const models = {
+            'openai': [
+                { value: 'gpt-4o', text: 'GPT-4o' },
+                { value: 'gpt-4-turbo', text: 'GPT-4 Turbo' },
+                { value: 'gpt-3.5-turbo', text: 'GPT-3.5 Turbo' }
+            ],
+            'anthropic': [
+                { value: 'claude-3-opus-20240229', text: 'Claude 3 Opus' },
+                { value: 'claude-3-sonnet-20240229', text: 'Claude 3 Sonnet' },
+                { value: 'claude-3-haiku-20240307', text: 'Claude 3 Haiku' }
+            ],
+            'google': [
+                { value: 'gemini-pro', text: 'Gemini Pro' },
+                { value: 'gemini-ultra', text: 'Gemini Ultra' }
+            ],
+            'huggingface': [
+                { value: 'meta-llama/Llama-3-70b-chat-hf', text: 'Llama 3 70B' },
+                { value: 'mistralai/Mixtral-8x7B-Instruct-v0.1', text: 'Mixtral 8x7B' },
+                { value: 'google/gemma-7b-it', text: 'Gemma 7B' }
+            ],
+            'siliconflow': [
+                { value: 'Qwen/Qwen2-72B-Instruct', text: 'Qwen2 72B' },
+                { value: 'Meta-Llama-3-70B-Instruct', text: 'Meta Llama 3 70B' },
+                { value: 'Mixtral-8x7B-Instruct-v0.1', text: 'Mixtral 8x7B' }
+            ]
+        };
+        
+        if (models[provider]) {
+            models[provider].forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.value;
+                option.textContent = model.text;
+                modelInput.appendChild(option);
+            });
+        }
+    }
+    
+    // Show notification
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notificationId = 'notification-' + Date.now();
+        const notification = document.createElement('div');
+        notification.id = notificationId;
+        notification.className = `notification ${getNotificationClass(type)}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-icon">${getNotificationIcon(type)}</span>
+                <span class="notification-text">${message}</span>
+                <button class="notification-close" onclick="closeNotification('${notificationId}')">&times;</button>
+            </div>
+        `;
+        
+        // Add notification to body
+        document.body.appendChild(notification);
+        
+        // Show notification with animation
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 10);
+        
+        // Auto close after 5 seconds
+        setTimeout(() => {
+            closeNotification(notificationId);
+        }, 5000);
+    }
+    
+    // Get notification class based on type
+    function getNotificationClass(type) {
+        const classes = {
+            'success': 'notification-success',
+            'error': 'notification-error',
+            'warning': 'notification-warning',
+            'info': 'notification-info'
+        };
+        return classes[type] || classes['info'];
+    }
+    
+    // Get notification icon based on type
+    function getNotificationIcon(type) {
+        const icons = {
+            'success': '<i class="bi bi-check-circle"></i>',
+            'error': '<i class="bi bi-exclamation-circle"></i>',
+            'warning': '<i class="bi bi-exclamation-triangle"></i>',
+            'info': '<i class="bi bi-info-circle"></i>'
+        };
+        return icons[type] || icons['info'];
+    }
+    
+    // Close notification
+    function closeNotification(notificationId) {
+        const notification = document.getElementById(notificationId);
+        if (!notification) return;
+        
+        notification.classList.remove('show');
+        
+        // Remove element after animation
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }
+    
+    // Add CSS for notifications
+    const style = document.createElement('style');
+    style.textContent = `
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            min-width: 300px;
+            max-width: 400px;
+            padding: 12px 16px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            z-index: 1050;
+            color: #212529;
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .notification-icon {
+            flex-shrink: 0;
+            font-size: 18px;
+        }
+        
+        .notification-text {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+        
+        .notification-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            color: #6c757d;
+        }
+        
+        .notification-close:hover {
+            color: #212529;
+        }
+        
+        .notification-success .notification-icon {
+            color: #28a745;
+        }
+        
+        .notification-error .notification-icon {
+            color: #dc3545;
+        }
+        
+        .notification-warning .notification-icon {
+            color: #ffc107;
+        }
+        
+        .notification-info .notification-icon {
+            color: #17a2b8;
+        }
+    `;
+    document.head.appendChild(style);
+</script>
+{% endblock %}

@@ -67,6 +67,20 @@ def start_all_models():
     for thread in threads:
         thread.join()
 
+def start_agi_core():
+    """启动AGI核心系统 | Start AGI core system"""
+    print("启动AGI核心系统 | Starting AGI Core System")
+    try:
+        # 首先尝试启动增强版核心系统
+        core_file = "enhanced_core_system_enhanced.py"
+        if os.path.exists(core_file):
+            print("使用增强版AGI核心系统 | Using enhanced AGI Core System")
+            subprocess.Popen([sys.executable, core_file])
+        else:
+            print("增强版AGI核心系统文件不存在，使用默认版本 | Enhanced AGI Core System file not found, using default version")
+    except Exception as e:
+        print(f"启动AGI核心系统失败: {e} | Failed to start AGI Core System: {e}")
+
 def main():
     """主启动函数 | Main startup function"""
     print("="*50)
@@ -75,6 +89,9 @@ def main():
     
     # 启动所有子模型
     start_all_models()
+    
+    # 启动AGI核心系统
+    start_agi_core()
     
     # 启动Web界面
     print("启动Web界面 (端口: 5000) | Starting web interface (port: 5000)")

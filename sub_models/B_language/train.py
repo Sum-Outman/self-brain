@@ -19,6 +19,7 @@ import json
 import torch
 import numpy as np
 from datetime import datetime
+from typing import Dict, List, Any, Optional, Tuple
 from transformers import (
     AutoTokenizer, 
     AutoModelForSequenceClassification,
@@ -379,6 +380,121 @@ class LanguageModelTrainer:
         """连接到主模型 | Connect to main model"""
         print(f"连接到主模型: {main_model_endpoint} | Connected to main model: {main_model_endpoint}")
         # 实际实现应建立通信通道 | Actual implementation should establish communication
+    
+    def train_jointly(self, models: List[Any], train_datasets: List[Any], 
+                     val_datasets: List[Any] = None, config: Dict = None, 
+                     loss_weights: List[float] = None) -> Dict:
+        """与其他模型联合训练 | Joint training with other models
+        
+        参数:
+            models: 参与联合训练的模型列表 | List of models for joint training
+            train_datasets: 每个模型对应的训练数据集 | Training datasets for each model
+            val_datasets: 每个模型对应的验证数据集 | Validation datasets for each model
+            config: 训练配置 | Training configuration
+            loss_weights: 每个模型的损失权重 | Loss weights for each model
+        
+        返回:
+            训练结果字典 | Training result dictionary
+        """
+        if config:
+            self.training_config.update(config)
+        
+        # 检查输入一致性 | Check input consistency
+        if len(models) != len(train_datasets):
+            raise ValueError("模型数量和训练数据集数量必须匹配 | Number of models and training datasets must match")
+        
+        if val_datasets and len(val_datasets) != len(models):
+            raise ValueError("验证数据集数量必须与模型数量匹配 | Number of validation datasets must match number of models")
+        
+        # 初始化默认损失权重 | Initialize default loss weights if not provided
+        if loss_weights is None:
+            loss_weights = [1.0] * len(models)
+        elif len(loss_weights) != len(models):
+            raise ValueError("损失权重数量必须与模型数量匹配 | Number of loss weights must match number of models")
+        
+        # 归一化损失权重 | Normalize loss weights
+        total_weight = sum(loss_weights)
+        loss_weights = [w / total_weight for w in loss_weights]
+        
+        # 记录联合训练信息 | Log joint training information
+        print(f"开始多模型联合训练 | Starting joint training with {len(models)} models")
+        print(f"损失权重分配 | Loss weight distribution: {loss_weights}")
+        
+        # 初始化联合训练结果 | Initialize joint training results
+        joint_results = {
+            "status": "success",
+            "message": "联合训练完成 | Joint training completed",
+            "individual_results": [],
+            "joint_metrics": {}
+        }
+        
+        # 为每个模型准备联合训练数据 | Prepare joint training data for each model
+        for i, (model, train_dataset) in enumerate(zip(models, train_datasets)):
+            print(f"处理模型 {i+1} 的训练数据 | Processing training data for model {i+1}")
+            
+            # 为每个模型创建联合训练伙伴信息 | Create joint training partner info for each model
+            joint_training_info = {}
+            for j, partner_model in enumerate(models):
+                if i != j:  # 不包含自身 | Exclude self
+                    # 根据伙伴模型类型添加相应信息 | Add appropriate info based on partner model type
+                    # 这部分需要根据实际模型类型和接口进行实现 | This part needs to be implemented based on actual model types and interfaces
+                    partner_name = f"model_{j+1}"
+                    joint_training_info[partner_name] = {
+                        "model_type": "language" if j == 0 else "partner",
+                        "weight": loss_weights[j]
+                    }
+            
+            # 训练当前模型，传入其他模型的信息 | Train current model with other models' info
+            val_dataset = val_datasets[i] if val_datasets else None
+            
+            if model == self:  # 训练当前对象 | Training current object
+                result = self.train(train_dataset, val_dataset, config, joint_training_info)
+            else:  # 训练其他模型 | Training other models
+                # 假设其他模型也有类似的train方法 | Assume other models have similar train method
+                try:
+                    result = model.train(train_dataset, val_dataset, config, joint_training_info)
+                except Exception as e:
+                    print(f"训练模型 {i+1} 失败: {e} | Training model {i+1} failed: {e}")
+                    joint_results["status"] = "partial_failure"
+                    joint_results["message"] = f"部分模型训练失败 | Some models training failed"
+                    result = {"status": "error", "message": str(e)}
+            
+            joint_results["individual_results"].append(result)
+        
+        # 计算联合指标 | Calculate joint metrics
+        if all(res.get("status") == "success" for res in joint_results["individual_results"]):
+            joint_accuracy = sum(res["metrics"].get("accuracy", 0) * w for res, w in zip(joint_results["individual_results"], loss_weights))
+            joint_f1 = sum(res["metrics"].get("f1", 0) * w for res, w in zip(joint_results["individual_results"], loss_weights))
+            
+            joint_results["joint_metrics"] = {
+                "joint_accuracy": joint_accuracy,
+                "joint_f1": joint_f1,
+                "loss_weights": loss_weights
+            }
+            
+            print(f"联合训练完成，联合准确率: {joint_accuracy:.4f}, 联合F1得分: {joint_f1:.4f} | Joint training completed, joint accuracy: {joint_accuracy:.4f}, joint F1: {joint_f1:.4f}")
+        
+        # 保存联合训练报告 | Save joint training report
+        report_path = f"./training_reports/joint_{self.model_type}_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        os.makedirs(os.path.dirname(report_path), exist_ok=True)
+        
+        with open(report_path, 'w', encoding='utf-8') as f:
+            json.dump({
+                "training_date": datetime.now().isoformat(),
+                "joint_training": True,
+                "model_count": len(models),
+                "models": [{
+                    "model_type": "language",
+                    "specific_type": self.model_type,
+                    "language": self.language
+                }] + [{"model_type": "partner", "index": i+2} for i in range(len(models)-1)],
+                "loss_weights": loss_weights,
+                "training_config": self.training_config,
+                "joint_results": joint_results
+            }, f, indent=2, ensure_ascii=False)
+        
+        joint_results["report_path"] = report_path
+        return joint_results
 
 # 训练API接口 | Training API interface
 def start_training(model_type="sentiment", data_path=None, config=None, use_external=False, api_config=None):
@@ -407,6 +523,67 @@ def resume_training(model_path, data_path=None, config=None):
     """恢复训练 | Resume training"""
     # 实现恢复训练逻辑 | Implement resume training logic
     pass
+
+# 联合训练API接口 | Joint training API interface
+def start_joint_training(model_configs: List[Dict], data_paths: List[str], config: Dict = None, loss_weights: List[float] = None) -> Dict:
+    """启动联合训练任务 | Start joint training task
+    
+    参数:
+        model_configs: 各模型的配置列表 | List of model configurations
+        data_paths: 各模型的数据路径列表 | List of data paths for each model
+        config: 全局训练配置 | Global training configuration
+        loss_weights: 各模型的损失权重 | Loss weights for each model
+    
+    返回:
+        联合训练结果 | Joint training result
+    """
+    # 创建参与联合训练的模型列表 | Create list of models for joint training
+    models = []
+    train_datasets = []
+    val_datasets = []
+    
+    print(f"准备启动联合训练，参与模型数量: {len(model_configs)} | Preparing to start joint training with {len(model_configs)} models")
+    
+    # 初始化每个模型并准备数据 | Initialize each model and prepare data
+    for i, model_config in enumerate(model_configs):
+        print(f"初始化模型 {i+1}: {model_config.get('model_type', 'unknown')} | Initializing model {i+1}: {model_config.get('model_type', 'unknown')}")
+        
+        # 创建模型实例 | Create model instance
+        trainer = LanguageModelTrainer(
+            model_type=model_config.get('model_type', 'sentiment'),
+            language=model_config.get('language', 'multilingual'),
+            use_external_api=model_config.get('use_external_api', False),
+            api_config=model_config.get('api_config')
+        )
+        
+        # 加载预训练模型 | Load pretrained model
+        if not trainer.use_external_api:
+            trainer.load_pretrained_model()
+        
+        # 准备数据集 | Prepare dataset
+        data_path = data_paths[i] if i < len(data_paths) else None
+        datasets = trainer.prepare_dataset(data_path, model_config.get('model_type', 'sentiment'))
+        
+        # 添加到列表 | Add to lists
+        models.append(trainer)
+        train_datasets.append(datasets['train'])
+        val_datasets.append(datasets['test'])
+    
+    # 如果只有一个模型，则执行普通训练 | If only one model, perform regular training
+    if len(models) == 1:
+        print("只有一个模型，执行普通训练 | Only one model, performing regular training")
+        return start_training(
+            model_type=model_configs[0].get('model_type', 'sentiment'),
+            data_path=data_paths[0] if data_paths else None,
+            config=config,
+            use_external=model_configs[0].get('use_external_api', False),
+            api_config=model_configs[0].get('api_config')
+        )
+    
+    # 执行联合训练 | Perform joint training
+    # 选择第一个模型作为主导模型来协调联合训练 | Select the first model as the lead to coordinate joint training
+    lead_model = models[0]
+    return lead_model.train_jointly(models, train_datasets, val_datasets, config, loss_weights)
 
 if __name__ == '__main__':
     # 测试训练程序 | Test training program
@@ -446,4 +623,23 @@ if __name__ == '__main__':
     print("情感推理结果 | Emotion result:", json.dumps(emotion_result, indent=2, ensure_ascii=False))
     print("外部API结果 | External API result:", json.dumps(api_result, indent=2, ensure_ascii=False))
     
-    print("训练结果 | Training result:", json.dumps(result, indent=2, ensure_ascii=False))
+    # 测试联合训练 | Test joint training (示例代码，实际使用时需根据实际情况修改)
+    print("\n测试联合训练功能... | Testing joint training functionality...")
+    
+    # 创建两个语言模型进行联合训练演示
+    # Note: 这只是一个演示，实际联合训练应包含不同类型的模型
+    joint_result = start_joint_training(
+        model_configs=[
+            {"model_type": "sentiment", "language": "multilingual"},
+            {"model_type": "emotion", "language": "multilingual"}
+        ],
+        data_paths=[None, None],  # 使用示例数据
+        config={
+            'epochs': 2,
+            'batch_size': 8,
+            'learning_rate': 2e-5
+        },
+        loss_weights=[0.6, 0.4]
+    )
+    
+    print("联合训练结果 | Joint training result:", json.dumps(joint_result, indent=2, ensure_ascii=False))

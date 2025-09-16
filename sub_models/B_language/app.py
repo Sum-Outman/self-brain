@@ -341,30 +341,39 @@ def train_model():
         mode = config.get('mode', 'standard')
         epochs = config.get('epochs', 10)
         batch_size = config.get('batch_size', 32)
-        learning_rate = config.get('learning_rate', 0.001)
-        
-        # 生成模拟训练数据用于测试  # Generate mock training data for testing
-        mock_training_data = [
-            {"text": "This is a positive example", "label": "positive", "language": "en"},
-            {"text": "This is a negative example", "label": "negative", "language": "en"},
-            {"text": "这是一个中文例子", "label": "neutral", "language": "zh"},
-            {"text": "Este es un ejemplo en español", "label": "positive", "language": "es"},
-            {"text": "Ceci est un exemple en français", "label": "neutral", "language": "fr"}
-        ]
-        
-        # 扩展数据到指定大小  # Expand data to specified size
-        expanded_data = mock_training_data * max(1, batch_size // len(mock_training_data))
-        
-        texts = [item['text'] for item in expanded_data]
-        labels = [item['label'] for item in expanded_data]
-        languages = [item['language'] for item in expanded_data]
+        learning_rate = config.get('learning_rate', 0.0001)
+        data_path = config.get('data_path', './data')
+        languages = config.get('languages', ['zh', 'en', 'de', 'ja'])
+        use_incremental = config.get('use_incremental', False)
+        use_transfer = config.get('use_transfer', False)
+        source_language = config.get('source_language', None)
         
         # 使用语言模型进行训练  # Use language model for training
-        training_result = language_model.fine_tune(
-            texts=texts,
-            labels=labels,
-            languages=languages
-        )
+        if use_incremental:
+            training_result = language_model.incremental_train(
+                data_path=data_path,
+                languages=languages,
+                epochs=epochs,
+                batch_size=batch_size,
+                learning_rate=learning_rate
+            )
+        elif use_transfer and source_language:
+            training_result = language_model.transfer_learn(
+                source_language=source_language,
+                target_language=languages,
+                data_path=data_path,
+                epochs=epochs,
+                batch_size=batch_size,
+                learning_rate=learning_rate
+            )
+        else:
+            training_result = language_model.train_model(
+                data_path=data_path,
+                languages=languages,
+                epochs=epochs,
+                batch_size=batch_size,
+                learning_rate=learning_rate
+            )
         
         # 添加配置信息到结果  # Add configuration info to results
         enhanced_result = {
@@ -373,7 +382,12 @@ def train_model():
                 "mode": mode,
                 "epochs": epochs,
                 "batch_size": batch_size,
-                "learning_rate": learning_rate
+                "learning_rate": learning_rate,
+                "data_path": data_path,
+                "languages": languages,
+                "use_incremental": use_incremental,
+                "use_transfer": use_transfer,
+                "source_language": source_language
             },
             "training": training_result,
             "status": "completed"
@@ -389,7 +403,8 @@ def train_model():
     except Exception as e:
         return jsonify({
             "status": "error",
-            "message": f"训练失败: {str(e)} | Training failed"
+            "message": f"训练失败: {str(e)} | Training failed",
+            "details": str(e)
         }), 500
         
 # 实时监视接口  # Real-time monitoring interface

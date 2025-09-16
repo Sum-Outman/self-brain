@@ -14,6 +14,9 @@ import pickle
 import os
 from typing import Dict, List, Any, Optional
 
+# 导入增强学习模块
+from manager_model.enhanced_learning import EnhancedLearningSystem
+
 class SelfLearningModule:
     """自主学习模块，支持AGI的持续学习和自我改进 | Self-learning module supporting continuous learning and self-improvement"""
     
@@ -63,6 +66,21 @@ class SelfLearningModule:
                 "enabled": True,
                 "weight": 0.1,
                 "effectiveness": 0.9
+            },
+            "meta_learning": {
+                "enabled": True,
+                "weight": 0.15,
+                "effectiveness": 0.85
+            },
+            "online_learning": {
+                "enabled": True,
+                "weight": 0.25,
+                "effectiveness": 0.75
+            },
+            "knowledge_distillation": {
+                "enabled": True,
+                "weight": 0.15,
+                "effectiveness": 0.8
             }
         }
         
@@ -71,7 +89,9 @@ class SelfLearningModule:
             "accuracy_improvement": 0.8,
             "efficiency_improvement": 0.7,
             "knowledge_expansion": 0.9,
-            "skill_diversification": 0.6
+            "skill_diversification": 0.6,
+            "adaptability": 0.85,
+            "continuous_learning": 0.9
         }
         
         # 设置日志
@@ -80,6 +100,9 @@ class SelfLearningModule:
         # 学习线程控制
         self.running = False
         self.learning_thread = None
+        
+        # 初始化增强学习系统
+        self.enhanced_learning_system = EnhancedLearningSystem()
         
         # 加载之前的学习状态
         self._load_learning_state()
@@ -303,6 +326,19 @@ class SelfLearningModule:
                 score = (learning_needs["skill_diversification"] * 0.5 +
                         learning_needs["knowledge_expansion"] * 0.5)
             
+            elif strategy == "meta_learning":
+                # 元学习适合适应性和学习能力改进
+                score = learning_needs.get("adaptability", 0.0) * 0.9
+            
+            elif strategy == "online_learning":
+                # 在线学习适合持续学习和实时适应
+                score = learning_needs.get("continuous_learning", 0.0) * 0.85
+            
+            elif strategy == "knowledge_distillation":
+                # 知识蒸馏适合模型间知识传递
+                score = (learning_needs["knowledge_expansion"] * 0.3 +
+                        learning_needs["efficiency_improvement"] * 0.7)
+            
             strategy_scores[strategy] = score * config["effectiveness"] * config["weight"]
         
         if not strategy_scores:
@@ -327,13 +363,27 @@ class SelfLearningModule:
                 results.update(self._execute_supervised_learning(learning_data))
             
             elif strategy == "reinforcement_learning":
-                results.update(self._execute_reinforcement_learning(learning_data))
+                # 使用增强学习系统中的强化学习功能
+                results.update(self.enhanced_learning_system.reinforcement_learning.execute(strategy, learning_data))
             
             elif strategy == "unsupervised_learning":
                 results.update(self._execute_unsupervised_learning(learning_data))
             
             elif strategy == "transfer_learning":
-                results.update(self._execute_transfer_learning(learning_data))
+                # 使用增强学习系统中的迁移学习功能
+                results.update(self.enhanced_learning_system.transfer_learning.execute(strategy, learning_data))
+            
+            elif strategy == "meta_learning":
+                # 执行元学习
+                results.update(self._execute_meta_learning(learning_data))
+            
+            elif strategy == "online_learning":
+                # 执行在线学习
+                results.update(self._execute_online_learning(learning_data))
+            
+            elif strategy == "knowledge_distillation":
+                # 执行知识蒸馏
+                results.update(self._execute_knowledge_distillation(learning_data))
             
             # 执行自我升级检查（每10个学习周期一次）
             if self.learning_state["total_learning_cycles"] % 10 == 0:
@@ -406,6 +456,21 @@ class SelfLearningModule:
             },
             "learning_type": "transfer"
         }
+    
+    def _execute_meta_learning(self, learning_data: Dict[str, Any]) -> Dict[str, Any]:
+        """执行元学习 | Execute meta-learning"""
+        # 使用增强学习系统中的元学习功能
+        return self.enhanced_learning_system.meta_learning.execute("meta_learning", learning_data)
+    
+    def _execute_online_learning(self, learning_data: Dict[str, Any]) -> Dict[str, Any]:
+        """执行在线学习 | Execute online learning"""
+        # 使用增强学习系统中的在线学习功能
+        return self.enhanced_learning_system.online_learning.execute("online_learning", learning_data)
+    
+    def _execute_knowledge_distillation(self, learning_data: Dict[str, Any]) -> Dict[str, Any]:
+        """执行知识蒸馏 | Execute knowledge distillation"""
+        # 使用增强学习系统中的知识蒸馏功能
+        return self.enhanced_learning_system.knowledge_distillation.execute("knowledge_distillation", learning_data)
 
     def _execute_self_upgrading(self, learning_data: Dict[str, Any]) -> Dict[str, Any]:
         """执行自我升级 - 修改自身代码以改进性能 | Execute self-upgrading - modify own code to improve performance"""

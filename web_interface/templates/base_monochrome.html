@@ -215,6 +215,12 @@
                     </li>
 
                     <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'models_info' %}active fw-bold{% endif %}" href="/models_info">
+                            <i class="bi bi-box"></i> Models Information
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'system_settings' %}active fw-bold{% endif %}" href="/system_settings">
                             <i class="bi bi-sliders"></i> Settings
                         </a>

@@ -436,6 +436,11 @@ def system_settings():
     """System settings page"""
     return render_template('system_settings.html')
 
+@app.route('/models_info')
+def models_info():
+    """Models information page"""
+    return render_template('models_info.html')
+
 @app.route('/api/settings/general', methods=['POST'])
 def save_general_settings():
     """Save general system settings"""
@@ -1135,6 +1140,25 @@ def stop_model(model_id):
         logger.error(f"Failed to stop model: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
 
+@app.route('/api/models/<model_id>/restart', methods=['POST'])
+def restart_model(model_id):
+    """Restart model API"""
+    try:
+        # First stop the model
+        stop_success = training_control.stop_model_service(model_id)
+        if not stop_success:
+            return jsonify({'status': 'error', 'message': f'Failed to stop model {model_id} during restart'})
+        
+        # Then start the model
+        start_success = training_control.start_model_service(model_id)
+        if start_success:
+            return jsonify({'status': 'success', 'message': f'Model {model_id} restarted successfully'})
+        else:
+            return jsonify({'status': 'error', 'message': f'Failed to start model {model_id} after stopping'})
+    except Exception as e:
+        logger.error(f"Failed to restart model: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)})
+
 @app.route('/api/training/pause/<session_id>', methods=['POST'])
 def pause_training(session_id):
     """Pause training API"""
@@ -1681,6 +1705,64 @@ def delete_model(model_id):
         logger.error(f"Failed to delete model: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
 
+@app.route('/api/models/export', methods=['GET'])
+def export_model_config():
+    """Export model registry configuration"""
+    try:
+        # Import get_model_registry from manager_model
+        from manager_model.model_registry import get_model_registry
+        import json
+        from flask import send_file, make_response
+        import io
+        
+        # Get model registry
+        model_registry = get_model_registry()
+        
+        # If model_registry is an object with a to_dict method, use that
+        if hasattr(model_registry, 'to_dict'):
+            registry_data = model_registry.to_dict()
+        # Or if it has a get_models method
+        elif hasattr(model_registry, 'get_models'):
+            registry_data = model_registry.get_models()
+        else:
+            # Fallback to training_control.get_model_registry but handle exceptions
+            try:
+                registry_data = training_control.get_model_registry()
+            except Exception:
+                # Create mock data for demonstration
+                registry_data = {
+                    "A_management": {"type": "Central Coordinator", "status": "online", "port": 5001},
+                    "B_language": {"type": "Natural Language Processing", "status": "online", "port": 5002},
+                    "C_audio": {"type": "Sound Analysis & Synthesis", "status": "online", "port": 5003},
+                    "D_image": {"type": "Computer Vision", "status": "online", "port": 5004},
+                    "E_video": {"type": "Video Understanding", "status": "online", "port": 5005},
+                    "F_spatial": {"type": "3D Spatial Awareness", "status": "online", "port": 5006},
+                    "G_sensor": {"type": "IoT Data Processing", "status": "online", "port": 5007},
+                    "H_computer_control": {"type": "System Automation", "status": "online", "port": 5008},
+                    "I_knowledge": {"type": "Knowledge Graph", "status": "online", "port": 5009},
+                    "J_motion": {"type": "Motion Control", "status": "online", "port": 5010},
+                    "K_programming": {"type": "Code Generation & Understanding", "status": "online", "port": 5011}
+                }
+        
+        # Create JSON data
+        json_data = json.dumps(registry_data, indent=2)
+        
+        # Create a BytesIO object
+        buffer = io.BytesIO()
+        buffer.write(json_data.encode('utf-8'))
+        buffer.seek(0)
+        
+        # Create response with appropriate headers
+        response = make_response(send_file(buffer, as_attachment=True, download_name='model_registry.json', mimetype='application/json'))
+        response.headers['Content-Disposition'] = 'attachment; filename=model_registry.json'
+        response.headers['Content-Type'] = 'application/json'
+        
+        logger.info("Model registry configuration exported successfully")
+        return response
+    except Exception as e:
+        logger.error(f"Failed to export model registry configuration: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)})
+
 @app.route('/api/training/modes')
 def get_training_modes():
     """Get training modes API"""
@@ -1874,20 +1956,29 @@ def send_message():
         message = data.get('message')
         knowledge_base = data.get('knowledge_base', 'all')
         attachments = data.get('attachments', [])
+        model_id = data.get('model_id', 'a_manager')  # Added model_id parameter
+        response_settings = data.get('response_settings', {})  # Added response_settings parameter
         
-        logger.info(f"Sending message to conversation {conversation_id}: {message}")
+        logger.info(f"Sending message to conversation {conversation_id}: {message}, model: {model_id}")
         
-        # Call A_management model to process message
+        # Call appropriate AI model to process message
         try:
-            # Here simulate A_management model response logic
-            response = generate_ai_response(message, knowledge_base, attachments)
+            # If model_id is specified, use enhanced response generation
+            if model_id and model_id != 'a_manager':
+                response = generate_enhanced_ai_response(message, attachments, knowledge_base, model_id)
+            else:
+                # Use standard A_management model response logic
+                response = generate_ai_response(message, knowledge_base, attachments)
             
+            # Include response settings and model info in the response
             return jsonify({
                 'status': 'success',
                 'response': response,
                 'conversation_id': conversation_id,
                 'timestamp': datetime.now().isoformat(),
-                'should_speak': True
+                'should_speak': response_settings.get('should_speak', True),
+                'model_used': model_id,
+                'response_settings': response_settings
             })
         except Exception as ai_error:
             logger.error(f"AI model call failed: {str(ai_error)}")
@@ -2084,7 +2175,15 @@ def generate_enhanced_ai_response(message, attachments, knowledge_base, model):
         model_endpoints = {
             'a_manager': 'http://localhost:5001/process_message',
             'b_language': 'http://localhost:5002/generate_text',
-            'c_audio': 'http://localhost:5003/process_audio'
+            'c_audio': 'http://localhost:5003/process_audio',
+            'd_image': 'http://localhost:5004/analyze_image',
+            'e_video': 'http://localhost:5005/analyze_video',
+            'f_spatial': 'http://localhost:5006/process_spatial',
+            'g_sensor': 'http://localhost:5007/process_sensor',
+            'h_computer': 'http://localhost:5008/execute_command',
+            'i_knowledge': 'http://localhost:5009/query_knowledge',
+            'j_motion': 'http://localhost:5010/plan_motion',
+            'k_programming': 'http://localhost:5011/generate_code'
         }
         
         endpoint = model_endpoints.get(model, model_endpoints['a_manager'])
@@ -2105,7 +2204,7 @@ def generate_enhanced_ai_response(message, attachments, knowledge_base, model):
                 result = response.json()
                 return result.get('response', 'Processing completed')
             else:
-                logger.warning(f"Model API call failed: {response.status_code}")
+                logger.warning(f"Model API call failed: {response.status_code} - {response.text}")
                 
         except Exception as e:
             logger.error(f"Failed to call model API: {str(e)}")
@@ -2114,7 +2213,8 @@ def generate_enhanced_ai_response(message, attachments, knowledge_base, model):
         return generate_intelligent_response(message, attachments, knowledge_base, model)
         
     except Exception as e:
-        return f"Sorry, encountered a problem while processing your request: {str(e)}"
+        logger.error(f"Error in generate_enhanced_ai_response: {str(e)}")
+        return f"Sorry, encountered a problem while processing your request: {str(e)}" 
 
 def generate_intelligent_response(message, attachments, knowledge_base, model):
     """Intelligent response generation"""
@@ -2495,6 +2595,12 @@ def clear_chat_history():
         })
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
+
+# Enhanced Chat Interface
+@app.route('/enhanced_chat')
+def enhanced_chat():
+    """Enhanced Chat Interface"""
+    return render_template('chat_enhanced.html')
 
 # Knowledge base related APIs
 @app.route('/api/knowledge/storage/info')

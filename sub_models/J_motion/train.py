@@ -345,6 +345,131 @@ def save_training_results(model: nn.Module, history: Dict, results: Dict,
     
     logger.info(f"Model and training results saved: {save_path}")
 
+def train_jointly(models: List[nn.Module], train_loaders: List[DataLoader], val_loaders: List[DataLoader],
+                  epochs: int = 10, lr: float = 0.001, device: str = 'cpu',
+                  loss_weights: Optional[List[float]] = None) -> List[Dict]:
+    """Jointly train multiple models
+    
+    Args:
+        models: List of models
+        train_loaders: List of training data loaders
+        val_loaders: List of validation data loaders
+        epochs: Number of epochs
+        lr: Learning rate
+        device: Training device
+        loss_weights: Loss weights for each model
+    
+    Returns:
+        List of training history dictionaries for each model
+    """
+    # Check parameters
+    if len(models) != len(train_loaders) or len(models) != len(val_loaders):
+        raise ValueError("Number of models must match number of loaders")
+    
+    # If no loss weights provided, use equal weights
+    if loss_weights is None:
+        loss_weights = [1.0] * len(models)
+    elif len(loss_weights) != len(models):
+        raise ValueError("Number of loss weights must match number of models")
+    
+    # Create optimizers and schedulers for each model
+    optimizers = [optim.Adam(model.parameters(), lr=lr) for model in models]
+    schedulers = [optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
+                 for optimizer in optimizers]
+    
+    # Create training history for each model
+    histories = [{
+        'train_loss': [],
+        'val_loss': [],
+        'val_accuracy': [],
+        'learning_rate': []
+    } for _ in range(len(models))]
+    
+    # Move all models to device
+    for model in models:
+        model.to(device)
+    
+    for epoch in range(epochs):
+        # Joint training phase
+        for model in models:
+            model.train()
+        
+        running_losses = [0.0] * len(models)
+        
+        # Iterate through training data
+        for i, (inputs, targets) in enumerate(zip(*train_loaders)):
+            # Zero gradients
+            for optimizer in optimizers:
+                optimizer.zero_grad()
+            
+            # Forward pass and loss calculation
+            total_loss = 0.0
+            for j, (model, input_data, target_data, weight) in enumerate(
+                    zip(models, inputs, targets, loss_weights)):
+                input_data = input_data.to(device)
+                target_data = target_data.to(device)
+                
+                outputs = model(input_data)
+                loss = nn.CrossEntropyLoss()(outputs, target_data)
+                weighted_loss = loss * weight
+                running_losses[j] += loss.item()
+                total_loss += weighted_loss
+            
+            # Backward pass and optimization
+            total_loss.backward()
+            for optimizer in optimizers:
+                optimizer.step()
+        
+        # Joint validation phase
+        for model in models:
+            model.eval()
+        
+        val_losses = [0.0] * len(models)
+        correct = [0] * len(models)
+        total = [0] * len(models)
+        
+        with torch.no_grad():
+            for inputs, targets in zip(*val_loaders):
+                for j, (model, input_data, target_data) in enumerate(
+                        zip(models, inputs, targets)):
+                    input_data = input_data.to(device)
+                    target_data = target_data.to(device)
+                    
+                    outputs = model(input_data)
+                    loss = nn.CrossEntropyLoss()(outputs, target_data)
+                    val_losses[j] += loss.item()
+                    
+                    _, predicted = torch.max(outputs.data, 1)
+                    total[j] += target_data.numel()
+                    correct[j] += (predicted == target_data).sum().item()
+        
+        # Update learning rate
+        avg_val_losses = [val_loss / len(val_loaders[j]) for j, val_loss in enumerate(val_losses)]
+        for j, scheduler in enumerate(schedulers):
+            scheduler.step(avg_val_losses[j])
+        
+        # Record history
+        avg_train_losses = [running_loss / len(train_loaders[j]) for j, running_loss in enumerate(running_losses)]
+        avg_val_accuracies = [100 * corr / total_j if total_j > 0 else 0 
+                             for corr, total_j in zip(correct, total)]
+        current_lrs = [optimizer.param_groups[0]['lr'] for optimizer in optimizers]
+        
+        for j in range(len(models)):
+            histories[j]['train_loss'].append(avg_train_losses[j])
+            histories[j]['val_loss'].append(avg_val_losses[j])
+            histories[j]['val_accuracy'].append(avg_val_accuracies[j])
+            histories[j]['learning_rate'].append(current_lrs[j])
+        
+        # Logging
+        logger.info(f'Joint Training - Epoch {epoch+1}/{epochs}')
+        for j in range(len(models)):
+            logger.info(f'  Model {j+1} - Train Loss: {avg_train_losses[j]:.4f}, ' \
+                       f'Val Loss: {avg_val_losses[j]:.4f}, ' \
+                       f'Val Acc: {avg_val_accuracies[j]:.2f}%, ' \
+                       f'LR: {current_lrs[j]:.8f}')
+    
+    return histories
+
 def main():
     """Main training function"""
     # Set device
@@ -370,8 +495,8 @@ def main():
     num_classes = len(train_dataset.command_map) if train_dataset.command_map else 10
     model = MotionModel(input_size=9, hidden_size=64, num_classes=num_classes, num_layers=2)
     
-    # Train model
-    logger.info("开始训练运动控制模型 | Starting motion control model training")
+    # Train model (individual training mode)
+    logger.info("开始训练运动控制模型（单独训练模式） | Starting motion control model training (individual mode)")
     history = train_model(model, train_loader, val_loader, epochs=20, lr=0.001, device=device)
     
     # Evaluate model
@@ -383,6 +508,47 @@ def main():
     
     logger.info("运动控制模型训练完成 | Motion control model training completed")
     logger.info(f"Final evaluation results - Loss: {results['loss']:.4f}, Accuracy: {results['accuracy']:.2f}%")
+    
+    # Example: How to use the joint training functionality
+    # Note: In a real application, you would provide multiple different models and corresponding datasets
+    # The following code is only an example to demonstrate how to call the joint training function
+    logger.info("\n--- Joint Training Functionality Example ---")
+    try:
+        # Create another model of the same type for demonstration purposes
+        secondary_model = MotionModel(input_size=9, hidden_size=64, num_classes=num_classes, num_layers=2)
+        
+        # Prepare model list and data loader lists
+        models_list = [model, secondary_model]
+        train_loaders_list = [train_loader, train_loader]  # In a real app, use different datasets
+        val_loaders_list = [val_loader, val_loader]        # In a real app, use different datasets
+        
+        # Configure loss weights
+        loss_weights = [0.6, 0.4]
+        
+        # Execute joint training
+        logger.info("Starting joint training example")
+        joint_histories = train_jointly(
+            models=models_list,
+            train_loaders=train_loaders_list,
+            val_loaders=val_loaders_list,
+            epochs=5,  # Use fewer epochs for demonstration
+            lr=0.001,
+            device=device,
+            loss_weights=loss_weights
+        )
+        
+        # Evaluate jointly trained models
+        logger.info("Evaluating jointly trained models")
+        for i, trained_model in enumerate(models_list):
+            joint_results = evaluate_model(trained_model, test_loader, device=device)
+            logger.info(f"Model {i+1} - Post-joint training evaluation results: Loss: {joint_results['loss']:.4f}, Accuracy: {joint_results['accuracy']:.2f}%")
+            
+            # Save jointly trained model
+            joint_save_path = f'models/j_motion_joint_model_{i+1}.pth'
+            save_training_results(trained_model, joint_histories[i], joint_results, joint_save_path)
+    except Exception as e:
+        logger.error(f"Error executing joint training example: {str(e)}")
+        logger.info("In a real application, ensure you provide correct model lists and data loader lists")
 
 if __name__ == '__main__':
     main()

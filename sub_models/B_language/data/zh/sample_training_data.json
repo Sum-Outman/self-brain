@@ -1,0 +1,9 @@
+[
+  {"text": "我今天很高兴，收到了一份意外的礼物。", "label": "joy", "language": "zh", "intensity": 0.9},
+  {"text": "这部电影真的很无聊，浪费了我的时间。", "label": "sadness", "language": "zh", "intensity": 0.7},
+  {"text": "你怎么能这样对待我？我感到非常生气。", "label": "anger", "language": "zh", "intensity": 0.8},
+  {"text": "听到这个消息，我感到很震惊。", "label": "surprise", "language": "zh", "intensity": 0.6},
+  {"text": "这个地方看起来有点可怕，我不敢进去。", "label": "fear", "language": "zh", "intensity": 0.5},
+  {"text": "他的行为让我感到很恶心。", "label": "disgust", "language": "zh", "intensity": 0.6},
+  {"text": "今天天气不错，适合出去走走。", "label": "neutral", "language": "zh", "intensity": 0.3}
+]

@@ -68,6 +68,12 @@
                     </li>
 
                     <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'models_info' %}active{% endif %}" href="/models_info">
+                            Models Information
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'system_settings' %}active{% endif %}" href="/system_settings">
                             System Settings
                         </a>

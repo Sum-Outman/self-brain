@@ -1,0 +1,9 @@
+[
+  {"text": "今日はとても嬉しいです、予期しないプレゼントをもらいました。", "label": "joy", "language": "ja", "intensity": 0.9},
+  {"text": "この映画は本当に退屈で、私の時間を無駄にしました。", "label": "sadness", "language": "ja", "intensity": 0.7},
+  {"text": "どうして私をこのように扱うのですか？非常に怒っています。", "label": "anger", "language": "ja", "intensity": 0.8},
+  {"text": "このニュースを聞いてショックを受けました。", "label": "surprise", "language": "ja", "intensity": 0.6},
+  {"text": "この場所は少し怖そうで、入る勇気がありません。", "label": "fear", "language": "ja", "intensity": 0.5},
+  {"text": "彼の行動は私を不快にさせます。", "label": "disgust", "language": "ja", "intensity": 0.6},
+  {"text": "今日はいい天気で、散歩に適しています。", "label": "neutral", "language": "ja", "intensity": 0.3}
+]

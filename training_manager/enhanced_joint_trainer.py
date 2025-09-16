@@ -133,7 +133,7 @@ class EnhancedJointTrainer:
                 "H_computer_control": {"port": 5007, "training_endpoint": "/train"},
                 "I_knowledge": {"port": 5008, "training_endpoint": "/train"},
                 "J_motion": {"port": 5009, "training_endpoint": "/train"},
-                "K_programming": {"port": 5011, "training_endpoint": "/train"},"/train"}
+                "K_programming": {"port": 5011, "training_endpoint": "/train"}
             }
         }
         
