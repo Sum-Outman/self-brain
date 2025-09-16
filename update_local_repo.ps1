@@ -1,23 +1,25 @@
 Write-Host "Starting Self Brain AGI local repository update..." -ForegroundColor Green
 Write-Host ""
 
-# 添加所有更改
-Write-Host "Adding all changes to Git..." -ForegroundColor Yellow
+# Add all changes
+Write-Host "Adding all changes..." -ForegroundColor Yellow
 git add .
 
-# 提交更改
-Write-Host "Creating commit with latest changes..." -ForegroundColor Yellow
-git commit -m "chore: Update Self Brain AGI system with latest enhancements"
+# Commit changes
+Write-Host "Committing changes..." -ForegroundColor Yellow
+git commit -m "Update: Self Brain AGI system with enhanced features and documentation"
 
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "No changes to commit." -ForegroundColor Yellow
-} else {
-    Write-Host "Successfully committed changes locally." -ForegroundColor Green
-    Write-Host ""
-    Write-Host "Next steps when network is available:" -ForegroundColor Cyan
-    Write-Host "1. Ensure GitHub connectivity is restored" -ForegroundColor White
-    Write-Host "2. Run 'git push origin main' to push changes to GitHub" -ForegroundColor White
-}
+# Show commit summary
+Write-Host "" -ForegroundColor Yellow
+git log -1 --stat
 
-Write-Host ""
-Write-Host "Local update process completed." -ForegroundColor Green
+Write-Host "" -ForegroundColor Green
+Write-Host "Local repository update completed successfully!" -ForegroundColor Green
+Write-Host "" -ForegroundColor Yellow
+Write-Host "When network connection to GitHub is restored, please run the following command to push changes:"
+Write-Host "cd d:\shiyan"
+Write-Host "git push origin main"
+Write-Host "" -ForegroundColor Green
+Write-Host "Alternatively, you can run push_to_github.ps1 script when network is available."
+Write-Host "" -ForegroundColor White
+Read-Host "Press Enter to exit..."
