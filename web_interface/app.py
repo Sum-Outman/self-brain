@@ -436,11 +436,6 @@ def system_settings():
     """System settings page"""
     return render_template('system_settings.html')
 
-@app.route('/models_info')
-def models_info():
-    """Models information page"""
-    return render_template('models_info.html')
-
 @app.route('/api/settings/general', methods=['POST'])
 def save_general_settings():
     """Save general system settings"""
@@ -1596,6 +1591,65 @@ def get_models_performance():
         logger.error(f"Failed to get models performance: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
 
+@app.route('/api/models/<model_id>/api-config', methods=['POST'])
+def save_model_api_config(model_id):
+    """Save model API configuration"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        if not data.get('api_key') or not data.get('model') or not data.get('base_url'):
+            return jsonify({'status': 'error', 'message': 'Missing required API configuration parameters'})
+        
+        # Get existing model configuration
+        model_config = training_control.get_model_configuration(model_id)
+        if not model_config:
+            return jsonify({'status': 'error', 'message': 'Model not found'})
+        
+        # Update model configuration with API settings
+        updated_config = {
+            **model_config,
+            'model_source': 'external',
+            'external_api': {
+                'provider': data.get('provider', 'custom'),
+                'api_key': data.get('api_key'),
+                'model': data.get('model'),
+                'base_url': data.get('base_url'),
+                'timeout': data.get('timeout', 30),
+                'last_updated': datetime.now().isoformat()
+            }
+        }
+        
+        # Update model configuration
+        success = training_control.update_model_configuration(model_id, updated_config)
+        
+        if success:
+            # Switch to external model in the model registry
+            try:
+                from manager_model.model_registry import get_model_registry
+                model_registry = get_model_registry()
+                model_registry.switch_to_external(model_id, updated_config['external_api'])
+                
+                # Restart the model service with new configuration
+                training_control.stop_model_service(model_id)
+                training_control.start_model_service(model_id)
+                
+                logger.info(f"Model {model_id} API configuration updated successfully")
+                return jsonify({
+                    'status': 'success',
+                    'message': 'API configuration saved successfully',
+                    'config': updated_config
+                })
+            except Exception as e:
+                logger.error(f"Error switching model to external after config update: {str(e)}")
+                return jsonify({'status': 'success', 'message': 'API configuration saved, but failed to switch to external mode'})
+        else:
+            return jsonify({'status': 'error', 'message': 'Failed to update model configuration'})
+            
+    except Exception as e:
+        logger.error(f"Failed to save model API configuration: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)})
+
 @app.route('/api/models/<model_id>')
 def get_model_details(model_id):
     """Get specific model details API"""
@@ -2067,7 +2121,6 @@ def generate_ai_response(message, knowledge_base, attachments):
         return "A Management Model is taking too long to respond. Please try again in a moment."
     except Exception as e:
         logger.error(f"Failed to call A Management Model: {str(e)}")
-        return f"An unexpected error occurred while processing your request: {str(e)}"    
         return f"Error communicating with A Management Model: {str(e)}. Please check the system status."
 
 @app.route('/api/chat/suggestions', methods=['POST'])

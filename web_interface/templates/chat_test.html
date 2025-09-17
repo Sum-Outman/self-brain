@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Management Model - Enhanced Chat Interface</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/chat_enhanced.css">
+    <script>
+        // Tailwind Configuration
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gray: {
+                            50: '#f9fafb',
+                            100: '#f3f4f6',
+                            200: '#e5e7eb',
+                            300: '#d1d5db',
+                            400: '#9ca3af',
+                            500: '#6b7280',
+                            600: '#4b5563',
+                            700: '#374151',
+                            800: '#1f2937',
+                            900: '#111827',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    },
+                },
+            }
+        }
+    </script>
+</head>
+<body>
+    <!-- Enhanced Chat Interface -->
+    <div class="chat-container">
+        <!-- Sidebar -->
+        <div class="chat-sidebar">
+            <div class="sidebar-header">
+                <h2>A Management Model</h2>
+            </div>
+            
+            <!-- Conversation List -->
+            <div class="conversations-list" id="conversationList">
+                <!-- Conversations will be dynamically loaded here -->
+                <div class="text-center text-gray-500 py-4">
+                    <i class="fa fa-comments"></i> No conversations yet
+                </div>
+            </div>
+            
+            <!-- Knowledge Base Selector -->
+            <div class="knowledge-base-section">
+                <h3>Knowledge Base</h3>
+                <select id="knowledgeSelect" class="knowledge-base-selector">
+                    <option value="all">All Knowledge Bases</option>
+                </select>
+            </div>
+            
+            <!-- System Status -->
+            <div class="system-status">
+                <div class="status-item">
+                    <span class="status-label">Connection:</span>
+                    <span id="connectionStatus">Not Connected</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">API:</span>
+                    <span id="apiStatus" class="status-offline"><i class="fa fa-exclamation-circle"></i> Not Checked</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Chat Area -->
+        <div class="chat-main">
+            <div class="chat-header">
+                <h1 id="currentConversationTitle">New Conversation</h1>
+                <div class="header-actions">
+                    <button id="newConversationBtn" class="btn btn-icon" title="New Conversation">
+                        <i class="fa fa-plus"></i>
+                    </button>
+                    <button id="clearChatBtn" class="btn btn-icon" title="Clear Chat">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                    <button id="exportChatBtn" class="btn btn-icon" title="Export Chat">
+                        <i class="fa fa-download"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Messages Container -->
+            <div class="messages-container" id="messagesContainer">
+                <!-- Messages will be dynamically loaded here -->
+            </div>
+            
+            <!-- Input Area -->
+            <div class="input-area">
+                <!-- File Upload Area -->
+                <div class="file-upload-area">
+                    <div id="uploadArea" class="file-drop-area">
+                        <p class="file-drop-text">
+                            <i class="fa fa-cloud-upload"></i> Drag and drop files here or click to upload
+                        </p>
+                        <input type="file" id="fileInput" style="display: none;" multiple>
+                    </div>
+                    <!-- File Preview -->
+                    <div id="filePreview" class="file-preview">
+                        <!-- Preview of uploaded files will be displayed here -->
+                    </div>
+                </div>
+                
+                <!-- Message Input -->
+                <div class="message-input-container">
+                    <textarea id="messageInput" class="message-input" placeholder="Type your message..."></textarea>
+                    <div class="action-buttons">
+                        <button id="toggleVoiceBtn" class="btn btn-icon btn-outline-secondary" title="Voice Input">
+                            <i class="fa fa-microphone"></i>
+                        </button>
+                        <button id="sendBtn" class="btn send-btn">
+                            <i class="fa fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Response Settings Panel -->
+        <div class="response-settings-panel">
+            <div class="settings-header">
+                <h2>Settings</h2>
+            </div>
+            
+            <!-- Model Selector -->
+            <div class="model-selector-section">
+                <h3>Model</h3>
+                <select id="modelSelector" class="model-selector">
+                    <option value="a_management">A Management Model</option>
+                    <option value="b_language">B Language Model</option>
+                    <option value="c_audio">C Audio Model</option>
+                    <option value="d_image">D Image Model</option>
+                    <option value="e_video">E Video Model</option>
+                    <option value="f_spatial">F Spatial Model</option>
+                    <option value="g_sensor">G Sensor Model</option>
+                    <option value="h_computer">H Computer Model</option>
+                    <option value="i_knowledge">I Knowledge Model</option>
+                    <option value="j_motion">J Motion Model</option>
+                    <option value="k_programming">K Programming Model</option>
+                </select>
+            </div>
+            
+            <!-- Processing Status -->
+            <div class="processing-status">
+                <h3>Processing Status</h3>
+                <div class="status-badges">
+                    <span id="textStatus" class="badge bg-gray-400">Idle</span>
+                    <span id="imageStatus" class="badge bg-gray-400">Idle</span>
+                    <span id="audioStatus" class="badge bg-gray-400">Idle</span>
+                </div>
+            </div>
+            
+            <!-- Response Controls -->
+            <div class="response-controls">
+                <h3>Response Settings</h3>
+                
+                <!-- Response Style -->
+                <div class="setting-group">
+                    <label for="responseStyle">Response Style</label>
+                    <select id="responseStyle" class="form-control">
+                        <option value="detailed">Detailed</option>
+                        <option value="concise">Concise</option>
+                        <option value="technical">Technical</option>
+                        <option value="simple">Simple</option>
+                    </select>
+                </div>
+                
+                <!-- Temperature -->
+                <div class="setting-group">
+                    <label for="temperature">Temperature: <span id="tempValue">0.7</span></label>
+                    <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
+                </div>
+                
+                <!-- Max Tokens -->
+                <div class="setting-group">
+                    <label for="maxTokens">Max Tokens: <span id="tokensValue">1000</span></label>
+                    <input type="range" id="maxTokens" min="100" max="2000" step="100" value="1000">
+                </div>
+                
+                <!-- Auto Speak -->
+                <div class="setting-group">
+                    <label>
+                        <input type="checkbox" id="autoSpeak" checked>
+                        Auto Speak Responses
+                    </label>
+                </div>
+                
+                <!-- Performance Metrics -->
+                <div class="setting-group">
+                    <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Performance Metrics</h4>
+                    <div class="text-xs text-gray-600 space-y-1">
+                        <p>Response Time: <span id="responseTime">--</span></p>
+                        <p>Tokens Used: <span id="tokensUsed">0</span></p>
+                        <p>Context Length: <span id="contextLength">0</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+    <!-- Enhanced Chat Manager -->
+    <script src="/static/js/chat_enhanced.js"></script>
+</body>
+</html>

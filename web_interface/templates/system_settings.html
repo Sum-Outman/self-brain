@@ -98,8 +98,198 @@
                                 </button>
                             </form>
                         </div>
-                    </div>
-                </div>
+                        <!-- Model Architecture Visualization -->
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="bi bi-diagram-3"></i> Model Architecture</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="model-architecture">
+                                    <!-- Central Management Model -->
+                                    <div class="architecture-node central-node">
+                                        <div class="node-content">
+                                            <div class="node-icon bg-dark text-white">A</div>
+                                            <div class="node-label">Management<br>Central Coordinator</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Function Models -->
+                                    <div class="architecture-node function-node node-b">
+                                        <div class="node-content">
+                                            <div class="node-icon bg-dark text-white">B</div>
+                                            <div class="node-label">Language<br>Processing</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="architecture-node function-node node-c">
+                                        <div class="node-content">
+                                            <div class="node-icon bg-dark text-white">C</div>
+                                            <div class="node-label">Audio<br>Analysis</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="architecture-node function-node node-d">
+                                        <div class="node-content">
+                                            <div class="node-icon bg-dark text-white">D</div>
+                                            <div class="node-label">Image<br>Vision</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="architecture-node function-node node-e">
+                                        <div class="node-content">
+                                            <div class="node-icon bg-dark text-white">E</div>
+                                            <div class="node-label">Video<br>Understanding</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="architecture-node function-node node-f">
+                                        <div class="node-content">
+                                            <div class="node-icon bg-dark text-white">F</div>
+                                            <div class="node-label">Spatial<br>Awareness</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="architecture-node function-node node-g">
+                                        <div class="node-content">
+                                            <div class="node-icon bg-dark text-white">G</div>
+                                            <div class="node-label">Sensor<br>Processing</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="architecture-node function-node node-h">
+                                        <div class="node-content">
+                                            <div class="node-icon bg-dark text-white">H</div>
+                                            <div class="node-label">Computer<br>Control</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="architecture-node function-node node-i">
+                                        <div class="node-content">
+                                            <div class="node-icon bg-dark text-white">I</div>
+                                            <div class="node-label">Knowledge<br>Graph</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="architecture-node function-node node-j">
+                                        <div class="node-content">
+                                            <div class="node-icon bg-dark text-white">J</div>
+                                            <div class="node-label">Motion<br>Control</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="architecture-node function-node node-k">
+                                        <div class="node-content">
+                                            <div class="node-icon bg-dark text-white">K</div>
+                                            <div class="node-label">Programming<br>Generation</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Model Details Modal -->
+                        <div class="modal fade" id="modelDetailsModal" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Model Details</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            <div class="col-lg-4">
+                                                <div class="card mb-3">
+                                                    <div class="card-body">
+                                                        <div class="text-center">
+                                                            <div class="model-icon-large" id="modalModelIcon">A</div>
+                                                            <h3 class="mt-3" id="modalModelName">Management Model</h3>
+                                                            <p class="text-secondary" id="modalModelType">Central Coordinator</p>
+                                                            <span class="badge bg-dark" id="modalModelStatus">Active</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="card">
+                                                    <div class="card-header">
+                                                        <h5 class="mb-0">Connection Info</h5>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <dl class="row">
+                                                            <dt class="col-sm-5">Host:</dt>
+                                                            <dd class="col-sm-7" id="modalHost">localhost</dd>
+
+                                                            <dt class="col-sm-5">Port:</dt>
+                                                            <dd class="col-sm-7" id="modalPort">5001</dd>
+
+                                                            <dt class="col-sm-5">Status:</dt>
+                                                            <dd class="col-sm-7">
+                                                                <span class="badge bg-success" id="modalConnectionStatus">Connected</span>
+                                                            </dd>
+
+                                                            <dt class="col-sm-5">Latency:</dt>
+                                                            <dd class="col-sm-7" id="modalLatency">5ms</dd>
+                                                        </dl>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-8">
+                                                <div class="card mb-3">
+                                                    <div class="card-header">
+                                                        <h5 class="mb-0">Model Information</h5>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <dl class="row">
+                                                            <dt class="col-sm-3">Model ID:</dt>
+                                                            <dd class="col-sm-9" id="modalModelId">A_management</dd>
+
+                                                            <dt class="col-sm-3">Version:</dt>
+                                                            <dd class="col-sm-9" id="modalModelVersion">1.0.0</dd>
+
+                                                            <dt class="col-sm-3">Created:</dt>
+                                                            <dd class="col-sm-9" id="modalModelCreated">2024-01-15</dd>
+
+                                                            <dt class="col-sm-3">Last Updated:</dt>
+                                                            <dd class="col-sm-9" id="modalModelUpdated">2024-01-15</dd>
+
+                                                            <dt class="col-sm-3">Memory Usage:</dt>
+                                                            <dd class="col-sm-9" id="modalMemoryUsage">2.1 GB</dd>
+
+                                                            <dt class="col-sm-3">CPU Usage:</dt>
+                                                            <dd class="col-sm-9" id="modalCpuUsage">15%</dd>
+
+                                                            <dt class="col-sm-3">Source:</dt>
+                                                            <dd class="col-sm-9" id="modalModelSource">Local</dd>
+
+                                                            <dt class="col-sm-3">API Type:</dt>
+                                                            <dd class="col-sm-9" id="modalApiType">REST API</dd>
+                                                        </dl>
+                                                    </div>
+                                                </div>
+
+                                                <div class="card">
+                                                    <div class="card-header">
+                                                        <h5 class="mb-0">Model Capabilities</h5>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div id="modalModelCapabilities">
+                                                            <!-- Capabilities will be populated dynamically -->
+                                                            <div class="capability-item">Central coordination of all system components</div>
+                                                            <div class="capability-item">Model management and monitoring</div>
+                                                            <div class="capability-item">Task allocation and scheduling</div>
+                                                            <div class="capability-item">System health monitoring</div>
+                                                            <div class="capability-item">Data flow orchestration</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                 
                 <div class="col-lg-4">
                     <div class="card">
@@ -216,15 +406,16 @@
                                 <table class="table table-hover">
                                     <thead>
                                         <tr>
-                                            <th>Model ID</th>
-                                            <th>Name</th>
-                                            <th>Type</th>
-                                            <th>Status</th>
-                                            <th>Memory</th>
-                                            <th>Provider</th>
-                                            <th>Last Updated</th>
-                                            <th>Actions</th>
-                                        </tr>
+                                        <th>Model ID</th>
+                                        <th>Name</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th>Memory</th>
+                                        <th>API Source</th>
+                                        <th>Provider</th>
+                                        <th>Last Updated</th>
+                                        <th>Actions</th>
+                                    </tr>
                                     </thead>
                                     <tbody id="modelsTableBody">
                                         <tr>
@@ -234,10 +425,18 @@
                                             <td><span class="badge bg-dark">Active</span></td>
                                             <td>2.1 GB</td>
                                             <td>Local</td>
+                                            <td>Local</td>
                                             <td>2024-01-15</td>
                                             <td>
-                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
-                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="viewModelDetails('A', 'Management Model', 'Central Coordinator', 'Active', '2.1 GB', '15%', 'Local', 'REST API', 'localhost', '5001', 'Connected', '5ms', 'A_management', '1.0.0', '2024-01-15')">
+                                                    View Details
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="showExternalApiModal('A', 'Management Model')">
+                                                    Switch API
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="restartModel('A')">
+                                                    Restart
+                                                </button>
                                             </td>
                                         </tr>
                                         <tr>
@@ -247,10 +446,18 @@
                                             <td><span class="badge bg-dark">Active</span></td>
                                             <td>4.2 GB</td>
                                             <td>Local</td>
+                                            <td>Local</td>
                                             <td>2024-01-15</td>
                                             <td>
-                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
-                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="viewModelDetails('B', 'Large Language Model', 'NLP', 'Active', '4.2 GB', '12%', 'Local', 'REST API', 'localhost', '5002', 'Connected', '7ms', 'B_language', '1.0.0', '2024-01-15')">
+                                                    View Details
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="showExternalApiModal('B', 'Large Language Model')">
+                                                    Switch API
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="restartModel('B')">
+                                                    Restart
+                                                </button>
                                             </td>
                                         </tr>
                                         <tr>
@@ -260,10 +467,18 @@
                                             <td><span class="badge bg-dark">Active</span></td>
                                             <td>1.8 GB</td>
                                             <td>Local</td>
+                                            <td>Local</td>
                                             <td>2024-01-15</td>
                                             <td>
-                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
-                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="viewModelDetails('C', 'Audio Processing', 'Audio Analysis', 'Active', '1.8 GB', '8%', 'Local', 'REST API', 'localhost', '5003', 'Connected', '3ms', 'C_audio', '1.0.0', '2024-01-15')">
+                                                    View Details
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="showExternalApiModal('C', 'Audio Processing')">
+                                                    Switch API
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="restartModel('C')">
+                                                    Restart
+                                                </button>
                                             </td>
                                         </tr>
                                         <tr>
@@ -273,10 +488,18 @@
                                             <td><span class="badge bg-dark">Active</span></td>
                                             <td>3.5 GB</td>
                                             <td>Local</td>
+                                            <td>Local</td>
                                             <td>2024-01-15</td>
                                             <td>
-                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
-                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="viewModelDetails('D', 'Image Vision', 'Computer Vision', 'Active', '3.5 GB', '18%', 'Local', 'REST API', 'localhost', '5004', 'Connected', '6ms', 'D_image', '1.0.0', '2024-01-15')">
+                                                    View Details
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="showExternalApiModal('D', 'Image Vision')">
+                                                    Switch API
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="restartModel('D')">
+                                                    Restart
+                                                </button>
                                             </td>
                                         </tr>
                                         <tr>
@@ -286,10 +509,18 @@
                                             <td><span class="badge bg-dark">Active</span></td>
                                             <td>2.9 GB</td>
                                             <td>Local</td>
+                                            <td>Local</td>
                                             <td>2024-01-15</td>
                                             <td>
-                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
-                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="viewModelDetails('E', 'Video Stream', 'Video Understanding', 'Active', '2.9 GB', '25%', 'Local', 'REST API', 'localhost', '5005', 'Connected', '10ms', 'E_video', '1.0.0', '2024-01-15')">
+                                                    View Details
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="showExternalApiModal('E', 'Video Stream')">
+                                                    Switch API
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="restartModel('E')">
+                                                    Restart
+                                                </button>
                                             </td>
                                         </tr>
                                         <tr>
@@ -299,10 +530,18 @@
                                             <td><span class="badge bg-dark">Active</span></td>
                                             <td>2.3 GB</td>
                                             <td>Local</td>
+                                            <td>Local</td>
                                             <td>2024-01-15</td>
                                             <td>
-                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
-                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="viewModelDetails('F', 'Binocular Spatial', '3D Spatial Awareness', 'Active', '2.3 GB', '10%', 'Local', 'REST API', 'localhost', '5006', 'Connected', '4ms', 'F_spatial', '1.0.0', '2024-01-15')">
+                                                    View Details
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="showExternalApiModal('F', 'Binocular Spatial')">
+                                                    Switch API
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="restartModel('F')">
+                                                    Restart
+                                                </button>
                                             </td>
                                         </tr>
                                         <tr>
@@ -312,10 +551,18 @@
                                             <td><span class="badge bg-dark">Active</span></td>
                                             <td>1.5 GB</td>
                                             <td>Local</td>
+                                            <td>Local</td>
                                             <td>2024-01-15</td>
                                             <td>
-                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
-                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="viewModelDetails('G', 'Sensor Processing', 'IoT Data', 'Active', '1.5 GB', '5%', 'Local', 'REST API', 'localhost', '5007', 'Connected', '2ms', 'G_sensor', '1.0.0', '2024-01-15')">
+                                                    View Details
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="showExternalApiModal('G', 'Sensor Processing')">
+                                                    Switch API
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="restartModel('G')">
+                                                    Restart
+                                                </button>
                                             </td>
                                         </tr>
                                         <tr>
@@ -325,10 +572,18 @@
                                             <td><span class="badge bg-dark">Active</span></td>
                                             <td>2.7 GB</td>
                                             <td>Local</td>
+                                            <td>Local</td>
                                             <td>2024-01-15</td>
                                             <td>
-                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
-                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="viewModelDetails('H', 'Computer Control', 'System Automation', 'Active', '2.7 GB', '13%', 'Local', 'REST API', 'localhost', '5008', 'Connected', '6ms', 'H_computer_control', '1.0.0', '2024-01-15')">
+                                                    View Details
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="showExternalApiModal('H', 'Computer Control')">
+                                                    Switch API
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="restartModel('H')">
+                                                    Restart
+                                                </button>
                                             </td>
                                         </tr>
                                         <tr>
@@ -338,10 +593,18 @@
                                             <td><span class="badge bg-dark">Active</span></td>
                                             <td>5.1 GB</td>
                                             <td>Local</td>
+                                            <td>Local</td>
                                             <td>2024-01-15</td>
                                             <td>
-                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
-                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="viewModelDetails('I', 'Knowledge Expert', 'Knowledge Graph', 'Active', '5.1 GB', '20%', 'Local', 'REST API', 'localhost', '5009', 'Connected', '8ms', 'I_knowledge', '1.0.0', '2024-01-15')">
+                                                    View Details
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="showExternalApiModal('I', 'Knowledge Expert')">
+                                                    Switch API
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="restartModel('I')">
+                                                    Restart
+                                                </button>
                                             </td>
                                         </tr>
                                         <tr>
@@ -351,10 +614,18 @@
                                             <td><span class="badge bg-dark">Active</span></td>
                                             <td>1.9 GB</td>
                                             <td>Local</td>
+                                            <td>Local</td>
                                             <td>2024-01-15</td>
                                             <td>
-                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
-                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="viewModelDetails('J', 'Motion Control', 'Motion Planning', 'Active', '1.9 GB', '7%', 'Local', 'REST API', 'localhost', '5010', 'Connected', '4ms', 'J_motion', '1.0.0', '2024-01-15')">
+                                                    View Details
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="showExternalApiModal('J', 'Motion Control')">
+                                                    Switch API
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="restartModel('J')">
+                                                    Restart
+                                                </button>
                                             </td>
                                         </tr>
                                         <tr>
@@ -364,10 +635,18 @@
                                             <td><span class="badge bg-dark">Active</span></td>
                                             <td>2.4 GB</td>
                                             <td>Local</td>
+                                            <td>Local</td>
                                             <td>2024-01-15</td>
                                             <td>
-                                                <button class="btn btn-sm btn-outline-dark">Configure</button>
-                                                <button class="btn btn-sm btn-outline-dark">Restart</button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="viewModelDetails('K', 'Programming', 'Code Generation', 'Active', '2.4 GB', '14%', 'Local', 'REST API', 'localhost', '5011', 'Connected', '5ms', 'K_programming', '1.0.0', '2024-01-15')">
+                                                    View Details
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="showExternalApiModal('K', 'Programming')">
+                                                    Switch API
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="restartModel('K')">
+                                                    Restart
+                                                </button>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -420,16 +699,16 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Configure External API for Model <span id="currentModelId"></span></h5>
+                        <h5 class="modal-title">Configure External API for Model <span id="externalApiModelName"></span> (<span id="externalApiModelId"></span>)</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <form id="externalApiForm">
-                            <input type="hidden" id="modelIdInput">
+                            <input type="hidden" id="externalApiModelId">
                             
                             <div class="mb-3">
-                                <label for="apiProvider" class="form-label">API Provider</label>
-                                <select class="form-select" id="apiProvider" onchange="onApiProviderChange()">
+                                <label for="externalApiProvider" class="form-label">API Provider</label>
+                                <select class="form-select" id="externalApiProvider" onchange="onApiProviderChange()">
                                     <option value="openai">OpenAI</option>
                                     <option value="anthropic">Anthropic</option>
                                     <option value="google">Google AI</option>
@@ -439,30 +718,31 @@
                             </div>
                             
                             <div class="mb-3">
-                                <label for="apiKey" class="form-label">API Key / Token</label>
-                                <input type="password" class="form-control" id="apiKey" placeholder="Enter your API key" required>
+                                <label for="externalApiKey" class="form-label">API Key / Token</label>
+                                <input type="password" class="form-control" id="externalApiKey" placeholder="Enter your API key" required>
                             </div>
                             
                             <div class="mb-3">
-                                <label for="apiModel" class="form-label">Model Name</label>
-                                <input type="text" class="form-control" id="apiModel" placeholder="e.g., gpt-4o" required>
+                                <label for="externalApiModel" class="form-label">Model Name</label>
+                                <input type="text" class="form-control" id="externalApiModel" placeholder="e.g., gpt-4o" required>
                             </div>
                             
                             <div class="mb-3">
-                                <label for="apiEndpoint" class="form-label">API Endpoint</label>
-                                <input type="url" class="form-control" id="apiEndpoint" placeholder="Enter API endpoint URL" required>
+                                <label for="externalApiBaseUrl" class="form-label">API Endpoint</label>
+                                <input type="url" class="form-control" id="externalApiBaseUrl" placeholder="Enter API endpoint URL" required>
                             </div>
                             
                             <div class="mb-3">
-                                <label for="apiTimeout" class="form-label">Timeout (seconds)</label>
-                                <input type="number" class="form-control" id="apiTimeout" value="30" min="5" max="300">
+                                <label for="externalApiTimeout" class="form-label">Timeout (seconds)</label>
+                                <input type="number" class="form-control" id="externalApiTimeout" value="30" min="5" max="300">
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-outline-info" onclick="testExternalApi()">Test Connection</button>
+                        <button type="button" class="btn btn-outline-info" onclick="testExternalApiConnection()">Test Connection</button>
                         <button type="button" class="btn btn-outline-primary" onclick="saveExternalApiConfig()">Save & Switch</button>
+                        <button type="button" class="btn btn-outline-warning" onclick="switchToLocalConfirm()">Switch to Local Mode</button>
                     </div>
                 </div>
             </div>
@@ -952,7 +1232,7 @@ function addNewModel() {
     const modelType = document.getElementById('newModelType').value;
 
     if (!modelId || !modelName) {
-        alert('Please fill in all required fields');
+        showNotification('Please fill in all required fields', 'error');
         return;
     }
 
@@ -968,8 +1248,15 @@ function addNewModel() {
         <td>${modelType === 'local' ? 'Local' : 'API'}</td>
         <td>${new Date().toISOString().split('T')[0]}</td>
         <td>
-            <button class="btn btn-sm btn-outline-dark">Configure</button>
-            <button class="btn btn-sm btn-outline-dark">Restart</button>
+            <button class="btn btn-sm btn-outline-dark" onclick="viewModelDetails('${modelId}', '${modelName}', '${modelType.charAt(0).toUpperCase() + modelType.slice(1)}', 'Loading', '0.0 GB', '0%', '${modelType === 'local' ? 'Local' : 'API'}', 'REST API', 'localhost', '0', 'Disconnected', '-', '${modelId.toLowerCase()}_model', '1.0.0', '${new Date().toISOString().split('T')[0]}')">
+                View Details
+            </button>
+            <button class="btn btn-sm btn-outline-dark" onclick="showExternalApiModal('${modelId}', '${modelName}')">
+                Switch API
+            </button>
+            <button class="btn btn-sm btn-outline-dark" onclick="restartModel('${modelId}')">
+                Restart
+            </button>
         </td>
     `;
 
@@ -981,11 +1268,11 @@ function addNewModel() {
     modal.hide();
     document.getElementById('addModelForm').reset();
 
-    alert(`Model ${modelName} added successfully!`);
+    showNotification(`Model ${modelName} added successfully!`, 'success');
 }
 
 function refreshModels() {
-    alert('Refreshing model status...');
+    showNotification('Refreshing model status...', 'info');
     // Simulate refresh with random updates
     const badges = document.querySelectorAll('#modelsTableBody .badge');
     badges.forEach(badge => {
@@ -1056,10 +1343,10 @@ function importModels() {
             reader.onload = function(e) {
                 try {
                     const models = JSON.parse(e.target.result);
-                    alert(`Importing ${models.length} models...`);
+                    showNotification(`Importing ${models.length} models...`, 'info');
                     // Here you would typically process the imported data
                 } catch (error) {
-                    alert('Error importing file: Invalid JSON format');
+                    showNotification('Error importing file: Invalid JSON format', 'error');
                 }
             };
             reader.readAsText(file);
@@ -1068,8 +1355,275 @@ function importModels() {
     input.click();
 }
 
-// Initialize model counts on page load
-updateModelCounts();
+// View Model Details
+function viewModelDetails(id, name, type, status, memory, cpuUsage, provider, apiType, host, port, connectionStatus, latency, component, version, lastUpdated) {
+    // Set the model details in the modal
+    document.getElementById('modelId').textContent = id;
+    document.getElementById('modelName').textContent = name;
+    document.getElementById('modelType').textContent = type;
+    document.getElementById('modelStatus').textContent = status;
+    document.getElementById('modelMemory').textContent = memory;
+    document.getElementById('modelCpuUsage').textContent = cpuUsage;
+    document.getElementById('modelProvider').textContent = provider;
+    document.getElementById('modelApiType').textContent = apiType;
+    document.getElementById('modelHost').textContent = host;
+    document.getElementById('modelPort').textContent = port;
+    document.getElementById('modelConnectionStatus').textContent = connectionStatus;
+    document.getElementById('modelLatency').textContent = latency;
+    document.getElementById('modelComponent').textContent = component;
+    document.getElementById('modelVersion').textContent = version;
+    document.getElementById('modelLastUpdated').textContent = lastUpdated;
+    
+    // Show the modal
+    const modelDetailsModal = new bootstrap.Modal(document.getElementById('modelDetailsModal'));
+    modelDetailsModal.show();
+}
+
+// Show External API Modal
+function showExternalApiModal(modelId, modelName) {
+    document.getElementById('externalApiModelId').value = modelId;
+    document.getElementById('externalApiModelName').textContent = modelName;
+    document.getElementById('externalApiForm').reset();
+    
+    const externalApiModal = new bootstrap.Modal(document.getElementById('externalApiModal'));
+    externalApiModal.show();
+}
+
+// Restart Model
+function restartModel(modelId) {
+    if (confirm(`Are you sure you want to restart model ${modelId}?`)) {
+        showNotification(`Restarting model ${modelId}...`, 'info');
+        
+        // Update UI to show restarting status
+        const rows = document.querySelectorAll('#modelsTableBody tr');
+        rows.forEach(row => {
+            if (row.querySelector('td:first-child strong').textContent === modelId) {
+                const statusBadge = row.querySelector('.badge');
+                statusBadge.className = 'badge bg-warning';
+                statusBadge.textContent = 'Restarting';
+            }
+        });
+        
+        // Call API to restart the model
+        fetch(`/api/models/${modelId}/restart`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Network response was not ok');
+        }).then(data => {
+            if (data.status === 'success') {
+                // Update UI to show active status after successful restart
+                rows.forEach(row => {
+                    if (row.querySelector('td:first-child strong').textContent === modelId) {
+                        const statusBadge = row.querySelector('.badge');
+                        statusBadge.className = 'badge bg-dark';
+                        statusBadge.textContent = 'Active';
+                    }
+                });
+                showNotification(`Model ${modelId} restarted successfully`, 'success');
+            } else {
+                showNotification(`Failed to restart model ${modelId}: ${data.message}`, 'error');
+                // Revert status if failed
+                rows.forEach(row => {
+                    if (row.querySelector('td:first-child strong').textContent === modelId) {
+                        const statusBadge = row.querySelector('.badge');
+                        statusBadge.className = 'badge bg-danger';
+                        statusBadge.textContent = 'Error';
+                    }
+                });
+            }
+        }).catch(error => {
+            console.error('Error restarting model:', error);
+            showNotification(`Failed to restart model ${modelId}: ${error.message}`, 'error');
+            // Revert status if failed
+            rows.forEach(row => {
+                if (row.querySelector('td:first-child strong').textContent === modelId) {
+                    const statusBadge = row.querySelector('.badge');
+                    statusBadge.className = 'badge bg-danger';
+                    statusBadge.textContent = 'Error';
+                }
+            });
+        });
+    }
+}
+
+// Handle API Provider Change
+function onApiProviderChange() {
+    const provider = document.getElementById('externalApiProvider').value;
+    const modelInput = document.getElementById('externalApiModel');
+    const baseUrlInput = document.getElementById('externalApiBaseUrl');
+    
+    // Set default values based on provider
+    switch(provider) {
+        case 'openai':
+            modelInput.value = 'gpt-4o';
+            baseUrlInput.value = 'https://api.openai.com/v1';
+            break;
+        case 'anthropic':
+            modelInput.value = 'claude-3-opus-20240229';
+            baseUrlInput.value = 'https://api.anthropic.com/v1';
+            break;
+        case 'google':
+            modelInput.value = 'gemini-1.5-pro-latest';
+            baseUrlInput.value = 'https://generativelanguage.googleapis.com/v1beta';
+            break;
+        case 'huggingface':
+            modelInput.value = 'meta-llama/Llama-3-70b-chat-hf';
+            baseUrlInput.value = 'https://api-inference.huggingface.co/models';
+            break;
+        case 'custom':
+            modelInput.value = '';
+            baseUrlInput.value = '';
+            break;
+    }
+}
+
+// Save External API Configuration
+function saveExternalApiConfig() {
+    const modelId = document.getElementById('externalApiModelId').value;
+    const provider = document.getElementById('externalApiProvider').value;
+    const apiKey = document.getElementById('externalApiKey').value;
+    const apiModel = document.getElementById('externalApiModel').value;
+    const baseUrl = document.getElementById('externalApiBaseUrl').value;
+    const timeout = document.getElementById('externalApiTimeout').value;
+    
+    if (!apiKey || !apiModel || !baseUrl) {
+        showNotification('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    // Validate timeout parameter
+    const timeoutValue = timeout ? parseInt(timeout) : 30;
+    if (isNaN(timeoutValue) || timeoutValue <= 0 || timeoutValue > 120) {
+        showNotification('Timeout must be between 1 and 120 seconds', 'error');
+        return;
+    }
+    
+    showNotification(`Saving external API configuration for model ${modelId}...`, 'info');
+    
+    // Send configuration to server
+    fetch(`/api/models/${modelId}/api-config`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            provider: provider,
+            api_key: apiKey,
+            model: apiModel,
+            base_url: baseUrl,
+            timeout: timeoutValue
+        })
+    }).then(response => {
+        if (response.ok) {
+            return response.json();
+        }
+        throw new Error('Network response was not ok');
+    }).then(data => {
+        if (data.status === 'success') {
+            showNotification(`External API configuration saved successfully for model ${modelId}`, 'success');
+            
+            // Update the model's provider in the table
+            const rows = document.querySelectorAll('#modelsTableBody tr');
+            rows.forEach(row => {
+                if (row.querySelector('td:first-child strong').textContent === modelId) {
+                    // Update API source column
+                    const apiSourceCell = row.querySelector('td:nth-child(5)');
+                    apiSourceCell.textContent = 'External';
+                    apiSourceCell.className = 'text-success';
+                    
+                    // Update provider column
+                    row.querySelector('td:nth-child(6)').textContent = provider;
+                    
+                    // Change status to indicate API is active
+                    const statusBadge = row.querySelector('.badge');
+                    statusBadge.className = 'badge bg-dark';
+                    statusBadge.textContent = 'Active';
+                }
+            });
+            
+            const externalApiModal = bootstrap.Modal.getInstance(document.getElementById('externalApiModal'));
+            externalApiModal.hide();
+        } else {
+            showNotification(`Failed to save API configuration: ${data.message || 'Unknown error'}`, 'error');
+        }
+    }).catch(error => {
+        console.error('Error saving API configuration:', error);
+        showNotification(`Failed to save API configuration: ${error.message}`, 'error');
+    });
+}
+
+// Test External API Connection
+function testExternalApiConnection() {
+    const modelId = document.getElementById('externalApiModelId').value;
+    const provider = document.getElementById('externalApiProvider').value;
+    const apiKey = document.getElementById('externalApiKey').value;
+    const apiModel = document.getElementById('externalApiModel').value;
+    const baseUrl = document.getElementById('externalApiBaseUrl').value;
+    const timeout = document.getElementById('externalApiTimeout').value;
+    
+    if (!apiKey || !apiModel || !baseUrl) {
+        showNotification('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    // Validate timeout parameter
+    const timeoutValue = timeout ? parseInt(timeout) : 30;
+    if (isNaN(timeoutValue) || timeoutValue <= 0 || timeoutValue > 120) {
+        showNotification('Timeout must be between 1 and 120 seconds', 'error');
+        return;
+    }
+    
+    showNotification(`Testing external API connection for model ${modelId}...`, 'info');
+    
+    // Test connection to external API
+    fetch('/api/models/test-connection', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            provider: provider,
+            api_key: apiKey,
+            model: apiModel,
+            base_url: baseUrl,
+            timeout: timeoutValue
+        })
+    }).then(response => {
+        if (response.ok) {
+            return response.json();
+        }
+        throw new Error('Network response was not ok');
+    }).then(data => {
+        if (data.status === 'success') {
+            showNotification(`External API connection test successful for model ${modelId}! Latency: ${data.latency}ms`, 'success');
+        } else {
+            showNotification(`External API connection test failed: ${data.message || 'Unknown error'}`, 'error');
+        }
+    }).catch(error => {
+        console.error('Error testing API connection:', error);
+        showNotification(`Failed to test API connection: ${error.message}`, 'error');
+    });
+}
+
+    // Show confirmation and switch to local mode
+    function switchToLocalConfirm() {
+        const modelId = document.getElementById('externalApiModelId').textContent;
+        switchToLocal(modelId);
+        // Close the modal will be handled by the switchToLocal function
+    }
+    
+
+    
+    // Initialize model counts on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateModelCounts();
+    });
 </script>
 
 <!-- External API Configuration Script -->
