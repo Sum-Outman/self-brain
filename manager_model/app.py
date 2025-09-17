@@ -2,44 +2,570 @@
 # A Management Model API Server - 高级模型管理API服务
 # Copyright 2025 The AGI Brain System Authors
 
-import asyncio
-import json
-import logging
 import os
 import sys
+import json
+import logging
+import traceback
+import asyncio
+import psutil
+import time
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, List, Any, Optional
+from collections import defaultdict, deque
 
-from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS
-import threading
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+import uvicorn
 
 # 添加当前目录到Python路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# 导入核心系统模块
 from core_system_merged import get_unified_system
-from training_control import training_controller
+from manager_model.data_bus import DataBus
+from manager_model.self_learning import SelfLearningModule
 
-# 设置日志
+# 配置日志
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger("A_Management_API")
+logger = logging.getLogger("ManagerModel")
 
-# 创建Flask应用
-app = Flask(__name__, template_folder='templates')
-CORS(app)
+# 创建FastAPI应用
+app = FastAPI(title="A Management Model API", description="Central coordination API for Self Brain AGI System")
 
-# 全局统一系统实例
-unified_system = None
-model_manager = None  # 新增全局 model_manager
+# 配置文件路径
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "config")
+MODEL_REGISTRY_PATH = os.path.join(CONFIG_PATH, "model_registry.json")
 
-# 全局统一系统实例
-unified_system = None
-model_manager = None  # 新增全局 model_manager
+# 初始化核心系统组件
+data_bus = DataBus()
+unified_system = get_unified_system()
+self_learning_module = SelfLearningModule()
 
-@app.route('/')
+# 系统状态
+SYSTEM_STATUS = {
+    "status": "running",
+    "version": "1.0.0",
+    "start_time": datetime.now().isoformat(),
+    "active_models": {},
+    "pending_tasks": 0,
+    "completed_tasks": 0,
+    "failed_tasks": 0,
+    "performance_metrics": {
+        "avg_response_time": 0.0,
+        "success_rate": 0.0,
+        "cpu_usage": 0.0,
+        "memory_usage": 0.0
+    },
+    "system_health": "healthy",
+    "adaptive_strategies": [],
+    "active_collaborations": []
+}
+
+# 模型注册表缓存
+MODEL_REGISTRY = {}
+
+# 历史任务记录
+TASK_HISTORY = deque(maxlen=1000)
+
+# 模型性能监控
+MODEL_PERFORMANCE_MONITOR = defaultdict(lambda: {
+    "total_tasks": 0,
+    "success_count": 0,
+    "avg_response_time": 0.0,
+    "last_response_time": 0.0,
+    "error_rate": 0.0,
+    "reliability_score": 1.0,
+    "capacity_utilization": 0.0
+})
+
+# 协作策略池
+COLLABORATION_STRATEGIES = {
+    "sequential": {"priority": 1, "description": "顺序执行任务，资源消耗低"},
+    "parallel": {"priority": 2, "description": "并行执行任务，资源消耗中等"},
+    "hierarchical": {"priority": 3, "description": "层次化执行任务，资源消耗高"},
+    "adaptive": {"priority": 4, "description": "自适应执行策略，根据系统状态调整"}
+}
+
+# 智能任务分配器
+def smart_task_allocator(task_data):
+    """根据任务类型、优先级和系统状态智能分配任务"""
+    try:
+        # 提取任务信息
+        task_type = task_data.get('type', 'general')
+        priority = task_data.get('priority', 1)
+        requirements = task_data.get('requirements', {})
+        deadline = task_data.get('deadline', None)
+        urgency_score = calculate_urgency_score(priority, deadline)
+        complexity_score = calculate_complexity_score(requirements)
+        
+        # 获取当前系统状态
+        current_status = get_system_status()
+        
+        # 选择最合适的协作策略
+        strategy = select_collaboration_strategy(current_status, complexity_score, urgency_score)
+        
+        # 根据任务类型和系统状态选择最优模型
+        best_models = select_best_models_for_task(task_type, requirements, current_status)
+        
+        # 创建任务记录
+        task_id = f"task_{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{hash(str(task_data)) % 10000}"
+        task_record = {
+            'task_id': task_id,
+            'type': task_type,
+            'priority': priority,
+            'requirements': requirements,
+            'allocated_models': best_models,
+            'strategy': strategy,
+            'status': 'pending',
+            'created_at': datetime.now().isoformat(),
+            'urgency_score': urgency_score,
+            'complexity_score': complexity_score
+        }
+        
+        # 更新系统状态
+        update_system_status(task_record)
+        
+        # 将任务发布到数据总线
+        data_bus.publish_message('task_queue', task_record)
+        
+        logger.info(f"任务 {task_id} 已分配给模型 {best_models}，使用策略 {strategy}")
+        
+        return task_id, best_models, strategy
+    except Exception as e:
+        logger.error(f"智能任务分配失败: {e}")
+        traceback.print_exc()
+        # 降级到默认分配策略
+        default_model = select_default_model_for_task(task_type)
+        task_id = f"task_{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{hash(str(task_data)) % 10000}"
+        return task_id, [default_model], "sequential"
+
+# 计算任务紧急度评分
+def calculate_urgency_score(priority, deadline):
+    """计算任务的紧急度评分（0-100）"""
+    urgency = priority * 20  # 基础优先级评分
+    if deadline:
+        try:
+            deadline_dt = datetime.fromisoformat(deadline.replace('Z', '+00:00'))
+            time_diff = (deadline_dt - datetime.now()).total_seconds()
+            if time_diff < 0:
+                urgency = 100  # 已过期任务紧急度最高
+            elif time_diff < 3600:  # 1小时内
+                urgency = 90
+            elif time_diff < 86400:  # 1天内
+                urgency = 70
+            elif time_diff < 604800:  # 1周内
+                urgency = 50
+        except Exception:
+            pass  # 解析失败时保持基础评分
+    return min(urgency, 100)
+
+# 计算任务复杂度评分
+def calculate_complexity_score(requirements):
+    """计算任务的复杂度评分（0-100）"""
+    complexity = 10  # 基础复杂度
+    
+    # 根据资源需求调整复杂度
+    if requirements.get('high_compute', False):
+        complexity += 30
+    if requirements.get('large_memory', False):
+        complexity += 20
+    if requirements.get('multi_modal', False):
+        complexity += 40
+    
+    # 根据输入输出规模调整复杂度
+    input_size = requirements.get('input_size', 'small')
+    if input_size == 'medium':
+        complexity += 10
+    elif input_size == 'large':
+        complexity += 20
+    
+    return min(complexity, 100)
+
+# 选择协作策略
+def select_collaboration_strategy(current_status, complexity_score, urgency_score):
+    """根据系统状态、任务复杂度和紧急度选择最佳协作策略"""
+    # 获取系统资源状态
+    cpu_usage = current_status['performance_metrics']['cpu_usage']
+    memory_usage = current_status['performance_metrics']['memory_usage']
+    
+    # 资源充足时优先选择高效策略
+    if cpu_usage < 30 and memory_usage < 30:
+        if complexity_score > 70:
+            return 'hierarchical'
+        elif urgency_score > 70:
+            return 'parallel'
+        else:
+            return 'adaptive'
+    # 资源紧张时选择资源友好策略
+    elif cpu_usage > 70 or memory_usage > 70:
+        return 'sequential'
+    # 资源中等时根据任务特性选择
+    else:
+        if complexity_score > 50 or urgency_score > 50:
+            return 'parallel'
+        else:
+            return 'sequential'
+
+# 为任务选择最佳模型
+def select_best_models_for_task(task_type, requirements, current_status):
+    """根据任务类型和需求选择最佳的模型集合"""
+    # 基础模型映射
+    task_to_model_map = {
+        'text': ['B_language'],
+        'audio': ['C_audio'],
+        'image': ['D_image'],
+        'video': ['E_video', 'D_image'],  # 视频需要图像支持
+        'spatial': ['F_spatial'],
+        'sensor': ['G_sensor'],
+        'control': ['H_computer_control'],
+        'knowledge': ['I_knowledge'],
+        'motion': ['J_motion'],
+        'code': ['K_programming'],
+        'general': ['B_language']  # 通用任务默认使用语言模型
+    }
+    
+    # 获取基础模型列表
+    base_models = task_to_model_map.get(task_type, task_to_model_map['general'])
+    
+    # 根据需求扩展模型列表
+    if requirements.get('multi_modal', False):
+        # 多模态任务需要多种模型协作
+        if task_type == 'text' and requirements.get('include_knowledge', False):
+            base_models.append('I_knowledge')
+        elif task_type == 'image' and requirements.get('include_text', False):
+            base_models.append('B_language')
+        elif task_type == 'video' and requirements.get('include_audio', False):
+            base_models.append('C_audio')
+    
+    # 根据模型性能和健康状态过滤
+    filtered_models = []
+    for model_id in base_models:
+        if model_id in MODEL_REGISTRY and MODEL_REGISTRY[model_id].get('status') == 'active':
+            # 检查模型性能和容量
+            performance = MODEL_PERFORMANCE_MONITOR.get(model_id, {})
+            reliability = performance.get('reliability_score', 1.0)
+            capacity = 1.0 - performance.get('capacity_utilization', 0.0)
+            
+            # 仅选择性能良好且有容量的模型
+            if reliability > 0.7 and capacity > 0.3:
+                filtered_models.append(model_id)
+    
+    # 如果没有合适的模型，降级到默认模型
+    if not filtered_models:
+        return task_to_model_map['general']
+    
+    # 根据性能排序
+    filtered_models.sort(key=lambda mid: MODEL_PERFORMANCE_MONITOR.get(mid, {}).get('reliability_score', 1.0), reverse=True)
+    
+    return filtered_models
+
+# 为任务选择默认模型
+def select_default_model_for_task(task_type):
+    """为任务选择默认模型（降级策略）"""
+    task_to_model_map = {
+        'text': 'B_language',
+        'audio': 'C_audio',
+        'image': 'D_image',
+        'video': 'E_video',
+        'spatial': 'F_spatial',
+        'sensor': 'G_sensor',
+        'control': 'H_computer_control',
+        'knowledge': 'I_knowledge',
+        'motion': 'J_motion',
+        'code': 'K_programming',
+        'general': 'B_language'
+    }
+    
+    return task_to_model_map.get(task_type, task_to_model_map['general'])
+
+# 获取系统状态
+def get_system_status():
+    """获取当前系统状态"""
+    try:
+        # 更新性能指标
+        SYSTEM_STATUS['performance_metrics']['cpu_usage'] = psutil.cpu_percent(interval=0.1)
+        SYSTEM_STATUS['performance_metrics']['memory_usage'] = psutil.virtual_memory().percent
+        
+        # 计算成功率
+        total_tasks = SYSTEM_STATUS['completed_tasks'] + SYSTEM_STATUS['failed_tasks']
+        if total_tasks > 0:
+            SYSTEM_STATUS['performance_metrics']['success_rate'] = SYSTEM_STATUS['completed_tasks'] / total_tasks
+        
+        # 更新系统健康状态
+        if SYSTEM_STATUS['performance_metrics']['cpu_usage'] > 90 or SYSTEM_STATUS['performance_metrics']['memory_usage'] > 90:
+            SYSTEM_STATUS['system_health'] = 'critical'
+        elif SYSTEM_STATUS['performance_metrics']['cpu_usage'] > 70 or SYSTEM_STATUS['performance_metrics']['memory_usage'] > 70:
+            SYSTEM_STATUS['system_health'] = 'warning'
+        else:
+            SYSTEM_STATUS['system_health'] = 'healthy'
+        
+        return SYSTEM_STATUS.copy()
+    except Exception as e:
+        logger.error(f"获取系统状态失败: {e}")
+        return SYSTEM_STATUS.copy()
+
+# 更新系统状态
+def update_system_status(task_record):
+    """根据任务记录更新系统状态"""
+    try:
+        # 更新任务计数
+        if task_record['status'] == 'pending':
+            SYSTEM_STATUS['pending_tasks'] += 1
+        elif task_record['status'] == 'completed':
+            SYSTEM_STATUS['pending_tasks'] -= 1
+            SYSTEM_STATUS['completed_tasks'] += 1
+        elif task_record['status'] == 'failed':
+            SYSTEM_STATUS['pending_tasks'] -= 1
+            SYSTEM_STATUS['failed_tasks'] += 1
+        
+        # 更新活动协作
+        if task_record['status'] == 'pending' or task_record['status'] == 'running':
+            collaboration_key = f"{task_record['task_id']}_{task_record['strategy']}"
+            if collaboration_key not in SYSTEM_STATUS['active_collaborations']:
+                SYSTEM_STATUS['active_collaborations'].append(collaboration_key)
+        
+        # 记录任务历史
+        TASK_HISTORY.append(task_record)
+        
+        # 更新模型性能监控
+        for model_id in task_record.get('allocated_models', []):
+            if task_record['status'] == 'completed':
+                MODEL_PERFORMANCE_MONITOR[model_id]['success_count'] += 1
+            MODEL_PERFORMANCE_MONITOR[model_id]['total_tasks'] += 1
+            
+            # 重新计算成功率和错误率
+            if MODEL_PERFORMANCE_MONITOR[model_id]['total_tasks'] > 0:
+                success_rate = MODEL_PERFORMANCE_MONITOR[model_id]['success_count'] / MODEL_PERFORMANCE_MONITOR[model_id]['total_tasks']
+                MODEL_PERFORMANCE_MONITOR[model_id]['error_rate'] = 1.0 - success_rate
+                
+                # 更新可靠性评分（综合考虑成功率、响应时间等因素）
+                MODEL_PERFORMANCE_MONITOR[model_id]['reliability_score'] = 0.7 * success_rate + 0.3 * (1.0 - min(MODEL_PERFORMANCE_MONITOR[model_id]['avg_response_time'] / 10.0, 1.0))
+    except Exception as e:
+        logger.error(f"更新系统状态失败: {e}")
+
+# 系统健康检查循环
+async def system_health_check():
+    """定期检查系统健康状态"""
+    while True:
+        try:
+            # 获取当前系统状态
+            current_status = get_system_status()
+            
+            # 健康检查逻辑
+            if current_status['system_health'] == 'critical':
+                logger.warning("系统处于临界状态，启动应急措施")
+                # 启动应急措施
+                await activate_emergency_measures()
+            elif current_status['system_health'] == 'warning':
+                logger.warning("系统处于警告状态，建议优化资源使用")
+                # 建议优化资源使用
+                suggest_resource_optimization()
+            
+            # 如果开启了自学习，将系统状态传递给自学习模块
+            if self_learning_module.is_active:
+                self_learning_module.update_system_state(current_status)
+            
+            # 每秒检查一次
+            await asyncio.sleep(1)
+        except Exception as e:
+            logger.error(f"系统健康检查失败: {e}")
+            await asyncio.sleep(5)  # 发生错误时延长检查间隔
+
+# 应急措施
+async def activate_emergency_measures():
+    """系统处于临界状态时的应急措施"""
+    try:
+        logger.info("启动应急措施")
+        
+        # 1. 暂停低优先级任务
+        # 这里可以实现暂停低优先级任务的逻辑
+        
+        # 2. 减少模型并行度
+        # 这里可以实现减少模型并行度的逻辑
+        
+        # 3. 请求自学习模块进行紧急优化
+        if self_learning_module.is_active:
+            await self_learning_module.request_emergency_optimization()
+        
+        # 4. 发送警告通知
+        # 这里可以实现发送警告通知的逻辑
+    except Exception as e:
+        logger.error(f"激活应急措施失败: {e}")
+
+# 资源优化建议
+def suggest_resource_optimization():
+    """提供资源优化建议"""
+    try:
+        # 这里可以实现资源优化建议的逻辑
+        pass
+    except Exception as e:
+        logger.error(f"生成资源优化建议失败: {e}")
+
+# 启动健康检查任务
+@app.on_event("startup")
+async def startup_event():
+    """应用启动时执行"""
+    logger.info("Manager Model API 启动中...")
+    
+    # 启动健康检查任务
+    asyncio.create_task(system_health_check())
+
+# 健康检查接口
+@app.get("/api/health")
+async def health_check():
+    """系统健康检查"""
+    status = get_system_status()
+    return JSONResponse(content={
+        "status": status["status"],
+        "health": status["system_health"],
+        "version": status["version"],
+        "timestamp": datetime.now().isoformat()
+    })
+
+# 获取系统统计信息
+@app.get("/api/stats")
+async def get_stats():
+    """获取系统统计信息"""
+    status = get_system_status()
+    return JSONResponse(content={
+        "active_models": len(status["active_models"]),
+        "pending_tasks": status["pending_tasks"],
+        "completed_tasks": status["completed_tasks"],
+        "failed_tasks": status["failed_tasks"],
+        "performance": status["performance_metrics"],
+        "health": status["system_health"],
+        "timestamp": datetime.now().isoformat()
+    })
+
+# 获取详细系统统计信息
+@app.get("/api/system/stats")
+async def get_system_stats():
+    """获取详细系统统计信息"""
+    status = get_system_status()
+    return JSONResponse(content={
+        "system_status": status,
+        "model_performance": dict(MODEL_PERFORMANCE_MONITOR),
+        "active_collaborations": status["active_collaborations"],
+        "available_strategies": list(COLLABORATION_STRATEGIES.keys()),
+        "timestamp": datetime.now().isoformat()
+    })
+
+# 获取可用模型列表
+@app.get("/api/models")
+async def get_models():
+    """获取可用模型列表"""
+    return JSONResponse(content={
+        "models": MODEL_REGISTRY,
+        "timestamp": datetime.now().isoformat()
+    })
+
+# 任务提交接口
+@app.post("/api/task")
+async def submit_task(request: Request):
+    """提交新任务到系统"""
+    try:
+        task_data = await request.json()
+        
+        # 验证任务数据
+        if not task_data:
+            raise HTTPException(status_code=400, detail="任务数据不能为空")
+        
+        # 智能分配任务
+        task_id, allocated_models, strategy = smart_task_allocator(task_data)
+        
+        return JSONResponse(content={
+            "task_id": task_id,
+            "allocated_models": allocated_models,
+            "strategy": strategy,
+            "status": "accepted",
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"提交任务失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# 获取任务状态
+@app.get("/api/task/{task_id}")
+async def get_task_status(task_id: str):
+    """获取指定任务的状态"""
+    try:
+        # 查找任务记录
+        for task in TASK_HISTORY:
+            if task['task_id'] == task_id:
+                return JSONResponse(content={
+                    "task_id": task_id,
+                    "status": task['status'],
+                    "allocated_models": task.get('allocated_models', []),
+                    "strategy": task.get('strategy', 'sequential'),
+                    "created_at": task.get('created_at'),
+                    "timestamp": datetime.now().isoformat()
+                })
+        
+        raise HTTPException(status_code=404, detail=f"任务 {task_id} 不存在")
+    except Exception as e:
+        logger.error(f"获取任务状态失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# 模型协作接口
+@app.post("/api/collaborate")
+async def collaborate(request: Request):
+    """多模型协作接口"""
+    try:
+        collaboration_data = await request.json()
+        
+        # 验证协作数据
+        required_fields = ['models', 'task_type', 'input_data']
+        for field in required_fields:
+            if field not in collaboration_data:
+                raise HTTPException(status_code=400, detail=f"缺少必需字段: {field}")
+        
+        models = collaboration_data['models']
+        task_type = collaboration_data['task_type']
+        input_data = collaboration_data['input_data']
+        strategy = collaboration_data.get('strategy', 'adaptive')
+        
+        # 验证模型是否可用
+        for model_id in models:
+            if model_id not in MODEL_REGISTRY or MODEL_REGISTRY[model_id].get('status') != 'active':
+                raise HTTPException(status_code=400, detail=f"模型 {model_id} 不可用")
+        
+        # 创建协作任务
+        collaboration_id = f"collab_{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{hash(str(collaboration_data)) % 10000}"
+        collaboration_task = {
+            'collaboration_id': collaboration_id,
+            'models': models,
+            'task_type': task_type,
+            'input_data': input_data,
+            'strategy': strategy,
+            'status': 'pending',
+            'created_at': datetime.now().isoformat()
+        }
+        
+        # 将协作任务发布到数据总线
+        data_bus.publish_message('collaboration_queue', collaboration_task)
+        
+        # 更新系统状态
+        SYSTEM_STATUS['active_collaborations'].append(collaboration_id)
+        
+        logger.info(f"协作任务 {collaboration_id} 已创建，参与模型: {models}")
+        
+        return JSONResponse(content={
+            "collaboration_id": collaboration_id,
+            "models": models,
+            "strategy": strategy,
+            "status": "accepted",
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"创建协作任务失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# 根路径接口
+@app.get('/')
 def index():
     """Web界面首页"""
     return render_template('index.html')

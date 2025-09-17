@@ -202,30 +202,42 @@ class DataBus:
         return None
         
     def _find_best_content_match(self, message: Dict) -> Optional[str]:
-        """基于内容相关性找到最佳匹配模型"""
+        """基于内容相关性找到最佳匹配模型
+        增强版: 使用更复杂的关键词匹配和权重系统
+        """
         content = message["content"]
         best_match = None
         highest_score = 0.0
         
-        # 简单实现：基于关键词匹配
-        # 实际系统可以使用更复杂的NLP方法或向量相似度计算
+        # 增强的关键词匹配系统，包含权重
         keyword_model_mapping = {
-            "text": ["B"],
-            "image": ["D"],
-            "audio": ["C"],
-            "video": ["E"],
-            "knowledge": ["I"],
-            "code": ["K"]
+            "text": {"models": ["B"], "weight": 0.8},
+            "image": {"models": ["D"], "weight": 0.9},
+            "audio": {"models": ["C"], "weight": 0.8},
+            "video": {"models": ["E"], "weight": 0.9},
+            "knowledge": {"models": ["I"], "weight": 0.7},
+            "code": {"models": ["K"], "weight": 0.8},
+            "spatial": {"models": ["F"], "weight": 0.7},
+            "sensor": {"models": ["G"], "weight": 0.6},
+            "motion": {"models": ["J"], "weight": 0.6},
+            "control": {"models": ["H"], "weight": 0.7}
         }
         
-        for keyword, models in keyword_model_mapping.items():
+        for keyword, config in keyword_model_mapping.items():
             if keyword in str(content).lower():
-                for model in models:
-                    # 基础分加上关键词匹配分
-                    score = 0.5 + 0.3  # 基础分+匹配分
+                # 计算匹配得分
+                # 基础分 + 关键词权重 * 匹配频率
+                frequency = str(content).lower().count(keyword)
+                score = 0.3 + (config["weight"] * min(frequency, 3) / 3)
+                
+                for model in config["models"]:
                     if score > highest_score:
                         highest_score = score
                         best_match = model
+        
+        # 如果找到最佳匹配，记录路由决策
+        if best_match:
+            self.logger.info(f"智能路由决策: 消息类型 '{message.get('message_type', 'unknown')}' 通过内容匹配路由到 {best_match} (得分: {highest_score:.2f})")
         
         return best_match
     
@@ -240,14 +252,26 @@ class DataBus:
             # 尝试从持久化存储恢复 | Try to recover from persistent storage
             return self._recover_message(channel_id)
             
+        # 更新最后使用时间
+        self.channels[channel_id]["last_used"] = time.time()
+        
         # 获取优先级最高的消息 | Get highest priority message
         messages = self.channels[channel_id]["messages"]
         if not messages:
             return None
             
-        # 简单实现：返回最早的消息 | Simple implementation: return oldest message
-        # 实际系统应按优先级排序 | Real system should sort by priority
-        return messages.pop(0)
+        # 按优先级排序，然后按时间排序
+        messages.sort(key=lambda x: (x["_meta"]["priority"], x["_meta"]["timestamp"]))
+        
+        # 记录接收时间用于性能统计
+        start_time = time.time()
+        message = messages.pop(0)
+        
+        # 更新性能指标
+        processing_time = time.time() - start_time
+        self._update_channel_performance(channel_id, processing_time)
+        
+        return message
         
     def _persist_message(self, channel_id: str, message: Dict):
         """持久化消息 | Persist message"""
@@ -289,13 +313,17 @@ class DataBus:
         返回:
             通道信息字典列表 | List of channel info dictionaries
         """
+        now = time.time()
         return [
             {
                 "id": cid,
                 "message_count": len(self.channels[cid]["messages"]),
                 "throughput": self.channels[cid]["throughput"],
                 "priority": self.channels[cid]["priority"],
-                "is_knowledge": cid in self.knowledge_channels
+                "is_knowledge": cid in self.knowledge_channels,
+                "last_used": self.channels[cid]["last_used"],
+                "age": now - self.channels[cid]["created_at"],
+                "avg_processing_time": self.channels[cid]["avg_processing_time"]
             }
             for cid in self.channels if self._match_pattern(cid, pattern)
         ]
@@ -352,7 +380,10 @@ class DataBus:
         # 创建一个新的通道，这里我们使用一个简单的队列实现
         self.direct_channels[channel_id] = {
             "queue": [],
-            "lock": threading.Lock()
+            "lock": threading.Lock(),
+            "created_at": time.time(),
+            "last_used": time.time(),
+            "throughput": 0
         }
         self.logger.info(f"创建直接通道: {channel_id} | Direct channel created: {channel_id}")
         return channel_id
@@ -370,7 +401,15 @@ class DataBus:
             return False
             
         with self.direct_channels[channel_id]["lock"]:
+            # 添加消息ID和时间戳
+            message.setdefault("_meta", {})
+            message["_meta"].update({
+                "timestamp": time.time(),
+                "message_id": f"direct_msg_{int(time.time()*1000)}_{os.urandom(4).hex()}"
+            })
             self.direct_channels[channel_id]["queue"].append(message)
+            self.direct_channels[channel_id]["throughput"] += 1
+            self.direct_channels[channel_id]["last_used"] = time.time()
             
         return True
         
@@ -388,7 +427,10 @@ class DataBus:
         with self.direct_channels[channel_id]["lock"]:
             if not self.direct_channels[channel_id]["queue"]:
                 return None
-            return self.direct_channels[channel_id]["queue"].pop(0)
+            
+            message = self.direct_channels[channel_id]["queue"].pop(0)
+            self.direct_channels[channel_id]["last_used"] = time.time()
+            return message
     
     def enhance_collaboration(self, source_model, target_model, task_id):
         """增强模型间协作 | Enhance inter-model collaboration
@@ -401,50 +443,129 @@ class DataBus:
         """
         # 创建专用协作通道 | Create dedicated collaboration channel
         channel_id = f"{task_id}-{source_model}-{target_model}-collab"
-        self.create_channel(channel_id, capacity=20, priority=1)
-        return channel_id
         
-    def register_component(self, component_id: str, component: Any):
+        # 检查通道是否已存在
+        if channel_id not in self.channels:
+            # 为协作任务创建高优先级通道
+            self.create_channel(channel_id, capacity=20, priority=1)
+            self.logger.info(f"创建协作通道: {channel_id} | Collaboration channel created: {channel_id}")
+        
+        # 记录协作关系
+        collaboration_key = f"{source_model}:{target_model}"
+        reverse_key = f"{target_model}:{source_model}"
+        
+        # 初始化协作统计
+        if "collaboration_stats" not in self.performance_metrics:
+            self.performance_metrics["collaboration_stats"] = {}
+        
+        if collaboration_key not in self.performance_metrics["collaboration_stats"] and \
+           reverse_key not in self.performance_metrics["collaboration_stats"]:
+            self.performance_metrics["collaboration_stats"][collaboration_key] = {
+                "tasks": 0,
+                "success_count": 0,
+                "failure_count": 0,
+                "total_response_time": 0,
+                "last_collaboration": time.time()
+            }
+        
+        # 更新协作任务计数
+        if collaboration_key in self.performance_metrics["collaboration_stats"]:
+            self.performance_metrics["collaboration_stats"][collaboration_key]["tasks"] += 1
+            self.performance_metrics["collaboration_stats"][collaboration_key]["last_collaboration"] = time.time()
+        elif reverse_key in self.performance_metrics["collaboration_stats"]:
+            self.performance_metrics["collaboration_stats"][reverse_key]["tasks"] += 1
+            self.performance_metrics["collaboration_stats"][reverse_key]["last_collaboration"] = time.time()
+        
+        return channel_id
+    
+    def register_component(self, component_id: str, component: Any, metadata: Dict = None):
         """注册组件到数据总线 | Register component to data bus
+        增强版: 添加组件元数据存储和状态管理
+        
         参数:
             component_id: 组件ID | Component ID
             component: 组件实例 | Component instance
+            metadata: 组件元数据 (可选) | Component metadata (optional)
         """
-        # 实际实现中这里会有更复杂的逻辑
+        # 存储组件实例
+        self.components[component_id] = component
+        
+        # 初始化组件状态
+        self.component_status[component_id] = {
+            "status": "active",
+            "last_heartbeat": time.time(),
+            "error_count": 0,
+            "restart_count": 0,
+            "resource_usage": {}
+        }
+        
+        # 存储组件元数据
+        self.component_metadata[component_id] = metadata or {
+            "type": "generic",
+            "version": "1.0.0",
+            "description": "",
+            "dependencies": [],
+            "capabilities": []
+        }
+        
         self.logger.info(f"注册组件: {component_id} | Registered component: {component_id}")
-        
-    def publish(self, channel_id: str, message: Dict):
-        """发布消息到指定通道 | Publish message to specified channel
-        参数:
-            channel_id: 通道ID | Channel ID
-            message: 消息内容 | Message content
-        """
-        self.send_message(channel_id, message)
-        
-    def subscribe(self, channel_id: str, callback: Callable[[Dict], None]):
-        """订阅通道消息 | Subscribe to channel messages
-        参数:
-            channel_id: 通道ID | Channel ID
-            callback: 消息到达时的回调函数 | Callback function when message arrives
-        """
-        if channel_id not in self.subscriptions:
-            self.subscriptions[channel_id] = []
-        self.subscriptions[channel_id].append(callback)
-        self.logger.info(f"订阅通道 {channel_id} | Subscribed to channel {channel_id}")
-        
+        self.logger.debug(f"组件元数据: {json.dumps(self.component_metadata[component_id], ensure_ascii=False)}")
+    
+    def publish(self, channel_id: str, message: Any):
+        """发布消息到指定通道"""
+        try:
+            # 检查通道是否存在
+            if channel_id not in self.channels:
+                self.create_channel(channel_id)
+                self.logger.warning(f"通道 {channel_id} 不存在，已自动创建")
+            
+            # 为消息添加元数据
+            message_with_metadata = {
+                'message': message,
+                'timestamp': datetime.now().isoformat(),
+                'channel': channel_id,
+                'sender': f'data_bus_{id(self)}',
+                'message_id': str(uuid.uuid4())
+            }
+            
+            # 发布消息到通道
+            self.channels[channel_id].append(message_with_metadata)
+            
+            # 记录发布日志
+            self.logger.info(f"消息已发布到通道 {channel_id}: {str(message)[:100]}...")
+            
+            # 通知订阅者
+            self.notify_subscribers(channel_id, message_with_metadata)
+            
+            return True
+        except Exception as e:
+            self.logger.error(f"发布消息失败: {e}")
+            return False
+    
+    # 添加publish_message方法作为publish方法的别名，以兼容app.py中的调用
+    def publish_message(self, channel_id: str, message: Any):
+        """发布消息到指定通道（兼容app.py的方法名）"""
+        return self.publish(channel_id, message)
+
+    def subscribe(self, channel_id: str, callback: Callable):
+        """订阅通道消息"""
+        try:
+            if channel_id not in self.subscriptions:
+                self.subscriptions[channel_id] = []
+            self.subscriptions[channel_id].append(callback)
+            self.logger.info(f"订阅通道 {channel_id} | Subscribed to channel {channel_id}")
+        except Exception as e:
+            self.logger.error(f"订阅通道失败: {str(e)} | Failed to subscribe to channel {channel_id}: {str(e)}")
+
     def notify_subscribers(self, channel_id: str, message: Dict):
-        """通知订阅者 | Notify subscribers
-        参数:
-            channel_id: 通道ID | Channel ID
-            message: 消息内容 | Message content
-        """
+        """通知订阅者"""
         if channel_id in self.subscriptions:
             for callback in self.subscriptions[channel_id]:
                 try:
                     callback(message)
                 except Exception as e:
                     self.logger.error(f"回调执行失败: {str(e)} | Callback execution failed: {str(e)}")
-                    
+                        
     # ===== 新增编程模型文件操作接口 =====
     # ===== Added Programming Model File Operations =====
     def programming_file_read(self, file_path: str) -> Dict:
@@ -517,7 +638,19 @@ class DataBus:
         """
         try:
             files = os.listdir(dir_path)
-            return {'status': 'success', 'files': files}
+            # 增强：添加文件类型和大小信息
+            file_details = []
+            for file in files:
+                full_path = os.path.join(dir_path, file)
+                file_info = {
+                    'name': file,
+                    'is_dir': os.path.isdir(full_path),
+                    'size': os.path.getsize(full_path) if os.path.isfile(full_path) else 0,
+                    'modified_time': os.path.getmtime(full_path)
+                }
+                file_details.append(file_info)
+            
+            return {'status': 'success', 'files': file_details}
         except Exception as e:
             return {'status': 'error', 'message': str(e)}
             
@@ -645,7 +778,8 @@ class DataBus:
         """智能分析命令执行结果"""
         analysis = {
             'success': result.returncode == 0,
-            'suggestions': []
+            'suggestions': [],
+            'potential_issues': []
         }
         
         # 分析错误输出
@@ -653,19 +787,28 @@ class DataBus:
             # 常见错误模式识别
             if "permission denied" in result.stderr.lower():
                 analysis['suggestions'].append("尝试使用管理员权限执行命令")
+                analysis['potential_issues'].append("权限不足")
             if "no such file or directory" in result.stderr.lower():
                 analysis['suggestions'].append("检查文件路径是否正确")
+                analysis['potential_issues'].append("文件或目录不存在")
             if "command not found" in result.stderr.lower():
                 analysis['suggestions'].append("检查命令是否安装或路径是否配置正确")
+                analysis['potential_issues'].append("命令未找到")
                 
         # 分析输出内容
         if result.stdout:
             # 检测潜在问题
             if "warning" in result.stdout.lower():
                 analysis['suggestions'].append("输出包含警告信息，建议检查")
+                analysis['potential_issues'].append("存在警告")
             if "error" in result.stdout.lower():
                 analysis['suggestions'].append("输出包含错误信息，需要修复")
+                analysis['potential_issues'].append("存在错误")
                 
+        # 分析执行时间
+        if hasattr(result, 'execution_time') and result.execution_time > 10:
+            analysis['suggestions'].append("命令执行时间较长，考虑优化命令或拆分任务")
+            
         return analysis
         
     def _analyze_timeout_error(self, command: str, timeout: int) -> Dict:
@@ -716,3 +859,224 @@ class DataBus:
                 f.write(json.dumps(entry) + '\n')
         except Exception as e:
             self.logger.error(f"记录命令历史失败: {str(e)}")
+    
+        # ===== 新增性能监控和组件管理接口 =====
+        
+        def _start_performance_monitoring(self):
+            """启动性能监控任务"""
+            self.performance_metrics = {
+                "total_messages": 0,
+                "success_rate": 0.0,
+                "avg_response_time": 0.0,
+                "error_count": 0,
+                "collaboration_stats": {},
+                "channel_usage": {}
+            }
+            
+            # 启动定期清理线程
+            def cleanup_task():
+                while True:
+                    try:
+                        self._cleanup_old_data()
+                        time.sleep(3600)  # 每小时清理一次
+                    except Exception as e:
+                        self.logger.error(f"清理任务失败: {str(e)}")
+            
+            cleanup_thread = threading.Thread(target=cleanup_task, daemon=True)
+            cleanup_thread.start()
+        
+        def _update_channel_performance(self, channel_id: str, processing_time: float):
+            """更新通道性能指标"""
+            if channel_id not in self.channels:
+                return
+            
+            channel = self.channels[channel_id]
+            channel["message_processing_time"].append(processing_time)
+            
+            # 限制历史数据点数量，防止内存占用过大
+            if len(channel["message_processing_time"]) > 100:
+                channel["message_processing_time"] = channel["message_processing_time"][-100:]
+            
+            # 计算平均处理时间
+            channel["avg_processing_time"] = sum(channel["message_processing_time"]) / len(channel["message_processing_time"])
+            
+            # 更新全局性能指标
+            self.performance_metrics["total_messages"] += 1
+            
+        def _cleanup_old_data(self):
+            """清理过期数据和不活跃通道"""
+            now = time.time()
+            self.last_cleanup_time = now
+            
+            # 清理30天以上的命令历史
+            try:
+                history_file = os.path.join(self.storage_path, "command_history.log")
+                if os.path.exists(history_file):
+                    cutoff_time = now - (30 * 24 * 3600)  # 30天前
+                    
+                    with open(history_file, 'r', encoding='utf-8') as f:
+                        lines = f.readlines()
+                    
+                    # 保留30天内的记录
+                    new_lines = []
+                    for line in lines:
+                        try:
+                            entry = json.loads(line)
+                            if entry.get('timestamp', 0) >= cutoff_time:
+                                new_lines.append(line)
+                        except:
+                            pass
+                    
+                    if len(new_lines) < len(lines):
+                        with open(history_file, 'w', encoding='utf-8') as f:
+                            f.writelines(new_lines)
+                        self.logger.info(f"清理命令历史: 保留 {len(new_lines)} 条记录，移除 {len(lines)-len(new_lines)} 条旧记录")
+            except Exception as e:
+                self.logger.error(f"清理命令历史失败: {str(e)}")
+            
+            # 清理6小时未使用的不活跃通道
+            inactive_threshold = now - (6 * 3600)  # 6小时前
+            inactive_channels = []
+            
+            for channel_id, channel in self.channels.items():
+                # 跳过知识库通道和高优先级通道
+                if channel_id in self.knowledge_channels or channel["priority"] <= 2:
+                    continue
+                
+                # 检查是否不活跃且没有消息
+                if channel["last_used"] < inactive_threshold and len(channel["messages"]) == 0:
+                    inactive_channels.append(channel_id)
+            
+            for channel_id in inactive_channels:
+                del self.channels[channel_id]
+                if channel_id in self.subscriptions:
+                    del self.subscriptions[channel_id]
+                self.logger.info(f"清理不活跃通道: {channel_id}")
+        
+        def update_component_heartbeat(self, component_id: str):
+            """更新组件心跳
+            参数:
+                component_id: 组件ID
+            """
+            if component_id in self.component_status:
+                self.component_status[component_id]["last_heartbeat"] = time.time()
+        
+        def update_component_status(self, component_id: str, status: str, resource_usage: Dict = None):
+            """更新组件状态
+            参数:
+                component_id: 组件ID
+                status: 组件状态 (active, error, warning, offline)
+                resource_usage: 资源使用情况 (可选)
+            """
+            if component_id in self.component_status:
+                self.component_status[component_id]["status"] = status
+                if resource_usage:
+                    self.component_status[component_id]["resource_usage"] = resource_usage
+                
+                # 如果状态是error，增加错误计数
+                if status == "error":
+                    self.component_status[component_id]["error_count"] += 1
+        
+        def get_component_status(self, component_id: str = None) -> Dict:
+            """获取组件状态信息
+            参数:
+                component_id: 组件ID，如果为None则返回所有组件状态
+            返回:
+                组件状态信息字典
+            """
+            if component_id:
+                if component_id in self.component_status:
+                    return {
+                        component_id: {
+                            **self.component_status[component_id],
+                            "metadata": self.component_metadata.get(component_id, {})
+                        }
+                    }
+                return {}
+            
+            # 返回所有组件状态
+            result = {}
+            for cid in self.component_status:
+                result[cid] = {
+                    **self.component_status[cid],
+                    "metadata": self.component_metadata.get(cid, {})
+                }
+            
+            return result
+        
+        def get_performance_metrics(self) -> Dict:
+            """获取系统性能指标
+            返回:
+                性能指标字典
+            """
+            return {
+                **self.performance_metrics,
+                "channel_count": len(self.channels),
+                "direct_channel_count": len(self.direct_channels),
+                "registered_components": len(self.components),
+                "last_cleanup": self.last_cleanup_time
+            }
+        
+        def reset_channel(self, channel_id: str):
+            """重置指定通道
+            参数:
+                channel_id: 通道ID
+            """
+            if channel_id in self.channels:
+                # 保留通道配置，但清空消息
+                original_config = self.channels[channel_id].copy()
+                self.channels[channel_id] = {
+                    "messages": [],
+                    "capacity": original_config["capacity"],
+                    "throughput": 0,
+                    "persistent": original_config["persistent"],
+                    "priority": original_config["priority"],
+                    "created_at": original_config["created_at"],
+                    "last_used": time.time(),
+                    "message_processing_time": [],
+                    "avg_processing_time": 0.0
+                }
+                self.logger.info(f"重置通道: {channel_id}")
+                
+                # 删除持久化消息文件
+                try:
+                    persist_file = os.path.join(self.storage_path, f"{channel_id}.log")
+                    if os.path.exists(persist_file):
+                        os.remove(persist_file)
+                except Exception as e:
+                    self.logger.error(f"删除持久化文件失败: {str(e)}")
+        
+        def remove_component(self, component_id: str):
+            """移除已注册的组件
+            参数:
+                component_id: 组件ID
+            """
+            if component_id in self.components:
+                del self.components[component_id]
+                if component_id in self.component_status:
+                    del self.component_status[component_id]
+                if component_id in self.component_metadata:
+                    del self.component_metadata[component_id]
+                self.logger.info(f"移除组件: {component_id}")
+        
+        def get_component_dependencies(self, component_id: str) -> List[str]:
+            """获取组件依赖信息
+            参数:
+                component_id: 组件ID
+            返回:
+                依赖组件ID列表
+            """
+            if component_id in self.component_metadata:
+                return self.component_metadata[component_id].get("dependencies", [])
+            return []
+        
+        def get_component_capabilities(self, component_id: str) -> List[str]:
+            """获取组件功能列表
+            参数:
+                component_id: 组件ID
+            返回:
+                组件功能列表
+            """
+            if component_id in self.component_metadata:
+                return self.component_metadata[component_id].get("capabilities", [])
+            return []

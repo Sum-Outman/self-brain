@@ -3,7 +3,7 @@ import json
 import time
 import uuid
 import logging
-import datetime
+from datetime import datetime
 import threading
 import psutil
 import gc
@@ -139,17 +139,17 @@ class AGIBrainCore:
                 "cpu_usage_threshold": 85
             },
             "knowledge_extraction": {
-                "enabled": true,
+                "enabled": True,
                 "min_confidence": 0.7,
-                "keyword_extraction_enabled": true,
+                "keyword_extraction_enabled": True,
                 "max_keywords": 5
             },
             "model_optimization": {
-                "enabled": true,
-                "hyperparameter_tuning": true,
-                "architecture_optimization": true,
-                "memory_optimization": true,
-                "cpu_optimization": true
+                "enabled": True,
+                "hyperparameter_tuning": True,
+                "architecture_optimization": True,
+                "memory_optimization": True,
+                "cpu_optimization": True
             },
             "logging": {
                 "level": "INFO",

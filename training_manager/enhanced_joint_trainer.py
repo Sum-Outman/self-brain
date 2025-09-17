@@ -13,6 +13,8 @@ from typing import Dict, List, Any, Optional, Set, Union
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.optim as optim
+from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR
 from pathlib import Path
 import psutil
 import gc
@@ -23,6 +25,10 @@ from enum import Enum
 import re
 import requests
 from concurrent.futures import ThreadPoolExecutor
+import random
+from sklearn.model_selection import ParameterGrid
+from manager_model.data_broker import DataBroker
+from manager_model.model_registry import ModelRegistry
 
 # Setup logging
 logging.basicConfig(
@@ -68,7 +74,13 @@ class EnhancedJointTrainer:
             "start_time": None,
             "end_time": None,
             "metrics": {},
-            "collaboration_efficiency": 0.0
+            "collaboration_efficiency": 0.0,
+            "adaptive_optimization": {
+                "enabled": True,
+                "strategy": "adaptive",  # adaptive, greedy, Bayesian
+                "performance_improvement_threshold": 0.02,
+                "resource_optimization": True
+            }
         }
         
         # Training history
@@ -78,12 +90,29 @@ class EnhancedJointTrainer:
         self.collaboration_data = defaultdict(dict)
         
         # Thread pool executor
-        self.executor = ThreadPoolExecutor(max_workers=5)
+        self.executor = ThreadPoolExecutor(max_workers=8)  # Increased workers for better parallelization
         
         # Language manager
         self.language = "zh"  # Default Chinese
         
-        logger.info("Enhanced Joint Trainer initialized")
+        # Data broker for inter-model communication
+        self.data_broker = DataBroker()
+        
+        # Model registry for accessing model instances
+        self.model_registry = ModelRegistry()
+        
+        # Optimization history for adaptive training
+        self.optimization_history = defaultdict(list)
+        
+        # Hyperparameter search space
+        self.hyperparam_space = {
+            "batch_size": [16, 32, 64],
+            "learning_rate": [0.001, 0.0005, 0.0001],
+            "weight_decay": [0.0, 0.01, 0.001],
+            "dropout_rate": [0.1, 0.2, 0.3]
+        }
+        
+        logger.info("Enhanced Joint Trainer initialized with advanced optimization features")
     
     def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
         """Load configuration file"""
@@ -239,7 +268,7 @@ class EnhancedJointTrainer:
         }
     
     async def _prepare_joint_training(self, training_request: Dict[str, Any], training_id: str) -> Dict[str, Any]:
-        """Prepare joint training"""
+        """Prepare joint training with adaptive optimization"""
         try:
             # Determine training mode
             training_mode = JointTrainingMode(training_request["mode"])
@@ -253,6 +282,13 @@ class EnhancedJointTrainer:
             # Configure training parameters
             training_config = self._configure_joint_training_parameters(training_request)
             
+            # Apply adaptive optimization configuration
+            adaptive_config = self.training_status.get('adaptive_optimization', {})
+            if adaptive_config.get('enabled', False):
+                training_config['adaptive_optimization'] = adaptive_config
+                # Optimize parameters based on models and resources
+                training_config = await self._optimize_joint_training_parameters(training_request, training_config)
+            
             # Check resource availability
             resource_check = self._check_joint_resource_availability(
                 training_request["models"],
@@ -260,10 +296,19 @@ class EnhancedJointTrainer:
             )
             
             if not resource_check["available"]:
-                return {
-                    "success": False,
-                    "message": f"Insufficient resources: {resource_check['message']}"
-                }
+                # Try to adapt parameters to fit available resources
+                training_config = self._adapt_to_resource_constraints(training_config, resource_check)
+                # Re-check resources with adapted parameters
+                resource_check = self._check_joint_resource_availability(
+                    training_request["models"],
+                    training_config
+                )
+                
+                if not resource_check["available"]:
+                    return {
+                        "success": False,
+                        "message": f"Insufficient resources even after adaptation: {resource_check['message']}"
+                    }
             
             return {
                 "success": True,
@@ -272,7 +317,8 @@ class EnhancedJointTrainer:
                 "data_sharing": data_sharing_config,
                 "communication": communication_config,
                 "training_config": training_config,
-                "resource_check": resource_check
+                "resource_check": resource_check,
+                "optimization_config": adaptive_config
             }
             
         except Exception as e:
@@ -690,7 +736,16 @@ class EnhancedJointTrainer:
         }
     
     def _train_single_model(self, model_name: str, training_config: Dict[str, Any], **kwargs) -> Dict[str, Any]:
-        """Train single model"""
+        """Train single model with adaptive optimization capabilities
+        
+        Parameters:
+        model_name: Name of the model to train
+        training_config: Base training configuration
+        **kwargs: Additional context parameters
+        
+        Returns:
+        Dictionary containing training results and metrics
+        """
         try:
             # Get model endpoint
             if model_name not in self.config["model_interfaces"]:
@@ -714,12 +769,20 @@ class EnhancedJointTrainer:
                 if value:  # Only add non-empty values
                     training_data[key] = value
             
+            # Apply adaptive optimization if enabled
+            adaptive_params = self._get_adaptive_params(model_name, training_config)
+            if adaptive_params:
+                training_data["adaptive_params"] = adaptive_params
+                # Merge adaptive params into config for this training run
+                training_config = {**training_config, **adaptive_params}
+                training_data["config"] = training_config
+            
             # Send training request
             start_time = time.time()
             response = requests.post(
                 url,
                 json=training_data,
-                timeout=training_config.get("timeout_seconds", 30)
+                timeout=training_config.get("timeout_seconds", 300)
             )
             duration = time.time() - start_time
             
@@ -733,6 +796,10 @@ class EnhancedJointTrainer:
             result = response.json()
             result["duration"] = duration
             
+            # Update optimization history based on results
+            if result.get("status") == "completed" and "metrics" in result:
+                self._update_optimization_history(model_name, result["metrics"], adaptive_params)
+            
             return result
             
         except Exception as e:
@@ -742,6 +809,360 @@ class EnhancedJointTrainer:
                 "message": f"Model {model_name} training failed: {str(e)}",
                 "duration": 0
             }
+            
+    def _get_adaptive_params(self, model_name: str, base_config: Dict[str, Any]) -> Dict[str, Any]:
+        """Get adaptive parameters for a specific model
+        
+        Parameters:
+        model_name: Name of the model
+        base_config: Base training configuration
+        
+        Returns:
+        Dictionary of adaptive parameters to apply
+        """
+        adaptive_params = {}
+        
+        # Check if adaptive optimization is enabled
+        if not self.training_status.get('adaptive_optimization', {}).get('enabled', False):
+            return adaptive_params
+        
+        strategy_config = self.training_status['adaptive_optimization']
+        
+        # Get model-specific optimization history
+        model_history = self.optimization_history.get(model_name, [])
+        
+        # If we have enough history, apply adaptive parameters
+        if len(model_history) > 2:
+            # Get the last few training runs
+            recent_history = model_history[-3:]
+            
+            # Calculate average performance trend
+            performance_trend = self._calculate_performance_trend(recent_history)
+            
+            # Adjust learning rate based on performance trend
+            if performance_trend < 0:  # Performance is decreasing
+                current_lr = base_config.get('learning_rate', 0.001)
+                new_lr = current_lr * strategy_config.get('lr_reduction_factor', 0.5)
+                adaptive_params['learning_rate'] = new_lr
+                logger.info(f"Reducing learning rate for {model_name} from {current_lr} to {new_lr} due to decreasing performance")
+            elif performance_trend > strategy_config.get('max_improvement_threshold', 0.1):  # Performance is improving rapidly
+                current_lr = base_config.get('learning_rate', 0.001)
+                new_lr = min(current_lr * 1.2, strategy_config.get('max_learning_rate', 0.01))
+                adaptive_params['learning_rate'] = new_lr
+                logger.info(f"Increasing learning rate for {model_name} from {current_lr} to {new_lr} due to rapid improvement")
+        
+        # Add optimizer type if specified in strategy
+        if 'optimizer' in strategy_config:
+            adaptive_params['optimizer'] = strategy_config['optimizer']
+        
+        # Add scheduler if specified
+        if 'scheduler' in strategy_config:
+            adaptive_params['scheduler'] = strategy_config['scheduler']
+        
+        return adaptive_params
+        
+    def _update_optimization_history(self, model_name: str, metrics: Dict[str, Any], params: Dict[str, Any]):
+        """Update optimization history for a model
+        
+        Parameters:
+        model_name: Name of the model
+        metrics: Performance metrics from the latest training
+        params: Parameters used for this training run
+        """
+        optimization_record = {
+            'timestamp': datetime.now().isoformat(),
+            'metrics': metrics,
+            'params': params,
+            'performance_score': self._calculate_performance_score(metrics)
+        }
+        
+        self.optimization_history[model_name].append(optimization_record)
+        
+        # Limit history size to prevent memory issues
+        if len(self.optimization_history[model_name]) > 50:
+            self.optimization_history[model_name] = self.optimization_history[model_name][-50:]
+        
+    def _calculate_performance_trend(self, history: List[Dict]) -> float:
+        """Calculate performance trend from historical data
+        
+        Parameters:
+        history: List of historical training records
+        
+        Returns:
+        Float representing the performance trend
+        """
+        if len(history) < 2:
+            return 0.0
+        
+        scores = [record.get('performance_score', 0.0) for record in history]
+        
+        # Calculate simple linear regression to determine trend
+        x = list(range(len(scores)))
+        
+        # Calculate mean of x and y
+        mean_x = sum(x) / len(x)
+        mean_y = sum(scores) / len(scores)
+        
+        # Calculate slope
+        numerator = sum((x[i] - mean_x) * (scores[i] - mean_y) for i in range(len(x)))
+        denominator = sum((x[i] - mean_x) ** 2 for i in range(len(x)))
+        
+        if denominator == 0:
+            return 0.0
+        
+        slope = numerator / denominator
+        
+        return slope
+        
+    def _calculate_performance_score(self, metrics: Dict[str, Any]) -> float:
+        """Calculate a single performance score from metrics
+        
+        Parameters:
+        metrics: Dictionary of performance metrics
+        
+        Returns:
+        Float representing the overall performance score
+        """
+        score = 0.0
+        weight_sum = 0.0
+        
+        # Define metric weights
+        metric_weights = {
+            'accuracy': 0.3,
+            'f1_score': 0.3,
+            'precision': 0.15,
+            'recall': 0.15,
+            'loss': -0.2,
+            'val_accuracy': 0.25,
+            'val_loss': -0.15,
+            'mse': -0.1,
+            'rmse': -0.1,
+            'auc': 0.2
+        }
+        
+        for metric_name, weight in metric_weights.items():
+            if metric_name in metrics:
+                metric_value = metrics[metric_name]
+                # Normalize metric values to 0-1 range if possible
+                if metric_name.endswith('_loss') or metric_name in ['mse', 'rmse']:
+                    # For loss metrics, we cap the value to prevent extreme scores
+                    normalized_value = min(1.0, max(0.0, 1.0 - min(metric_value, 1.0)))
+                else:
+                    # For other metrics, we assume they are already in 0-1 range
+                    normalized_value = min(1.0, max(0.0, metric_value))
+                
+                score += normalized_value * weight
+                weight_sum += abs(weight)
+        
+        if weight_sum == 0:
+            return 0.5  # Default neutral score
+        
+        # Normalize to 0-1 range
+        normalized_score = min(1.0, max(0.0, score / weight_sum + 0.5))
+        
+        return normalized_score
+        
+    def setup_adaptive_optimization(self, strategy_config: Dict[str, Any]):
+        """Set up adaptive optimization strategy
+        
+        Parameters:
+        strategy_config: Configuration for adaptive optimization
+        """
+        # Update adaptive optimization configuration
+        self.training_status['adaptive_optimization'] = {
+            **self.training_status.get('adaptive_optimization', {}),
+            **strategy_config
+        }
+        
+        # Log the setup
+        logger.info(f"Adaptive optimization strategy set up: {self.training_status['adaptive_optimization']}")
+        
+    def run_hyperparameter_search(self, model_name: str, param_space: Dict[str, Any], max_trials: int = 10) -> Dict:
+        """Run hyperparameter search for a specific model
+        
+        Parameters:
+        model_name: Name of the model to tune
+        param_space: Dictionary defining the hyperparameter search space
+        max_trials: Maximum number of trials to run
+        
+        Returns:
+        Dictionary with best parameters and search results
+        """
+        if model_name not in self.config["model_interfaces"]:
+            raise ValueError(f"Model {model_name} not found in registry")
+        
+        logger.info(f"Starting hyperparameter search for model {model_name}, max_trials: {max_trials}")
+        
+        # Initialize best results
+        best_params = None
+        best_metrics = None
+        best_score = -float('inf')
+        
+        # Generate trials
+        trials = []
+        for i in range(max_trials):
+            # Sample hyperparameters from the search space
+            params = self._sample_hyperparameters(param_space)
+            
+            # Run training with these parameters
+            logger.info(f"Running trial {i+1}/{max_trials} with parameters: {params}")
+            
+            # Use minimal epochs for hyperparameter search
+            search_params = {
+                **params,
+                'epochs': min(params.get('epochs', 10), 5)  # Limit epochs for faster search
+            }
+            
+            # Execute training
+            result = self._train_single_model(model_name, search_params, hyperparameter_search=True)
+            
+            # Evaluate results
+            if result.get("status") == "completed" and "metrics" in result:
+                metrics = result["metrics"]
+                performance_score = self._calculate_performance_score(metrics)
+                
+                # Update best parameters if this trial is better
+                if performance_score > best_score:
+                    best_score = performance_score
+                    best_params = params
+                    best_metrics = metrics
+                    
+                    logger.info(f"New best parameters found: {best_params}, performance_score: {best_score}")
+            
+            # Store trial results
+            trials.append({
+                'trial_id': i + 1,
+                'parameters': params,
+                'metrics': result.get('metrics'),
+                'status': result.get('status'),
+                'duration': result.get('duration')
+            })
+        
+        # Log search completion
+        logger.info(f"Hyperparameter search completed for model {model_name}")
+        
+        # Return best parameters and summary
+        return {
+            'model_name': model_name,
+            'best_parameters': best_params,
+            'best_metrics': best_metrics,
+            'best_score': best_score,
+            'trials': trials,
+            'search_space': param_space,
+            'max_trials': max_trials
+        }
+        
+    def _sample_hyperparameters(self, param_space: Dict[str, Any]) -> Dict[str, Any]:
+        """Sample hyperparameters from the search space
+        
+        Parameters:
+        param_space: Dictionary defining the hyperparameter search space
+        
+        Returns:
+        Dictionary with sampled hyperparameters
+        """
+        sampled_params = {}
+        
+        for param_name, param_values in param_space.items():
+            # Sample based on parameter type
+            if isinstance(param_values, list):
+                # Discrete values - choose randomly
+                sampled_params[param_name] = random.choice(param_values)
+            elif isinstance(param_values, dict):
+                # Parameter with type specification
+                param_type = param_values.get('type', 'discrete')
+                
+                if param_type == 'int':
+                    # Integer range
+                    min_val = param_values.get('min', 0)
+                    max_val = param_values.get('max', 100)
+                    sampled_params[param_name] = random.randint(min_val, max_val)
+                elif param_type == 'float':
+                    # Float range
+                    min_val = param_values.get('min', 0.0)
+                    max_val = param_values.get('max', 1.0)
+                    sampled_params[param_name] = random.uniform(min_val, max_val)
+                elif param_type == 'log_uniform':
+                    # Log uniform range for learning rates
+                    min_val = param_values.get('min', 0.0001)
+                    max_val = param_values.get('max', 0.1)
+                    sampled_params[param_name] = math.exp(random.uniform(math.log(min_val), math.log(max_val)))
+        
+        return sampled_params
+        
+    async def _optimize_joint_training_parameters(self, training_request: Dict[str, Any], base_config: Dict[str, Any]) -> Dict[str, Any]:
+        """Optimize joint training parameters using adaptive strategies
+        
+        Parameters:
+        training_request: Original training request
+        base_config: Base training configuration
+        
+        Returns:
+        Optimized training configuration
+        """
+        models = training_request["models"]
+        training_mode = JointTrainingMode(training_request["mode"])
+        optimized_config = base_config.copy()
+        
+        # Check if we need to run hyperparameter search first
+        if training_request.get("hyperparam_search", {}).get("enabled", False) and len(models) == 1:
+            # Single model training with hyperparameter search
+            model_name = models[0]
+            param_space = training_request["hyperparam_search"].get("param_space", self.hyperparam_space)
+            max_trials = training_request["hyperparam_search"].get("max_trials", 5)
+            
+            # Run hyperparameter search
+            search_result = self.run_hyperparameter_search(model_name, param_space, max_trials)
+            
+            # Apply best parameters
+            if search_result.get("best_parameters"):
+                optimized_config.update(search_result["best_parameters"])
+                logger.info(f"Applied best parameters from search: {search_result['best_parameters']}")
+        
+        # Adjust parameters based on training mode
+        if training_mode == JointTrainingMode.PARALLEL:
+            # Reduce batch size for parallel training to save memory
+            if 'batch_size' in optimized_config:
+                optimized_config['batch_size'] = max(1, optimized_config['batch_size'] // 2)
+        elif training_mode == JointTrainingMode.FEDERATED:
+            # Increase communication frequency for federated learning
+            if 'interaction_frequency' in optimized_config:
+                optimized_config['interaction_frequency'] = max(1, optimized_config['interaction_frequency'] // 2)
+        
+        return optimized_config
+        
+    def _adapt_to_resource_constraints(self, training_config: Dict[str, Any], resource_check: Dict[str, Any]) -> Dict[str, Any]:
+        """Adapt training parameters to fit available resources
+        
+        Parameters:
+        training_config: Original training configuration
+        resource_check: Resource check result
+        
+        Returns:
+        Adapted training configuration
+        """
+        adapted_config = training_config.copy()
+        
+        # Check memory constraints
+        if "Insufficient memory" in resource_check.get("message", ""):
+            # Reduce batch size
+            if 'batch_size' in adapted_config:
+                new_batch_size = max(1, adapted_config['batch_size'] // 2)
+                adapted_config['batch_size'] = new_batch_size
+                logger.warning(f"Reducing batch size to {new_batch_size} due to memory constraints")
+            
+            # Reduce epochs if still insufficient
+            if 'epochs' in adapted_config:
+                adapted_config['epochs'] = max(1, adapted_config['epochs'] // 2)
+                logger.warning(f"Reducing epochs to {adapted_config['epochs']} due to memory constraints")
+        
+        # Check CPU constraints
+        if "Insufficient CPU" in resource_check.get("message", ""):
+            # Enable gradient checkpointing if supported
+            adapted_config['gradient_checkpointing'] = True
+            logger.warning("Enabling gradient checkpointing due to CPU constraints")
+        
+        return adapted_config
     
     def _prepare_collaboration_context(self, model_name: str, metrics_history: List[Dict], current_epoch: int) -> Dict[str, Any]:
         """Prepare collaboration context"""
@@ -868,9 +1289,110 @@ class EnhancedJointTrainer:
         return round(efficiency, 4)
     
     def _calculate_performance_improvement(self, current: Dict, previous: Dict) -> float:
-        """Calculate performance improvement"""
-        # Simplified implementation: use random improvement score
-        return np.random.uniform(0.0, 0.3)
+        """Calculate performance improvement based on actual metrics
+        
+        Parameters:
+        current: Current metrics data
+        previous: Previous metrics data
+        
+        Returns:
+        Float representing the improvement score (-1.0 to 1.0)
+        """
+        # Initialize improvement score
+        improvement_score = 0.0
+        
+        # Determine which metrics to compare based on data structure
+        if "metrics" in current and "metrics" in previous:
+            # For collaborative training or sequential phases
+            current_metrics = current["metrics"]
+            previous_metrics = previous["metrics"]
+            
+            # If metrics are nested by model
+            if isinstance(current_metrics, dict) and isinstance(previous_metrics, dict):
+                # Compare metrics for each model
+                model_improvements = []
+                
+                for model_name in current_metrics:
+                    if model_name in previous_metrics:
+                        model_improvement = self._compare_model_metrics(
+                            current_metrics[model_name], previous_metrics[model_name]
+                        )
+                        model_improvements.append(model_improvement)
+                
+                if model_improvements:
+                    improvement_score = sum(model_improvements) / len(model_improvements)
+            else:
+                # Direct metric comparison
+                improvement_score = self._compare_model_metrics(current_metrics, previous_metrics)
+        elif "model_metrics" in current and "model_metrics" in previous:
+            # For federated learning rounds
+            current_metrics = current["model_metrics"]
+            previous_metrics = previous["model_metrics"]
+            
+            model_improvements = []
+            for model_name in current_metrics:
+                if model_name in previous_metrics:
+                    model_improvement = self._compare_model_metrics(
+                        current_metrics[model_name], previous_metrics[model_name]
+                    )
+                    model_improvements.append(model_improvement)
+            
+            if model_improvements:
+                improvement_score = sum(model_improvements) / len(model_improvements)
+        
+        # Normalize to range [-1.0, 1.0]
+        improvement_score = max(-1.0, min(1.0, improvement_score))
+        
+        return improvement_score
+        
+    def _compare_model_metrics(self, current_metrics: Dict[str, float], previous_metrics: Dict[str, float]) -> float:
+        """Compare two sets of model metrics to calculate improvement
+        
+        Parameters:
+        current_metrics: Current model metrics
+        previous_metrics: Previous model metrics
+        
+        Returns:
+        Float representing the improvement score (-1.0 to 1.0)
+        """
+        # Define metric weights (positive: higher is better, negative: lower is better)
+        metric_weights = {
+            "accuracy": 0.3,  # Higher is better
+            "f1_score": 0.3,  # Higher is better
+            "precision": 0.15,  # Higher is better
+            "recall": 0.15,  # Higher is better
+            "loss": -0.2,  # Lower is better
+            "val_accuracy": 0.25,  # Higher is better
+            "val_loss": -0.15  # Lower is better
+        }
+        
+        # Calculate improvement for each metric
+        improvements = []
+        weights = []
+        
+        for metric_name, weight in metric_weights.items():
+            if metric_name in current_metrics and metric_name in previous_metrics:
+                current_value = current_metrics[metric_name]
+                previous_value = previous_metrics[metric_name]
+                
+                # Calculate relative improvement
+                if abs(previous_value) > 1e-6:  # Avoid division by zero
+                    improvement = (current_value - previous_value) / abs(previous_value)
+                else:
+                    improvement = current_value - previous_value
+                
+                # Apply weight
+                weighted_improvement = improvement * weight
+                improvements.append(weighted_improvement)
+                weights.append(abs(weight))
+        
+        # Calculate weighted average improvement
+        if weights:
+            avg_improvement = sum(improvements) / sum(weights)
+        else:
+            avg_improvement = 0.0  # No common metrics to compare
+        
+        return avg_improvement
     
     def _check_training_continuation(self) -> bool:
         """Check if training should continue"""
@@ -900,7 +1422,18 @@ class EnhancedJointTrainer:
         logger.info(f"Joint training status updated: {status}, models: {active_models}")
     
     def _save_joint_checkpoint(self, training_id: str, phase: int, metrics_history: List[Dict]):
-        """Save joint training checkpoint"""
+        """Save joint training checkpoint to disk
+        
+        Parameters:
+        training_id: Unique identifier for the training session
+        phase: Current training phase/epoch
+        metrics_history: Historical training metrics
+        """
+        # Create checkpoint directory if it doesn't exist
+        checkpoint_dir = Path(f"checkpoints/{training_id}")
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Build checkpoint data
         checkpoint = {
             "training_id": training_id,
             "phase": phase,
@@ -909,11 +1442,79 @@ class EnhancedJointTrainer:
             "system_resources": {
                 "memory_used": psutil.virtual_memory().percent,
                 "cpu_used": psutil.cpu_percent()
-            }
+            },
+            "optimization_history": dict(self.optimization_history),
+            "collaboration_data": dict(self.collaboration_data)
         }
         
-        # Should implement actual checkpoint saving logic
-        logger.info(f"Joint training checkpoint saved: {training_id} phase {phase}")
+        # Save checkpoint to file
+        checkpoint_path = checkpoint_dir / f"checkpoint_phase_{phase}.json"
+        try:
+            with open(checkpoint_path, 'w', encoding='utf-8') as f:
+                json.dump(checkpoint, f, indent=2, ensure_ascii=False)
+            
+            logger.info(f"Joint training checkpoint saved: {checkpoint_path}")
+            
+            # Also save a symlink to the latest checkpoint
+            latest_checkpoint = checkpoint_dir / "latest_checkpoint.json"
+            if latest_checkpoint.exists():
+                latest_checkpoint.unlink()
+            # In Windows, need to create a copy instead of symlink
+            import shutil
+            shutil.copy2(checkpoint_path, latest_checkpoint)
+            
+        except Exception as e:
+            logger.error(f"Failed to save checkpoint: {e}")
+            
+    def load_checkpoint(self, training_id: str, phase: Optional[int] = None) -> bool:
+        """Load joint training checkpoint from disk
+        
+        Parameters:
+        training_id: Unique identifier for the training session
+        phase: Specific phase to load, or None to load latest
+        
+        Returns:
+        Boolean indicating success
+        """
+        checkpoint_dir = Path(f"checkpoints/{training_id}")
+        
+        # Determine which checkpoint to load
+        if phase is not None:
+            checkpoint_path = checkpoint_dir / f"checkpoint_phase_{phase}.json"
+        else:
+            checkpoint_path = checkpoint_dir / "latest_checkpoint.json"
+            
+        # Check if checkpoint exists
+        if not checkpoint_path.exists():
+            logger.error(f"Checkpoint file not found: {checkpoint_path}")
+            return False
+        
+        try:
+            # Load checkpoint data
+            with open(checkpoint_path, 'r', encoding='utf-8') as f:
+                checkpoint = json.load(f)
+            
+            # Restore training state
+            self.training_history = deque(checkpoint.get("metrics_history", []), maxlen=500)
+            
+            # Restore optimization history
+            if "optimization_history" in checkpoint:
+                self.optimization_history = defaultdict(list)
+                for model_id, history in checkpoint["optimization_history"].items():
+                    self.optimization_history[model_id] = history
+            
+            # Restore collaboration data
+            if "collaboration_data" in checkpoint:
+                self.collaboration_data = defaultdict(dict)
+                for model_id, data in checkpoint["collaboration_data"].items():
+                    self.collaboration_data[model_id] = data
+            
+            logger.info(f"Successfully loaded checkpoint from: {checkpoint_path}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to load checkpoint: {e}")
+            return False
     
     def _record_joint_training_result(self, training_id: str, training_request: Dict[str, Any], result: Dict[str, Any]):
         """Record joint training result"""
