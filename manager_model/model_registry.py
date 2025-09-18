@@ -616,6 +616,16 @@ def get_model_registry(config_path: Optional[str] = None) -> ModelRegistry:
         _model_registry_instance = ModelRegistry(config_path)
     return _model_registry_instance
 
+def get_model_endpoint(model_name: str) -> Optional[Dict[str, Any]]:
+    """获取模型端点信息 | Get model endpoint information"""
+    registry = get_model_registry()
+    return registry.get_model_info(model_name)
+
+def get_all_models() -> List[str]:
+    """获取所有模型名称 | Get all model names"""
+    registry = get_model_registry()
+    return registry.get_all_models()
+
 if __name__ == '__main__':
     # 测试代码 | Test code
     registry = ModelRegistry()

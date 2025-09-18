@@ -21,19 +21,19 @@
                     <div class="row">
                         <!-- Primary Actions -->
                         <div class="col-md-4 mb-2">
-                            <a href="{{ url_for('create_knowledge_page') }}" class="btn btn-dark w-100">
+                            <button class="btn btn-dark w-100" onclick="openCreateModal()">
                                 <i class="bi bi-plus-circle"></i> Create Knowledge Entry
-                            </a>
+                            </button>
                         </div>
                         <div class="col-md-4 mb-2">
-                            <a href="{{ url_for('knowledge_import') }}" class="btn btn-outline-dark w-100">
+                            <button class="btn btn-outline-dark w-100" onclick="triggerFileImport()">
                                 <i class="bi bi-upload"></i> Import Knowledge
-                            </a>
+                            </button>
                         </div>
                         <div class="col-md-4 mb-2">
-                            <a href="/knowledge/backup" class="btn btn-outline-dark w-100">
+                            <button class="btn btn-outline-dark w-100" onclick="backupKnowledge()">
                                 <i class="bi bi-download"></i> Backup Knowledge
-                            </a>
+                            </button>
                         </div>
                     </div>
                     <!-- Maintenance Actions -->
@@ -43,9 +43,9 @@
                                 <h6 class="text-muted mb-2">Maintenance Tools</h6>
                                 <div class="row">
                                     <div class="col-md-6 mb-2">
-                                        <a href="/knowledge/clean" class="btn btn-outline-danger w-100">
-                                            <i class="bi bi-trash"></i> Clean Database
-                                        </a>
+                                        <button class="btn btn-outline-danger w-100" onclick="cleanKnowledgeDatabase()">
+                                    <i class="bi bi-trash"></i> Clean Database
+                                </button>
                                     </div>
                                     <div class="col-md-6 mb-2">
                                         <button class="btn btn-outline-secondary w-100" onclick="optimizeDatabase()">
@@ -305,7 +305,7 @@ function loadKnowledgeEntries(page = 1) {
     const category = document.getElementById('category-filter').value;
     const model = document.getElementById('model-filter').value;
     
-    const url = `/api/knowledge?page=${page}&search=${encodeURIComponent(search)}&category=${category}&model=${model}`;
+    const url = `/api/knowledge/entries?page=${page}&search=${encodeURIComponent(search)}&category=${category}&model=${model}`;
     console.log('API URL:', url);
     
     fetch(url, {
@@ -567,12 +567,12 @@ function saveEdit() {
 }
 
 // Confirm delete
-function confirmDelete() {
-    const id = document.getElementById('delete-id').value;
-    
-    fetch(`/api/knowledge/${id}`, {
-        method: 'DELETE'
-    })
+    function confirmDelete() {
+        const id = document.getElementById('delete-id').value;
+        
+        fetch(`/api/knowledge/delete/${id}`, {
+            method: 'POST'
+        })
     .then(response => response.json())
     .then(result => {
         if (result.success) {
@@ -611,10 +611,118 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-// Optimize database - Navigate to dedicated page
-function optimizeDatabase() {
-    window.location.href = '/knowledge_optimize';
-}
+// Create knowledge entry modal
+    function openCreateModal() {
+        document.getElementById('edit-title').value = '';
+        document.getElementById('edit-category').value = '';
+        document.getElementById('edit-model').value = '';
+        document.getElementById('edit-content').value = '';
+        document.getElementById('edit-id').value = '';
+        document.getElementById('edit-modal-title').textContent = 'Create Knowledge Entry';
+        bootstrap.Modal.getInstance(document.getElementById('editModal')).show();
+    }
+
+    // Trigger file import
+    function triggerFileImport() {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.json';
+        fileInput.style.display = 'none';
+        fileInput.onchange = function(e) {
+            if (e.target.files.length > 0) {
+                importKnowledgeFile(e.target.files[0]);
+            }
+        };
+        document.body.appendChild(fileInput);
+        fileInput.click();
+        setTimeout(() => {
+            document.body.removeChild(fileInput);
+        }, 100);
+    }
+
+    // Import knowledge file
+    function importKnowledgeFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        fetch('/api/knowledge/import', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === 'success') {
+                showToast('Knowledge imported successfully', 'success');
+                loadKnowledgeEntries(currentPage);
+            } else {
+                showToast('Error importing knowledge: ' + (result.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error importing knowledge', 'error');
+        });
+    }
+
+    // Backup knowledge
+    function backupKnowledge() {
+        fetch('/api/knowledge/backup', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === 'success') {
+                showToast('Knowledge backup created successfully: ' + result.backup_file, 'success');
+            } else {
+                showToast('Error creating backup: ' + (result.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error creating backup', 'error');
+        });
+    }
+
+    // Clean knowledge database
+    function cleanKnowledgeDatabase() {
+        if (confirm('Are you sure you want to clean the knowledge database? This may remove redundant data.')) {
+            fetch('/api/knowledge/clean', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    showToast('Knowledge database cleaned successfully', 'success');
+                    loadKnowledgeEntries(currentPage);
+                } else {
+                    showToast('Error cleaning database: ' + (result.error || 'Unknown error'), 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error cleaning database', 'error');
+            });
+        }
+    }
+
+    // Optimize database
+    function optimizeDatabase() {
+        fetch('/api/knowledge/optimize', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === 'success') {
+                showToast('Knowledge database optimized successfully', 'success');
+            } else {
+                showToast('Error optimizing database: ' + (result.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error optimizing database', 'error');
+        });
+    }
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {

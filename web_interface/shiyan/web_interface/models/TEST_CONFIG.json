@@ -1,0 +1,10 @@
+{
+  "description": "Test API configuration",
+  "provider": "custom",
+  "api_key": "test-api-key",
+  "external_model_name": "test-model",
+  "api_endpoint": "https://api.example.com/v1",
+  "timeout": 30,
+  "model_source": "external",
+  "last_updated": "2025-09-18T11:37:25.474598"
+}

@@ -37,6 +37,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import psutil
 from training_manager.advanced_train_control import AdvancedTrainingController, TrainingMode, get_training_controller
 from manager_model.data_bus import DataBus
+from manager_model.training_control import TrainingController as training_control
 
 # Import real-time monitoring system
 from web_interface.backend.enhanced_realtime_monitor import init_enhanced_realtime_monitor
@@ -1422,7 +1423,21 @@ def switch_model_to_external(model_id):
     """Switch a model to use external API"""
     try:
         data = request.get_json()
-        api_config = data.get('api_config', {})
+        
+        # Handle both direct parameters and nested api_config
+        # This provides backward compatibility with different front-end implementations
+        if 'api_config' in data:
+            # Newer format with nested api_config
+            api_config = data['api_config']
+        else:
+            # Legacy format with direct parameters
+            api_config = {
+                'api_endpoint': data.get('endpoint', data.get('api_endpoint')),
+                'api_key': data.get('api_key'),
+                'model_name': data.get('model_name'),
+                'provider': data.get('provider'),
+                'timeout': data.get('timeout', 30)
+            }
         
         # Validate required API config parameters
         if not api_config.get('api_endpoint') or not api_config.get('api_key') or not api_config.get('model_name'):
@@ -1447,7 +1462,10 @@ def switch_model_to_external(model_id):
         try:
             from manager_model.model_registry import get_model_registry
             model_registry = get_model_registry()
-            success = model_registry.switch_to_external(model_id, api_config)
+            # Extract necessary parameters from api_config dictionary
+            api_url = api_config.get('api_endpoint') or api_config.get('base_url') or api_config.get('api_url')
+            api_key = api_config.get('api_key', '')
+            success = model_registry.switch_to_external(model_id, api_url, api_key)
             
             if success:
                 # Restart the model service with new configuration
@@ -1628,7 +1646,11 @@ def save_model_api_config(model_id):
             try:
                 from manager_model.model_registry import get_model_registry
                 model_registry = get_model_registry()
-                model_registry.switch_to_external(model_id, updated_config['external_api'])
+                # Extract necessary parameters from external_api dictionary
+                external_api = updated_config['external_api']
+                api_url = external_api.get('base_url') or external_api.get('api_url')
+                api_key = external_api.get('api_key', '')
+                model_registry.switch_to_external(model_id, api_url, api_key)
                 
                 # Restart the model service with new configuration
                 training_control.stop_model_service(model_id)
@@ -2059,15 +2081,42 @@ def generate_ai_response(message, knowledge_base, attachments):
         # Generate unique conversation ID
         conversation_id = str(uuid.uuid4())
         
-        # Direct call to A Management Model with additional parameters
-        response = requests.post(
-            "http://localhost:5015/api/chat",
-            json={
+        # Determine which endpoint to use based on message content
+        message_lower = clean_message.lower()
+        
+        # For task-specific requests, use process_message endpoint which can call sub-models
+        # Check for keywords that indicate a specific task type
+        if any(keyword in message_lower for keyword in ['code', 'program', 'python', 'javascript', 'write', 'function',
+                                                       'what', 'who', 'when', 'where', 'why', 'how', 'explain',
+                                                       'draw', 'design', 'create', 'imagine', 'story',
+                                                       'play', 'audio', 'sound', 'music', 'hear',
+                                                       'image', 'photo', 'picture', 'visualize',
+                                                       'video', 'stream', 'record',
+                                                       'move', 'motion', 'position',
+                                                       'control', 'execute', 'run', 'command']):
+            endpoint = "http://localhost:5015/process_message"
+            request_data = {
+                "message": clean_message,
+                "conversation_id": conversation_id,
+                "knowledge_base": knowledge_base,
+                "attachments": attachments if attachments else [],
+                "task_type": "general",  # Let A Management Model determine the task type
+                "emotional_context": {}
+            }
+        else:
+            # For general conversation or system queries, use the chat endpoint
+            endpoint = "http://localhost:5015/api/chat"
+            request_data = {
                 "message": clean_message,
                 "conversation_id": conversation_id,
                 "knowledge_base": knowledge_base,
                 "attachments": attachments if attachments else []
-            },
+            }
+        
+        # Send request to A Management Model
+        response = requests.post(
+            endpoint,
+            json=request_data,
             headers={
                 'Content-Type': 'application/json; charset=utf-8',
                 'Accept': 'application/json; charset=utf-8'
@@ -2081,13 +2130,13 @@ def generate_ai_response(message, knowledge_base, attachments):
                 
                 # Enhanced response handling for A Management Model
                 if isinstance(result, dict):
-                    # Case 1: Response in conversation_data.response
+                    # Case 1: Response in conversation_data.response (from /api/chat)
                     if 'conversation_data' in result and isinstance(result['conversation_data'], dict):
                         conv_data = result['conversation_data']
                         if 'response' in conv_data:
                             return str(conv_data['response'])
                     
-                    # Case 2: Direct response field
+                    # Case 2: Direct response field (common in both endpoints)
                     if 'response' in result:
                         return str(result['response'])
                     
@@ -2122,6 +2171,9 @@ def generate_ai_response(message, knowledge_base, attachments):
     except Exception as e:
         logger.error(f"Failed to call A Management Model: {str(e)}")
         return f"Error communicating with A Management Model: {str(e)}. Please check the system status."
+    
+    # Ensure the function returns a proper response even if all else fails
+    return "I'm sorry, I'm having trouble processing your request at the moment. Please try again later."
 
 @app.route('/api/chat/suggestions', methods=['POST'])
 def get_suggestions():
@@ -2221,9 +2273,186 @@ def send_enhanced_message():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
-def generate_enhanced_ai_response(message, attachments, knowledge_base, model):
-    """Generate enhanced AI response"""
+def call_external_api_model(message, model_config):
+    """Call external API model with proper formatting for different providers"""
     try:
+        import requests
+        import json
+        
+        provider = model_config.get('provider', '').lower()
+        api_key = model_config.get('api_key', '')
+        model_name = model_config.get('model', '')
+        base_url = model_config.get('base_url', '')
+        timeout = model_config.get('timeout', 30)
+        
+        if not all([api_key, model_name, base_url]):
+            raise ValueError("Missing required external API configuration")
+        
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        }
+        
+        # Format request body based on provider
+        if provider == 'openai':
+            data = {
+                "model": model_name,
+                "messages": [
+                    {"role": "system", "content": "You are a helpful AI assistant."},
+                    {"role": "user", "content": message}
+                ],
+                "temperature": 0.7
+            }
+            url = f"{base_url}/v1/chat/completions"
+        elif provider == 'anthropic':
+            data = {
+                "model": model_name,
+                "messages": [
+                    {"role": "user", "content": message}
+                ],
+                "temperature": 0.7
+            }
+            headers['anthropic-version'] = '2023-06-01'
+            url = f"{base_url}/v1/messages"
+        elif provider == 'google':
+            data = {
+                "model": model_name,
+                "contents": [
+                    {"role": "user", "parts": [{"text": message}]}
+                ]
+            }
+            url = f"{base_url}/v1beta/models/{model_name}:generateContent"
+        elif provider == 'siliconflow':
+            # Handle SiliconFlow model name mapping if needed
+            if model_name.startswith('siliconflow/'):
+                model_name = model_name.replace('siliconflow/', '')
+            
+            data = {
+                "model": model_name,
+                "messages": [
+                    {"role": "system", "content": "You are a helpful AI assistant."},
+                    {"role": "user", "content": message}
+                ],
+                "temperature": 0.7
+            }
+            url = f"{base_url}/v1/chat/completions"
+        elif provider == 'openrouter':
+            data = {
+                "model": model_name,
+                "messages": [
+                    {"role": "system", "content": "You are a helpful AI assistant."},
+                    {"role": "user", "content": message}
+                ],
+                "temperature": 0.7
+            }
+            url = f"{base_url}/v1/chat/completions"
+        else:
+            # Default to OpenAI format
+            data = {
+                "model": model_name,
+                "messages": [
+                    {"role": "system", "content": "You are a helpful AI assistant."},
+                    {"role": "user", "content": message}
+                ],
+                "temperature": 0.7
+            }
+            url = f"{base_url}/v1/chat/completions"
+        
+        logger.debug(f"Calling external API: {provider}, model: {model_name}, url: {url}")
+        response = requests.post(url, json=data, headers=headers, timeout=timeout)
+        
+        if response.status_code == 200:
+            result = response.json()
+            
+            # Parse response based on provider
+            if provider == 'openai' or provider == 'siliconflow' or provider == 'openrouter':
+                if 'choices' in result and result['choices'] and 'message' in result['choices'][0]:
+                    return result['choices'][0]['message']['content']
+            elif provider == 'anthropic':
+                if 'content' in result and result['content'] and 'text' in result['content'][0]:
+                    return result['content'][0]['text']
+            elif provider == 'google':
+                if 'candidates' in result and result['candidates'] and 'content' in result['candidates'][0]:
+                    content = result['candidates'][0]['content']
+                    if 'parts' in content and content['parts'] and 'text' in content['parts'][0]:
+                        return content['parts'][0]['text']
+            
+            # Default response parsing
+            logger.warning(f"Unexpected response format from {provider}: {json.dumps(result, indent=2)}")
+            return json.dumps(result)
+        else:
+            error_msg = f"External API returned status {response.status_code}"
+            try:
+                error_data = response.json()
+                if 'error' in error_data:
+                    if isinstance(error_data['error'], dict):
+                        error_msg += f": {error_data['error'].get('message', 'Unknown error')}"
+                    else:
+                        error_msg += f": {error_data['error']}"
+            except:
+                error_msg += f": {response.text[:200]}..."
+            
+            logger.error(error_msg)
+            raise Exception(error_msg)
+            
+    except requests.exceptions.Timeout:
+        error_msg = f"External API request timed out after {timeout} seconds"
+        logger.error(error_msg)
+        raise Exception(error_msg)
+    except requests.exceptions.ConnectionError:
+        error_msg = f"Failed to connect to external API at {base_url}"
+        logger.error(error_msg)
+        raise Exception(error_msg)
+    except Exception as e:
+        logger.error(f"Error calling external API: {str(e)}")
+        raise
+
+def generate_enhanced_ai_response(message, attachments, knowledge_base, model):
+    """Generate enhanced AI response with external API support"""
+    try:
+        # Load model registry to check if it's an external API model
+        try:
+            from training_control import model_registry
+            model_info = model_registry.get_model(model)
+            
+            # Check if model is configured to use external API
+            if model_info and model_info.get('model_source') == 'external' and model_info.get('external_api'):
+                api_config = model_info['external_api']
+                logger.info(f"Using external API model: {model}, provider: {api_config.get('provider')}")
+                
+                try:
+                    # Call external API model
+                    return call_external_api_model(message, api_config)
+                except Exception as api_error:
+                    logger.error(f"External API call failed for model {model}: {str(api_error)}")
+                    # Continue to try local model as fallback
+                    return generate_intelligent_response(
+                        message, attachments, knowledge_base, model,
+                        f"(Note: External API call failed: {str(api_error)}). Falling back to local processing."
+                    )
+        except Exception as registry_error:
+            logger.warning(f"Failed to load model registry: {str(registry_error)}")
+        
+        # Fallback check using training_control directly
+        try:
+            model_config = training_control.get_model_configuration(model)
+            if model_config and model_config.get('model_source') == 'external' and model_config.get('external_api'):
+                api_config = model_config['external_api']
+                logger.info(f"Using external API model (via training_control): {model}, provider: {api_config.get('provider')}")
+                
+                try:
+                    # Call external API model
+                    return call_external_api_model(message, api_config)
+                except Exception as api_error:
+                    logger.error(f"External API call failed for model {model}: {str(api_error)}")
+                    # Continue to try local model as fallback
+                    return generate_intelligent_response(
+                        message, attachments, knowledge_base, model,
+                        f"(Note: External API call failed: {str(api_error)}). Falling back to local processing."
+                    )
+        except Exception as config_error:
+            logger.warning(f"Failed to get model configuration: {str(config_error)}")
+        
         # Call different AI services based on selected model
         model_endpoints = {
             'a_manager': 'http://localhost:5001/process_message',
@@ -2254,13 +2483,38 @@ def generate_enhanced_ai_response(message, attachments, knowledge_base, model):
             response = requests.post(endpoint, json=request_data, timeout=30)
             
             if response.status_code == 200:
-                result = response.json()
-                return result.get('response', 'Processing completed')
+                try:
+                    result = response.json()
+                    return result.get('response', 'Processing completed')
+                except ValueError:
+                    # If JSON parsing fails, return raw text
+                    logger.warning(f"Failed to parse response as JSON for model {model}")
+                    return response.text
             else:
-                logger.warning(f"Model API call failed: {response.status_code} - {response.text}")
+                error_msg = f"Local model API call failed: {response.status_code} - {response.text[:200]}..."
+                logger.warning(error_msg)
+                # Return error information to the user
+                return generate_intelligent_response(
+                    message, attachments, knowledge_base, model,
+                    f"(Note: Local model error: {error_msg})."
+                )
                 
+        except requests.exceptions.ConnectionError:
+            error_msg = f"Cannot connect to {model} service at {endpoint}"
+            logger.error(error_msg)
+            return generate_intelligent_response(
+                message, attachments, knowledge_base, model,
+                f"(Note: Service unavailable: {error_msg})."
+            )
+        except requests.exceptions.Timeout:
+            error_msg = f"{model} service request timed out"
+            logger.error(error_msg)
+            return generate_intelligent_response(
+                message, attachments, knowledge_base, model,
+                f"(Note: Service timeout: {error_msg})."
+            )
         except Exception as e:
-            logger.error(f"Failed to call model API: {str(e)}")
+            logger.error(f"Failed to call {model} API: {str(e)}")
         
         # Fallback intelligent response logic
         return generate_intelligent_response(message, attachments, knowledge_base, model)
@@ -2269,25 +2523,30 @@ def generate_enhanced_ai_response(message, attachments, knowledge_base, model):
         logger.error(f"Error in generate_enhanced_ai_response: {str(e)}")
         return f"Sorry, encountered a problem while processing your request: {str(e)}" 
 
-def generate_intelligent_response(message, attachments, knowledge_base, model):
-    """Intelligent response generation"""
+def generate_intelligent_response(message, attachments, knowledge_base, model, error_context=None):
+    """Intelligent response generation with error context support"""
     message_lower = message.lower()
     
     # Analyze attachment content
     attachment_analysis = []
     if attachments:
         for att in attachments:
-            if att['type'].startswith('image/'):
-                attachment_analysis.append(f"Image file: {att['name']} ({att['size']} bytes)")
-            elif att['type'].startswith('video/'):
-                attachment_analysis.append(f"Video file: {att['name']} ({att['size']} bytes)")
-            elif att['type'].startswith('audio/'):
-                attachment_analysis.append(f"Audio file: {att['name']} ({att['size']} bytes)")
+            if att.get('type', '').startswith('image/'):
+                attachment_analysis.append(f"Image file: {att.get('name', 'unnamed')} ({att.get('size', 0)} bytes)")
+            elif att.get('type', '').startswith('video/'):
+                attachment_analysis.append(f"Video file: {att.get('name', 'unnamed')} ({att.get('size', 0)} bytes)")
+            elif att.get('type', '').startswith('audio/'):
+                attachment_analysis.append(f"Audio file: {att.get('name', 'unnamed')} ({att.get('size', 0)} bytes)")
             else:
-                attachment_analysis.append(f"Document file: {att['name']} ({att['size']} bytes)")
+                attachment_analysis.append(f"Document file: {att.get('name', 'unnamed')} ({att.get('size', 0)} bytes)")
     
     # Generate response based on message content and attachments
     response_parts = []
+    
+    # Add error context if provided
+    if error_context:
+        response_parts.append(error_context)
+        response_parts.append("")  # Add a blank line
     
     if attachment_analysis:
         response_parts.append(f"I have received your {len(attachments)} files:")
@@ -2296,9 +2555,7 @@ def generate_intelligent_response(message, attachments, knowledge_base, model):
     # Check for model-related queries and handle them specially
     model_phrases = [
         'show all models', 'show models', 'list all models', 'list models',
-        'display all models', 'display models', 'model list', 'available models',
-        '查看所有模型', '查看模型', '显示所有模型', '显示模型', '列出所有模型', '列出模型',
-        '模型列表', '有什么模型', '模型有哪些'
+        'display all models', 'display models', 'model list', 'available models'
     ]
     is_model_query = any(phrase == message_lower.strip() or message_lower.strip().startswith(phrase) for phrase in model_phrases)
     

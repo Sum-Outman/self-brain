@@ -2,6 +2,10 @@
 
 {% block title %}Settings - Self Brain AGI{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/minimal_settings.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <div class="row">
@@ -331,7 +335,7 @@
                 <div class="col-lg-3 col-md-6 mb-3">
                     <div class="card">
                         <div class="card-body text-center">
-                            <h3 class="text-success mb-2" id="activeModels">11</h3>
+                            <h3 class="text-dark mb-2" id="activeModels">11</h3>
                             <p class="text-secondary mb-0">Active Models</p>
                         </div>
                     </div>
@@ -339,7 +343,7 @@
                 <div class="col-lg-3 col-md-6 mb-3">
                     <div class="card">
                         <div class="card-body text-center">
-                            <h3 class="text-warning mb-2" id="trainingModels">0</h3>
+                            <h3 class="text-dark mb-2" id="trainingModels">0</h3>
                             <p class="text-secondary mb-0">Training</p>
                         </div>
                     </div>
@@ -347,7 +351,7 @@
                 <div class="col-lg-3 col-md-6 mb-3">
                     <div class="card">
                         <div class="card-body text-center">
-                            <h3 class="text-danger mb-2" id="errorModels">0</h3>
+                            <h3 class="text-dark mb-2" id="errorModels">0</h3>
                             <p class="text-secondary mb-0">Errors</p>
                         </div>
                     </div>
@@ -437,6 +441,9 @@
                                                 <button class="btn btn-sm btn-outline-dark" onclick="restartModel('A')">
                                                     Restart
                                                 </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="deleteModel('A', 'Management Model')">
+                                                    Delete
+                                                </button>
                                             </td>
                                         </tr>
                                         <tr>
@@ -457,6 +464,9 @@
                                                 </button>
                                                 <button class="btn btn-sm btn-outline-dark" onclick="restartModel('B')">
                                                     Restart
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="deleteModel('B', 'Large Language Model')">
+                                                    Delete
                                                 </button>
                                             </td>
                                         </tr>
@@ -479,6 +489,9 @@
                                                 <button class="btn btn-sm btn-outline-dark" onclick="restartModel('C')">
                                                     Restart
                                                 </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="deleteModel('C', 'Audio Processing')">
+                                                    Delete
+                                                </button>
                                             </td>
                                         </tr>
                                         <tr>
@@ -499,6 +512,9 @@
                                                 </button>
                                                 <button class="btn btn-sm btn-outline-dark" onclick="restartModel('D')">
                                                     Restart
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="deleteModel('D', 'Image Vision')">
+                                                    Delete
                                                 </button>
                                             </td>
                                         </tr>
@@ -521,6 +537,9 @@
                                                 <button class="btn btn-sm btn-outline-dark" onclick="restartModel('E')">
                                                     Restart
                                                 </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="deleteModel('E', 'Video Stream')">
+                                                    Delete
+                                                </button>
                                             </td>
                                         </tr>
                                         <tr>
@@ -541,6 +560,9 @@
                                                 </button>
                                                 <button class="btn btn-sm btn-outline-dark" onclick="restartModel('F')">
                                                     Restart
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="deleteModel('F', 'Binocular Spatial')">
+                                                    Delete
                                                 </button>
                                             </td>
                                         </tr>
@@ -563,6 +585,9 @@
                                                 <button class="btn btn-sm btn-outline-dark" onclick="restartModel('G')">
                                                     Restart
                                                 </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="deleteModel('G', 'Sensor Processing')">
+                                                    Delete
+                                                </button>
                                             </td>
                                         </tr>
                                         <tr>
@@ -583,6 +608,9 @@
                                                 </button>
                                                 <button class="btn btn-sm btn-outline-dark" onclick="restartModel('H')">
                                                     Restart
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="deleteModel('H', 'Computer Control')">
+                                                    Delete
                                                 </button>
                                             </td>
                                         </tr>
@@ -605,6 +633,9 @@
                                                 <button class="btn btn-sm btn-outline-dark" onclick="restartModel('I')">
                                                     Restart
                                                 </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="deleteModel('I', 'Knowledge Expert')">
+                                                    Delete
+                                                </button>
                                             </td>
                                         </tr>
                                         <tr>
@@ -626,6 +657,9 @@
                                                 <button class="btn btn-sm btn-outline-dark" onclick="restartModel('J')">
                                                     Restart
                                                 </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="deleteModel('J', 'Motion Control')">
+                                                    Delete
+                                                </button>
                                             </td>
                                         </tr>
                                         <tr>
@@ -646,6 +680,9 @@
                                                 </button>
                                                 <button class="btn btn-sm btn-outline-dark" onclick="restartModel('K')">
                                                     Restart
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" onclick="deleteModel('K', 'Programming')">
+                                                    Delete
                                                 </button>
                                             </td>
                                         </tr>
@@ -1055,7 +1092,7 @@ function handleFormSubmission(formId, endpoint) {
             }
 
             // Send to server
-            const response = await fetchWithRetry(endpoint, {
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1114,518 +1151,26 @@ document.addEventListener('DOMContentLoaded', function() {
     handleFormSubmission('securitySettingsForm', '/api/settings/security');
     
     // Load settings after DOM is ready
-    setTimeout(loadAllSettings, 100);
+    setTimeout(() => {
+        // loadAllSettings function has been moved to settings_manager.js
+        showNotification('Settings management functions loaded from external files', 'info');
+    }, 100);
 });
 
-// Load all settings from server with enhanced error handling
-    async function loadAllSettings() {
-        try {
-            const response = await fetchWithRetry('/api/settings/load');
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                populateFormFields(data.settings);
-            } else {
-                showNotification('Failed to load settings: ' + data.message, 'error');
-            }
-        } catch (error) {
-            console.error('Error loading settings:', error);
-            showNotification('Failed to load settings: ' + error.message, 'error');
-        }
-    }
+// All settings management functions have been moved to external files
+// - loadAllSettings: Now part of settings_manager.js
+// - fetchWithRetry: Now part of utils/api.js
 
-    // Enhanced fetch with retry for settings
-    async function fetchWithRetry(url, options = {}, maxRetries = 3) {
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                const response = await fetch(url, {
-                    ...options,
-                    mode: 'cors',
-                    credentials: 'include',
-                    cache: 'no-cache'
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                return response;
-            } catch (error) {
-                if (error.message?.includes('net::ERR_ABORTED') || error.name === 'AbortError') {
-                    if (attempt === maxRetries) {
-                        throw new Error(`Request aborted after ${maxRetries} attempts`);
-                    }
-                } else {
-                    if (attempt === maxRetries) {
-                        throw error;
-                    }
-                }
-                // Exponential backoff
-                await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
-            }
-        }
-    }
+// All model management related functions have been moved to external files
+// - models_management.js contains model CRUD operations, viewing, and statistics
+// - external_api_config.js contains API configuration management
 
-// Populate form fields with loaded settings
-function populateFormFields(settings) {
-    const safeSetValue = (id, value, defaultValue = '') => {
-        const element = document.getElementById(id);
-        if (element) {
-            if (element.type === 'checkbox') {
-                element.checked = value !== false && value !== 'false';
-            } else {
-                element.value = value || defaultValue;
-            }
-        }
-    };
+// Delete Model function has been moved to models_management.js
 
-    const safeSetText = (id, text) => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = text;
-        }
-    };
-
-    // General settings
-    if (settings.general) {
-        safeSetValue('systemName', settings.general.systemName, 'Self Brain AGI');
-        safeSetValue('systemDescription', settings.general.systemDescription);
-        safeSetValue('timezone', settings.general.timezone, 'UTC');
-        safeSetValue('language', settings.general.language, 'en');
-    }
-    
-    // API settings
-    if (settings.api) {
-        safeSetValue('openaiApiKey', settings.api.openaiApiKey);
-        safeSetValue('anthropicApiKey', settings.api.anthropicApiKey);
-        safeSetValue('googleApiKey', settings.api.googleApiKey);
-        safeSetValue('huggingfaceToken', settings.api.huggingfaceToken);
-        safeSetValue('apiTimeout', settings.api.apiTimeout, 30);
-    }
-    
-    // Hardware settings
-    if (settings.hardware) {
-        safeSetValue('maxMemoryUsage', settings.hardware.maxMemoryUsage, 80);
-        safeSetText('memoryValue', (settings.hardware.maxMemoryUsage || 80) + '%');
-        safeSetValue('maxCpuUsage', settings.hardware.maxCpuUsage, 70);
-        safeSetText('cpuValue', (settings.hardware.maxCpuUsage || 70) + '%');
-        safeSetValue('gpuMemory', settings.hardware.gpuMemory, 8);
-        safeSetValue('cacheSize', settings.hardware.cacheSize, 10);
-    }
-    
-    // Security settings
-    if (settings.security) {
-        safeSetValue('enableEncryption', settings.security.enableEncryption, true);
-        safeSetValue('enableAuditLog', settings.security.enableAuditLog, true);
-        safeSetValue('sessionTimeout', settings.security.sessionTimeout, 30);
-    }
-}
-
-// Model Management Functions
-function showAddModelModal() {
-    const modal = new bootstrap.Modal(document.getElementById('addModelModal'));
-    modal.show();
-}
-
-function addNewModel() {
-    const modelId = document.getElementById('newModelId').value;
-    const modelName = document.getElementById('newModelName').value;
-    const modelType = document.getElementById('newModelType').value;
-
-    if (!modelId || !modelName) {
-        showNotification('Please fill in all required fields', 'error');
-        return;
-    }
-
-    // Add new row to table
-    const tbody = document.getElementById('modelsTableBody');
-    const newRow = tbody.insertRow();
-    newRow.innerHTML = `
-        <td><strong>${modelId}</strong></td>
-        <td>${modelName}</td>
-        <td>${modelType.charAt(0).toUpperCase() + modelType.slice(1)}</td>
-        <td><span class="badge bg-warning">Loading</span></td>
-        <td>0.0 GB</td>
-        <td>${modelType === 'local' ? 'Local' : 'API'}</td>
-        <td>${new Date().toISOString().split('T')[0]}</td>
-        <td>
-            <button class="btn btn-sm btn-outline-dark" onclick="viewModelDetails('${modelId}', '${modelName}', '${modelType.charAt(0).toUpperCase() + modelType.slice(1)}', 'Loading', '0.0 GB', '0%', '${modelType === 'local' ? 'Local' : 'API'}', 'REST API', 'localhost', '0', 'Disconnected', '-', '${modelId.toLowerCase()}_model', '1.0.0', '${new Date().toISOString().split('T')[0]}')">
-                View Details
-            </button>
-            <button class="btn btn-sm btn-outline-dark" onclick="showExternalApiModal('${modelId}', '${modelName}')">
-                Switch API
-            </button>
-            <button class="btn btn-sm btn-outline-dark" onclick="restartModel('${modelId}')">
-                Restart
-            </button>
-        </td>
-    `;
-
-    // Update model counts
-    updateModelCounts();
-
-    // Close modal and reset form
-    const modal = bootstrap.Modal.getInstance(document.getElementById('addModelModal'));
-    modal.hide();
-    document.getElementById('addModelForm').reset();
-
-    showNotification(`Model ${modelName} added successfully!`, 'success');
-}
-
-function refreshModels() {
-    showNotification('Refreshing model status...', 'info');
-    // Simulate refresh with random updates
-    const badges = document.querySelectorAll('#modelsTableBody .badge');
-    badges.forEach(badge => {
-        const statuses = ['Active', 'Loading', 'Error', 'Training'];
-        const colors = ['bg-dark', 'bg-warning', 'bg-danger', 'bg-info'];
-        const randomIndex = Math.floor(Math.random() * statuses.length);
-        badge.textContent = statuses[randomIndex];
-        badge.className = `badge ${colors[randomIndex]}`;
-    });
-
-    updateModelCounts();
-}
-
-function updateModelCounts() {
-    const rows = document.querySelectorAll('#modelsTableBody tr');
-    const totalModels = rows.length;
-    let activeModels = 0;
-    let trainingModels = 0;
-    let errorModels = 0;
-
-    rows.forEach(row => {
-        const status = row.querySelector('.badge').textContent;
-        if (status === 'Active') activeModels++;
-        else if (status === 'Training') trainingModels++;
-        else if (status === 'Error') errorModels++;
-    });
-
-    document.getElementById('totalModels').textContent = totalModels;
-    document.getElementById('activeModels').textContent = activeModels;
-    document.getElementById('trainingModels').textContent = trainingModels;
-    document.getElementById('errorModels').textContent = errorModels;
-}
-
-function exportModels() {
-    const models = [];
-    const rows = document.querySelectorAll('#modelsTableBody tr');
-    
-    rows.forEach(row => {
-        const cells = row.querySelectorAll('td');
-        models.push({
-            id: cells[0].textContent,
-            name: cells[1].textContent,
-            type: cells[2].textContent,
-            status: cells[3].textContent,
-            memory: cells[4].textContent,
-            provider: cells[5].textContent,
-            lastUpdated: cells[6].textContent
-        });
-    });
-
-    const blob = new Blob([JSON.stringify(models, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'models-config.json';
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-function importModels() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const models = JSON.parse(e.target.result);
-                    showNotification(`Importing ${models.length} models...`, 'info');
-                    // Here you would typically process the imported data
-                } catch (error) {
-                    showNotification('Error importing file: Invalid JSON format', 'error');
-                }
-            };
-            reader.readAsText(file);
-        }
-    };
-    input.click();
-}
-
-// View Model Details
-function viewModelDetails(id, name, type, status, memory, cpuUsage, provider, apiType, host, port, connectionStatus, latency, component, version, lastUpdated) {
-    // Set the model details in the modal
-    document.getElementById('modelId').textContent = id;
-    document.getElementById('modelName').textContent = name;
-    document.getElementById('modelType').textContent = type;
-    document.getElementById('modelStatus').textContent = status;
-    document.getElementById('modelMemory').textContent = memory;
-    document.getElementById('modelCpuUsage').textContent = cpuUsage;
-    document.getElementById('modelProvider').textContent = provider;
-    document.getElementById('modelApiType').textContent = apiType;
-    document.getElementById('modelHost').textContent = host;
-    document.getElementById('modelPort').textContent = port;
-    document.getElementById('modelConnectionStatus').textContent = connectionStatus;
-    document.getElementById('modelLatency').textContent = latency;
-    document.getElementById('modelComponent').textContent = component;
-    document.getElementById('modelVersion').textContent = version;
-    document.getElementById('modelLastUpdated').textContent = lastUpdated;
-    
-    // Show the modal
-    const modelDetailsModal = new bootstrap.Modal(document.getElementById('modelDetailsModal'));
-    modelDetailsModal.show();
-}
-
-// Show External API Modal
-function showExternalApiModal(modelId, modelName) {
-    document.getElementById('externalApiModelId').value = modelId;
-    document.getElementById('externalApiModelName').textContent = modelName;
-    document.getElementById('externalApiForm').reset();
-    
-    const externalApiModal = new bootstrap.Modal(document.getElementById('externalApiModal'));
-    externalApiModal.show();
-}
-
-// Restart Model
-function restartModel(modelId) {
-    if (confirm(`Are you sure you want to restart model ${modelId}?`)) {
-        showNotification(`Restarting model ${modelId}...`, 'info');
-        
-        // Update UI to show restarting status
-        const rows = document.querySelectorAll('#modelsTableBody tr');
-        rows.forEach(row => {
-            if (row.querySelector('td:first-child strong').textContent === modelId) {
-                const statusBadge = row.querySelector('.badge');
-                statusBadge.className = 'badge bg-warning';
-                statusBadge.textContent = 'Restarting';
-            }
-        });
-        
-        // Call API to restart the model
-        fetch(`/api/models/${modelId}/restart`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        }).then(response => {
-            if (response.ok) {
-                return response.json();
-            }
-            throw new Error('Network response was not ok');
-        }).then(data => {
-            if (data.status === 'success') {
-                // Update UI to show active status after successful restart
-                rows.forEach(row => {
-                    if (row.querySelector('td:first-child strong').textContent === modelId) {
-                        const statusBadge = row.querySelector('.badge');
-                        statusBadge.className = 'badge bg-dark';
-                        statusBadge.textContent = 'Active';
-                    }
-                });
-                showNotification(`Model ${modelId} restarted successfully`, 'success');
-            } else {
-                showNotification(`Failed to restart model ${modelId}: ${data.message}`, 'error');
-                // Revert status if failed
-                rows.forEach(row => {
-                    if (row.querySelector('td:first-child strong').textContent === modelId) {
-                        const statusBadge = row.querySelector('.badge');
-                        statusBadge.className = 'badge bg-danger';
-                        statusBadge.textContent = 'Error';
-                    }
-                });
-            }
-        }).catch(error => {
-            console.error('Error restarting model:', error);
-            showNotification(`Failed to restart model ${modelId}: ${error.message}`, 'error');
-            // Revert status if failed
-            rows.forEach(row => {
-                if (row.querySelector('td:first-child strong').textContent === modelId) {
-                    const statusBadge = row.querySelector('.badge');
-                    statusBadge.className = 'badge bg-danger';
-                    statusBadge.textContent = 'Error';
-                }
-            });
-        });
-    }
-}
-
-// Handle API Provider Change
-function onApiProviderChange() {
-    const provider = document.getElementById('externalApiProvider').value;
-    const modelInput = document.getElementById('externalApiModel');
-    const baseUrlInput = document.getElementById('externalApiBaseUrl');
-    
-    // Set default values based on provider
-    switch(provider) {
-        case 'openai':
-            modelInput.value = 'gpt-4o';
-            baseUrlInput.value = 'https://api.openai.com/v1';
-            break;
-        case 'anthropic':
-            modelInput.value = 'claude-3-opus-20240229';
-            baseUrlInput.value = 'https://api.anthropic.com/v1';
-            break;
-        case 'google':
-            modelInput.value = 'gemini-1.5-pro-latest';
-            baseUrlInput.value = 'https://generativelanguage.googleapis.com/v1beta';
-            break;
-        case 'huggingface':
-            modelInput.value = 'meta-llama/Llama-3-70b-chat-hf';
-            baseUrlInput.value = 'https://api-inference.huggingface.co/models';
-            break;
-        case 'custom':
-            modelInput.value = '';
-            baseUrlInput.value = '';
-            break;
-    }
-}
-
-// Save External API Configuration
-function saveExternalApiConfig() {
-    const modelId = document.getElementById('externalApiModelId').value;
-    const provider = document.getElementById('externalApiProvider').value;
-    const apiKey = document.getElementById('externalApiKey').value;
-    const apiModel = document.getElementById('externalApiModel').value;
-    const baseUrl = document.getElementById('externalApiBaseUrl').value;
-    const timeout = document.getElementById('externalApiTimeout').value;
-    
-    if (!apiKey || !apiModel || !baseUrl) {
-        showNotification('Please fill in all required fields', 'error');
-        return;
-    }
-    
-    // Validate timeout parameter
-    const timeoutValue = timeout ? parseInt(timeout) : 30;
-    if (isNaN(timeoutValue) || timeoutValue <= 0 || timeoutValue > 120) {
-        showNotification('Timeout must be between 1 and 120 seconds', 'error');
-        return;
-    }
-    
-    showNotification(`Saving external API configuration for model ${modelId}...`, 'info');
-    
-    // Send configuration to server
-    fetch(`/api/models/${modelId}/api-config`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            provider: provider,
-            api_key: apiKey,
-            model: apiModel,
-            base_url: baseUrl,
-            timeout: timeoutValue
-        })
-    }).then(response => {
-        if (response.ok) {
-            return response.json();
-        }
-        throw new Error('Network response was not ok');
-    }).then(data => {
-        if (data.status === 'success') {
-            showNotification(`External API configuration saved successfully for model ${modelId}`, 'success');
-            
-            // Update the model's provider in the table
-            const rows = document.querySelectorAll('#modelsTableBody tr');
-            rows.forEach(row => {
-                if (row.querySelector('td:first-child strong').textContent === modelId) {
-                    // Update API source column
-                    const apiSourceCell = row.querySelector('td:nth-child(5)');
-                    apiSourceCell.textContent = 'External';
-                    apiSourceCell.className = 'text-success';
-                    
-                    // Update provider column
-                    row.querySelector('td:nth-child(6)').textContent = provider;
-                    
-                    // Change status to indicate API is active
-                    const statusBadge = row.querySelector('.badge');
-                    statusBadge.className = 'badge bg-dark';
-                    statusBadge.textContent = 'Active';
-                }
-            });
-            
-            const externalApiModal = bootstrap.Modal.getInstance(document.getElementById('externalApiModal'));
-            externalApiModal.hide();
-        } else {
-            showNotification(`Failed to save API configuration: ${data.message || 'Unknown error'}`, 'error');
-        }
-    }).catch(error => {
-        console.error('Error saving API configuration:', error);
-        showNotification(`Failed to save API configuration: ${error.message}`, 'error');
-    });
-}
-
-// Test External API Connection
-function testExternalApiConnection() {
-    const modelId = document.getElementById('externalApiModelId').value;
-    const provider = document.getElementById('externalApiProvider').value;
-    const apiKey = document.getElementById('externalApiKey').value;
-    const apiModel = document.getElementById('externalApiModel').value;
-    const baseUrl = document.getElementById('externalApiBaseUrl').value;
-    const timeout = document.getElementById('externalApiTimeout').value;
-    
-    if (!apiKey || !apiModel || !baseUrl) {
-        showNotification('Please fill in all required fields', 'error');
-        return;
-    }
-    
-    // Validate timeout parameter
-    const timeoutValue = timeout ? parseInt(timeout) : 30;
-    if (isNaN(timeoutValue) || timeoutValue <= 0 || timeoutValue > 120) {
-        showNotification('Timeout must be between 1 and 120 seconds', 'error');
-        return;
-    }
-    
-    showNotification(`Testing external API connection for model ${modelId}...`, 'info');
-    
-    // Test connection to external API
-    fetch('/api/models/test-connection', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            provider: provider,
-            api_key: apiKey,
-            model: apiModel,
-            base_url: baseUrl,
-            timeout: timeoutValue
-        })
-    }).then(response => {
-        if (response.ok) {
-            return response.json();
-        }
-        throw new Error('Network response was not ok');
-    }).then(data => {
-        if (data.status === 'success') {
-            showNotification(`External API connection test successful for model ${modelId}! Latency: ${data.latency}ms`, 'success');
-        } else {
-            showNotification(`External API connection test failed: ${data.message || 'Unknown error'}`, 'error');
-        }
-    }).catch(error => {
-        console.error('Error testing API connection:', error);
-        showNotification(`Failed to test API connection: ${error.message}`, 'error');
-    });
-}
-
-    // Show confirmation and switch to local mode
-    function switchToLocalConfirm() {
-        const modelId = document.getElementById('externalApiModelId').textContent;
-        switchToLocal(modelId);
-        // Close the modal will be handled by the switchToLocal function
-    }
-    
-
-    
-    // Initialize model counts on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        updateModelCounts();
-    });
 </script>
 
-<!-- External API Configuration Script -->
+<!-- External Scripts -->
+<script src="{{ url_for('static', filename='js/external_scripts.js') }}"></script>
 <script src="/static/js/external_api_config.js"></script>
+<script src="/static/js/models_management.js"></script>
 {% endblock %}

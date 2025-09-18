@@ -1,0 +1,9 @@
+{
+  "description": "External API configuration for D_image",
+  "api_endpoint": "https://api.example.com/v1",
+  "api_key": "test-api-key",
+  "provider": "custom",
+  "external_model_name": "test-D_image",
+  "model_source": "external",
+  "last_updated": "2025-09-18T11:39:57.226736"
+}

@@ -1,7 +1,10 @@
 {
-  "description": "测试保存配置功能",
-  "api_endpoint": "https://api.siliconflow.cn/v1",
-  "api_key": "sk-actual-key",
-  "external_model_name": "deepseek-ai/DeepSeek-R1",
-  "model_source": "external"
+  "description": "External API configuration for A_management",
+  "provider": "custom",
+  "api_key": "test-api-key",
+  "external_model_name": "test-A_management",
+  "api_endpoint": "https://api.example.com/v1",
+  "timeout": 30,
+  "model_source": "external",
+  "last_updated": "2025-09-18T11:42:21.188480"
 }

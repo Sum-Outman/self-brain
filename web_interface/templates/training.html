@@ -576,13 +576,23 @@ function updateRealtimeMetrics(data) {
 // Update training data from API
 async function updateTrainingData() {
     try {
-        const response = await fetch('/api/training/status');
-        const data = await response.json();
+        console.log('Fetching training data from:', '/api/training/sessions');
+        const response = await fetch('/api/training/sessions');
+        console.log('Response status:', response.status);
         
-        if (data.status === 'success') {
-            updateStatistics(data);
-            updateSessionsTable(data);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        
+        const text = await response.text();
+        console.log('Response text:', text);
+        
+        const data = JSON.parse(text);
+        console.log('Parsed data:', data);
+        
+        // Directly update statistics and sessions table with the data
+        updateStatistics(data);
+        updateSessionsTable(data);
     } catch (error) {
         console.error('Error updating training data:', error);
     }

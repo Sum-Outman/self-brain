@@ -501,7 +501,7 @@ def health_check():
 
 if __name__ == '__main__':
     logger.info("Starting A Manager Model API Server")
-    logger.info("API service running at http://localhost:5001")
+    logger.info("API service running at http://localhost:5015")
     
     # Run Flask application
-    app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=5015, debug=True, use_reloader=False)
