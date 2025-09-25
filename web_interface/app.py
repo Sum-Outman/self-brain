@@ -39,8 +39,19 @@ from training_manager.advanced_train_control import AdvancedTrainingController, 
 from manager_model.data_bus import DataBus
 from manager_model.training_control import TrainingController as training_control
 
+# Import AGI Brain Core
+from enhanced_agi_brain import AGIBrainCore
+agi_brain = AGIBrainCore()
+
+# Import Camera Manager
+from camera_manager import get_camera_manager
+camera_manager = get_camera_manager()
+
 # Import real-time monitoring system
 from web_interface.backend.enhanced_realtime_monitor import init_enhanced_realtime_monitor
+
+# Import device communication module
+from device_communication import device_bp, init_device_communication, cleanup_device_communication
 
 # Configure logging
 logging.basicConfig(level=logging.INFO,
@@ -103,6 +114,9 @@ CORS(app, resources={
         "max_age": 86400
     }
 })
+
+# Register device communication blueprint
+app.register_blueprint(device_bp)
 
 # Create SocketIO instance with enhanced configuration for stability
 socketio = SocketIO(
@@ -436,6 +450,16 @@ def training_page():
 def system_settings():
     """System settings page"""
     return render_template('system_settings.html')
+
+@app.route('/camera_management')
+def camera_management():
+    """Camera management page"""
+    return render_template('camera_management.html')
+
+@app.route('/device_communication')
+def device_communication_page():
+    """Device communication page"""
+    return render_template('device_communication.html')
 
 @app.route('/api/settings/general', methods=['POST'])
 def save_general_settings():
@@ -2285,13 +2309,26 @@ def call_external_api_model(message, model_config):
         base_url = model_config.get('base_url', '')
         timeout = model_config.get('timeout', 30)
         
-        if not all([api_key, model_name, base_url]):
-            raise ValueError("Missing required external API configuration")
+        # Validate required configuration
+        if not provider:
+            raise ValueError("Provider name is required for external API model")
+        if not base_url:
+            raise ValueError("Base URL is required for external API model")
         
+        # Log API call attempt
+        logger.info(f"Attempting to call external API: provider={provider}, model={model_name}, base_url={base_url}")
+        
+        # Prepare headers
         headers = {
-            'Authorization': f'Bearer {api_key}',
             'Content-Type': 'application/json'
         }
+        
+        # Add API key if provided
+        if api_key:
+            headers['Authorization'] = f'Bearer {api_key}'
+            logger.debug(f"API key for {provider} is available and will be used")
+        else:
+            logger.warning(f"No API key provided for {provider}. Some APIs may require authentication.")
         
         # Format request body based on provider
         if provider == 'openai':
@@ -2348,6 +2385,7 @@ def call_external_api_model(message, model_config):
             url = f"{base_url}/v1/chat/completions"
         else:
             # Default to OpenAI format
+            logger.info(f"Using default OpenAI format for provider: {provider}")
             data = {
                 "model": model_name,
                 "messages": [
@@ -2358,8 +2396,16 @@ def call_external_api_model(message, model_config):
             }
             url = f"{base_url}/v1/chat/completions"
         
-        logger.debug(f"Calling external API: {provider}, model: {model_name}, url: {url}")
+        # Log request details (without sensitive information)
+        logger.debug(f"API Request URL: {url}")
+        logger.debug(f"API Request Headers: {json.dumps({k: '******' if 'authorization' in k.lower() else v for k, v in headers.items()})}")
+        
+        # Make the API request
+        start_time = time.time()
         response = requests.post(url, json=data, headers=headers, timeout=timeout)
+        response_time = time.time() - start_time
+        
+        logger.info(f"API Response Status: {response.status_code}, Response Time: {response_time:.2f}s")
         
         if response.status_code == 200:
             result = response.json()
@@ -2367,18 +2413,24 @@ def call_external_api_model(message, model_config):
             # Parse response based on provider
             if provider == 'openai' or provider == 'siliconflow' or provider == 'openrouter':
                 if 'choices' in result and result['choices'] and 'message' in result['choices'][0]:
-                    return result['choices'][0]['message']['content']
+                    content = result['choices'][0]['message']['content']
+                    logger.debug(f"Successfully parsed response from {provider}")
+                    return content
             elif provider == 'anthropic':
                 if 'content' in result and result['content'] and 'text' in result['content'][0]:
-                    return result['content'][0]['text']
+                    content = result['content'][0]['text']
+                    logger.debug(f"Successfully parsed response from {provider}")
+                    return content
             elif provider == 'google':
                 if 'candidates' in result and result['candidates'] and 'content' in result['candidates'][0]:
                     content = result['candidates'][0]['content']
                     if 'parts' in content and content['parts'] and 'text' in content['parts'][0]:
-                        return content['parts'][0]['text']
+                        content = content['parts'][0]['text']
+                        logger.debug(f"Successfully parsed response from {provider}")
+                        return content
             
             # Default response parsing
-            logger.warning(f"Unexpected response format from {provider}: {json.dumps(result, indent=2)}")
+            logger.warning(f"Unexpected response format from {provider}: {json.dumps(result, indent=2)[:500]}...")
             return json.dumps(result)
         else:
             error_msg = f"External API returned status {response.status_code}"
@@ -2403,6 +2455,10 @@ def call_external_api_model(message, model_config):
         error_msg = f"Failed to connect to external API at {base_url}"
         logger.error(error_msg)
         raise Exception(error_msg)
+    except requests.exceptions.RequestException as e:
+        error_msg = f"HTTP request exception: {str(e)}"
+        logger.error(error_msg)
+        raise Exception(error_msg)
     except Exception as e:
         logger.error(f"Error calling external API: {str(e)}")
         raise
@@ -2410,48 +2466,39 @@ def call_external_api_model(message, model_config):
 def generate_enhanced_ai_response(message, attachments, knowledge_base, model):
     """Generate enhanced AI response with external API support"""
     try:
-        # Load model registry to check if it's an external API model
-        try:
-            from training_control import model_registry
-            model_info = model_registry.get_model(model)
-            
-            # Check if model is configured to use external API
-            if model_info and model_info.get('model_source') == 'external' and model_info.get('external_api'):
-                api_config = model_info['external_api']
-                logger.info(f"Using external API model: {model}, provider: {api_config.get('provider')}")
-                
-                try:
-                    # Call external API model
-                    return call_external_api_model(message, api_config)
-                except Exception as api_error:
-                    logger.error(f"External API call failed for model {model}: {str(api_error)}")
-                    # Continue to try local model as fallback
-                    return generate_intelligent_response(
-                        message, attachments, knowledge_base, model,
-                        f"(Note: External API call failed: {str(api_error)}). Falling back to local processing."
-                    )
-        except Exception as registry_error:
-            logger.warning(f"Failed to load model registry: {str(registry_error)}")
+        # Load model registry from config file
+        model_registry_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'model_registry.json')
+        model_info = None
         
-        # Fallback check using training_control directly
         try:
-            model_config = training_control.get_model_configuration(model)
-            if model_config and model_config.get('model_source') == 'external' and model_config.get('external_api'):
-                api_config = model_config['external_api']
-                logger.info(f"Using external API model (via training_control): {model}, provider: {api_config.get('provider')}")
-                
-                try:
-                    # Call external API model
-                    return call_external_api_model(message, api_config)
-                except Exception as api_error:
-                    logger.error(f"External API call failed for model {model}: {str(api_error)}")
-                    # Continue to try local model as fallback
-                    return generate_intelligent_response(
-                        message, attachments, knowledge_base, model,
-                        f"(Note: External API call failed: {str(api_error)}). Falling back to local processing."
-                    )
-        except Exception as config_error:
-            logger.warning(f"Failed to get model configuration: {str(config_error)}")
+            if os.path.exists(model_registry_path):
+                with open(model_registry_path, 'r', encoding='utf-8') as f:
+                    registry = json.load(f)
+                    model_info = registry.get(model)
+                    
+                # Check if model is configured to use external API
+                if model_info and model_info.get('model_source') == 'external' and model_info.get('api_url'):
+                    api_config = {
+                        'provider': model_info.get('provider', 'openai'),
+                        'api_key': model_info.get('api_key', ''),
+                        'model': model_info.get('api_model', 'gpt-3.5-turbo'),
+                        'base_url': model_info.get('api_url', ''),
+                        'timeout': model_info.get('timeout', 30)
+                    }
+                    logger.info(f"Using external API model: {model}, provider: {api_config.get('provider')}")
+                    
+                    try:
+                        # Call external API model
+                        return call_external_api_model(message, api_config)
+                    except Exception as api_error:
+                        logger.error(f"External API call failed for model {model}: {str(api_error)}")
+                        # Continue to try local model as fallback
+                        return generate_intelligent_response(
+                            message, attachments, knowledge_base, model,
+                            f"(Note: External API call failed: {str(api_error)}). Falling back to local processing."
+                        )
+        except Exception as registry_error:
+            logger.warning(f"Failed to load model registry from file: {str(registry_error)}")
         
         # Call different AI services based on selected model
         model_endpoints = {
@@ -4916,6 +4963,308 @@ def restore_backup(backup_filename):
         logger.error(f"Restore error: {e}")
         return jsonify({'error': str(e), 'success': False}), 500
 
+# Camera Input API Endpoint
+@app.route('/api/camera/inputs', methods=['GET'])
+def get_camera_inputs():
+    """Get active camera inputs API"""
+    try:
+        print("=== DEBUG: /api/camera/inputs endpoint called ===")
+        
+        # Get all available cameras
+        available_cameras = camera_manager.list_available_cameras()
+        
+        # Get active cameras
+        active_camera_ids = camera_manager.get_active_camera_ids()
+        
+        # Prepare active camera inputs
+        active_inputs = {}
+        for camera_id in active_camera_ids:
+            status = camera_manager.get_camera_status(camera_id)
+            active_inputs[str(camera_id)] = {
+                "status": "active" if status["is_active"] else "inactive",
+                "started_at": status.get("start_time"),
+                "timestamp": datetime.now().isoformat()
+            }
+        
+        # Return combined result with available and active cameras
+        result = {
+            "status": "success",
+            "available_cameras": available_cameras,
+            "active_camera_count": len(active_camera_ids),
+            "active_camera_inputs": active_inputs
+        }
+        
+        print(f"DEBUG: CameraManager returned: {result}")
+        return jsonify(result)
+        
+    except Exception as e:
+        error_msg = f"Failed to get camera inputs: {str(e)}"
+        print(f"DEBUG: Exception in get_camera_inputs: {error_msg}")
+        logger.error(error_msg)
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/api/camera/start/<int:camera_id>', methods=['POST'])
+def start_camera(camera_id):
+    """Start specified camera API"""
+    try:
+        print(f"=== DEBUG: /api/camera/start/{camera_id} endpoint called ===")
+        
+        # Get parameters from request body if any
+        params = request.json if request.is_json else {}
+        print(f"DEBUG: Received params: {params}")
+        
+        # Call CameraManager to start the specified camera
+        success = camera_manager.start_camera(camera_id, params)
+        
+        if success:
+            # Get camera status after starting
+            status = camera_manager.get_camera_status(camera_id)
+            result = {
+                "status": "success",
+                "camera_id": camera_id,
+                "message": f"Camera {camera_id} started successfully",
+                "camera_info": {
+                    "status": "active",
+                    "settings": status.get("settings"),
+                    "started_at": status.get("start_time")
+                }
+            }
+        else:
+            result = {
+                "status": "error",
+                "camera_id": camera_id,
+                "message": f"Failed to start camera {camera_id}"
+            }
+        
+        print(f"DEBUG: CameraManager start_camera result: {result}")
+        
+        if result['status'] == 'error':
+            return jsonify(result), 400
+        
+        return jsonify(result)
+    except Exception as e:
+        error_msg = f"Failed to start camera {camera_id}: {str(e)}"
+        print(f"DEBUG: Exception in start_camera: {error_msg}")
+        logger.error(error_msg)
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/api/camera/stop/<int:camera_id>', methods=['POST'])
+def stop_camera(camera_id):
+    """Stop specified camera API"""
+    try:
+        print(f"=== DEBUG: /api/camera/stop/{camera_id} endpoint called ===")
+        
+        # Call CameraManager to stop the specified camera
+        success = camera_manager.stop_camera(camera_id)
+        
+        if success:
+            result = {
+                "status": "success",
+                "camera_id": camera_id,
+                "message": f"Camera {camera_id} stopped successfully"
+            }
+        else:
+            result = {
+                "status": "error",
+                "camera_id": camera_id,
+                "message": f"Failed to stop camera {camera_id}"
+            }
+        
+        print(f"DEBUG: CameraManager stop_camera result: {result}")
+        
+        if result['status'] == 'error':
+            return jsonify(result), 400
+        
+        return jsonify(result)
+    except Exception as e:
+        error_msg = f"Failed to stop camera {camera_id}: {str(e)}"
+        print(f"DEBUG: Exception in stop_camera: {error_msg}")
+        logger.error(error_msg)
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/api/camera/take-snapshot/<int:camera_id>', methods=['POST'])
+def take_camera_snapshot(camera_id):
+    """Take snapshot from specified camera API"""
+    try:
+        print(f"=== DEBUG: /api/camera/take-snapshot/{camera_id} endpoint called ===")
+        
+        # Call CameraManager to take a snapshot from the specified camera
+        snapshot_data = camera_manager.take_snapshot(camera_id)
+        
+        if snapshot_data:
+            result = {
+                "status": "success",
+                "camera_id": camera_id,
+                "snapshot_id": snapshot_data["snapshot_id"],
+                "image_data": snapshot_data["frame"],
+                "timestamp": snapshot_data["timestamp"],
+                "message": "Snapshot taken successfully"
+            }
+        else:
+            result = {
+                "status": "error",
+                "camera_id": camera_id,
+                "message": f"Failed to take snapshot from camera {camera_id}"
+            }
+        
+        print(f"DEBUG: CameraManager take_snapshot result: {result}")
+        
+        if result['status'] == 'error':
+            return jsonify(result), 400
+        
+        return jsonify(result)
+    except Exception as e:
+        error_msg = f"Failed to take snapshot from camera {camera_id}: {str(e)}"
+        print(f"DEBUG: Exception in take_camera_snapshot: {error_msg}")
+        logger.error(error_msg)
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/api/camera/settings/<int:camera_id>', methods=['GET'])
+def get_camera_settings(camera_id):
+    """Get camera settings API"""
+    try:
+        print(f"=== DEBUG: /api/camera/settings/{camera_id} GET endpoint called ===")
+        
+        # Call CameraManager to get settings for the specified camera
+        settings = camera_manager.get_camera_settings(camera_id)
+        
+        if settings:
+            result = {
+                "status": "success",
+                "camera_id": camera_id,
+                "settings": settings,
+                "message": f"Settings for camera {camera_id} retrieved successfully"
+            }
+        else:
+            # Check if camera exists but not running
+            available_cameras = camera_manager.list_available_cameras()
+            camera_exists = any(cam["id"] == camera_id for cam in available_cameras)
+            
+            if camera_exists:
+                result = {
+                    "status": "warning",
+                    "camera_id": camera_id,
+                    "message": f"Camera {camera_id} exists but is not running. Start the camera first to access settings."
+                }
+            else:
+                result = {
+                    "status": "error",
+                    "camera_id": camera_id,
+                    "message": f"Camera {camera_id} does not exist"
+                }
+        
+        print(f"DEBUG: CameraManager get_camera_settings result: {result}")
+        
+        if result['status'] == 'error':
+            return jsonify(result), 400
+        
+        return jsonify(result)
+    except Exception as e:
+        error_msg = f"Failed to get camera {camera_id} settings: {str(e)}"
+        print(f"DEBUG: Exception in get_camera_settings: {error_msg}")
+        logger.error(error_msg)
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/api/camera/settings/<int:camera_id>', methods=['POST'])
+def update_camera_settings(camera_id):
+    """Update camera settings API"""
+    try:
+        print(f"=== DEBUG: /api/camera/settings/{camera_id} POST endpoint called ===")
+        
+        # Get settings from request body
+        settings = request.json
+        print(f"DEBUG: Received settings: {settings}")
+        
+        # Call CameraManager to update settings for the specified camera
+        success = camera_manager.update_camera_settings(camera_id, settings)
+        
+        if success:
+            # Get updated settings
+            updated_settings = camera_manager.get_camera_settings(camera_id)
+            result = {
+                "status": "success",
+                "camera_id": camera_id,
+                "settings": updated_settings,
+                "message": f"Settings for camera {camera_id} updated successfully"
+            }
+        else:
+            # Check if camera exists and is running
+            if camera_id not in camera_manager.get_active_camera_ids():
+                result = {
+                    "status": "error",
+                    "camera_id": camera_id,
+                    "message": f"Cannot update settings: Camera {camera_id} is not running"
+                }
+            else:
+                result = {
+                    "status": "error",
+                    "camera_id": camera_id,
+                    "message": f"Failed to update settings for camera {camera_id}"
+                }
+        
+        print(f"DEBUG: CameraManager update_camera_settings result: {result}")
+        
+        if result['status'] == 'error':
+            return jsonify(result), 400
+        
+        return jsonify(result)
+    except Exception as e:
+        error_msg = f"Failed to update camera {camera_id} settings: {str(e)}"
+        print(f"DEBUG: Exception in update_camera_settings: {error_msg}")
+        logger.error(error_msg)
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/api/camera/frame/<int:camera_id>', methods=['GET'])
+def get_camera_frame(camera_id):
+    """Get current frame from specified camera API"""
+    try:
+        print(f"=== DEBUG: /api/camera/frame/{camera_id} endpoint called ===")
+        
+        # Call CameraManager to get the current frame from the specified camera
+        frame_data = camera_manager.get_camera_frame(camera_id)
+        
+        if frame_data:
+            # Return frame data as JSON response
+            result = {
+                "status": "success",
+                "camera_id": camera_id,
+                "frame": frame_data["frame"],
+                "timestamp": frame_data["timestamp"],
+                "message": "Frame retrieved successfully"
+            }
+        else:
+            # Check if camera exists and is running
+            if camera_id not in camera_manager.get_active_camera_ids():
+                result = {
+                    "status": "error",
+                    "camera_id": camera_id,
+                    "message": f"Cannot get frame: Camera {camera_id} is not running"
+                }
+            else:
+                result = {
+                    "status": "error",
+                    "camera_id": camera_id,
+                    "message": f"Failed to retrieve frame from camera {camera_id}"
+                }
+        
+        print(f"DEBUG: CameraManager get_camera_frame result: {result}")
+        
+        if result['status'] == 'error':
+            return jsonify(result), 400
+        
+        return jsonify(result)
+    except Exception as e:
+        error_msg = f"Failed to get frame from camera {camera_id}: {str(e)}"
+        print(f"DEBUG: Exception in get_camera_frame: {error_msg}")
+        logger.error(error_msg)
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(error):
@@ -4947,10 +5296,21 @@ if __name__ == '__main__':
     logger.info("  - API Status: http://localhost:5000/api/system/status")
     logger.info("  - Command Execute: http://localhost:5000/api/execute")
     logger.info("  - Models Status: http://localhost:5000/api/models/status")
+    logger.info("  - Device Communication: http://localhost:5000/api/devices")
     
-    # Run Flask application
-    socketio.run(app, 
-                host='0.0.0.0', 
-                port=5000, 
-                debug=True, 
-                allow_unsafe_werkzeug=True)
+    # Initialize device communication system
+    logger.info("Initializing device communication system...")
+    init_device_communication()
+    
+    try:
+        # Run Flask application
+        socketio.run(app, 
+                    host='0.0.0.0', 
+                    port=5000, 
+                    debug=True, 
+                    allow_unsafe_werkzeug=True)
+    finally:
+        # Cleanup device communication system on shutdown
+        logger.info("Cleaning up device communication system...")
+        cleanup_device_communication()
+        logger.info("Self Brain AGI System shutdown complete")

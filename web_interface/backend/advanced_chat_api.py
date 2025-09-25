@@ -47,14 +47,26 @@ class AManagementModel:
     
     def __init__(self):
         self.models = {
-            'language': 'LanguageModel',
-            'vision': 'VisionModel', 
-            'audio': 'AudioModel',
-            'video': 'VideoModel',
-            'document': 'DocumentModel'
+            'language': 'http://localhost:5002/api/predict',
+            'vision': 'http://localhost:5004/api/predict',
+            'audio': 'http://localhost:5003/api/predict',
+            'video': 'http://localhost:5005/api/predict',
+            'document': 'http://localhost:5009/api/predict'
         }
+        self.external_apis = {}
+        self.load_external_api_config()
         
-    def process_message(self, message, media=None, conversation_id=None):
+    def load_external_api_config(self):
+        """加载外部API配置"""
+        try:
+            config_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'api_settings.json')
+            if os.path.exists(config_path):
+                with open(config_path, 'r') as f:
+                    self.external_apis = json.load(f)
+        except Exception as e:
+            logger.error(f"Failed to load external API config: {str(e)}")
+    
+    def process_message(self, message, media=None, conversation_id=None, context=None):
         """Process user messages and coordinate relevant models"""
         
         response = {
@@ -67,26 +79,31 @@ class AManagementModel:
         start_time = datetime.now()
         
         try:
-            # Analyze message type and intent
-            analysis = self.analyze_message(message, media)
-            
-            # Call appropriate models based on analysis
-            if media:
-                # Process multimedia content
-                media_response = self.process_media(media, analysis)
-                response['message'] = media_response['message']
-                response['models_used'] = media_response['models_used']
+            # 优先使用外部API（如果配置并启用）
+            if 'management' in self.external_apis and self.external_apis['management'].get('enabled', False):
+                response = self._call_external_api('management', message, context)
             else:
-                # Process plain text
-                text_response = self.process_text(message, analysis)
-                response['message'] = text_response['message']
-                response['models_used'] = text_response['models_used']
+                # 使用内部模型处理
+                # 分析消息类型和意图
+                analysis = self.analyze_message(message, media)
                 
-            # Real-time voice/video processing
-            if analysis.get('is_voice_request'):
-                voice_response = self.process_voice(message)
-                response['voice_data'] = voice_response
-                
+                # 根据分析调用适当的模型
+                if media:
+                    # 处理多媒体内容
+                    media_response = self.process_media(media, analysis)
+                    response['message'] = media_response['message']
+                    response['models_used'] = media_response['models_used']
+                else:
+                    # 处理纯文本
+                    text_response = self.process_text(message, analysis, context)
+                    response['message'] = text_response['message']
+                    response['models_used'] = text_response['models_used']
+                    
+                # 实时语音/视频处理
+                if analysis.get('is_voice_request'):
+                    voice_response = self.process_voice(message)
+                    response['voice_data'] = voice_response
+                    
             response['processing_time'] = (datetime.now() - start_time).total_seconds()
             
         except Exception as e:
@@ -98,6 +115,74 @@ class AManagementModel:
             }
             
         return response
+        
+    def _call_external_api(self, model_type, message, context=None):
+        """调用外部API处理请求"""
+        import requests
+        
+        api_config = self.external_apis.get(model_type)
+        if not api_config or not api_config.get('enabled', False):
+            return {
+                'success': False,
+                'message': 'External API not configured or disabled'
+            }
+        
+        try:
+            headers = {
+                'Content-Type': 'application/json'
+            }
+            
+            if api_config.get('api_key'):
+                headers['Authorization'] = f"Bearer {api_config['api_key']}"
+            
+            payload = {
+                'model': api_config.get('model_name', ''),
+                'messages': [
+                    {'role': 'system', 'content': 'You are a helpful assistant.'}
+                ]
+            }
+            
+            # 添加上下文和当前消息
+            if context:
+                for item in context:
+                    if 'user' in item:
+                        payload['messages'].append({'role': 'user', 'content': item['user']})
+                    if 'ai' in item:
+                        payload['messages'].append({'role': 'assistant', 'content': item['ai']})
+            
+            payload['messages'].append({'role': 'user', 'content': message})
+            
+            # 根据不同API的格式调整payload
+            if api_config.get('api_type') == 'openai':
+                url = f"{api_config['base_url']}/v1/chat/completions"
+            else:
+                url = api_config['base_url']
+            
+            response = requests.post(url, headers=headers, json=payload, timeout=30)
+            response_json = response.json()
+            
+            # 解析响应
+            if api_config.get('api_type') == 'openai' and 'choices' in response_json:
+                content = response_json['choices'][0]['message']['content']
+            elif 'result' in response_json:
+                content = response_json['result']
+            else:
+                content = str(response_json)
+            
+            return {
+                'success': True,
+                'message': content,
+                'models_used': [f"external_{model_type}"],
+                'external_api': model_type
+            }
+            
+        except Exception as e:
+            logger.error(f"Error calling external API: {str(e)}")
+            return {
+                'success': False,
+                'message': f'Error calling external API: {str(e)}',
+                'error': str(e)
+            }
     
     def analyze_message(self, message, media=None):
         """Analyze user message intent and type"""

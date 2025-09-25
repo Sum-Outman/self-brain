@@ -50,8 +50,7 @@ self-brain/
 │   └── RELEASE_NOTES.md       # 发布说明
 ├── 📁 配置
 │   ├── .gitignore             # Git忽略规则
-│   ├── requirements.txt       # 依赖列表
-│   └── Dockerfile            # Docker配置
+│   └── requirements.txt       # 依赖列表
 ├── 📁 GitHub模板
 │   └── .github/
 │       ├── ISSUE_TEMPLATE/

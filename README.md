@@ -1,4 +1,4 @@
-# Self Brain AGI 🧠
+# Self Brain AGI
 
 <div align="center">
   <img src="icons/self_brain.svg" alt="Self Brain Logo" width="200"/>
@@ -194,10 +194,18 @@ This project is licensed under the **Apache License 2.0** - see the [LICENSE](LI
 ### 🌐 Updated Port Assignments
 | Service | Port | Status |
 |---------|------|--------|
-| Main Web Interface | 5000 | 
-| A Management Model | 5001 | 
-| B Language Model | 5002 | 
-| C Audio Model | 5003 | 
+| Main Web Interface | 5000 | Active
+| A Management Model | 5001 | Active
+| B Language Model | 5002 | Active
+| C Audio Model | 5003 | Active
+| D Image Model | 5004 | Active
+| E Video Model | 5005 | Active
+| F Spatial Model | 5006 | Active
+| G Sensor Model | 5007 | Active
+| H Computer Control | 5008 | Active
+| I Knowledge Model | 5009 | Active
+| J Motion Model | 5010 | Active
+| K Programming Model | 5011 | Active 
 | D Image Model | 5004 | 
 | E Video Model | 5005 | 
 | F Spatial Model | 5006 | 

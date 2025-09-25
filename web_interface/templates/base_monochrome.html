@@ -56,6 +56,16 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'camera_management' %}active fw-bold{% endif %}" href="/camera_management">
+                            <i class="bi bi-camera"></i> Camera Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'device_communication_page' %}active fw-bold{% endif %}" href="/device_communication">
+                            <i class="bi bi-gear"></i> Device Communication
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'upload_page' %}active fw-bold{% endif %}" href="/upload">
                             <i class="bi bi-cloud-upload"></i> Upload Data
                         </a>

@@ -1,5 +1,6 @@
 # 系统配置 - System Configuration
-# 版本: 1.0 | Version: 1.0
+# Self Brain AGI System Configuration
+# Version: 1.0 | 创作团队邮箱: silencecrowtom@qq.com
 
 # 端口配置 - Port Configuration
 ports:
@@ -17,6 +18,7 @@ ports:
   web_backend: 8000
   web_frontend: 8080
   manager_api: 5015
+  agi_core: 5014
 
 # 增强学习配置 - Enhanced Learning Configuration
 enhanced_learning:

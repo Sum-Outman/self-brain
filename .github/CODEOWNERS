@@ -5,5 +5,3 @@
 /config/ @Sum-Outman
 /.github/ @Sum-Outman
 /requirements*.txt @Sum-Outman
-/Dockerfile @Sum-Outman
-/docker-compose.yml @Sum-Outman

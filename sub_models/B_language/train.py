@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2025 The AI Management System Authors
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,633 +12,1380 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# B语言模型训练程序 | B Language Model Training Program
-# 多语言自然语言处理模型的完整训练实现 | Complete training implementation for multilingual NLP models
+"""
+语言模型训练模块
+整合从零开始训练和预训练模型功能
+提供统一的训练API接口
+"""
 
 import os
 import json
+import random
 import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import Dataset, DataLoader
+from transformers import AutoModel, AutoTokenizer, get_linear_schedule_with_warmup
 import numpy as np
+import time
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Tuple
-from transformers import (
-    AutoTokenizer, 
-    AutoModelForSequenceClassification,
-    AutoModelForTokenClassification,
-    Trainer, 
-    TrainingArguments,
-    DataCollatorWithPadding
-)
-from datasets import Dataset, load_dataset
-import evaluate
-from sklearn.model_selection import train_test_split
+from collections import deque
+import psutil
 
-class LanguageModelTrainer:
-    """语言模型训练器 | Language Model Trainer"""
+# 设置随机种子以确保可重复性
+SEED = 42
+torch.manual_seed(SEED)
+np.random.seed(SEED)
+random.seed(SEED)
+
+# 设备配置
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+# 全局的collate_fn函数，用于DataLoader在多进程环境中使用
+def collate_fn(batch):
+    """将批次数据转换为模型输入格式"""
+    input_ids = torch.stack([item['input_ids'] for item in batch])
+    attention_mask = torch.stack([item['attention_mask'] for item in batch])
+    labels = torch.stack([item['label'] for item in batch])
     
-    def __init__(self, model_type="sentiment", language="multilingual", use_external_api=False, api_config=None):
-        """初始化训练器 | Initialize trainer
+    return {
+        'input_ids': input_ids.to(device),
+        'attention_mask': attention_mask.to(device),
+        'labels': labels.to(device)
+    }
+
+class Vocabulary:
+    """
+    词汇表类，用于处理文本数据的词汇映射
+    """
+    def __init__(self):
+        self.word2idx = {}
+        self.idx2word = {}
+        self.word_count = {}
+        self.total_words = 0
+        
+        # 添加特殊标记
+        self.add_word('<pad>')
+        self.add_word('<unk>')
+        self.add_word('<bos>')
+        self.add_word('<eos>')
+    
+    def add_word(self, word):
+        """添加单词到词汇表"""
+        if word not in self.word2idx:
+            idx = len(self.word2idx)
+            self.word2idx[word] = idx
+            self.idx2word[idx] = word
+            self.word_count[word] = 1
+        else:
+            self.word_count[word] += 1
+        self.total_words += 1
+    
+    def get_idx(self, word):
+        """获取单词对应的索引，未找到则返回unknown的索引"""
+        return self.word2idx.get(word, self.word2idx['<unk>'])
+    
+    def get_word(self, idx):
+        """获取索引对应的单词"""
+        return self.idx2word.get(idx, '<unk>')
+    
+    def __len__(self):
+        """返回词汇表大小"""
+        return len(self.word2idx)
+
+class LanguageCorpusDataset(Dataset):
+    """
+    语言语料数据集类，支持从零开始训练和预训练两种模式
+    """
+    def __init__(self, data_path=None, is_pretrained=False, max_length=128, vocab_size=None):
+        """
+        初始化数据集
         
         参数:
-            model_type: 模型类型 (sentiment/ner/generation/emotion) | Model type (sentiment/ner/generation/emotion)
-            language: 语言类型 (multilingual/zh/en/ja/de/ru) | Language type (multilingual/zh/en/ja/de/ru)
-            use_external_api: 是否使用外部API | Whether to use external API
-            api_config: 外部API配置字典 | External API configuration dict
+            data_path: 数据文件路径，如果为None则生成合成数据
+            is_pretrained: 是否使用预训练模式
+            max_length: 序列最大长度
+            vocab_size: 词汇表大小，仅在非预训练模式下有效
         """
-        self.model_type = model_type
-        self.language = language
-        self.use_external_api = use_external_api
-        self.api_config = api_config or {}
-        self.model = None
-        self.tokenizer = None
-        self.trainer = None
-        self.training_config = self._get_default_config()
-        self.joint_training_partners = []  # 联合训练伙伴模型 | Joint training partners
-        self.emotion_categories = {
-            "anger": 0, "disgust": 1, "fear": 2, "joy": 3, 
-            "neutral": 4, "sadness": 5, "surprise": 6
-        }
-        self.language_resources = self._load_language_resources()
+        self.is_pretrained = is_pretrained
+        self.max_length = max_length
         
-    def _get_default_config(self):
-        """获取默认训练配置 | Get default training configuration"""
+        if is_pretrained:
+            # 预训练模式下，直接加载预训练分词器
+            self.tokenizer = AutoTokenizer.from_pretrained('xlm-roberta-base')
+            self.vocab = None
+        else:
+            # 从零开始训练模式，构建自定义词汇表
+            self.vocab = Vocabulary()
+            self.tokenizer = None  # 不使用预训练分词器
+        
+        # 加载或生成数据
+        if data_path and os.path.exists(data_path):
+            self.data = self._load_data(data_path)
+        else:
+            self.data = self._generate_synthetic_data()
+        
+        # 如果是从零开始训练，构建并可能扩展词汇表
+        if not is_pretrained:
+            self._build_vocabulary()
+            if vocab_size and vocab_size > len(self.vocab):
+                self._expand_vocabulary(vocab_size)
+        
+        # 编码数据
+        self.encoded_data = self._encode_data()
+    
+    def _generate_synthetic_data(self):
+        """生成合成训练数据"""
+        # 基础词汇表（支持5种语言）
+        vocabularies = {
+            'en': ['hello', 'world', 'i', 'am', 'a', 'language', 'model', 'learning', 'to', 'understand', 'you'],
+            'zh': ['你好', '世界', '我', '是', '一个', '语言', '模型', '学习', '理解', '你'],
+            'ja': ['こんにちは', '世界', '私', 'は', '言語', 'モデル', '学習', '理解', 'し', 'ます'],
+            'de': ['hallo', 'welt', 'ich', 'bin', 'ein', 'sprach', 'modell', 'lernen', 'zu', 'verstehen', 'dich'],
+            'ru': ['привет', 'мир', 'я', 'являюсь', 'языковой', 'моделью', 'учусь', 'понимать', 'вас']
+        }
+        
+        # 基础句子结构
+        sentence_structures = [
+            '{word1} {word2} {word3}',
+            '{word1} {word2} {word3} {word4}',
+            '{word1} {word2} {word3} {word4} {word5}',
+            '{word1} {word2} {word3} {word4} {word5} {word6}'
+        ]
+        
+        data = []
+        # 为每种语言生成数据
+        for lang, words in vocabularies.items():
+            for _ in range(1000):  # 每种语言生成1000个样本
+                # 随机选择句子结构
+                structure = random.choice(sentence_structures)
+                # 填充随机单词
+                sentence_parts = {'word{}'.format(i+1): random.choice(words) 
+                                for i in range(structure.count('{'))}
+                # 格式化句子
+                sentence = structure.format(**sentence_parts)
+                # 添加情感标签（简单模拟）
+                label = random.choice(['neutral', 'joy', 'sadness', 'anger', 'fear', 'surprise', 'disgust'])
+                # 添加到数据中
+                data.append({'text': sentence, 'label': label, 'language': lang})
+        
+        return data
+    
+    def _load_data(self, data_path):
+        """从文件加载数据"""
+        data = []
+        
+        # 如果是目录，遍历所有子目录中的JSON文件
+        if os.path.isdir(data_path):
+            for root, dirs, files in os.walk(data_path):
+                for file in files:
+                    if file.endswith('.json'):
+                        file_path = os.path.join(root, file)
+                        try:
+                            with open(file_path, 'r', encoding='utf-8') as f:
+                                file_data = json.load(f)
+                                if isinstance(file_data, list):
+                                    data.extend(file_data)
+                        except Exception as e:
+                            print(f"Error loading file {file_path}: {e}")
+        else:
+            # 如果是单个文件，直接加载
+            try:
+                with open(data_path, 'r', encoding='utf-8') as f:
+                    file_data = json.load(f)
+                    if isinstance(file_data, list):
+                        data.extend(file_data)
+            except Exception as e:
+                print(f"Error loading file {data_path}: {e}")
+        
+        return data
+    
+    def _build_vocabulary(self):
+        """构建词汇表"""
+        for item in self.data:
+            # 简单分词（按空格分割）
+            words = item['text'].split()
+            for word in words:
+                self.vocab.add_word(word)
+    
+    def _expand_vocabulary(self, target_size):
+        """
+        通过生成随机组合扩展词汇表到目标大小
+        这对于小数据集训练很有帮助
+        """
+        current_size = len(self.vocab)
+        if current_size >= target_size:
+            return
+        
+        base_words = list(self.vocab.word2idx.keys())
+        # 移除特殊标记
+        special_tokens = ['<pad>', '<unk>', '<bos>', '<eos>']
+        base_words = [word for word in base_words if word not in special_tokens]
+        
+        # 生成新单词直到达到目标大小
+        while len(self.vocab) < target_size and base_words:
+            # 随机选择基础单词数量
+            n = random.randint(2, min(4, len(base_words)))
+            # 随机选择n个基础单词
+            selected_words = random.sample(base_words, n)
+            # 组合成新单词
+            new_word = ''.join(selected_words)
+            # 添加到词汇表
+            if new_word not in self.vocab.word2idx:
+                self.vocab.add_word(new_word)
+    
+    def _encode_data(self):
+        """将文本数据编码为模型可用的格式"""
+        encoded_data = []
+        
+        for item in self.data:
+            text = item['text']
+            label = item['label']
+            language = item.get('language', 'en')
+            
+            if self.is_pretrained:
+                # 预训练模式：使用预训练分词器
+                encoding = self.tokenizer(
+                    text,
+                    truncation=True,
+                    padding='max_length',
+                    max_length=self.max_length,
+                    return_tensors='pt'
+                )
+                input_ids = encoding['input_ids'].squeeze().tolist()
+                attention_mask = encoding['attention_mask'].squeeze().tolist()
+            else:
+                # 从零开始训练模式：使用自定义词汇表
+                words = text.split()
+                # 添加开始和结束标记
+                words = ['<bos>'] + words + ['<eos>']
+                # 截断或填充到最大长度
+                if len(words) > self.max_length:
+                    words = words[:self.max_length]
+                else:
+                    words += ['<pad>'] * (self.max_length - len(words))
+                # 转换为索引
+                input_ids = [self.vocab.get_idx(word) for word in words]
+                # 生成注意力掩码
+                attention_mask = [1 if word != '<pad>' else 0 for word in words]
+            
+            # 将情感标签转换为索引
+            emotion_labels = {'neutral': 0, 'joy': 1, 'sadness': 2, 'anger': 3, 'fear': 4, 'surprise': 5, 'disgust': 6}
+            label_idx = emotion_labels.get(label, 0)  # 默认中性
+            
+            encoded_data.append({
+                'input_ids': input_ids,
+                'attention_mask': attention_mask,
+                'label': label_idx,
+                'language': language
+            })
+        
+        return encoded_data
+    
+    def __len__(self):
+        """返回数据集大小"""
+        return len(self.encoded_data)
+    
+    def __getitem__(self, idx):
+        """获取指定索引的数据项"""
+        item = self.encoded_data[idx]
         return {
+            'input_ids': torch.tensor(item['input_ids']),
+            'attention_mask': torch.tensor(item['attention_mask']),
+            'label': torch.tensor(item['label']),
+            'language': item['language']
+        }
+
+class LanguageModel(nn.Module):
+    """
+    语言模型类，支持从零开始训练和预训练两种模式
+    """
+    def __init__(self, vocab_size=None, embedding_dim=256, hidden_dim=512, 
+                 num_layers=2, dropout=0.3, model_name=None):
+        """
+        初始化语言模型
+        
+        参数:
+            vocab_size: 词汇表大小，仅在从零开始训练模式下使用
+            embedding_dim: 嵌入维度
+            hidden_dim: 隐藏层维度
+            num_layers: LSTM层数
+            dropout: Dropout比率
+            model_name: 预训练模型名称，设置后使用预训练模式
+        """
+        super(LanguageModel, self).__init__()
+        
+        self.is_pretrained = model_name is not None
+        
+        if self.is_pretrained:
+            # 预训练模式：加载预训练模型
+            self.base_model = AutoModel.from_pretrained(model_name)
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+            self.hidden_dim = self.base_model.config.hidden_size
+        else:
+            # 从零开始训练模式：构建自定义模型
+            self.embedding = nn.Embedding(vocab_size, embedding_dim)
+            self.lstm = nn.LSTM(
+                embedding_dim,
+                hidden_dim,
+                num_layers,
+                batch_first=True,
+                bidirectional=True,
+                dropout=dropout if num_layers > 1 else 0
+            )
+            self.dropout = nn.Dropout(dropout)
+            self.hidden_dim = hidden_dim
+        
+        # 情感分类头
+        self.emotion_head = nn.Linear(
+            self.hidden_dim * 2 if not self.is_pretrained else self.hidden_dim, 
+            7  # 7种基本情绪
+        )
+        
+        # 语言建模头（仅在从零开始训练模式下使用）
+        if not self.is_pretrained:
+            self.lm_head = nn.Linear(self.hidden_dim * 2, vocab_size)
+        
+        # 初始化统计跟踪属性
+        self.__post_init__()
+    
+    def __post_init__(self):
+        """初始化统计跟踪属性"""
+        self.input_stats = {
+            'total_requests': 0,
+            'successful_requests': 0,
+            'avg_response_time': 0,
+            'last_hour_requests': 0,
+            'language_distribution': {}
+        }
+        self.performance_metrics = {
+            'inference_speed': 0,
+            'accuracy': 0
+        }
+        self.last_activity = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self._request_times = deque(maxlen=100)  # 存储最近100个请求的处理时间
+    
+    def forward(self, input_ids, attention_mask=None):
+        """前向传播"""
+        if self.is_pretrained:
+            # 预训练模式
+            outputs = self.base_model(input_ids, attention_mask=attention_mask)
+            sequence_output = outputs.last_hidden_state
+        else:
+            # 从零开始训练模式
+            embedded = self.embedding(input_ids)
+            embedded = self.dropout(embedded)
+            lstm_out, _ = self.lstm(embedded)
+            sequence_output = self.dropout(lstm_out)
+        
+        # 情感预测（使用第一个token的表示）
+        emotion_logits = self.emotion_head(sequence_output[:, 0, :])
+        
+        # 语言建模预测（仅在从零开始训练模式下）
+        lm_logits = None
+        if not self.is_pretrained:
+            lm_logits = self.lm_head(sequence_output)
+        
+        return lm_logits, emotion_logits
+    
+    def _update_stats(self, success=True, process_time=None, language=None):
+        """更新模型统计信息"""
+        # 更新总请求数
+        self.input_stats['total_requests'] += 1
+        
+        # 更新成功请求数
+        if success:
+            self.input_stats['successful_requests'] += 1
+        
+        # 更新响应时间统计
+        if process_time:
+            self._request_times.append(process_time)
+            self.input_stats['avg_response_time'] = sum(self._request_times) / len(self._request_times)
+            # 计算推理速度
+            if hasattr(self, 'last_prompt_length') and self.last_prompt_length > 0:
+                self.performance_metrics['inference_speed'] = self.last_prompt_length / process_time
+        
+        # 更新语言分布
+        if language:
+            if language not in self.input_stats['language_distribution']:
+                self.input_stats['language_distribution'][language] = 0
+            self.input_stats['language_distribution'][language] += 1
+        
+        # 更新最后活动时间
+        self.last_activity = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    def get_status(self):
+        """获取模型状态信息"""
+        # 获取内存使用情况
+        process = psutil.Process()
+        memory_info = process.memory_info()
+        
+        # 获取GPU内存使用情况（如果可用）
+        gpu_memory = 0
+        if torch.cuda.is_available():
+            gpu_memory = torch.cuda.memory_allocated() / 1024 / 1024  # MB
+            
+        # 计算模型参数数量
+        param_count = sum(p.numel() for p in self.parameters())
+        
+        # 获取实际性能指标
+        inference_speed = self.performance_metrics.get('inference_speed', 0)
+        accuracy = self.performance_metrics.get('accuracy', 0)
+        
+        return {
+            "status": "active",
+            "memory_usage_mb": memory_info.rss / 1024 / 1024,
+            "gpu_memory_mb": gpu_memory,
+            "parameters_count": param_count,
+            "last_activity": self.last_activity,
+            "performance": {
+                "inference_speed": f"{inference_speed:.2f} tokens/sec" if inference_speed > 0 else "measuring...",
+                "accuracy": f"{accuracy:.2%}" if accuracy > 0 else "measuring..."
+            }
+        }
+    
+    def get_input_stats(self):
+        """获取输入统计信息"""
+        # 从实际使用中收集统计数据
+        total_requests = self.input_stats.get('total_requests', 0)
+        successful_requests = self.input_stats.get('successful_requests', 0)
+        failed_requests = total_requests - successful_requests
+        avg_response_time = self.input_stats.get('avg_response_time', 0)
+        last_hour_requests = self.input_stats.get('last_hour_requests', 0)
+        language_distribution = self.input_stats.get('language_distribution', {})
+        
+        return {
+            "total_requests": total_requests,
+            "successful_requests": successful_requests,
+            "failed_requests": failed_requests,
+            "average_response_time_ms": avg_response_time,
+            "last_hour_requests": last_hour_requests,
+            "language_distribution": language_distribution
+        }
+
+class ModelTrainer:
+    """
+    模型训练器类，负责模型的训练、评估和保存
+    """
+    def __init__(self, model, config=None):
+        """
+        初始化训练器
+        
+        参数:
+            model: 要训练的模型
+            config: 训练配置
+        """
+        self.model = model.to(device)
+        
+        # 设置默认配置
+        self.config = {
             'epochs': 10,
-            'batch_size': 16,
-            'learning_rate': 2e-5,
-            'warmup_steps': 500,
-            'logging_steps': 100,
-            'eval_steps': 500,
-            'save_steps': 1000,
-            'max_seq_length': 256,
-            'joint_training': False,
-            'external_api_timeout': 30
+            'batch_size': 32,
+            'learning_rate': 1e-4,
+            'weight_decay': 0.01,
+            'gradient_clipping': 1.0,
+            'early_stopping_patience': 10,
+            'checkpoint_dir': './checkpoints',
+            'log_interval': 10,
+            'main_metric': 'accuracy',
+            'metric_direction': 'max'
+        }
+        
+        # 更新用户配置
+        if config:
+            self.config.update(config)
+        
+        # 创建优化器
+        self.optimizer = optim.AdamW(
+            self.model.parameters(),
+            lr=self.config['learning_rate'],
+            weight_decay=self.config['weight_decay']
+        )
+        
+        # 创建损失函数
+        self.criterion_emotion = nn.CrossEntropyLoss()
+        if hasattr(self.model, 'lm_head'):
+            self.criterion_lm = nn.CrossEntropyLoss(ignore_index=self.model.vocab.get_idx('<pad>') if hasattr(self.model, 'vocab') else 0)
+        
+        # 创建学习率调度器
+        # 注意：移除verbose参数以兼容旧版本PyTorch
+        self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+            self.optimizer,
+            mode=self.config['metric_direction'],
+            factor=0.1,
+            patience=3
+        )
+        
+        # 初始化早停机制
+        self.early_stopping_counter = 0
+        self.best_score = None
+        
+        # 创建检查点目录
+        os.makedirs(self.config['checkpoint_dir'], exist_ok=True)
+        
+        # 初始化训练历史
+        self.train_history = {
+            'train_loss': [],
+            'val_loss': [],
+            'train_acc': [],
+            'val_acc': []
+        }
+    
+    def create_data_loaders(self, train_dataset, val_dataset=None, test_dataset=None):
+        """
+        创建数据加载器
+        """
+        # 创建训练数据加载器
+        self.train_loader = DataLoader(
+            train_dataset,
+            batch_size=self.config['batch_size'],
+            shuffle=True,
+            collate_fn=collate_fn,
+            num_workers=4
+        )
+        
+        # 创建验证数据加载器
+        self.val_loader = None
+        if val_dataset:
+            self.val_loader = DataLoader(
+                val_dataset,
+                batch_size=self.config['batch_size'],
+                shuffle=False,
+                collate_fn=collate_fn,
+                num_workers=4
+            )
+        
+        # 创建测试数据加载器
+        self.test_loader = None
+        if test_dataset:
+            self.test_loader = DataLoader(
+                test_dataset,
+                batch_size=self.config['batch_size'],
+                shuffle=False,
+                collate_fn=collate_fn,
+                num_workers=4
+            )
+    
+    def _calculate_accuracy(self, logits, labels):
+        """计算准确率"""
+        predictions = torch.argmax(logits, dim=1)
+        correct = (predictions == labels).sum().item()
+        return correct / len(labels)
+    
+    def train_epoch(self):
+        """训练一个epoch"""
+        self.model.train()
+        total_loss = 0
+        total_accuracy = 0
+        
+        for batch_idx, batch in enumerate(self.train_loader):
+            input_ids = batch['input_ids']
+            attention_mask = batch['attention_mask']
+            labels = batch['labels']
+            
+            # 前向传播
+            self.optimizer.zero_grad()
+            lm_logits, emotion_logits = self.model(input_ids, attention_mask)
+            
+            # 计算损失
+            loss = self.criterion_emotion(emotion_logits, labels)
+            
+            # 如果有语言建模头，添加语言建模损失
+            if lm_logits is not None:
+                lm_labels = input_ids[:, 1:]  # 预测下一个token
+                lm_logits = lm_logits[:, :-1, :]  # 移除最后一个输出
+                lm_loss = self.criterion_lm(lm_logits.reshape(-1, lm_logits.size(-1)), lm_labels.reshape(-1))
+                loss += lm_loss
+            
+            # 反向传播和优化
+            loss.backward()
+            
+            # 梯度裁剪
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config['gradient_clipping'])
+            
+            self.optimizer.step()
+            
+            # 累积损失和准确率
+            total_loss += loss.item()
+            accuracy = self._calculate_accuracy(emotion_logits, labels)
+            total_accuracy += accuracy
+            
+            # 打印进度
+            if (batch_idx + 1) % self.config['log_interval'] == 0:
+                print(f'Batch {batch_idx+1}/{len(self.train_loader)}, Loss: {loss.item():.4f}, Accuracy: {accuracy:.4f}')
+        
+        # 计算平均损失和准确率
+        avg_loss = total_loss / len(self.train_loader)
+        avg_accuracy = total_accuracy / len(self.train_loader)
+        
+        return avg_loss, avg_accuracy
+    
+    def evaluate(self, loader=None):
+        """评估模型"""
+        self.model.eval()
+        total_loss = 0
+        total_accuracy = 0
+        
+        # 默认使用验证加载器
+        if loader is None:
+            loader = self.val_loader
+        
+        with torch.no_grad():
+            for batch in loader:
+                input_ids = batch['input_ids']
+                attention_mask = batch['attention_mask']
+                labels = batch['labels']
+                
+                # 前向传播
+                lm_logits, emotion_logits = self.model(input_ids, attention_mask)
+                
+                # 计算损失
+                loss = self.criterion_emotion(emotion_logits, labels)
+                
+                # 如果有语言建模头，添加语言建模损失
+                if lm_logits is not None:
+                    lm_labels = input_ids[:, 1:]
+                    lm_logits = lm_logits[:, :-1, :]
+                    lm_loss = self.criterion_lm(lm_logits.reshape(-1, lm_logits.size(-1)), lm_labels.reshape(-1))
+                    loss += lm_loss
+                
+                # 累积损失和准确率
+                total_loss += loss.item()
+                accuracy = self._calculate_accuracy(emotion_logits, labels)
+                total_accuracy += accuracy
+        
+        # 计算平均损失和准确率
+        avg_loss = total_loss / len(loader)
+        avg_accuracy = total_accuracy / len(loader)
+        
+        return avg_loss, avg_accuracy
+    
+    def save_checkpoint(self, epoch, is_best=False):
+        """保存模型检查点"""
+        checkpoint_path = os.path.join(self.config['checkpoint_dir'], f'checkpoint_epoch_{epoch}.pt')
+        
+        checkpoint = {
+            'epoch': epoch,
+            'model_state_dict': self.model.state_dict(),
+            'optimizer_state_dict': self.optimizer.state_dict(),
+            'scheduler_state_dict': self.scheduler.state_dict(),
+            'best_score': self.best_score,
+            'train_history': self.train_history,
+            'config': self.config
+        }
+        
+        torch.save(checkpoint, checkpoint_path)
+        
+        # 保存最佳模型
+        if is_best:
+            best_checkpoint_path = os.path.join(self.config['checkpoint_dir'], 'best_model.pt')
+            torch.save(checkpoint, best_checkpoint_path)
+            print(f'Best model saved to {best_checkpoint_path}')
+    
+    def load_checkpoint(self, checkpoint_path):
+        """加载模型检查点"""
+        try:
+            if os.path.exists(checkpoint_path):
+                checkpoint = torch.load(checkpoint_path, map_location=device)
+                
+                # 加载模型状态
+                self.model.load_state_dict(checkpoint['model_state_dict'])
+                
+                # 加载优化器状态
+                if 'optimizer_state_dict' in checkpoint:
+                    self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+                
+                # 加载调度器状态
+                if 'scheduler_state_dict' in checkpoint:
+                    self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+                
+                # 加载最佳分数和训练历史
+                if 'best_score' in checkpoint:
+                    self.best_score = checkpoint['best_score']
+                
+                if 'train_history' in checkpoint:
+                    self.train_history = checkpoint['train_history']
+                
+                # 加载配置
+                if 'config' in checkpoint:
+                    self.config.update(checkpoint['config'])
+                
+                epoch = checkpoint.get('epoch', 0)
+                print(f'Loaded checkpoint from epoch {epoch}')
+                return epoch
+            else:
+                print(f'Checkpoint file not found: {checkpoint_path}')
+                return 0
+        except Exception as e:
+            print(f'Error loading checkpoint: {e}')
+            return 0
+    
+    def train(self):
+        """训练模型"""
+        # 初始化最佳分数
+        if self.best_score is None:
+            if self.config['metric_direction'] == 'max':
+                self.best_score = -float('inf')
+            else:
+                self.best_score = float('inf')
+        
+        # 主训练循环
+        for epoch in range(self.config['epochs']):
+            print(f'\nEpoch {epoch+1}/{self.config['epochs']}')
+            print('-' * 50)
+            
+            # 训练一个epoch
+            train_loss, train_acc = self.train_epoch()
+            
+            # 评估模型
+            val_loss, val_acc = None, None
+            if self.val_loader:
+                val_loss, val_acc = self.evaluate()
+            
+            # 更新训练历史
+            self.train_history['train_loss'].append(train_loss)
+            self.train_history['train_acc'].append(train_acc)
+            
+            if val_loss is not None:
+                self.train_history['val_loss'].append(val_loss)
+                self.train_history['val_acc'].append(val_acc)
+            
+            # 打印epoch总结
+            print(f'\nEpoch Summary:')
+            print(f'Train Loss: {train_loss:.4f}, Train Accuracy: {train_acc:.4f}')
+            if val_loss is not None:
+                print(f'Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_acc:.4f}')
+            
+            # 检查是否是最佳模型
+            current_score = val_acc if val_acc is not None else train_acc
+            is_best = False
+            
+            if self.config['metric_direction'] == 'max':
+                if current_score > self.best_score:
+                    self.best_score = current_score
+                    is_best = True
+                    self.early_stopping_counter = 0
+                else:
+                    self.early_stopping_counter += 1
+            else:
+                if current_score < self.best_score:
+                    self.best_score = current_score
+                    is_best = True
+                    self.early_stopping_counter = 0
+                else:
+                    self.early_stopping_counter += 1
+            
+            # 更新学习率
+            if val_loss is not None:
+                self.scheduler.step(val_loss)
+            
+            # 保存检查点
+            self.save_checkpoint(epoch+1, is_best)
+            
+            # 检查早停条件
+            if self.config['early_stopping_patience'] > 0 and self.early_stopping_counter >= self.config['early_stopping_patience']:
+                print(f'\nEarly stopping triggered after {self.early_stopping_counter} epochs without improvement')
+                break
+        
+        print('\nTraining completed!')
+        return self.train_history
+
+class LanguageModelTrainer:
+    """
+    语言模型训练管理器类，提供高级训练接口
+    整合从零开始训练和预训练模型功能
+    """
+    def __init__(self, config=None):
+        """
+        初始化训练管理器
+        
+        参数:
+            config: 训练配置
+        """
+        # 设置默认配置
+        self.config = self._get_default_config()
+        
+        # 更新用户配置
+        if config:
+            self.config.update(config)
+        
+        # 初始化数据集
+        self.train_dataset = None
+        self.val_dataset = None
+        self.test_dataset = None
+        
+        # 初始化模型和训练器
+        self.model = None
+        self.trainer = None
+        
+        # 加载语言资源
+        self.language_resources = self._load_language_resources()
+    
+    def _get_default_config(self):
+        """获取默认配置"""
+        return {
+            'model_id': 'B_language',
+            'is_pretrained': True,
+            'model_name': 'xlm-roberta-base',
+            'vocab_size': 30000,
+            'embedding_dim': 256,
+            'hidden_dim': 512,
+            'num_layers': 2,
+            'dropout': 0.3,
+            'data_path': './data',
+            'train_size': 0.8,
+            'val_size': 0.1,
+            'max_length': 128,
+            'epochs': 10,
+            'batch_size': 32,
+            'learning_rate': 1e-4,
+            'weight_decay': 0.01,
+            'gradient_clipping': 1.0,
+            'early_stopping_patience': 10,
+            'checkpoint_dir': './checkpoints',
+            'log_interval': 10,
+            'main_metric': 'accuracy',
+            'metric_direction': 'max'
         }
     
     def _load_language_resources(self):
-        """加载多语言资源 | Load multilingual resources"""
-        # 实际实现应从文件加载，这里简化
-        return {
-            "zh": {"emotion_labels": ["愤怒", "厌恶", "恐惧", "快乐", "中性", "悲伤", "惊讶"]},
-            "en": {"emotion_labels": ["Anger", "Disgust", "Fear", "Joy", "Neutral", "Sadness", "Surprise"]},
-            "ja": {"emotion_labels": ["怒り", "嫌悪", "恐怖", "喜び", "中性", "悲しみ", "驚き"]},
-            "de": {"emotion_labels": ["Wut", "Ekel", "Angst", "Freude", "Neutral", "Traurigkeit", "Überraschung"]},
-            "ru": {"emotion_labels": ["Гнев", "Отвращение", "Страх", "Радость", "Нейтральный", "Грусть", "Удивление"]}
-        }
-    
-    def load_pretrained_model(self):
-        """加载预训练模型 | Load pretrained model"""
-        try:
-            if self.use_external_api:
-                print("使用外部API模型 | Using external API model")
-                return True
-                
-            if self.model_type == "sentiment" or self.model_type == "emotion":
-                model_name = "bert-base-multilingual-cased"
-                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-                num_labels = 5 if self.model_type == "sentiment" else len(self.emotion_categories)
-                self.model = AutoModelForSequenceClassification.from_pretrained(
-                    model_name, num_labels=num_labels
-                )
-            elif self.model_type == "ner":
-                model_name = "Davlan/bert-base-multilingual-cased-ner-hrl"
-                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-                self.model = AutoModelForTokenClassification.from_pretrained(model_name)
-            else:
-                raise ValueError(f"不支持的模型类型: {self.model_type} | Unsupported model type: {self.model_type}")
-                
-            print(f"预训练模型加载成功: {model_name} | Pretrained model loaded successfully: {model_name}")
-            return True
-        except Exception as e:
-            print(f"模型加载失败: {e} | Model loading failed: {e}")
-            return False
-    
-    def prepare_dataset(self, data_path=None, task_type="sentiment"):
-        """准备训练数据集 | Prepare training dataset
-        
-        参数:
-            data_path: 数据文件路径 | Data file path
-            task_type: 任务类型 (sentiment/ner) | Task type (sentiment/ner)
-        """
-        if data_path and os.path.exists(data_path):
-            # 从文件加载数据 | Load data from file
-            with open(data_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-        else:
-            # 使用示例数据 | Use example data
-            data = self._get_example_data(task_type)
-        
-        if task_type == "sentiment":
-            return self._prepare_sentiment_data(data)
-        elif task_type == "ner":
-            return self._prepare_ner_data(data)
-        else:
-            raise ValueError(f"不支持的任务类型: {task_type} | Unsupported task type: {task_type}")
-    
-    def _get_example_data(self, task_type):
-        """获取示例训练数据 | Get example training data"""
-        if task_type == "sentiment":
-            return [
-                {"text": "这个产品非常好用，我很满意！", "label": 4, "language": "zh"},
-                {"text": "质量很差，完全不值得购买", "label": 0, "language": "zh"},
-                {"text": "This is an amazing product!", "label": 4, "language": "en"},
-                {"text": "Very disappointed with the service", "label": 1, "language": "en"},
-                {"text": "Das Buch ist ausgezeichnet", "label": 4, "language": "de"},
-                {"text": "Nicht zu empfehlen", "label": 1, "language": "de"},
-                {"text": "この製品は素晴らしいです！", "label": 4, "language": "ja"},
-                {"text": "サービスが悪かった", "label": 0, "language": "ja"},
-                {"text": "Отличный продукт", "label": 4, "language": "ru"},
-                {"text": "Очень разочарован", "label": 1, "language": "ru"}
-            ]
-        elif task_type == "emotion":
-            return [
-                {"text": "我被这个决定激怒了！", "label": 0, "language": "zh", "intensity": 0.9},
-                {"text": "这个惊喜让我非常开心", "label": 3, "language": "zh", "intensity": 0.8},
-                {"text": "I'm terrified of what might happen", "label": 2, "language": "en", "intensity": 0.95},
-                {"text": "Diese Nachricht macht mich traurig", "label": 5, "language": "de", "intensity": 0.7},
-                {"text": "この結果に驚きました", "label": 6, "language": "ja", "intensity": 0.6},
-                {"text": "Я чувствую отвращение к этой ситуации", "label": 1, "language": "ru", "intensity": 0.85}
-            ]
-        elif task_type == "ner":
-            return [
-                {"text": "张三去了北京的天安门", "entities": [{"start": 0, "end": 2, "label": "PER"}, {"start": 6, "end": 8, "label": "LOC"}]},
-                {"text": "Apple Inc. is located in Cupertino", "entities": [{"start": 0, "end": 10, "label": "ORG"}, {"start": 27, "end": 36, "label": "LOC"}]}
-            ]
-        return []
-    
-    def _prepare_sentiment_data(self, data):
-        """准备情感分析数据 | Prepare sentiment analysis data"""
-        texts = [item['text'] for item in data]
-        labels = [item['label'] for item in data]
-        
-        # 分词 | Tokenization
-        encodings = self.tokenizer(
-            texts, 
-            truncation=True, 
-            padding=True, 
-            max_length=self.training_config['max_seq_length']
-        )
-        
-        dataset = Dataset.from_dict({
-            'input_ids': encodings['input_ids'],
-            'attention_mask': encodings['attention_mask'],
-            'labels': labels
-        })
-        
-        # 分割训练集和验证集 | Split train and validation sets
-        train_test_split = dataset.train_test_split(test_size=0.2)
-        return train_test_split
-    
-    def _prepare_ner_data(self, data):
-        """准备命名实体识别数据 | Prepare NER data"""
-        # 简化实现，实际需要更复杂的处理 | Simplified implementation, actual needs more complex processing
-        texts = [item['text'] for item in data]
-        
-        encodings = self.tokenizer(
-            texts, 
-            truncation=True, 
-            padding=True, 
-            max_length=self.training_config['max_seq_length'],
-            is_split_into_words=False
-        )
-        
-        # 创建标签 | Create labels
-        labels = []
-        for item in data:
-            text_labels = ['O'] * len(item['text'])
-            for entity in item['entities']:
-                # 简化标签分配 | Simplified label assignment
-                text_labels[entity['start']:entity['end']] = [f'B-{entity["label"]}'] + [f'I-{entity["label"]}'] * (entity['end'] - entity['start'] - 1)
-            labels.append(text_labels)
-        
-        dataset = Dataset.from_dict({
-            'input_ids': encodings['input_ids'],
-            'attention_mask': encodings['attention_mask'],
-            'labels': labels
-        })
-        
-        return dataset.train_test_split(test_size=0.2)
-    
-    def train(self, train_dataset, eval_dataset=None, config=None, joint_data=None):
-        """训练模型 | Train model"""
-        if config:
-            self.training_config.update(config)
-        
-        # 联合训练数据处理 | Joint training data processing
-        if joint_data:
-            print(f"接收来自{len(joint_data)}个模型的联合训练数据 | Received joint training data from {len(joint_data)} models")
-            # 此处添加多模态数据融合逻辑 | Add multimodal data fusion logic here
-            # 示例：将知识库模型数据融入训练 | Example: Integrate knowledge model data
-            if 'knowledge' in joint_data:
-                train_dataset = self._enhance_with_knowledge(train_dataset, joint_data['knowledge'])
-        
-        if self.use_external_api:
-            return self._train_via_external_api(train_dataset)
-        
-        if not self.model or not self.tokenizer:
-            if not self.load_pretrained_model():
-                return {"status": "error", "message": "模型加载失败 | Model loading failed"}
-        
-        # 设置训练参数 | Set training arguments
-        training_args = TrainingArguments(
-            output_dir=f"./results/{self.model_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            num_train_epochs=self.training_config['epochs'],
-            per_device_train_batch_size=self.training_config['batch_size'],
-            per_device_eval_batch_size=self.training_config['batch_size'],
-            warmup_steps=self.training_config['warmup_steps'],
-            learning_rate=self.training_config['learning_rate'],
-            logging_steps=self.training_config['logging_steps'],
-            eval_steps=self.training_config['eval_steps'] if eval_dataset else None,
-            save_steps=self.training_config['save_steps'],
-            evaluation_strategy="steps" if eval_dataset else "no",
-            save_strategy="steps",
-            load_best_model_at_end=True if eval_dataset else False,
-            metric_for_best_model="accuracy" if self.model_type == "sentiment" else "f1",
-            greater_is_better=True
-        )
-        
-        # 创建训练器 | Create trainer
-        data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
-        
-        self.trainer = Trainer(
-            model=self.model,
-            args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
-            data_collator=data_collator,
-            tokenizer=self.tokenizer,
-            compute_metrics=self._compute_metrics
-        )
-        
-        # 开始训练 | Start training
-        print(f"开始训练 {self.model_type} 模型... | Starting {self.model_type} model training...")
-        train_result = self.trainer.train()
-        
-        # 保存模型 | Save model
-        self.trainer.save_model()
-        self.tokenizer.save_pretrained(self.trainer.args.output_dir)
-        
-        metrics = train_result.metrics
-        metrics.update(self.trainer.evaluate())
-        
-        return {
-            "status": "success",
-            "message": "训练完成 | Training completed",
-            "metrics": metrics,
-            "model_path": self.trainer.args.output_dir
-        }
-    
-    def _compute_metrics(self, eval_pred):
-        """计算评估指标 | Compute evaluation metrics"""
-        predictions, labels = eval_pred
-        predictions = np.argmax(predictions, axis=1)
-        
-        accuracy_metric = evaluate.load("accuracy")
-        precision_metric = evaluate.load("precision")
-        recall_metric = evaluate.load("recall")
-        f1_metric = evaluate.load("f1")
-        
-        metrics = {
-            "accuracy": accuracy_metric.compute(predictions=predictions, references=labels)["accuracy"],
-            "precision": precision_metric.compute(predictions=predictions, references=labels, average="weighted")["precision"],
-            "recall": recall_metric.compute(predictions=predictions, references=labels, average="weighted")["recall"],
-            "f1": f1_metric.compute(predictions=predictions, references=labels, average="weighted")["f1"]
-        }
-        
-        # 情感强度分析（仅emotion类型）| Emotion intensity analysis (only for emotion type)
-        if self.model_type == "emotion":
-            intensity_scores = self._calculate_emotion_intensity(predictions, labels)
-            metrics.update(intensity_scores)
-        
-        return metrics
-    
-    def _calculate_emotion_intensity(self, predictions, labels):
-        """计算情感强度得分 | Calculate emotion intensity scores"""
-        # 简化实现，实际应使用更复杂的算法 | Simplified implementation
-        intensity = np.abs(predictions - labels).mean()
-        return {
-            "intensity_error": float(intensity),
-            "intensity_accuracy": 1.0 - intensity
-        }
-    
-    def evaluate_model(self, test_data):
-        """评估模型性能 | Evaluate model performance"""
-        if not self.model or not self.tokenizer:
-            return {"status": "error", "message": "模型未加载 | Model not loaded"}
-        
-        # 准备测试数据 | Prepare test data
-        test_dataset = self.prepare_dataset(test_data, self.model_type)['test']
-        
-        # 评估 | Evaluate
-        eval_results = self.trainer.evaluate(test_dataset)
-        return eval_results
-    
-    def save_training_report(self, metrics, output_path):
-        """保存训练报告 | Save training report"""
-        report = {
-            "training_date": datetime.now().isoformat(),
-            "model_type": self.model_type,
-            "language": self.language,
-            "training_config": self.training_config,
-            "metrics": metrics,
-            "hardware_info": {
-                "device": str(torch.device('cuda' if torch.cuda.is_available() else 'cpu')),
-                "cuda_available": torch.cuda.is_available(),
-                "gpu_count": torch.cuda.device_count() if torch.cuda.is_available() else 0
+        """加载语言资源"""
+        # 定义情感标签映射（多语言）
+        emotion_labels = {
+            'en': {
+                'neutral': 0, 'joy': 1, 'sadness': 2, 'anger': 3, 'fear': 4, 'surprise': 5, 'disgust': 6
+            },
+            'zh': {
+                '中性': 0, '快乐': 1, '悲伤': 2, '愤怒': 3, '恐惧': 4, '惊讶': 5, '厌恶': 6
+            },
+            'ja': {
+                'ニュートラル': 0, '喜び': 1, '悲しみ': 2, '怒り': 3, '恐怖': 4, '驚き': 5, '嫌悪': 6
+            },
+            'de': {
+                'neutral': 0, 'freude': 1, 'traurigkeit': 2, 'wut': 3, 'angst': 4, 'überraschung': 5, 'abscheu': 6
+            },
+            'fr': {
+                'neutre': 0, 'joie': 1, 'tristesse': 2, 'colère': 3, 'peur': 4, 'surprise': 5, 'dégoût': 6
             }
         }
         
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        with open(output_path, 'w', encoding='utf-8') as f:
+        return {'emotion_labels': emotion_labels}
+    
+    def prepare_dataset(self, data_path=None, task_type='sentiment'):
+        """
+        准备数据集
+        
+        参数:
+            data_path: 数据路径
+            task_type: 任务类型 (sentiment, ner, etc.)
+        """
+        if data_path is None:
+            data_path = self.config['data_path']
+        
+        # 创建主数据集
+        dataset = LanguageCorpusDataset(
+            data_path=data_path,
+            is_pretrained=self.config['is_pretrained'],
+            max_length=self.config['max_length'],
+            vocab_size=self.config['vocab_size'] if not self.config['is_pretrained'] else None
+        )
+        
+        # 分割数据集
+        dataset_size = len(dataset)
+        train_size = int(self.config['train_size'] * dataset_size)
+        val_size = int(self.config['val_size'] * dataset_size)
+        test_size = dataset_size - train_size - val_size
+        
+        self.train_dataset, self.val_dataset, self.test_dataset = torch.utils.data.random_split(
+            dataset, [train_size, val_size, test_size]
+        )
+        
+        # 根据任务类型进行特定处理
+        if task_type == 'sentiment':
+            # 情感分析任务特定处理
+            pass  # 基本实现已包含在LanguageCorpusDataset中
+        elif task_type == 'ner':
+            # 命名实体识别任务特定处理
+            pass  # 可根据需要扩展
+        
+        print(f'Dataset prepared: {len(self.train_dataset)} train, {len(self.val_dataset)} val, {len(self.test_dataset)} test samples')
+        
+        if not self.config['is_pretrained'] and dataset.vocab:
+            print(f'Vocabulary size: {len(dataset.vocab)}')
+        
+        return self.train_dataset, self.val_dataset, self.test_dataset
+    
+    def initialize_model(self):
+        """
+        初始化模型
+        """
+        if self.config['is_pretrained']:
+            # 使用预训练模型
+            self.model = LanguageModel(
+                model_name=self.config['model_name']
+            )
+        else:
+            # 从零开始训练模型
+            # 需要确保数据集已准备好以获取词汇表大小
+            if self.train_dataset is None:
+                self.prepare_dataset()
+            
+            # 获取词汇表大小
+            vocab_size = len(self.train_dataset.dataset.vocab)
+            
+            self.model = LanguageModel(
+                vocab_size=vocab_size,
+                embedding_dim=self.config['embedding_dim'],
+                hidden_dim=self.config['hidden_dim'],
+                num_layers=self.config['num_layers'],
+                dropout=self.config['dropout']
+            )
+        
+        # 打印模型架构摘要
+        print('\nModel Architecture:')
+        print(self.model)
+        
+        # 计算模型参数数量
+        param_count = sum(p.numel() for p in self.model.parameters())
+        print(f'Total parameters: {param_count:,}')
+        
+        # 初始化训练器
+        self.trainer = ModelTrainer(self.model, self.config)
+        
+        # 创建数据加载器
+        self.trainer.create_data_loaders(
+            self.train_dataset,
+            self.val_dataset,
+            self.test_dataset
+        )
+    
+    def train(self, resume_from_checkpoint=None):
+        """
+        训练模型
+        
+        参数:
+            resume_from_checkpoint: 从哪个检查点恢复训练
+        """
+        # 确保模型已初始化
+        if self.model is None:
+            self.initialize_model()
+        
+        # 如果指定了检查点，加载它
+        if resume_from_checkpoint:
+            self.trainer.load_checkpoint(resume_from_checkpoint)
+        
+        # 开始训练
+        train_history = self.trainer.train()
+        
+        # 保存最终训练报告
+        self.save_training_report(train_history)
+        
+        return train_history
+    
+    def evaluate(self, dataset_type='test'):
+        """
+        评估模型
+        
+        参数:
+            dataset_type: 评估数据集类型 (train, val, test)
+        """
+        # 确保模型已初始化
+        if self.model is None:
+            print('Model not initialized. Please call initialize_model() first.')
+            return None
+        
+        # 选择评估数据集
+        if dataset_type == 'train':
+            loader = self.trainer.train_loader
+        elif dataset_type == 'val':
+            loader = self.trainer.val_loader
+        elif dataset_type == 'test':
+            loader = self.trainer.test_loader
+        else:
+            print(f'Invalid dataset type: {dataset_type}')
+            return None
+        
+        # 评估模型
+        loss, accuracy = self.trainer.evaluate(loader)
+        
+        print(f'\n{dataset_type.capitalize()} Evaluation:')
+        print(f'Loss: {loss:.4f}, Accuracy: {accuracy:.4f}')
+        
+        # 计算额外指标
+        metrics = self._compute_metrics(loader)
+        
+        return {
+            'loss': loss,
+            'accuracy': accuracy,
+            **metrics
+        }
+    
+    def _compute_metrics(self, loader):
+        """
+        计算额外评估指标
+        """
+        self.model.eval()
+        all_predictions = []
+        all_labels = []
+        all_logits = []
+        
+        with torch.no_grad():
+            for batch in loader:
+                input_ids = batch['input_ids']
+                attention_mask = batch['attention_mask']
+                labels = batch['labels']
+                
+                # 前向传播
+                _, emotion_logits = self.model(input_ids, attention_mask)
+                
+                # 获取预测
+                predictions = torch.argmax(emotion_logits, dim=1)
+                
+                # 收集结果
+                all_predictions.extend(predictions.cpu().numpy())
+                all_labels.extend(labels.cpu().numpy())
+                all_logits.extend(emotion_logits.cpu().numpy())
+        
+        # 转换为numpy数组
+        all_predictions = np.array(all_predictions)
+        all_labels = np.array(all_labels)
+        all_logits = np.array(all_logits)
+        
+        # 计算精确率、召回率和F1分数
+        from sklearn.metrics import precision_score, recall_score, f1_score
+        
+        precision = precision_score(all_labels, all_predictions, average='weighted')
+        recall = recall_score(all_labels, all_predictions, average='weighted')
+        f1 = f1_score(all_labels, all_predictions, average='weighted')
+        
+        # 计算情感强度分析结果
+        emotion_intensity = self._calculate_emotion_intensity(all_logits)
+        
+        return {
+            'precision': precision,
+            'recall': recall,
+            'f1_score': f1,
+            'emotion_intensity': emotion_intensity
+        }
+    
+    def _calculate_emotion_intensity(self, logits):
+        """
+        计算情感强度分析结果
+        """
+        # 转换为概率
+        probs = torch.softmax(torch.tensor(logits), dim=-1).numpy()
+        
+        # 计算每种情感的平均强度
+        emotion_names = ['neutral', 'joy', 'sadness', 'anger', 'fear', 'surprise', 'disgust']
+        avg_intensity = {}
+        
+        for i, emotion in enumerate(emotion_names):
+            avg_intensity[emotion] = float(np.mean(probs[:, i]))
+        
+        return avg_intensity
+    
+    def save_training_report(self, train_history):
+        """
+        保存训练报告
+        """
+        report = {
+            'model_id': self.config['model_id'],
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'config': self.config,
+            'training_history': train_history,
+            'best_score': self.trainer.best_score,
+            'model_summary': {
+                'total_parameters': sum(p.numel() for p in self.model.parameters()),
+                'is_pretrained': self.config['is_pretrained']
+            }
+        }
+        
+        # 保存报告
+        report_path = os.path.join(self.config['checkpoint_dir'], 'training_report.json')
+        with open(report_path, 'w', encoding='utf-8') as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
         
-        return output_path
+        print(f'Training report saved to {report_path}')
 
-# 新增方法 | New methods
-    def _train_via_external_api(self, dataset):
-        """通过外部API训练 | Train via external API"""
-        # 实际实现应调用配置的API | Actual implementation should call configured API
-        print(f"通过外部API训练: {self.api_config.get('endpoint')} | Training via external API: {self.api_config.get('endpoint')}")
-        return {
-            "status": "success",
-            "message": "外部API训练完成 | External API training completed",
-            "metrics": {"external_api": True},
-            "model_path": "external_api_model"
+# 模型保存和加载函数
+def save_model(model, path):
+    """保存模型到文件"""
+    torch.save({
+        'model_state_dict': model.state_dict(),
+        'config': {
+            'is_pretrained': model.is_pretrained,
+            'model_name': model.base_model.config._name_or_path if model.is_pretrained else None,
+            'hidden_dim': model.hidden_dim
         }
-    
-    def _enhance_with_knowledge(self, dataset, knowledge_data):
-        """使用知识库数据增强训练集 | Enhance dataset with knowledge data"""
-        # 实际实现应融合知识库信息 | Actual implementation should integrate knowledge
-        print("使用知识库数据增强训练集 | Enhancing dataset with knowledge data")
-        return dataset
-    
-    def set_joint_training(self, models):
-        """设置联合训练伙伴 | Set joint training partners"""
-        self.joint_training_partners = models
-        print(f"设置联合训练伙伴: {', '.join(models)} | Set joint training partners: {', '.join(models)}")
-    
-    def connect_to_main_model(self, main_model_endpoint):
-        """连接到主模型 | Connect to main model"""
-        print(f"连接到主模型: {main_model_endpoint} | Connected to main model: {main_model_endpoint}")
-        # 实际实现应建立通信通道 | Actual implementation should establish communication
-    
-    def train_jointly(self, models: List[Any], train_datasets: List[Any], 
-                     val_datasets: List[Any] = None, config: Dict = None, 
-                     loss_weights: List[float] = None) -> Dict:
-        """与其他模型联合训练 | Joint training with other models
-        
-        参数:
-            models: 参与联合训练的模型列表 | List of models for joint training
-            train_datasets: 每个模型对应的训练数据集 | Training datasets for each model
-            val_datasets: 每个模型对应的验证数据集 | Validation datasets for each model
-            config: 训练配置 | Training configuration
-            loss_weights: 每个模型的损失权重 | Loss weights for each model
-        
-        返回:
-            训练结果字典 | Training result dictionary
-        """
-        if config:
-            self.training_config.update(config)
-        
-        # 检查输入一致性 | Check input consistency
-        if len(models) != len(train_datasets):
-            raise ValueError("模型数量和训练数据集数量必须匹配 | Number of models and training datasets must match")
-        
-        if val_datasets and len(val_datasets) != len(models):
-            raise ValueError("验证数据集数量必须与模型数量匹配 | Number of validation datasets must match number of models")
-        
-        # 初始化默认损失权重 | Initialize default loss weights if not provided
-        if loss_weights is None:
-            loss_weights = [1.0] * len(models)
-        elif len(loss_weights) != len(models):
-            raise ValueError("损失权重数量必须与模型数量匹配 | Number of loss weights must match number of models")
-        
-        # 归一化损失权重 | Normalize loss weights
-        total_weight = sum(loss_weights)
-        loss_weights = [w / total_weight for w in loss_weights]
-        
-        # 记录联合训练信息 | Log joint training information
-        print(f"开始多模型联合训练 | Starting joint training with {len(models)} models")
-        print(f"损失权重分配 | Loss weight distribution: {loss_weights}")
-        
-        # 初始化联合训练结果 | Initialize joint training results
-        joint_results = {
-            "status": "success",
-            "message": "联合训练完成 | Joint training completed",
-            "individual_results": [],
-            "joint_metrics": {}
-        }
-        
-        # 为每个模型准备联合训练数据 | Prepare joint training data for each model
-        for i, (model, train_dataset) in enumerate(zip(models, train_datasets)):
-            print(f"处理模型 {i+1} 的训练数据 | Processing training data for model {i+1}")
-            
-            # 为每个模型创建联合训练伙伴信息 | Create joint training partner info for each model
-            joint_training_info = {}
-            for j, partner_model in enumerate(models):
-                if i != j:  # 不包含自身 | Exclude self
-                    # 根据伙伴模型类型添加相应信息 | Add appropriate info based on partner model type
-                    # 这部分需要根据实际模型类型和接口进行实现 | This part needs to be implemented based on actual model types and interfaces
-                    partner_name = f"model_{j+1}"
-                    joint_training_info[partner_name] = {
-                        "model_type": "language" if j == 0 else "partner",
-                        "weight": loss_weights[j]
-                    }
-            
-            # 训练当前模型，传入其他模型的信息 | Train current model with other models' info
-            val_dataset = val_datasets[i] if val_datasets else None
-            
-            if model == self:  # 训练当前对象 | Training current object
-                result = self.train(train_dataset, val_dataset, config, joint_training_info)
-            else:  # 训练其他模型 | Training other models
-                # 假设其他模型也有类似的train方法 | Assume other models have similar train method
-                try:
-                    result = model.train(train_dataset, val_dataset, config, joint_training_info)
-                except Exception as e:
-                    print(f"训练模型 {i+1} 失败: {e} | Training model {i+1} failed: {e}")
-                    joint_results["status"] = "partial_failure"
-                    joint_results["message"] = f"部分模型训练失败 | Some models training failed"
-                    result = {"status": "error", "message": str(e)}
-            
-            joint_results["individual_results"].append(result)
-        
-        # 计算联合指标 | Calculate joint metrics
-        if all(res.get("status") == "success" for res in joint_results["individual_results"]):
-            joint_accuracy = sum(res["metrics"].get("accuracy", 0) * w for res, w in zip(joint_results["individual_results"], loss_weights))
-            joint_f1 = sum(res["metrics"].get("f1", 0) * w for res, w in zip(joint_results["individual_results"], loss_weights))
-            
-            joint_results["joint_metrics"] = {
-                "joint_accuracy": joint_accuracy,
-                "joint_f1": joint_f1,
-                "loss_weights": loss_weights
-            }
-            
-            print(f"联合训练完成，联合准确率: {joint_accuracy:.4f}, 联合F1得分: {joint_f1:.4f} | Joint training completed, joint accuracy: {joint_accuracy:.4f}, joint F1: {joint_f1:.4f}")
-        
-        # 保存联合训练报告 | Save joint training report
-        report_path = f"./training_reports/joint_{self.model_type}_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        os.makedirs(os.path.dirname(report_path), exist_ok=True)
-        
-        with open(report_path, 'w', encoding='utf-8') as f:
-            json.dump({
-                "training_date": datetime.now().isoformat(),
-                "joint_training": True,
-                "model_count": len(models),
-                "models": [{
-                    "model_type": "language",
-                    "specific_type": self.model_type,
-                    "language": self.language
-                }] + [{"model_type": "partner", "index": i+2} for i in range(len(models)-1)],
-                "loss_weights": loss_weights,
-                "training_config": self.training_config,
-                "joint_results": joint_results
-            }, f, indent=2, ensure_ascii=False)
-        
-        joint_results["report_path"] = report_path
-        return joint_results
+    }, path)
 
-# 训练API接口 | Training API interface
-def start_training(model_type="sentiment", data_path=None, config=None, use_external=False, api_config=None):
-    """启动训练任务 | Start training task"""
-    trainer = LanguageModelTrainer(
-        model_type=model_type, 
-        use_external_api=use_external,
-        api_config=api_config
-    )
+def load_model(path, vocab_size=None):
+    """从文件加载模型"""
+    checkpoint = torch.load(path, map_location=device)
+    config = checkpoint.get('config', {})
     
-    # 准备数据 | Prepare data
-    datasets = trainer.prepare_dataset(data_path, model_type)
+    if config.get('is_pretrained', False) and config.get('model_name'):
+        # 加载预训练模型
+        model = LanguageModel(model_name=config['model_name'])
+    else:
+        # 加载自定义模型
+        model = LanguageModel(
+            vocab_size=vocab_size,
+            hidden_dim=config.get('hidden_dim', 512)
+        )
     
-    # 开始训练 | Start training
-    result = trainer.train(datasets['train'], datasets['test'], config)
+    # 加载模型状态字典
+    model.load_state_dict(checkpoint['model_state_dict'])
     
-    if result['status'] == 'success':
-        # 保存训练报告 | Save training report
-        report_path = f"./training_reports/{model_type}_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        trainer.save_training_report(result['metrics'], report_path)
-        result['report_path'] = report_path
-    
-    return result
+    return model
 
-def resume_training(model_path, data_path=None, config=None):
-    """恢复训练 | Resume training"""
-    # 实现恢复训练逻辑 | Implement resume training logic
-    pass
-
-# 联合训练API接口 | Joint training API interface
-def start_joint_training(model_configs: List[Dict], data_paths: List[str], config: Dict = None, loss_weights: List[float] = None) -> Dict:
-    """启动联合训练任务 | Start joint training task
+# 训练API接口
+def start_training(config=None):
+    """
+    启动模型训练的API接口
     
     参数:
-        model_configs: 各模型的配置列表 | List of model configurations
-        data_paths: 各模型的数据路径列表 | List of data paths for each model
-        config: 全局训练配置 | Global training configuration
-        loss_weights: 各模型的损失权重 | Loss weights for each model
+        config: 训练配置
     
     返回:
-        联合训练结果 | Joint training result
+        训练结果
     """
-    # 创建参与联合训练的模型列表 | Create list of models for joint training
-    models = []
-    train_datasets = []
-    val_datasets = []
-    
-    print(f"准备启动联合训练，参与模型数量: {len(model_configs)} | Preparing to start joint training with {len(model_configs)} models")
-    
-    # 初始化每个模型并准备数据 | Initialize each model and prepare data
-    for i, model_config in enumerate(model_configs):
-        print(f"初始化模型 {i+1}: {model_config.get('model_type', 'unknown')} | Initializing model {i+1}: {model_config.get('model_type', 'unknown')}")
+    try:
+        # 创建训练管理器
+        trainer = LanguageModelTrainer(config)
         
-        # 创建模型实例 | Create model instance
-        trainer = LanguageModelTrainer(
-            model_type=model_config.get('model_type', 'sentiment'),
-            language=model_config.get('language', 'multilingual'),
-            use_external_api=model_config.get('use_external_api', False),
-            api_config=model_config.get('api_config')
-        )
+        # 准备数据集
+        trainer.prepare_dataset()
         
-        # 加载预训练模型 | Load pretrained model
-        if not trainer.use_external_api:
-            trainer.load_pretrained_model()
+        # 初始化模型
+        trainer.initialize_model()
         
-        # 准备数据集 | Prepare dataset
-        data_path = data_paths[i] if i < len(data_paths) else None
-        datasets = trainer.prepare_dataset(data_path, model_config.get('model_type', 'sentiment'))
+        # 开始训练
+        train_history = trainer.train()
         
-        # 添加到列表 | Add to lists
-        models.append(trainer)
-        train_datasets.append(datasets['train'])
-        val_datasets.append(datasets['test'])
-    
-    # 如果只有一个模型，则执行普通训练 | If only one model, perform regular training
-    if len(models) == 1:
-        print("只有一个模型，执行普通训练 | Only one model, performing regular training")
-        return start_training(
-            model_type=model_configs[0].get('model_type', 'sentiment'),
-            data_path=data_paths[0] if data_paths else None,
-            config=config,
-            use_external=model_configs[0].get('use_external_api', False),
-            api_config=model_configs[0].get('api_config')
-        )
-    
-    # 执行联合训练 | Perform joint training
-    # 选择第一个模型作为主导模型来协调联合训练 | Select the first model as the lead to coordinate joint training
-    lead_model = models[0]
-    return lead_model.train_jointly(models, train_datasets, val_datasets, config, loss_weights)
+        # 评估模型
+        evaluation_results = trainer.evaluate()
+        
+        return {
+            'status': 'success',
+            'message': 'Training completed successfully',
+            'train_history': train_history,
+            'evaluation_results': evaluation_results,
+            'config': trainer.config
+        }
+    except Exception as e:
+        return {
+            'status': 'error',
+            'message': str(e)
+        }
 
+def resume_training(checkpoint_path, config=None):
+    """
+    从检查点恢复训练的API接口
+    
+    参数:
+        checkpoint_path: 检查点路径
+        config: 训练配置
+    
+    返回:
+        训练结果
+    """
+    try:
+        # 创建训练管理器
+        trainer = LanguageModelTrainer(config)
+        
+        # 准备数据集
+        trainer.prepare_dataset()
+        
+        # 初始化模型
+        trainer.initialize_model()
+        
+        # 从检查点恢复训练
+        train_history = trainer.train(resume_from_checkpoint=checkpoint_path)
+        
+        # 评估模型
+        evaluation_results = trainer.evaluate()
+        
+        return {
+            'status': 'success',
+            'message': 'Training resumed successfully',
+            'train_history': train_history,
+            'evaluation_results': evaluation_results,
+            'config': trainer.config
+        }
+    except Exception as e:
+        return {
+            'status': 'error',
+            'message': str(e)
+        }
+
+# 联合训练API接口
+def start_joint_training(model_configs, data_paths, config=None, loss_weights=None):
+    """
+    启动联合训练的API接口
+    
+    参数:
+        model_configs: 模型配置列表
+        data_paths: 数据路径列表
+        config: 联合训练配置
+        loss_weights: 损失权重列表
+    
+    返回:
+        联合训练结果
+    """
+    try:
+        # 确保模型配置和数据路径数量匹配
+        if len(model_configs) != len(data_paths):
+            raise ValueError('Number of model configurations must match number of data paths')
+        
+        # 设置默认配置
+        default_config = {
+            'epochs': 10,
+            'batch_size': 32,
+            'learning_rate': 1e-4,
+            'checkpoint_dir': './checkpoints',
+            'joint_training_type': 'parallel',  # parallel 或 sequential
+            'dominant_model_index': 0  # 主导模型索引
+        }
+        
+        if config:
+            default_config.update(config)
+        
+        # 设置损失权重（如果未提供，默认平均）
+        if loss_weights is None:
+            loss_weights = [1.0 / len(model_configs)] * len(model_configs)
+        else:
+            # 归一化损失权重
+            total_weight = sum(loss_weights)
+            loss_weights = [w / total_weight for w in loss_weights]
+        
+        # 实现简化的联合训练逻辑
+        # 对于真实场景，这里需要更复杂的实现来处理多模型交互
+        
+        print(f'Starting joint training with {len(model_configs)} models')
+        
+        # 为每个模型创建训练器
+        trainers = []
+        for i, (model_config, data_path) in enumerate(zip(model_configs, data_paths)):
+            print(f'Preparing model {i+1}/{len(model_configs)}')
+            
+            # 合并配置
+            combined_config = default_config.copy()
+            if model_config:
+                combined_config.update(model_config)
+            
+            # 设置数据路径
+            combined_config['data_path'] = data_path
+            
+            # 创建训练管理器
+            trainer = LanguageModelTrainer(combined_config)
+            
+            # 准备数据集
+            trainer.prepare_dataset()
+            
+            # 初始化模型
+            trainer.initialize_model()
+            
+            trainers.append(trainer)
+        
+        # 简化实现：分别训练每个模型
+        results = []
+        for i, trainer in enumerate(trainers):
+            print(f'\nTraining model {i+1}/{len(trainers)}')
+            
+            # 训练模型
+            train_history = trainer.train()
+            
+            # 评估模型
+            evaluation_results = trainer.evaluate()
+            
+            # 记录结果
+            results.append({
+                'model_index': i,
+                'train_history': train_history,
+                'evaluation_results': evaluation_results,
+                'config': trainer.config
+            })
+        
+        # 计算联合指标
+        joint_metrics = {
+            'average_accuracy': np.mean([r['evaluation_results']['accuracy'] for r in results]),
+            'average_f1_score': np.mean([r['evaluation_results']['f1_score'] for r in results]),
+            'weighted_accuracy': np.sum([r['evaluation_results']['accuracy'] * loss_weights[i] for i, r in enumerate(results)]),
+            'weighted_f1_score': np.sum([r['evaluation_results']['f1_score'] * loss_weights[i] for i, r in enumerate(results)]),
+            'loss_weights': loss_weights
+        }
+        
+        # 保存联合训练报告
+        report = {
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'config': default_config,
+            'joint_metrics': joint_metrics,
+            'individual_results': results
+        }
+        
+        report_path = os.path.join(default_config['checkpoint_dir'], 'joint_training_report.json')
+        with open(report_path, 'w', encoding='utf-8') as f:
+            json.dump(report, f, indent=2, ensure_ascii=False)
+        
+        print(f'Joint training report saved to {report_path}')
+        
+        return {
+            'status': 'success',
+            'message': 'Joint training completed successfully',
+            'joint_metrics': joint_metrics,
+            'individual_results': results,
+            'config': default_config
+        }
+    except Exception as e:
+        return {
+            'status': 'error',
+            'message': str(e)
+        }
+
+# 主函数，用于测试训练功能
 if __name__ == '__main__':
-    # 测试训练程序 | Test training program
-    print("测试B语言模型训练程序... | Testing B Language Model Training Program...")
+    # 测试情感分析训练
+    print("\n--- 测试情感分析训练 ---")
+    sentiment_config = {
+        'model_id': 'sentiment_analysis',
+        'is_pretrained': True,
+        'model_name': 'xlm-roberta-base',
+        'epochs': 2,
+        'batch_size': 8,
+        'learning_rate': 1e-5,
+        'data_path': './data/en/sample_training_data.json'
+    }
     
-    # 测试情感分析训练 | Test sentiment analysis training
-    result = start_training(
-        model_type="sentiment",
-        config={
-            'epochs': 3,
-            'batch_size': 8,
-            'learning_rate': 2e-5
-        }
-    )
+    sentiment_result = start_training(sentiment_config)
+    print("情感分析训练结果 | Sentiment analysis training result:", json.dumps(sentiment_result, indent=2, ensure_ascii=False))
     
-    # 测试情感推理训练 | Test emotion reasoning training
-    emotion_result = start_training(
-        model_type="emotion",
-        config={
-            'epochs': 4,
-            'batch_size': 12,
-            'learning_rate': 3e-5
-        }
-    )
+    # 测试从零开始训练
+    print("\n--- 测试从零开始训练 ---")
+    从零_config = {
+        'model_id': 'from_scratch',
+        'is_pretrained': False,
+        'vocab_size': 10000,
+        'epochs': 2,
+        'batch_size': 8,
+        'learning_rate': 1e-3
+    }
     
-    # 测试外部API训练 | Test external API training
-    api_result = start_training(
-        model_type="sentiment",
-        use_external=True,
-        api_config={
-            "endpoint": "https://api.agilanguage.com/v1/train",
-            "api_key": "your_api_key_here"
-        }
-    )
+    from_scratch_result = start_training(从零_config)
+    print("从零开始训练结果 | From scratch training result:", json.dumps(from_scratch_result, indent=2, ensure_ascii=False))
     
-    print("情感分析结果 | Sentiment result:", json.dumps(result, indent=2, ensure_ascii=False))
-    print("情感推理结果 | Emotion result:", json.dumps(emotion_result, indent=2, ensure_ascii=False))
-    print("外部API结果 | External API result:", json.dumps(api_result, indent=2, ensure_ascii=False))
-    
-    # 测试联合训练 | Test joint training (示例代码，实际使用时需根据实际情况修改)
-    print("\n测试联合训练功能... | Testing joint training functionality...")
-    
-    # 创建两个语言模型进行联合训练演示
-    # Note: 这只是一个演示，实际联合训练应包含不同类型的模型
+    # 测试联合训练
+    print("\n--- 测试联合训练 ---")
     joint_result = start_joint_training(
         model_configs=[
-            {"model_type": "sentiment", "language": "multilingual"},
-            {"model_type": "emotion", "language": "multilingual"}
+            {'model_id': 'multilingual', 'is_pretrained': True, 'model_name': 'xlm-roberta-base'},
+            {'model_id': 'emotion', 'is_pretrained': False, 'vocab_size': 5000}
         ],
-        data_paths=[None, None],  # 使用示例数据
+        data_paths=['./data/en/sample_training_data.json', './data/zh/sample_training_data.json'],
         config={
             'epochs': 2,
             'batch_size': 8,
-            'learning_rate': 2e-5
+            'learning_rate': 1e-5
         },
         loss_weights=[0.6, 0.4]
     )

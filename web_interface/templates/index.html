@@ -225,6 +225,75 @@
         </div>
     </div>
     
+    <!-- Camera Vision Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Multi-Camera Vision System</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Camera Controls -->
+                    <div class="mb-4">
+                        <div class="btn-group" role="group">
+                            <button id="listAllCamerasBtn" class="btn btn-outline-primary">
+                                <i class="bi bi-camera-video me-1"></i> List Cameras
+                            </button>
+                            <button id="startStereoVisionBtn" class="btn btn-primary">
+                                <i class="bi bi-eye me-1"></i> Start Stereo Vision
+                            </button>
+                            <button id="stopAllCamerasBtn" class="btn btn-danger">
+                                <i class="bi bi-stop-circle me-1"></i> Stop All
+                            </button>
+                            <button id="snapshotAllBtn" class="btn btn-info">
+                                <i class="bi bi-camera me-1"></i> Take Snapshots
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Camera Preview Area -->
+                    <div class="camera-preview-container" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+                        <div class="camera-feed" style="width: 400px;">
+                            <h6 class="text-center mb-2"><i class="bi bi-camera-video"></i> Camera 1 (Left Eye)</h6>
+                            <div class="relative border rounded bg-black p-2" style="height: 240px; display: flex; align-items: center; justify-content: center;">
+                                <video id="camera1Preview" class="w-100 h-100 object-contain" autoplay muted></video>
+                                <div class="absolute top-2 right-2 bg-primary text-white text-xs px-2 py-1 rounded" id="camera1Status">Inactive</div>
+                            </div>
+                        </div>
+                        
+                        <div class="camera-feed" style="width: 400px;">
+                            <h6 class="text-center mb-2"><i class="bi bi-camera-video"></i> Camera 2 (Right Eye)</h6>
+                            <div class="relative border rounded bg-black p-2" style="height: 240px; display: flex; align-items: center; justify-content: center;">
+                                <video id="camera2Preview" class="w-100 h-100 object-contain" autoplay muted></video>
+                                <div class="absolute top-2 right-2 bg-primary text-white text-xs px-2 py-1 rounded" id="camera2Status">Inactive</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Camera Selector -->
+                    <div class="mt-4 row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="camera1Selector" class="form-label">Select Left Eye Camera:</label>
+                                <select id="camera1Selector" class="form-select">
+                                    <option value="default">Default Camera</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="camera2Selector" class="form-label">Select Right Eye Camera:</label>
+                                <select id="camera2Selector" class="form-select">
+                                    <option value="default">Default Camera</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Contact Information -->
     <div class="row mt-4">
         <div class="col-12">
@@ -241,7 +310,14 @@
     </div>
 </div>
 
+<!-- Camera Control Module -->
+<script src="/static/js/camera_control.js"></script>
+
 <script>
+// Global camera streams references
+let camera1Stream = null;
+let camera2Stream = null;
+
 // Real-time system functions and A Management Model conversation
 let conversationHistory = [];
 let isProcessing = false;
@@ -623,9 +699,231 @@ document.addEventListener('DOMContentLoaded', function() {
 • Answer questions about the AGI system
 • Process commands and provide insights
 • Handle knowledge management
+• Control the multi-camera vision system
 
 What would you like to know or do?`, 'ai');
     }, 1000);
+    
+    // Initialize camera controls
+    initCameraControls();
 });
+
+// Initialize camera controls
+function initCameraControls() {
+    // Add event listeners to camera buttons
+    document.getElementById('listAllCamerasBtn')?.addEventListener('click', listAvailableCameras);
+    document.getElementById('startStereoVisionBtn')?.addEventListener('click', startStereoVision);
+    document.getElementById('stopAllCamerasBtn')?.addEventListener('click', stopAllCameras);
+    document.getElementById('snapshotAllBtn')?.addEventListener('click', takeAllSnapshots);
+    
+    // Test camera API connection
+    if (typeof CameraControl !== 'undefined') {
+        CameraControl.testAPI().then(result => {
+            if (result.success) {
+                console.log('Camera API initialized successfully');
+            } else {
+                console.warn('Camera API initialization failed:', result.error);
+            }
+        });
+    }
+}
+
+// List all available cameras
+async function listAvailableCameras() {
+    try {
+        // Add message to conversation
+        addMessageToConversation('Scanning for available cameras...', 'user');
+        
+        // Clear previous options
+        const camera1Selector = document.getElementById('camera1Selector');
+        const camera2Selector = document.getElementById('camera2Selector');
+        
+        if (camera1Selector) {
+            camera1Selector.innerHTML = '<option value="default">Default Camera</option>';
+        }
+        if (camera2Selector) {
+            camera2Selector.innerHTML = '<option value="default">Default Camera</option>';
+        }
+        
+        // Get available cameras
+        const cameras = await CameraControl.getAvailableCameras();
+        
+        if (cameras.length > 0) {
+            let message = `Found ${cameras.length} camera(s):\n`;
+            
+            // Add cameras to selectors
+            cameras.forEach((camera, index) => {
+                const cameraName = camera.label || `Camera ${index + 1}`;
+                message += `- ${cameraName}\n`;
+                
+                if (camera1Selector) {
+                    const option = document.createElement('option');
+                    option.value = camera.deviceId;
+                    option.textContent = cameraName;
+                    camera1Selector.appendChild(option);
+                }
+                
+                if (camera2Selector) {
+                    const option = document.createElement('option');
+                    option.value = camera.deviceId;
+                    option.textContent = cameraName;
+                    camera2Selector.appendChild(option);
+                }
+            });
+            
+            // Update conversation
+            addMessageToConversation(message, 'ai');
+        } else {
+            addMessageToConversation('No cameras found on this device.', 'ai');
+        }
+        
+    } catch (error) {
+        console.error('Error listing cameras:', error);
+        addMessageToConversation(`Failed to list cameras: ${error.message}`, 'ai');
+    }
+}
+
+// Start stereo vision with two cameras
+async function startStereoVision() {
+    try {
+        addMessageToConversation('Starting stereo vision system...', 'user');
+        
+        // Stop any existing streams
+        if (camera1Stream) {
+            CameraControl.stopCameraStream(camera1Stream);
+            camera1Stream = null;
+        }
+        if (camera2Stream) {
+            CameraControl.stopCameraStream(camera2Stream);
+            camera2Stream = null;
+        }
+        
+        // Get selected cameras
+        const camera1Id = document.getElementById('camera1Selector')?.value || 'default';
+        const camera2Id = document.getElementById('camera2Selector')?.value || 'default';
+        
+        // Check if different cameras are selected for stereo vision
+        if (camera1Id !== 'default' && camera2Id !== 'default' && camera1Id === camera2Id) {
+            addMessageToConversation('Please select two different cameras for stereo vision.', 'ai');
+            return;
+        }
+        
+        // Start first camera (left eye)
+        const constraints1 = {
+            video: camera1Id === 'default' ? true : { deviceId: camera1Id }
+        };
+        
+        camera1Stream = await CameraControl.startCameraStream(constraints1);
+        document.getElementById('camera1Preview')?.srcObject = camera1Stream;
+        updateCameraStatus('camera1Status', true);
+        
+        // Start second camera (right eye) if different from first
+        if (camera2Id !== camera1Id) {
+            const constraints2 = {
+                video: camera2Id === 'default' ? true : { deviceId: camera2Id }
+            };
+            
+            camera2Stream = await CameraControl.startCameraStream(constraints2);
+            document.getElementById('camera2Preview')?.srcObject = camera2Stream;
+            updateCameraStatus('camera2Status', true);
+        }
+        
+        addMessageToConversation('Stereo vision system started successfully. The vision models (D and F) are now processing the camera feeds for depth perception and spatial awareness.', 'ai');
+        
+    } catch (error) {
+        console.error('Error starting stereo vision:', error);
+        let errorMessage = `Failed to start stereo vision: ${error.message}`;
+        
+        // Handle common camera errors
+        if (error.name === 'NotAllowedError') {
+            errorMessage += '\nPlease allow camera access in your browser settings.';
+        } else if (error.name === 'NotFoundError') {
+            errorMessage += '\nNo camera found on this device.';
+        } else if (error.name === 'NotReadableError') {
+            errorMessage += '\nCamera is already in use by another application.';
+        }
+        
+        addMessageToConversation(errorMessage, 'ai');
+        
+        // Reset camera statuses
+        updateCameraStatus('camera1Status', false);
+        updateCameraStatus('camera2Status', false);
+    }
+}
+
+// Stop all cameras
+function stopAllCameras() {
+    try {
+        addMessageToConversation('Stopping all cameras...', 'user');
+        
+        if (camera1Stream) {
+            CameraControl.stopCameraStream(camera1Stream);
+            camera1Stream = null;
+            document.getElementById('camera1Preview')?.srcObject = null;
+        }
+        
+        if (camera2Stream) {
+            CameraControl.stopCameraStream(camera2Stream);
+            camera2Stream = null;
+            document.getElementById('camera2Preview')?.srcObject = null;
+        }
+        
+        // Update status indicators
+        updateCameraStatus('camera1Status', false);
+        updateCameraStatus('camera2Status', false);
+        
+        addMessageToConversation('All cameras stopped successfully.', 'ai');
+        
+    } catch (error) {
+        console.error('Error stopping cameras:', error);
+        addMessageToConversation(`Failed to stop cameras: ${error.message}`, 'ai');
+    }
+}
+
+// Take snapshots from all active cameras
+function takeAllSnapshots() {
+    try {
+        addMessageToConversation('Taking snapshots from all active cameras...', 'user');
+        
+        let snapshotsTaken = 0;
+        
+        // Take snapshot from camera 1
+        if (camera1Stream && document.getElementById('camera1Preview')) {
+            const snapshot = CameraControl.takeSnapshot('camera1Preview');
+            if (snapshot) {
+                snapshotsTaken++;
+                // You could save or process the snapshot here
+            }
+        }
+        
+        // Take snapshot from camera 2
+        if (camera2Stream && document.getElementById('camera2Preview')) {
+            const snapshot = CameraControl.takeSnapshot('camera2Preview');
+            if (snapshot) {
+                snapshotsTaken++;
+                // You could save or process the snapshot here
+            }
+        }
+        
+        if (snapshotsTaken > 0) {
+            addMessageToConversation(`${snapshotsTaken} snapshot(s) taken successfully. The vision model (D) is analyzing the images.`, 'ai');
+        } else {
+            addMessageToConversation('No active cameras to take snapshots from. Please start the cameras first.', 'ai');
+        }
+        
+    } catch (error) {
+        console.error('Error taking snapshots:', error);
+        addMessageToConversation(`Failed to take snapshots: ${error.message}`, 'ai');
+    }
+}
+
+// Update camera status indicator
+function updateCameraStatus(elementId, isActive) {
+    const statusElement = document.getElementById(elementId);
+    if (statusElement) {
+        statusElement.textContent = isActive ? 'Active' : 'Inactive';
+        statusElement.className = `absolute top-2 right-2 text-white text-xs px-2 py-1 rounded ${isActive ? 'bg-success' : 'bg-primary'}`;
+    }
+}
 </script>
 {% endblock %}

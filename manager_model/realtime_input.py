@@ -17,6 +17,9 @@ import time
 import logging
 from typing import Dict, Any, Optional
 
+# 导入摄像头管理器 | Import camera manager
+from camera_manager import get_camera_manager
+
 # 设置日志 | Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("RealtimeInput")
@@ -35,6 +38,9 @@ class RealtimeInputInterface:
         self.active_connections = {}  # 活动连接 | Active connections
         self.data_lock = threading.Lock()  # 数据锁 | Data lock
         
+        # 获取摄像头管理器实例 | Get camera manager instance
+        self.camera_manager = get_camera_manager()
+        
         # 启动数据更新线程 | Start data update thread
         self.update_thread = threading.Thread(target=self._update_data_loop, daemon=True)
         self.update_thread.start()
@@ -48,16 +54,51 @@ class RealtimeInputInterface:
             source: 来源类型 (local, network) | Source type (local, network)
             resolution: 分辨率 (720p, 1080p, 4K) | Resolution (720p, 1080p, 4K)
         """
-        with self.data_lock:
-            self.camera_sources[camera_id] = {
-                "type": "camera",
-                "source": source,
-                "resolution": resolution,
-                "status": "connected",
-                "last_update": time.time()
-            }
-            self.active_connections[camera_id] = True
-        logger.info(f"摄像头已连接: {camera_id} | Camera connected: {camera_id}")
+        try:
+            # 将camera_id转换为整数 | Convert camera_id to integer
+            cam_id = int(camera_id)
+            
+            # 设置分辨率参数 | Set resolution parameters
+            params = {}
+            if resolution.lower() == "720p":
+                params["width"] = 1280
+                params["height"] = 720
+            elif resolution.lower() == "1080p":
+                params["width"] = 1920
+                params["height"] = 1080
+            elif resolution.lower() == "4k":
+                params["width"] = 3840
+                params["height"] = 2160
+            
+            # 使用CameraManager启动摄像头 | Start camera using CameraManager
+            success = self.camera_manager.start_camera(cam_id, params)
+            
+            with self.data_lock:
+                self.camera_sources[camera_id] = {
+                    "type": "camera",
+                    "source": source,
+                    "resolution": resolution,
+                    "status": "connected" if success else "failed",
+                    "last_update": time.time()
+                }
+                self.active_connections[camera_id] = success
+            
+            if success:
+                logger.info(f"摄像头已连接: {camera_id} | Camera connected: {camera_id}")
+            else:
+                logger.error(f"摄像头连接失败: {camera_id} | Failed to connect camera: {camera_id}")
+            
+        except ValueError:
+            logger.error(f"无效的摄像头ID: {camera_id} | Invalid camera ID: {camera_id}")
+            with self.data_lock:
+                self.camera_sources[camera_id] = {
+                    "type": "camera",
+                    "source": source,
+                    "resolution": resolution,
+                    "status": "failed",
+                    "last_update": time.time()
+                }
+                self.active_connections[camera_id] = False
 
     def connect_microphone(self, mic_id: str, source: str = "local", sample_rate: int = 44100):
         """连接麦克风 | Connect to microphone
@@ -129,14 +170,29 @@ class RealtimeInputInterface:
         返回:
             摄像头数据或None | Camera data or None
         """
-        with self.data_lock:
-            if camera_id in self.camera_sources:
-                # 模拟返回摄像头数据 | Simulate returning camera data
+        try:
+            # 将camera_id转换为整数 | Convert camera_id to integer
+            cam_id = int(camera_id)
+            
+            # 使用CameraManager获取实际的摄像头帧数据 | Get actual camera frame using CameraManager
+            frame_data = self.camera_manager.get_camera_frame(cam_id)
+            
+            if frame_data:
+                # 更新最后更新时间 | Update last update time
+                with self.data_lock:
+                    if camera_id in self.camera_sources:
+                        self.camera_sources[camera_id]["last_update"] = time.time()
+                
+                # 返回帧数据 | Return frame data
                 return {
                     "camera_id": camera_id,
-                    "frame": "模拟视频帧数据 | Simulated video frame data",
-                    "timestamp": time.time()
+                    "frame": frame_data["frame"],
+                    "timestamp": frame_data["timestamp"]
                 }
+            
+            return None
+        except ValueError:
+            logger.error(f"无效的摄像头ID: {camera_id} | Invalid camera ID: {camera_id}")
             return None
 
     def get_audio_stream(self, mic_id: str) -> Optional[Dict[str, Any]]:
@@ -186,6 +242,16 @@ class RealtimeInputInterface:
         with self.data_lock:
             if source_id in self.active_connections:
                 self.active_connections[source_id] = False
+                
+                # 如果是摄像头源，使用CameraManager停止摄像头 | If it's a camera source, stop it using CameraManager
+                if source_id in self.camera_sources:
+                    try:
+                        cam_id = int(source_id)
+                        self.camera_manager.stop_camera(cam_id)
+                    except ValueError:
+                        # 如果无法转换为整数，则忽略 | Ignore if cannot convert to integer
+                        pass
+                
                 logger.info(f"源已断开: {source_id} | Source disconnected: {source_id}")
 
     def _update_data_loop(self):

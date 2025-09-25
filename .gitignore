@@ -259,3 +259,11 @@ htmlcov/
 .mypy_cache
 .pytest_cache
 .hypothesis
+
+# Docker
+Dockerfile
+docker-compose.yml
+docker-compose.override.yml
+docker-data/
+.docker/
+*.dockerfile
