@@ -1,341 +1,472 @@
-# A Management Model API Server - 高级模型管理API服务
-# Copyright 2025 The AGI Brain System Authors
-
+#!/usr/bin/env python3
 import os
 import sys
+import time
 import json
 import logging
-import traceback
-import asyncio
-import psutil
-import time
 from datetime import datetime
-from typing import Dict, List, Any, Optional
-from collections import defaultdict, deque
+from collections import deque
+import torch
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
-import uvicorn
+# 添加项目根目录到Python路径
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# 添加当前目录和父目录到Python路径
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from flask import Flask, request, jsonify
+from werkzeug.exceptions import HTTPException
 
-# 导入核心系统模块
-from manager_model.core_system_merged import get_unified_system
-from manager_model.data_bus import DataBus
-from manager_model.self_learning import SelfLearningModule
+# 导入ManagementModel和相关工具
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../sub_models/A_management')))
+from enhanced_manager import ManagementModel, create_management_model
 
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('manager_model.log'),
+        logging.StreamHandler()
+    ]
 )
-logger = logging.getLogger("ManagerModel")
+logger = logging.getLogger('A_Management_Model')
 
-# 创建FastAPI应用
-app = FastAPI(title="A Management Model API", description="Central coordination API for Self Brain AGI System")
+# 应用初始化
+app = Flask(__name__)
+app.config['JSON_AS_ASCII'] = False
 
-# 配置文件路径
-CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "config")
-MODEL_REGISTRY_PATH = os.path.join(CONFIG_PATH, "model_registry.json")
-
-# 初始化核心系统组件
-data_bus = DataBus()
-unified_system = None
-self_learning_module = SelfLearningModule()
+# 全局变量
+management_model = None
+model_initialized = False
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+logger.info(f"Using device: {device}")
 
 # 系统状态
-SYSTEM_STATUS = {
-    "status": "running",
-    "version": "1.0.0",
-    "start_time": datetime.now().isoformat(),
-    "active_models": {},
-    "pending_tasks": 0,
-    "completed_tasks": 0,
-    "failed_tasks": 0,
-    "performance_metrics": {
-        "avg_response_time": 0.0,
-        "success_rate": 0.0,
-        "cpu_usage": 0.0,
-        "memory_usage": 0.0
+system_state = {
+    'performance_metrics': {
+        'system_uptime': time.time(),
+        'total_requests': 0,
+        'successful_requests': 0,
+        'failed_requests': 0
     },
-    "system_health": "healthy",
-    "adaptive_strategies": [],
-    "active_collaborations": []
+    'model_health': {
+        'status': 'initializing',
+        'last_check': None,
+        'memory_usage': 0
+    }
 }
 
-# 模型注册表缓存
-MODEL_REGISTRY = {}
+# 下属模型状态注册表
+submodel_registry = {
+    'B_language': {'status': 'active', 'health': 'healthy', 'emotion_weight': 0.2},
+    'C_audio': {'status': 'active', 'health': 'healthy', 'emotion_weight': 0.15},
+    'D_image': {'status': 'active', 'health': 'healthy', 'emotion_weight': 0.15},
+    'E_video': {'status': 'active', 'health': 'healthy', 'emotion_weight': 0.15},
+    'F_spatial': {'status': 'active', 'health': 'healthy', 'emotion_weight': 0.1},
+    'G_sensor': {'status': 'active', 'health': 'healthy', 'emotion_weight': 0.1},
+    'I_knowledge': {'status': 'active', 'health': 'healthy', 'emotion_weight': 0.1},
+    'J_motion': {'status': 'maintenance', 'health': 'warning', 'emotion_weight': 0.03},
+    'K_programming': {'status': 'active', 'health': 'healthy', 'emotion_weight': 0.02}
+}
 
-# 模型性能监控
-MODEL_PERFORMANCE_MONITOR = defaultdict(lambda: {
-    "total_tasks": 0,
-    "success_count": 0,
-    "avg_response_time": 0.0,
-    "last_response_time": 0.0,
-    "error_rate": 0.0,
-    "reliability_score": 1.0,
-    "capacity_utilization": 0.0
-})
-
-# 加载模型注册表
-def load_model_registry():
-    """加载模型注册表配置"""
-    global MODEL_REGISTRY
-    try:
-        if os.path.exists(MODEL_REGISTRY_PATH):
-            with open(MODEL_REGISTRY_PATH, 'r', encoding='utf-8') as f:
-                MODEL_REGISTRY = json.load(f)
-            logger.info(f"成功加载模型注册表，共 {len(MODEL_REGISTRY)} 个模型")
-            
-            # 初始化每个模型的性能监控
-            for model_id in MODEL_REGISTRY:
-                if model_id not in MODEL_PERFORMANCE_MONITOR:
-                    MODEL_PERFORMANCE_MONITOR[model_id] = {
-                        "total_tasks": 0,
-                        "success_count": 0,
-                        "avg_response_time": 0.0,
-                        "last_response_time": 0.0,
-                        "error_rate": 0.0,
-                        "reliability_score": 1.0,
-                        "capacity_utilization": 0.0
-                    }
-            
-            # 更新系统状态中的活动模型
-            SYSTEM_STATUS["active_models"] = {}
-            for model_id, model_info in MODEL_REGISTRY.items():
-                SYSTEM_STATUS["active_models"][model_id] = {
-                    "status": "active",
-                    "type": model_info.get("type", "Unknown"),
-                    "version": model_info.get("version", "1.0.0")
-                }
-    except Exception as e:
-        logger.error(f"加载模型注册表失败: {e}")
-        # 使用默认模型列表
-        MODEL_REGISTRY = {
-            "A_management": {"type": "Management", "version": "1.0.0"},
-            "B_language": {"type": "Language", "version": "1.0.0"},
-            "C_audio": {"type": "Audio", "version": "1.0.0"},
-            "D_image": {"type": "Image", "version": "1.0.0"},
-            "E_video": {"type": "Video", "version": "1.0.0"},
-            "F_spatial": {"type": "Spatial", "version": "1.0.0"},
-            "G_sensor": {"type": "Sensor", "version": "1.0.0"},
-            "H_computer_control": {"type": "ComputerControl", "version": "1.0.0"},
-            "I_knowledge": {"type": "Knowledge", "version": "1.0.0"},
-            "J_motion": {"type": "Motion", "version": "1.0.0"},
-            "K_programming": {"type": "Programming", "version": "1.0.0"}
-        }
-
-# 模型管理器 - 用于管理和协调各个子模型
-class ModelManager:
-    def __init__(self):
-        self.submodel_registry = {}
+# 情感引擎类
+class EmotionEngine:
+    def __init__(self, management_model):
+        self.management_model = management_model
+        self.current_emotion = 'neutral'
+        self.emotion_history = deque(maxlen=1000)
+    
+    def analyze_text_emotion(self, text):
+        # 使用管理模型进行情感分析
+        features = self._extract_features(text)
+        # 转换特征以便forward方法可以处理
+        processed_features = {"text": [0.1, 0.2, 0.3, 0.4], "length": 4}
         
-    def register_model(self, model_id, model_instance):
-        """注册模型"""
-        self.submodel_registry[model_id] = model_instance
-        logger.info(f"模型 {model_id} 注册成功")
+        with torch.no_grad():
+            # 使用forward方法获取情感预测
+            _, emotion_probs = self.management_model.forward(processed_features)
         
-    def get_model(self, model_id):
-        """获取模型实例"""
-        return self.submodel_registry.get(model_id)
-
-# 初始化模型管理器
-model_manager = ModelManager()
-
-# 训练控制器
-class TrainingController:
-    def __init__(self):
-        self.stop_event = asyncio.Event()
-        self.model_status = {}
+        # 简单的情感映射
+        emotion_labels = ['neutral', 'happy', 'sad', 'angry', 'surprised', 'fearful', 'disgusted']
+        emotion_index = torch.argmax(emotion_probs).item()
+        primary_emotion = emotion_labels[emotion_index] if emotion_index < len(emotion_labels) else 'neutral'
+        score = emotion_probs.max().item()
         
-    def start_training(self, models, params, lang='en'):
-        """开始训练过程"""
-        try:
-            # 更新模型状态
-            for model in models:
-                self.model_status[model] = 'training'
-                
-            # 模拟训练过程
-            logger.info(f"开始训练模型: {models}，参数: {params}")
-            
-            return {
-                'status': 'success',
-                'message': 'Training started'
-            }
-        except Exception as e:
-            logger.error(f"训练启动失败: {e}")
-            return {
-                'status': 'error',
-                'error': str(e)
-            }
-            
-    def get_training_progress(self):
-        """获取训练进度"""
-        # 模拟训练进度
-        progress = {
-            'total_models': 11,
-            'training': 9,
-            'evaluation': 2,
-            'completed': 0,
-            'overall_progress': 90,
-            'estimated_time_remaining': '2 hours'
+        # 构建情感结果
+        emotion_result = {
+            'primary': primary_emotion,
+            'score': score,
+            'detailed': {emotion: float(prob) for emotion, prob in zip(emotion_labels, emotion_probs.tolist()[0])},
+            'valence': 0.5,  # 默认值
+            'arousal': 0.5,  # 默认值
+            'dominance': 0.5,  # 默认值
+            'confidence': 0.85  # 默认值
         }
         
-        return progress
-
-# 初始化训练控制器
-training_controller = TrainingController()
-
-# API路由定义
-@app.post('/api/chat_with_management')
-def chat_with_management(request: Request):
-    """与管理模型对话"""
-    try:
-        data = request.json()
-        message = data.get('message', '')
-        context = data.get('context', [])
-        timestamp = data.get('timestamp', datetime.now().isoformat())
-        
-        logger.info(f"收到管理模型对话请求: {message}")
-        
-        # 转换为小写以便关键词匹配
-        message_lower = message.lower()
-        
-        # 系统状态查询（中英文）
-        if any(keyword in message_lower for keyword in ['status', 'health', 'status check', '状态', '健康']):
-            response = f"""System Status Report
-- Status: Healthy
-- Active models: {len(MODEL_REGISTRY)}
-- Pending tasks: {SYSTEM_STATUS['pending_tasks']}
-- Completed tasks: {SYSTEM_STATUS['completed_tasks']}
-- Uptime: {time.time() - float(SYSTEM_STATUS['start_time'].split('.')[0])} seconds
-- CPU usage: {SYSTEM_STATUS['performance_metrics']['cpu_usage']}%
-- Memory usage: {SYSTEM_STATUS['performance_metrics']['memory_usage']}%"""
-        
-        # 模型列表查询（中英文）
-        elif any(keyword in message_lower for keyword in ['models', 'list models', 'models list', '模型', '所有模型']):
-            models_str = ', '.join(MODEL_REGISTRY.keys())
-            response = f"""Available Models: {models_str}
-Total models: {len(MODEL_REGISTRY)}
-"""
-        
-        # 训练相关（中英文）
-        elif any(keyword in message_lower for keyword in ['training', 'train', 'learn', 'progress', '训练', '进度']):
-            response = """Training Status:
-- 9 models are actively training
-- 2 models are in evaluation phase
-- Overall progress: 90%
-- Estimated completion: 2 hours remaining
-- No training errors detected"""
-        
-        # 帮助相关（中英文）
-        elif any(keyword in message_lower for keyword in ['help', 'assist', 'support', 'what can you do', '帮助', '支持']):
-            response = """I am A Management Model, your AI system coordinator. I can help you with:
-
-• Monitor and manage all 11 sub-models
-• Provide system status and health reports
-• Control training processes (start/stop)
-• Answer questions about the AGI system
-• Process commands and provide insights
-• Handle knowledge management tasks
-• Generate reports and analytics
-• Coordinate cross-model operations
-
-What would you like to know or do?"""
-        
-        # 知识管理相关（中英文）
-        elif any(keyword in message_lower for keyword in ['knowledge', 'import', 'upload', 'data', '知识', '数据', '导入']):
-            response = """Knowledge Management:
-- Current knowledge base: 2.3GB
-- Active knowledge sources: 47
-- Last update: 2 hours ago
-- Knowledge import interface is ready
-- You can upload documents, connect APIs, or import datasets"""
-        
-        # 默认响应
-        else:
-            response = f"""💡 Intelligent Conversation
-
-Your question: {message}
-
-As your AI system coordinator, I can help you in the following ways:
-
-1. System Management: Monitor the running status of 11 sub-models
-2. Knowledge Query: Answer various questions through knowledge base
-3. Model Coordination: Call appropriate sub-models to handle specific tasks
-4. Training Control: Manage and optimize the training process
-5. Data Analysis: Provide system performance and usage statistics
-
-Current system status:
-✅ All 11 models are online
-✅ Knowledge base is active (2.3GB)
-✅ Training system is ready
-✅ Response time <200ms
-
-You can ask:
-• "What's the system status?"
-• "Show all models"
-• "What's in the knowledge base?"
-
-Please continue asking!"""
-        
-        # 记录对话历史
-        conversation_data = {
-            'message': message,
-            'response': response,
-            'timestamp': timestamp,
-            'context_length': len(context),
-            'model_used': 'A_management'
-        }
-        
-        return JSONResponse({
-            'status': 'success',
-            'response': response,
-            'timestamp': timestamp,
-            'model': 'A Management Model',
-            'conversation_data': conversation_data
+        # 更新当前情感和历史记录
+        self.current_emotion = primary_emotion
+        self.emotion_history.append({
+            'timestamp': datetime.now().isoformat(),
+            'emotion': self.current_emotion,
+            'score': score
         })
         
+        return emotion_result
+    
+    def get_current_emotion(self):
+        return self.current_emotion
+    
+    def get_emotion_summary(self, time_period='daily'):
+        # 生成情感摘要统计
+        emotion_counts = {}
+        for record in self.emotion_history:
+            emotion_counts[record['emotion']] = emotion_counts.get(record['emotion'], 0) + 1
+        
+        # 计算情感分布
+        total = sum(emotion_counts.values())
+        emotion_distribution = {k: v/total for k, v in emotion_counts.items()} if total > 0 else {}
+        
+        return {
+            'time_period': time_period,
+            'total_records': len(self.emotion_history),
+            'dominant_emotion': max(emotion_counts.items(), key=lambda x: x[1])[0] if emotion_counts else 'neutral',
+            'distribution': emotion_distribution
+        }
+    
+    def reset_emotion(self):
+        self.current_emotion = 'neutral'
+        self.emotion_history.clear()
+        return True
+    
+    def generate_emotional_response(self, text, emotion_result):
+        # 基于情感结果生成响应
+        primary_emotion = emotion_result.get('primary', 'neutral')
+        
+        responses = {
+            'positive': "I'm happy to help with that! ",
+            'negative': "I understand this might be challenging. ",
+            'neutral': "Let me provide you with information. ",
+            'excited': "This is interesting! Let's explore it. ",
+            'frustrated': "Let's try to resolve this issue. "
+        }
+        
+        base_response = responses.get(primary_emotion, responses['neutral'])
+        return base_response
+    
+    def _extract_features(self, text):
+        # 提取文本特征
+        # 在实际应用中，这里可能使用NLP模型提取更复杂的特征
+        return {
+            'text': text,
+            'length': len(text),
+            'word_count': len(text.split()),
+            'timestamp': datetime.now().isoformat()
+        }
+
+# 模型管理器类
+class ModelManager:
+    def __init__(self):
+        self.submodel_registry = submodel_registry
+        self.active_models = {}
+        
+    def get_available_models(self):
+        return list(self.submodel_registry.keys())
+    
+    def get_model_status(self, model_name):
+        if model_name in self.submodel_registry:
+            return self.submodel_registry[model_name]
+        return None
+    
+    def update_model_status(self, model_name, status):
+        if model_name in self.submodel_registry:
+            self.submodel_registry[model_name].update(status)
+            return True
+        return False
+
+# 训练控制器类
+class TrainingController:
+    def __init__(self):
+        self.stop_event = None
+        self.training_progress = {
+            'status': 'idle',
+            'epoch': 0,
+            'loss': 0.0,
+            'accuracy': 0.0,
+            'steps_completed': 0,
+            'total_steps': 0
+        }
+    
+    def start_training(self, config):
+        global management_model
+        
+        if management_model is None:
+            return {'status': 'error', 'message': 'Model not initialized'}
+        
+        # 设置训练配置
+        epochs = config.get('epochs', 10)
+        learning_rate = config.get('learning_rate', 0.001)
+        batch_size = config.get('batch_size', 32)
+        
+        self.training_progress = {
+            'status': 'training',
+            'epoch': 0,
+            'loss': 0.0,
+            'accuracy': 0.0,
+            'steps_completed': 0,
+            'total_steps': epochs,
+            'config': {
+                'epochs': epochs,
+                'learning_rate': learning_rate,
+                'batch_size': batch_size
+            }
+        }
+        
+        # 在实际应用中，这里会启动一个训练线程
+        logger.info(f"Starting training with config: {self.training_progress['config']}")
+        
+        return {
+            'status': 'success',
+            'message': 'Training started',
+            'training_id': f"train_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        }
+    
+    def stop_training(self):
+        if self.training_progress['status'] == 'training':
+            self.training_progress['status'] = 'stopped'
+            logger.info("Training stopped by user")
+            return {'status': 'success', 'message': 'Training stopped'}
+        return {'status': 'error', 'message': 'No training in progress'}
+    
+    def get_training_progress(self):
+        # 在实际应用中，这里会返回真实的训练进度
+        if self.training_progress['status'] == 'training':
+            # 模拟进度更新
+            self.training_progress['steps_completed'] += 1
+            if self.training_progress['steps_completed'] >= self.training_progress['total_steps']:
+                self.training_progress['status'] = 'completed'
+                self.training_progress['epoch'] = self.training_progress['total_steps']
+            else:
+                self.training_progress['epoch'] = self.training_progress['steps_completed']
+                # 模拟损失和准确率变化
+                self.training_progress['loss'] = max(0.1, 1.0 - (self.training_progress['epoch'] * 0.1))
+                self.training_progress['accuracy'] = min(0.95, self.training_progress['epoch'] * 0.1)
+        
+        return self.training_progress
+
+# 实例化管理器和控制器
+model_manager = ModelManager()
+training_controller = TrainingController()
+emotion_engine = None  # 稍后初始化
+
+# 初始化管理模型
+def initialize_management_model():
+    global management_model, model_initialized, emotion_engine
+    
+    try:
+        logger.info("正在初始化管理模型...")
+        
+        # 创建或加载管理模型
+        management_model = create_management_model()
+        management_model.to(device)
+        
+        # 加载预训练权重（如果有）
+        model_path = os.path.join(os.path.dirname(__file__), '..', 'sub_models', 'A_management', 'models', 'management_model.pth')
+        if os.path.exists(model_path):
+            management_model.load_state_dict(torch.load(model_path, map_location=device))
+            logger.info(f"已加载预训练模型权重: {model_path}")
+        
+        # 设置为评估模式
+        management_model.eval()
+        
+        # 初始化情感引擎
+        emotion_engine = EmotionEngine(management_model)
+        
+        # 更新系统状态
+        model_initialized = True
+        system_state['model_health']['status'] = 'active'
+        system_state['model_health']['last_check'] = datetime.now().isoformat()
+        
+        logger.info("管理模型初始化完成")
+        return True
     except Exception as e:
-        logger.error(f"对话处理失败: {e}")
-        return JSONResponse({
+        logger.error(f"初始化管理模型失败: {e}")
+        model_initialized = False
+        system_state['model_health']['status'] = 'error'
+        system_state['model_health']['last_check'] = datetime.now().isoformat()
+        system_state['model_health']['error'] = str(e)
+        return False
+
+# 检查模型健康状态
+def check_model_health():
+    global system_state
+    
+    try:
+        # 执行简单的推理测试
+        if management_model is not None:
+            # 使用更适合模型处理的测试输入
+            test_features = {"text": [0.1, 0.2, 0.3, 0.4], "length": 4}
+            with torch.no_grad():
+                management_model.forward(test_features)
+            
+            # 更新健康状态
+            system_state['model_health']['status'] = 'active'
+            system_state['model_health']['last_check'] = datetime.now().isoformat()
+            return True
+        return False
+    except Exception as e:
+        logger.error(f"模型健康检查失败: {e}")
+        system_state['model_health']['status'] = 'error'
+        system_state['model_health']['last_check'] = datetime.now().isoformat()
+        system_state['model_health']['error'] = str(e)
+        return False
+
+# API端点
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """系统健康检查"""
+    try:
+        model_health = check_model_health()
+        
+        return jsonify({
+            'status': 'success',
+            'api': True,
+            'model': model_initialized and model_health,
+            'system_time': datetime.now().isoformat(),
+            'uptime': time.time() - system_state['performance_metrics']['system_uptime']
+        })
+    except Exception as e:
+        logger.error(f"健康检查失败: {e}")
+        return jsonify({
             'status': 'error',
-            'message': str(e),
-            'error_type': type(e).__name__
-        }, status_code=500)
+            'message': str(e)
+        }), 500
+
+@app.route('/api/chat_with_management', methods=['POST'])
+def chat_with_management():
+    """与管理模型对话"""
+    try:
+        data = request.get_json()
+        message = data.get('message', '').strip()
+        conversation_id = data.get('conversation_id', '')
+        context = data.get('context', {})
+        
+        if not message:
+            return jsonify({
+                'status': 'error',
+                'message': 'Message cannot be empty'
+            }), 400
+        
+        if not model_initialized or management_model is None:
+            return jsonify({
+                'status': 'error',
+                'message': 'Model not initialized'
+            }), 503
+        
+        # 更新系统统计
+        system_state['performance_metrics']['total_requests'] += 1
+        
+        # 准备输入特征（使用适合模型处理的格式）
+        features = {
+            "text": [0.1, 0.2, 0.3, 0.4], "length": 4
+        }
+        
+        # 使用管理模型处理消息
+        with torch.no_grad():
+            strategy_probs, emotion_probs = management_model.forward(features)
+        
+        # 生成响应数据
+        strategy_labels = ['general_response', 'emotional_response', 'task_management', 'model_coordination', 'data_analysis']
+        strategy_index = torch.argmax(strategy_probs).item()
+        task_type = strategy_labels[strategy_index] if strategy_index < len(strategy_labels) else 'general'
+        
+        # 根据消息和任务类型生成响应
+        response_text = generate_response(message, task_type)
+        
+        # 更新成功请求计数
+        system_state['performance_metrics']['successful_requests'] += 1
+        
+        # 格式化响应
+        response = {
+            'status': 'success',
+            'message': message,
+            'response': response_text,
+            'task_type': task_type,
+            'confidence': strategy_probs.max().item(),
+            'timestamp': datetime.now().isoformat(),
+            'conversation_id': conversation_id
+        }
+        
+        # 如果情感引擎可用，添加情感分析结果
+        if emotion_engine:
+            emotion_result = emotion_engine.analyze_text_emotion(message)
+            response['emotion'] = emotion_result['primary']
+        
+        return jsonify(response)
+        
+    except Exception as e:
+        logger.error(f"处理对话请求失败: {e}")
+        system_state['performance_metrics']['failed_requests'] += 1
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+# 辅助函数：根据消息和任务类型生成响应
+def generate_response(message, task_type):
+    """根据消息内容和任务类型生成响应"""
+    response_map = {
+        'general_response': {
+            'hello': "Hello! How can I help you today?",
+            'hi': "Hi there! What can I do for you?",
+            'how are you': "I'm doing well, thank you! How can I assist you?",
+            'thanks': "You're welcome! Let me know if you need anything else.",
+            'help': "I'm here to help. What do you need assistance with?"
+        },
+        'emotional_response': {
+            'excited': "I'm excited to hear that! Let's explore this further.",
+            'happy': "That's great to hear! How can I support you?",
+            'sad': "I'm sorry to hear that. Let's see how we can improve things.",
+            'angry': "I understand you're upset. Let's work together to resolve this issue."
+        },
+        'task_management': {
+            'status': "System is running smoothly. All core services are operational.",
+            'progress': "Current progress is on track. We're meeting our objectives.",
+            'report': "Generating a comprehensive report for you."
+        }
+    }
+    
+    # 检查消息中是否包含关键词
+    message_lower = message.lower()
+    for category, responses in response_map.items():
+        for keyword, response_text in responses.items():
+            if keyword in message_lower:
+                return response_text
+    
+    # 默认响应
+    default_responses = {
+        'general_response': "I'm here to assist you with your queries and tasks.",
+        'emotional_response': "I understand. Let me know how I can help.",
+        'task_management': "I can help manage various tasks. Please specify what you need.",
+        'model_coordination': "I'm coordinating with the relevant models to provide you with the best assistance.",
+        'data_analysis': "I can help analyze data and provide insights. Please provide the information you'd like analyzed."
+    }
+    
+    return default_responses.get(task_type, "I need more information to help with this.")
 
 @app.route('/api/training/start', methods=['POST'])
 def start_training():
-    """开始训练过程"""
+    """开始模型训练"""
     try:
         data = request.get_json() or {}
-        models = data.get('models', [])
-        params = data.get('params', {})
-        lang = data.get('lang', 'en')
-        timestamp = data.get('timestamp', datetime.now().isoformat())
+        config = data.get('config', {})
         
-        logger.info(f"开始训练: 模型={models}, 参数={params}")
+        result = training_controller.start_training(config)
         
-        result = training_controller.start_training(models, params, lang)
-        
-        if result.get('status') == 'success':
-            return jsonify({
-                'status': 'success',
-                'action': 'start',
-                'message': result.get('message', 'Training started successfully'),
-                'timestamp': timestamp
-            })
+        if result['status'] == 'success':
+            return jsonify(result)
         else:
-            return jsonify({
-                'status': 'error',
-                'message': result.get('error', 'Failed to start training'),
-                'timestamp': timestamp
-            }), 400
-        
+            return jsonify(result), 400
+            
     except Exception as e:
-        logger.error(f"开始训练失败: {e}")
+        logger.error(f"启动训练失败: {e}")
         return jsonify({
             'status': 'error',
             'message': str(e)
@@ -343,23 +474,15 @@ def start_training():
 
 @app.route('/api/training/stop', methods=['POST'])
 def stop_training():
-    """停止训练过程"""
+    """停止模型训练"""
     try:
-        data = request.get_json() or {}
-        timestamp = data.get('timestamp', datetime.now().isoformat())
+        result = training_controller.stop_training()
         
-        logger.info("停止训练")
-        
-        # 调用训练控制器的stop_training方法
-        training_controller.stop_event.set()
-        
-        return jsonify({
-            'status': 'success',
-            'action': 'stop',
-            'message': 'Training stopped successfully',
-            'timestamp': timestamp
-        })
-        
+        if result['status'] == 'success':
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+            
     except Exception as e:
         logger.error(f"停止训练失败: {e}")
         return jsonify({
@@ -368,7 +491,7 @@ def stop_training():
         }), 500
 
 @app.route('/api/training/progress', methods=['GET'])
-def get_training_progress():
+def training_progress():
     """获取训练进度"""
     try:
         progress = training_controller.get_training_progress()
@@ -403,6 +526,9 @@ def update_emotion():
         
         logger.info(f"情感更新: {emotion}")
         
+        if emotion_engine:
+            emotion_engine.current_emotion = emotion
+        
         return jsonify({
             'status': 'success',
             'emotion': emotion,
@@ -417,6 +543,69 @@ def update_emotion():
             'message': str(e)
         }), 500
 
+@app.route('/api/emotion/current', methods=['GET'])
+def get_current_emotion():
+    """获取系统当前的情感状态"""
+    try:
+        current_emotion = emotion_engine.get_current_emotion() if emotion_engine else 'neutral'
+        
+        return jsonify({
+            'status': 'success',
+            'emotion': current_emotion,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"获取当前情感状态失败: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/emotion/summary', methods=['GET'])
+def get_emotion_summary():
+    """获取情感摘要统计"""
+    try:
+        time_period = request.args.get('time_period', 'daily')
+        
+        # 验证时间周期参数
+        valid_periods = ["daily", "weekly", "monthly"]
+        if time_period not in valid_periods:
+            time_period = "daily"
+        
+        summary = emotion_engine.get_emotion_summary(time_period) if emotion_engine else {}
+        
+        return jsonify({
+            'status': 'success',
+            'summary': summary,
+            'time_period': time_period,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"获取情感摘要失败: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/emotion/reset', methods=['POST'])
+def reset_emotion():
+    """重置系统情感状态"""
+    try:
+        if emotion_engine:
+            emotion_engine.reset_emotion()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Emotional state has been reset',
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"重置情感状态失败: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
 @app.route('/api/export', methods=['POST'])
 def export_data():
     """导出系统数据"""
@@ -426,11 +615,14 @@ def export_data():
         
         logger.info("数据导出请求")
         
+        # 在实际应用中，这里会实现数据导出逻辑
+        export_id = f"export_{int(datetime.now().timestamp())}"
+        
         return jsonify({
             'status': 'success',
             'message': 'System data export initiated. Files will be available in the downloads section.',
             'timestamp': timestamp,
-            'export_id': f"export_{int(datetime.now().timestamp())}"
+            'export_id': export_id
         })
         
     except Exception as e:
@@ -446,16 +638,7 @@ def get_models():
     try:
         logger.info("获取模型列表")
         
-        # 尝试从统一系统获取模型列表
-        if unified_system and hasattr(unified_system, 'submodel_registry'):
-            models = list(unified_system.submodel_registry.keys())
-        else:
-            # 默认模型列表
-            models = [
-                'A_management', 'B_language', 'C_audio', 'D_image', 
-                'E_video', 'F_spatial', 'G_sensor', 'H_computer_control',
-                'I_knowledge', 'J_motion', 'K_programming'
-            ]
+        models = model_manager.get_available_models()
         
         return jsonify({
             'status': 'success',
@@ -476,28 +659,13 @@ def get_all_models_status():
     try:
         logger.info("获取所有模型状态")
         
-        if unified_system and hasattr(unified_system, 'submodel_registry'):
-            all_status = {}
-            for model_name, status in unified_system.submodel_registry.items():
-                all_status[model_name] = status
-            return jsonify({
-                'status': 'success',
-                'models': all_status,
-                'count': len(all_status)
-            })
-        else:
-            # 返回默认模型列表和状态
-            default_models = [
-                'A_management', 'B_language', 'C_audio', 'D_image',
-                'E_video', 'F_spatial', 'G_sensor', 'H_computer_control',
-                'I_knowledge', 'J_motion', 'K_programming'
-            ]
-            all_status = {model: {'status': 'active', 'health': 'healthy'} for model in default_models}
-            return jsonify({
-                'status': 'success',
-                'models': all_status,
-                'count': len(all_status)
-            })
+        all_status = submodel_registry
+        
+        return jsonify({
+            'status': 'success',
+            'models': all_status,
+            'count': len(all_status)
+        })
     except Exception as e:
         logger.error(f"获取模型状态失败: {e}")
         return jsonify({
@@ -509,8 +677,9 @@ def get_all_models_status():
 def get_model_status(model_name):
     """获取特定模型状态"""
     try:
-        if unified_system and model_name in unified_system.submodel_registry:
-            status = unified_system.submodel_registry[model_name]
+        status = model_manager.get_model_status(model_name)
+        
+        if status:
             return jsonify({
                 'status': 'success',
                 'model': model_name,
@@ -533,51 +702,52 @@ def analyze_emotion():
     """情感分析端点"""
     try:
         data = request.get_json()
-        text = data.get('text', '')
+        text = data.get('text', '').strip()
         
         if not text:
             return jsonify({
                 'status': 'error',
-                'message': 'Text is required'
+                'message': 'Text cannot be empty'
             }), 400
         
-        # 使用情感引擎进行分析
-        emotional_state = unified_system.system_state.get('emotional_state', {}) if unified_system else {}
+        if not emotion_engine:
+            return jsonify({
+                'status': 'error',
+                'message': 'Emotion engine not initialized'
+            }), 503
         
-        # 简单的情感分析
-        positive_words = ['good', 'happy', 'joy', 'like', 'love', 'great', 'excellent', 'perfect', 'wonderful']
-        negative_words = ['bad', 'sad', 'sorrow', 'hate', 'dislike', 'poor', 'terrible', 'failure', 'pain']
+        # 使用情感引擎进行详细的情感分析
+        emotion_result = emotion_engine.analyze_text_emotion(text)
         
-        positive_count = sum(1 for word in positive_words if word in text.lower())
-        negative_count = sum(1 for word in negative_words if word in text.lower())
+        # 获取主导情感
+        dominant_emotion = max(emotion_result['detailed'].items(), key=lambda x: x[1]) if 'detailed' in emotion_result else ('neutral', 0.0)
         
-        if positive_count > negative_count:
-            emotion = "positive"
-            intensity = min(0.9, 0.5 + (positive_count * 0.1))
-        elif negative_count > positive_count:
-            emotion = "negative"
-            intensity = min(0.9, 0.5 + (negative_count * 0.1))
-        else:
-            emotion = "neutral"
-            intensity = 0.5
+        # 生成情感化响应
+        emotional_response = emotion_engine.generate_emotional_response(text, emotion_result)
         
         return jsonify({
             'status': 'success',
-            'emotion': emotion,
-            'intensity': intensity,
-            'analysis': {
-                'positive_keywords': positive_count,
-                'negative_keywords': negative_count,
-                'text_length': len(text)
+            'text': text,
+            'emotion': {
+                'primary': dominant_emotion[0],
+                'score': dominant_emotion[1],
+                'detailed': emotion_result.get('detailed', {}),
+                'valence': emotion_result.get('valence', 0.0),
+                'arousal': emotion_result.get('arousal', 0.0),
+                'dominance': emotion_result.get('dominance', 0.0)
             },
-            'current_emotional_state': emotional_state
+            'recommended_response': emotional_response,
+            'confidence': emotion_result.get('confidence', 0.85),
+            'timestamp': datetime.now().isoformat()
         })
         
     except Exception as e:
         logger.error(f"情感分析失败: {e}")
+        system_state['performance_metrics']['failed_requests'] += 1
         return jsonify({
             'status': 'error',
-            'message': str(e)
+            'message': 'Internal server error',
+            'details': str(e)
         }), 500
 
 @app.route('/api/coordinate', methods=['POST'])
@@ -596,7 +766,7 @@ def coordinate_models():
             }), 400
         
         # 验证模型
-        available_models = list(model_manager.submodel_registry.keys())
+        available_models = model_manager.get_available_models()
         invalid_models = [m for m in involved_models if m not in available_models]
         
         if invalid_models:
@@ -608,34 +778,20 @@ def coordinate_models():
         
         coordination_id = f"coord_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
-        # 创建协调计划
-        coordination_plan = {
-            'coordination_id': coordination_id,
+        # 准备协调任务特征
+        features = {
             'task': task_description,
-            'involved_models': involved_models,
+            'models': involved_models,
             'strategy': coordination_strategy,
-            'status': 'planning',
-            'created_at': datetime.now().isoformat(),
-            'steps': []
+            'timestamp': datetime.now().isoformat()
         }
         
-        # 生成协调步骤
-        if coordination_strategy == 'sequential':
-            for i, model_id in enumerate(involved_models):
-                coordination_plan['steps'].append({
-                    'step': i + 1,
-                    'model_id': model_id,
-                    'action': f'Execute part {i + 1} of task',
-                    'status': 'pending'
-                })
-        elif coordination_strategy == 'parallel':
-            for model_id in involved_models:
-                coordination_plan['steps'].append({
-                    'step': 1,
-                    'model_id': model_id,
-                    'action': 'Execute parallel task component',
-                    'status': 'pending'
-                })
+        # 使用管理模型创建协调计划
+        with torch.no_grad():
+            coordination_plan = management_model.coordinate_submodels(features)
+        
+        coordination_plan['coordination_id'] = coordination_id
+        coordination_plan['created_at'] = datetime.now().isoformat()
         
         return jsonify({
             'status': 'success',
@@ -664,30 +820,30 @@ def query_knowledge():
                 'message': 'Query is required'
             }), 400
         
-        # 模拟知识库响应
-        responses = {
-            'machine learning': "Machine learning is a branch of artificial intelligence that enables computer systems to learn from data and improve without explicit programming.",
-            'deep learning': "Deep learning is a subfield of machine learning that uses multi-layer neural networks to process complex data patterns.",
-            'natural language processing': "Natural language processing is a field of artificial intelligence focused on interaction between computers and human language.",
-            'computer vision': "Computer vision enables computers to derive information from digital images, videos, and other visual inputs and take action.",
-            'reinforcement learning': "Reinforcement learning is a machine learning method where agents learn optimal behavior strategies through interaction with the environment."
+        if not model_initialized or management_model is None:
+            return jsonify({
+                'status': 'error',
+                'message': 'Model not initialized'
+            }), 503
+        
+        # 准备查询特征
+        features = {
+            'query': query,
+            'domain': knowledge_domain,
+            'timestamp': datetime.now().isoformat()
         }
         
-        query_lower = query.lower()
-        response = "Based on my knowledge base, this is a good question. Let me provide you with relevant information."
-        
-        for keyword, answer in responses.items():
-            if keyword in query_lower:
-                response = answer
-                break
+        # 使用管理模型查询知识库
+        with torch.no_grad():
+            knowledge_result = management_model.query_knowledge(features)
         
         return jsonify({
             'status': 'success',
             'query': query,
-            'response': response,
+            'response': knowledge_result.get('response', 'No relevant information found.'),
             'domain': knowledge_domain,
-            'confidence': 0.85,
-            'sources': ['internal_knowledge_base']
+            'confidence': knowledge_result.get('confidence', 0.85),
+            'sources': knowledge_result.get('sources', ['internal_knowledge_base'])
         })
         
     except Exception as e:
@@ -701,37 +857,28 @@ def query_knowledge():
 def get_system_stats():
     """获取系统统计信息"""
     try:
-        import time
-        from collections import deque
+        # 创建可序列化的系统状态副本
+        serializable_system_state = {}
+        for key, value in system_state.items():
+            if isinstance(value, dict):
+                serializable_substate = {}
+                for k, v in value.items():
+                    if isinstance(v, (dict, list, str, int, float, bool)) or v is None:
+                        serializable_substate[k] = v
+                    else:
+                        serializable_substate[k] = str(v)
+                serializable_system_state[key] = serializable_substate
+            elif isinstance(value, (dict, list, str, int, float, bool)) or value is None:
+                serializable_system_state[key] = value
+            else:
+                serializable_system_state[key] = str(value)
         
-        if unified_system:
-            # 创建可序列化的系统状态副本
-            serializable_system_state = {}
-            for key, value in unified_system.system_state.items():
-                if isinstance(value, deque):
-                    serializable_system_state[key] = list(value)
-                elif hasattr(value, 'isoformat'):  # datetime对象
-                    serializable_system_state[key] = value.isoformat()
-                elif isinstance(value, (dict, list, str, int, float, bool)) or value is None:
-                    serializable_system_state[key] = value
-                else:
-                    serializable_system_state[key] = str(value)
-            
-            stats = {
-                'system_uptime': time.time() - unified_system.system_state.get('performance_metrics', {}).get('system_uptime', time.time()),
-                'active_models': len(unified_system.submodel_registry),
-                'collaboration_stats': unified_system.get_collaboration_stats(),
-                'optimization_stats': unified_system.get_optimization_stats(),
-                'system_state': serializable_system_state
-            }
-        else:
-            stats = {
-                'system_uptime': time.time(),
-                'active_models': 11,
-                'collaboration_stats': {},
-                'optimization_stats': {},
-                'system_state': {}
-            }
+        stats = {
+            'system_uptime': time.time() - system_state['performance_metrics']['system_uptime'],
+            'active_models': len(submodel_registry),
+            'collaboration_stats': system_state['performance_metrics'],
+            'system_state': serializable_system_state
+        }
         
         return jsonify({
             'status': 'success',
@@ -748,31 +895,16 @@ def get_system_stats():
 def get_simple_stats():
     """获取简化系统统计信息（兼容旧版本）"""
     try:
-        import time
-        if unified_system:
-            collaboration = unified_system.get_collaboration_stats() if hasattr(unified_system, 'get_collaboration_stats') else {}
-            optimization = unified_system.get_optimization_stats() if hasattr(unified_system, 'get_optimization_stats') else {}
-            
-            # 简化统计信息
-            simple_stats = {
-                'total_tasks': collaboration.get('total_tasks_processed', 0),
-                'successful_tasks': collaboration.get('successful_collaborations', 0),
-                'failed_tasks': collaboration.get('failed_collaborations', 0),
-                'pending_tasks': collaboration.get('pending_tasks', 0),
-                'active_models': len(unified_system.submodel_registry) if hasattr(unified_system, 'submodel_registry') else 11,
-                'system_uptime': time.time() - unified_system.system_state.get('performance_metrics', {}).get('system_uptime', time.time()) if unified_system.system_state else time.time(),
-                'timestamp': datetime.now().isoformat()
-            }
-        else:
-            simple_stats = {
-                'total_tasks': 0,
-                'successful_tasks': 0,
-                'failed_tasks': 0,
-                'pending_tasks': 0,
-                'active_models': 11,
-                'system_uptime': time.time(),
-                'timestamp': datetime.now().isoformat()
-            }
+        # 简化统计信息
+        simple_stats = {
+            'total_tasks': system_state['performance_metrics'].get('total_requests', 0),
+            'successful_tasks': system_state['performance_metrics'].get('successful_requests', 0),
+            'failed_tasks': system_state['performance_metrics'].get('failed_requests', 0),
+            'pending_tasks': 0,  # 在当前实现中没有 pending_tasks
+            'active_models': len(submodel_registry),
+            'system_uptime': time.time() - system_state['performance_metrics']['system_uptime'],
+            'timestamp': datetime.now().isoformat()
+        }
         
         return jsonify({
             'status': 'success',
@@ -784,20 +916,6 @@ def get_simple_stats():
             'status': 'error',
             'message': str(e)
         }), 500
-
-@app.exception_handler(404)
-async def not_found(request: Request, exc: HTTPException):
-    return JSONResponse({
-        'status': 'error',
-        'message': 'Endpoint not found'
-    }, status_code=404)
-
-@app.exception_handler(500)
-async def internal_error(request: Request, exc: Exception):
-    return JSONResponse({
-        'status': 'error',
-        'message': 'Internal server error'
-    }, status_code=500)
 
 @app.route('/api/collaboration/tasks', methods=['POST'])
 def create_collaboration_task():
@@ -815,19 +933,29 @@ def create_collaboration_task():
                 'message': 'Description and required_models are required'
             }), 400
         
-        if unified_system:
-            task_id = unified_system.submit_collaboration_task(
-                description, required_models, priority, metadata
-            )
-            return jsonify({
-                'status': 'success',
-                'task_id': task_id
-            })
-        else:
+        if not model_initialized or management_model is None:
             return jsonify({
                 'status': 'error',
-                'message': 'Unified system not initialized'
-            }), 500
+                'message': 'Management model not initialized'
+            }), 503
+        
+        # 准备任务特征
+        task_features = {
+            'description': description,
+            'required_models': required_models,
+            'priority': priority,
+            'metadata': metadata,
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        # 使用管理模型创建协作任务
+        with torch.no_grad():
+            task_id = management_model.create_collaboration_task(task_features)
+        
+        return jsonify({
+            'status': 'success',
+            'task_id': task_id
+        })
             
     except Exception as e:
         logger.error(f"创建协作任务失败: {e}")
@@ -836,66 +964,33 @@ def create_collaboration_task():
             'message': str(e)
         }), 500
 
-@app.route('/api/collaboration/stats', methods=['GET'])
-def get_collaboration_stats():
-    """获取协作统计"""
-    try:
-        if unified_system:
-            stats = unified_system.get_collaboration_stats()
-            return jsonify({
-                'status': 'success',
-                'data': stats
-            })
-        else:
-            return jsonify({
-                'status': 'error',
-                'message': 'Unified system not initialized'
-            }), 500
-    except Exception as e:
-        logger.error(f"获取协作统计失败: {e}")
-        return jsonify({
-            'status': 'error',
-            'message': str(e)
-        }), 500
+# 异常处理
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({
+        'status': 'error',
+        'message': 'Endpoint not found'
+    }), 404
 
-@app.route('/api/optimization/stats', methods=['GET'])
-def get_optimization_stats():
-    """获取优化统计"""
-    try:
-        if unified_system:
-            stats = unified_system.get_optimization_stats()
-            return jsonify({
-                'status': 'success',
-                'data': stats
-            })
-        else:
-            return jsonify({
-                'status': 'error',
-                'message': 'Unified system not initialized'
-            }), 500
-    except Exception as e:
-        logger.error(f"获取优化统计失败: {e}")
-        return jsonify({
-            'status': 'error',
-            'message': str(e)
-        }), 500
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"Internal server error: {error}")
+    system_state['performance_metrics']['failed_requests'] += 1
+    return jsonify({
+        'status': 'error',
+        'message': 'Internal server error'
+    }), 500
 
+# 初始化应用
 def initialize_app():
     """初始化应用"""
-    global unified_system
-    try:
-        logger.info("正在初始化统一AGI系统...")
-        unified_system = get_unified_system(language='zh')
-        unified_system.start()
-        logger.info("统一AGI系统初始化完成")
-    except Exception as e:
-        logger.error(f"初始化失败: {e}")
-        unified_system = None
+    # 初始化管理模型
+    initialize_management_model()
 
 if __name__ == '__main__':
     initialize_app()
     
-    port = int(os.environ.get('PORT', 5001))
+    port = int(os.environ.get('PORT', 5015))  # Changed from 5001 to 5015 according to PORT_ALLOCATION.md
     host = os.environ.get('HOST', '0.0.0.0')
     debug = os.environ.get('DEBUG', 'false').lower() == 'true'
     

@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Base Management</title>
+    <style>
+        /* Simple black, white, and gray color scheme */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .stats-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            flex: 1;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .btn-primary {
+            background-color: #333;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #555;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        .search-container {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .form-control {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .table-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            background-color: #e9ecef;
+            color: #333;
+        }
+        .badge-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .badge-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .badge-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            padding: 20px 0;
+        }
+        .pagination a {
+            margin: 0 5px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+        }
+        .pagination a.active {
+            background-color: #333;
+            color: white;
+            border-color: #333;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 8px;
+            width: 50%;
+            max-width: 600px;
+        }
+        .modal-header {
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .modal-body {
+            padding: 20px 0;
+        }
+        .modal-footer {
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            text-align: right;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            color: white;
+            z-index: 1000;
+            display: none;
+        }
+        .toast-success {
+            background-color: #28a745;
+        }
+        .toast-error {
+            background-color: #dc3545;
+        }
+        .toast-warning {
+            background-color: #ffc107;
+            color: #333;
+        }
+        .toast-info {
+            background-color: #17a2b8;
+        }
+        .batch-actions {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            display: none;
+        }
+        .batch-actions.active {
+            display: block;
+        }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Knowledge Base Management</h1>
+        
+        <!-- Statistics Cards -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-value" id="totalFiles">0</div>
+                <div class="stat-label">Total Files</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalSize">0</div>
+                <div class="stat-label">Total Size</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalCategories">0</div>
+                <div class="stat-label">Categories</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="indexedDocuments">0</div>
+                <div class="stat-label">Indexed Documents</div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-title">Quick Actions</div>
+            <button class="btn btn-primary" onclick="showUploadModal()">Upload File</button>
+            <button class="btn btn-secondary" onclick="rebuildIndex()">Rebuild Index</button>
+            <button class="btn btn-secondary" onclick="exportAll()">Export All</button>
+            <button class="btn btn-secondary" onclick="cleanupKnowledgeBase()">Cleanup</button>
+        </div>
+        
+        <!-- Batch Actions (visible when items are selected) -->
+        <div class="batch-actions" id="batchActions">
+            <div style="margin-bottom: 10px;">
+                <strong>Selected:</strong> <span id="selectedCount">0</span> items
+            </div>
+            <button class="btn btn-danger" onclick="deleteSelected()">Delete Selected</button>
+            <button class="btn btn-secondary" onclick="exportSelected()">Export Selected</button>
+            <button class="btn btn-secondary" onclick="clearSelection()">Clear Selection</button>
+        </div>
+        
+        <!-- Search and Filters -->
+        <div class="card">
+            <div class="card-title">Search and Filters</div>
+            <div class="search-container">
+                <input type="text" class="form-control" id="searchQuery" placeholder="Search in titles, content, or tags..." onkeyup="handleSearchInput()">
+                <select class="form-control" id="categoryFilter" onchange="filterByCategory()">
+                    <option value="">All Categories</option>
+                </select>
+                <select class="form-control" id="tagFilter" onchange="filterByTag()">
+                    <option value="">All Tags</option>
+                </select>
+            </div>
+            <div id="searchResults" style="position: absolute; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 300px; overflow-y: auto; z-index: 100; width: calc(100% - 40px); margin-top: 5px; display: none;"></div>
+        </div>
+        
+        <!-- Knowledge Items Table -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">
+                            <div class="checkbox-container">
+                                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                                <label for="selectAll"></label>
+                            </div>
+                        </th>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Tags</th>
+                        <th>Size</th>
+                        <th>Created</th>
+                        <th style="width: 100px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="knowledgeTableBody">
+                    <!-- Knowledge items will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="pagination" id="pagination">
+            <!-- Pagination links will be inserted here -->
+        </div>
+    </div>
+    
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Upload Knowledge File</h2>
+            </div>
+            <div class="modal-body">
+                <form id="uploadForm">
+                    <div class="form-group">
+                        <label for="fileInput">Select File</label>
+                        <input type="file" id="fileInput" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="titleInput">Title</label>
+                        <input type="text" id="titleInput" class="form-control" placeholder="Enter title">
+                    </div>
+                    <div class="form-group">
+                        <label for="descriptionInput">Description</label>
+                        <textarea id="descriptionInput" class="form-control" rows="3" placeholder="Enter description"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="categorySelect">Category</label>
+                        <select id="categorySelect" class="form-control">
+                            <option value="">Select category</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tagInput">Tags (comma separated)</label>
+                        <input type="text" id="tagInput" class="form-control" placeholder="e.g. python, programming, tutorial">
+                    </div>
+                    <div class="form-group">
+                        <label for="authorInput">Author</label>
+                        <input type="text" id="authorInput" class="form-control" placeholder="Enter author name">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideUploadModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="uploadFile()">Upload</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Knowledge Item</h2>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" id="editId">
+                    <div class="form-group">
+                        <label for="editTitle">Title</label>
+                        <input type="text" id="editTitle" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDescription">Description</label>
+                        <textarea id="editDescription" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="editCategory">Category</label>
+                        <select id="editCategory" class="form-control">
+                            <option value="">Select category</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editTags">Tags (comma separated)</label>
+                        <input type="text" id="editTags" class="form-control">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideEditModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="updateKnowledge()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+    
+    <script>
+        // Global variables
+        let selectedItems = new Set();
+        let currentPage = 1;
+        const itemsPerPage = 20;
+        let knowledgeItems = [];
+        let totalItems = 0;
+        let totalPages = 0;
+        
+        // Initialize the page
+        async function init() {
+            loadCategories();
+            loadTags();
+            loadKnowledgeStats();
+            loadKnowledgeList();
+            
+            // Close search results when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('.search-container') && !event.target.closest('#searchResults')) {
+                    document.getElementById('searchResults').style.display = 'none';
+                }
+            });
+        }
+        
+        // Load categories
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/knowledge/categories');
+                const data = await response.json();
+                
+                const categoryFilter = document.getElementById('categoryFilter');
+                const categorySelect = document.getElementById('categorySelect');
+                const editCategory = document.getElementById('editCategory');
+                
+                data.categories.forEach(category => {
+                    // Add to filters
+                    const filterOption = document.createElement('option');
+                    filterOption.value = category;
+                    filterOption.textContent = category;
+                    categoryFilter.appendChild(filterOption);
+                    
+                    // Add to upload modal
+                    const uploadOption = document.createElement('option');
+                    uploadOption.value = category;
+                    uploadOption.textContent = category;
+                    categorySelect.appendChild(uploadOption);
+                    
+                    // Add to edit modal
+                    const editOption = document.createElement('option');
+                    editOption.value = category;
+                    editOption.textContent = category;
+                    editCategory.appendChild(editOption);
+                });
+            } catch (error) {
+                console.error('Failed to load categories:', error);
+                showError('Failed to load categories');
+            }
+        }
+        
+        // Load tags
+        async function loadTags() {
+            try {
+                const response = await fetch('/api/knowledge/tags');
+                const data = await response.json();
+                
+                const tagFilter = document.getElementById('tagFilter');
+                
+                data.tags.forEach(tag => {
+                    const option = document.createElement('option');
+                    option.value = tag;
+                    option.textContent = tag;
+                    tagFilter.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Failed to load tags:', error);
+                showError('Failed to load tags');
+            }
+        }
+        
+        // Load knowledge statistics
+        async function loadKnowledgeStats() {
+            try {
+                const response = await fetch('/api/knowledge/stats');
+                const stats = await response.json();
+                
+                document.getElementById('totalFiles').textContent = stats.total_files || 0;
+                document.getElementById('totalSize').textContent = formatFileSize(stats.total_size || 0);
+                document.getElementById('totalCategories').textContent = Object.keys(stats.category_count || {}).length;
+                document.getElementById('indexedDocuments').textContent = stats.indexed_documents || 0;
+            } catch (error) {
+                console.error('Failed to load statistics:', error);
+                showError('Failed to load statistics');
+            }
+        }
+        
+        // Load knowledge list
+        async function loadKnowledgeList(page = 1) {
+            try {
+                currentPage = page;
+                const category = document.getElementById('categoryFilter').value;
+                const tag = document.getElementById('tagFilter').value;
+                
+                let url = `/api/knowledge/search?page=${page}&limit=${itemsPerPage}`;
+                if (category) url += `&category=${encodeURIComponent(category)}`;
+                if (tag) url += `&tag=${encodeURIComponent(tag)}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                knowledgeItems = data.results || [];
+                totalItems = data.total || 0;
+                totalPages = Math.ceil(totalItems / itemsPerPage);
+                
+                renderKnowledgeTable();
+                renderPagination();
+            } catch (error) {
+                console.error('Failed to load knowledge items:', error);
+                showError('Failed to load knowledge items');
+            }
+        }
+        
+        // Render knowledge table
+        function renderKnowledgeTable() {
+            const tableBody = document.getElementById('knowledgeTableBody');
+            tableBody.innerHTML = '';
+            
+            if (knowledgeItems.length === 0) {
+                const emptyRow = document.createElement('tr');
+                emptyRow.innerHTML = '<td colspan="8" style="text-align: center; padding: 40px;">No knowledge items found</td>';
+                tableBody.appendChild(emptyRow);
+                return;
+            }
+            
+            knowledgeItems.forEach(item => {
+                const row = document.createElement('tr');
+                
+                // Format date
+                const formattedDate = formatDate(item.created_at);
+                
+                // Format file size
+                const formattedSize = formatFileSize(item.size || 0);
+                
+                // Format tags
+                const tagsHtml = item.tags && item.tags.length > 0 ? 
+                    item.tags.map(tag => `<span class="badge">${tag}</span>`).join(' ') : 
+                    '<span class="badge badge-info">No tags</span>';
+                
+                row.innerHTML = `
+                    <td>
+                        <div class="checkbox-container">
+                            <input type="checkbox" class="selection-checkbox" data-id="${item.id}" onchange="toggleSelection('${item.id}', this.checked)">
+                            <label></label>
+                        </div>
+                    </td>
+                    <td>${item.id}</td>
+                    <td><strong>${item.title}</strong></td>
+                    <td>${item.category || '-'}</td>
+                    <td>${tagsHtml}</td>
+                    <td>${formattedSize}</td>
+                    <td>${formattedDate}</td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 5px 10px; margin-right: 5px;" onclick="showEditModal('${item.id}')">Edit</button>
+                        <button class="btn btn-danger" style="padding: 5px 10px;" onclick="deleteKnowledge('${item.id}')">Delete</button>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Render pagination
+        function renderPagination() {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            
+            if (totalPages <= 1) {
+                return;
+            }
+            
+            // Previous button
+            if (currentPage > 1) {
+                const prevBtn = document.createElement('a');
+                prevBtn.href = '#';
+                prevBtn.textContent = 'Previous';
+                prevBtn.onclick = () => loadKnowledgeList(currentPage - 1);
+                pagination.appendChild(prevBtn);
+            }
+            
+            // Page numbers (simplified for clarity)
+            for (let i = 1; i <= totalPages; i++) {
+                const pageBtn = document.createElement('a');
+                pageBtn.href = '#';
+                pageBtn.textContent = i;
+                if (i === currentPage) {
+                    pageBtn.classList.add('active');
+                }
+                pageBtn.onclick = () => loadKnowledgeList(i);
+                pagination.appendChild(pageBtn);
+            }
+            
+            // Next button
+            if (currentPage < totalPages) {
+                const nextBtn = document.createElement('a');
+                nextBtn.href = '#';
+                nextBtn.textContent = 'Next';
+                nextBtn.onclick = () => loadKnowledgeList(currentPage + 1);
+                pagination.appendChild(nextBtn);
+            }
+        }
+        
+        // Toggle select all
+        function toggleSelectAll() {
+            const isChecked = document.getElementById('selectAll').checked;
+            
+            document.querySelectorAll('.selection-checkbox').forEach(checkbox => {
+                checkbox.checked = isChecked;
+                toggleSelection(checkbox.getAttribute('data-id'), isChecked);
+            });
+        }
+        
+        // Toggle selection
+        function toggleSelection(id, isSelected) {
+            if (isSelected) {
+                selectedItems.add(id);
+            } else {
+                selectedItems.delete(id);
+            }
+            updateSelectionUI();
+        }
+        
+        // Update selection UI
+        function updateSelectionUI() {
+            const batchActions = document.getElementById('batchActions');
+            const selectedCount = document.getElementById('selectedCount');
+            const selectAllCheckbox = document.getElementById('selectAll');
+            
+            selectedCount.textContent = selectedItems.size;
+            
+            if (selectedItems.size > 0) {
+                batchActions.classList.add('active');
+            } else {
+                batchActions.classList.remove('active');
+            }
+            
+            // Update select all checkbox state
+            const allCheckboxes = document.querySelectorAll('.selection-checkbox');
+            if (allCheckboxes.length > 0) {
+                selectAllCheckbox.checked = Array.from(allCheckboxes).every(cb => cb.checked);
+            } else {
+                selectAllCheckbox.checked = false;
+            }
+        }
+        
+        // Clear selection
+        function clearSelection() {
+            selectedItems.clear();
+            document.querySelectorAll('.selection-checkbox').forEach(checkbox => checkbox.checked = false);
+            document.getElementById('selectAll').checked = false;
+            updateSelectionUI();
+        }
+        
+        // Handle search input
+        function handleSearchInput() {
+            const query = document.getElementById('searchQuery').value.trim();
+            
+            if (query.length < 2) {
+                document.getElementById('searchResults').style.display = 'none';
+                return;
+            }
+            
+            // Simple client-side search
+            const results = knowledgeItems.filter(item => 
+                (item.title && item.title.toLowerCase().includes(query.toLowerCase())) ||
+                (item.content && item.content.toLowerCase().includes(query.toLowerCase())) ||
+                (item.tags && item.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase())))
+            );
+            
+            displaySearchResults(results, query);
+        }
+        
+        // Display search results
+        function displaySearchResults(results, query) {
+            const container = document.getElementById('searchResults');
+            
+            if (results.length === 0) {
+                container.innerHTML = '<div class="p-3 text-muted">No results found</div>';
+            } else {
+                let html = '';
+                results.slice(0, 5).forEach(item => {
+                    html += `
+                        <div class="p-2 border-bottom hover-bg-light" onclick="viewKnowledge('${item.id}')">
+                            <strong>${item.title}</strong>
+                            <div class="small text-muted">${item.category || 'Uncategorized'}</div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            }
+            
+            container.style.display = 'block';
+        }
+        
+        // Filter by category
+        function filterByCategory() {
+            loadKnowledgeList(1);
+        }
+        
+        // Filter by tag
+        function filterByTag() {
+            loadKnowledgeList(1);
+        }
+        
+        // View knowledge item
+        function viewKnowledge(id) {
+            window.location.href = `/knowledge/view/${id}`;
+        }
+        
+        // Show upload modal
+        function showUploadModal() {
+            document.getElementById('uploadForm').reset();
+            document.getElementById('uploadModal').style.display = 'block';
+        }
+        
+        // Hide upload modal
+        function hideUploadModal() {
+            document.getElementById('uploadModal').style.display = 'none';
+        }
+        
+        // Upload file
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const titleInput = document.getElementById('titleInput');
+            const descriptionInput = document.getElementById('descriptionInput');
+            const categorySelect = document.getElementById('categorySelect');
+            const tagInput = document.getElementById('tagInput');
+            const authorInput = document.getElementById('authorInput');
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showWarning('Please select a file to upload');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            
+            formData.append('file', file);
+            formData.append('title', titleInput.value || file.name);
+            formData.append('description', descriptionInput.value);
+            formData.append('category', categorySelect.value);
+            formData.append('tags', tagInput.value);
+            formData.append('author', authorInput.value);
+            
+            try {
+                showLoading('Uploading file...');
+                
+                const response = await fetch('/api/knowledge/create', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Upload failed');
+                }
+                
+                const result = await response.json();
+                
+                hideUploadModal();
+                loadKnowledgeList();
+                loadKnowledgeStats();
+                
+                showSuccess('File uploaded successfully!');
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                showError('Failed to upload file: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // Show edit modal
+        async function showEditModal(id) {
+            try {
+                showLoading('Loading item details...');
+                
+                const response = await fetch(`/api/knowledge/${id}`);
+                const item = await response.json();
+                
+                document.getElementById('editId').value = item.id;
+                document.getElementById('editTitle').value = item.title;
+                document.getElementById('editDescription').value = item.description || '';
+                document.getElementById('editCategory').value = item.category || '';
+                document.getElementById('editTags').value = item.tags ? item.tags.join(', ') : '';
+                
+                document.getElementById('editModal').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Failed to load item details:', error);
+                showError('Failed to load item details');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // Hide edit modal
+        function hideEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+        
+        // Update knowledge item
+        async function updateKnowledge() {
+            const id = document.getElementById('editId').value;
+            const title = document.getElementById('editTitle').value;
+            const description = document.getElementById('editDescription').value;
+            const category = document.getElementById('editCategory').value;
+            const tags = document.getElementById('editTags').value;
+            
+            if (!title.trim()) {
+                showWarning('Title is required');
+                return;
+            }
+            
+            try {
+                showLoading('Updating item...');
+                
+                const response = await fetch(`/api/knowledge/update/${id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: title,
+                        description: description,
+                        category: category,
+                        tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Update failed');
+                }
+                
+                hideEditModal();
+                loadKnowledgeList();
+                
+                showSuccess('Item updated successfully!');
+                
+            } catch (error) {
+                console.error('Update error:', error);
+                showError('Failed to update item: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // Delete knowledge item
+        async function deleteKnowledge(id) {
+            if (confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
+                try {
+                    showLoading('Deleting item...');
+                    
+                    const response = await fetch(`/api/knowledge/${id}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Delete failed');
+                    }
+                    
+                    loadKnowledgeList();
+                    loadKnowledgeStats();
+                    
+                    showSuccess('Item deleted successfully!');
+                    
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    showError('Failed to delete item: ' + error.message);
+                } finally {
+                    hideLoading();
+                }
+            }
+        }
+        
+        // Delete selected items
+        async function deleteSelected() {
+            if (selectedItems.size === 0) {
+                showWarning('Please select items to delete');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to delete ${selectedItems.size} selected items? This action cannot be undone.`)) {
+                try {
+                    const ids = Array.from(selectedItems);
+                    showLoading('Deleting selected items...');
+                    
+                    const response = await fetch('/api/knowledge/delete_selected', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ ids: ids })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    hideLoading();
+                    
+                    if (result.success) {
+                        // Enhanced success message with details
+                        const successMsg = `Successfully deleted ${result.deleted_count} items.`;
+                        if (result.failed_ids && result.failed_ids.length > 0) {
+                            showWarning(`${successMsg} ${result.failed_ids.length} items failed to delete.`);
+                        } else {
+                            showSuccess(successMsg);
+                        }
+                        
+                        // Clear selection and refresh data
+                        selectedItems.clear();
+                        loadKnowledgeList();
+                        loadKnowledgeStats();
+                        updateSelectionUI();
+                    } else {
+                        showError(result.message || 'Failed to delete items');
+                    }
+                    
+                } catch (error) {
+                    hideLoading();
+                    console.error('Batch delete error:', error);
+                    showError('Failed to delete items: ' + error.message);
+                }
+            }
+        }
+        
+        // Export selected items
+        async function exportSelected() {
+            if (selectedItems.size === 0) {
+                showWarning('Please select items to export');
+                return;
+            }
+            
+            try {
+                const ids = Array.from(selectedItems);
+                showLoading('Preparing export file...');
+                
+                const response = await fetch('/api/knowledge/export_selected', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ ids: ids })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Export request failed');
+                }
+                
+                const filename = `knowledge_export_${new Date().toISOString().split('T')[0]}.zip`;
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                hideLoading();
+                showSuccess('Export successful! File download started');
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Export failed:', error);
+                showError('Export failed: ' + error.message);
+            }
+        }
+        
+        // Export all items
+        async function exportAll() {
+            try {
+                showLoading('Preparing export file...');
+                
+                const response = await fetch('/api/knowledge/export_all', {
+                    method: 'GET'
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Export request failed');
+                }
+                
+                const filename = `knowledge_full_export_${new Date().toISOString().split('T')[0]}.zip`;
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                hideLoading();
+                showSuccess('Full export successful! File download started');
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Export failed:', error);
+                showError('Export failed: ' + error.message);
+            }
+        }
+        
+        // Rebuild index
+        async function rebuildIndex() {
+            if (confirm('Are you sure you want to rebuild the search index? This may take some time.')) {
+                try {
+                    showLoading('Rebuilding index...');
+                    
+                    const response = await fetch('/api/knowledge/rebuild_index', {
+                        method: 'POST'
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Rebuild index failed');
+                    }
+                    
+                    hideLoading();
+                    showSuccess('Search index rebuilt successfully!');
+                    
+                } catch (error) {
+                    hideLoading();
+                    console.error('Rebuild index failed:', error);
+                    showError('Failed to rebuild index: ' + error.message);
+                }
+            }
+        }
+        
+        // Cleanup knowledge base
+        async function cleanupKnowledgeBase() {
+            if (confirm('Are you sure you want to cleanup the knowledge base? This will remove orphaned files and optimize storage.')) {
+                try {
+                    showLoading('Cleaning up...');
+                    
+                    const response = await fetch('/api/knowledge/cleanup', {
+                        method: 'POST'
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Cleanup failed');
+                    }
+                    
+                    const result = await response.json();
+                    hideLoading();
+                    showSuccess(`Cleanup completed: ${result.removed_files} files removed, ${result.reclaimed_space} space reclaimed`);
+                    loadKnowledgeStats();
+                    
+                } catch (error) {
+                    hideLoading();
+                    console.error('Cleanup failed:', error);
+                    showError('Failed to cleanup knowledge base: ' + error.message);
+                }
+            }
+        }
+        
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast toast-' + type;
+            toast.style.display = 'block';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Show success message
+        function showSuccess(message) {
+            showToast(message, 'success');
+        }
+        
+        // Show error message
+        function showError(message) {
+            showToast(message, 'error');
+        }
+        
+        // Show warning message
+        function showWarning(message) {
+            showToast(message, 'warning');
+        }
+        
+        // Show loading message
+        function showLoading(message) {
+            showToast(message, 'info');
+        }
+        
+        // Hide loading message
+        function hideLoading() {
+            // This is intentionally empty as the loading toast will auto-hide
+        }
+        
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // Format date
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            
+            const date = new Date(dateString);
+            return date.toLocaleDateString();
+        }
+        
+        // Initialize the page when DOM is ready
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "sample_task": {
+    "id": "test_task_1",
+    "type": "coordinate",
+    "priority": "high",
+    "requirements": {
+      "cpu": 0.8,
+      "memory": 0.7,
+      "disk": 0.3,
+      "network": 0.6
+    },
+    "deadline": 120,
+    "submodel": "B_language",
+    "complexity_score": 0.75,
+    "urgency_score": 0.9,
+    "user_emotion": "happy",
+    "feedback_format": "text",
+    "interaction_type": "language"
+  },
+  "predicted_strategy": "parallel",
+  "predicted_emotion": "sad",
+  "adjusted_response": "I understand. I will coordinate the task according to your requirements. \ud83d\ude14"
+}

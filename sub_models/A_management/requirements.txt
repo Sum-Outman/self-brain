@@ -1,0 +1,26 @@
+# Core dependencies
+
+# Machine learning libraries
+torch>=1.9.0
+scikit-learn>=1.0.0
+pandas>=1.3.0
+numpy>=1.20.0
+
+# Utilities
+matplotlib>=3.4.0  # For confusion matrix visualization
+seaborn>=0.11.0    # For advanced visualization
+scipy>=1.7.0       # For scientific computing
+
+# Optional dependencies for GPU support
+# Uncomment the following line if you're using CUDA 11.3
+# torch==1.12.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
+
+# Development dependencies
+pytest>=7.0.0      # For running tests
+flake8>=4.0.0      # For code linting
+black>=22.0.0      # For code formatting
+isort>=5.0.0       # For import sorting
+
+# Documentation
+sphinx>=4.0.0
+sphinx-rtd-theme>=1.0.0

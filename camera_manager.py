@@ -11,6 +11,7 @@ import threading
 import time
 import logging
 import base64
+import os
 from typing import Dict, Any, List, Optional
 import numpy as np
 from datetime import datetime
@@ -18,6 +19,9 @@ from datetime import datetime
 # 设置日志 | Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("CameraManager")
+
+# 是否使用模拟摄像头 (可通过环境变量控制)
+MOCK_CAMERAS = os.environ.get('MOCK_CAMERAS', 'False').lower() == 'true'
 
 class CameraManager:
     """多摄像头管理器
@@ -32,7 +36,12 @@ class CameraManager:
         self.active_cameras = set()
         self.global_lock = threading.Lock()
         self.settings = {}
-        logger.info("摄像头管理器已初始化 | Camera Manager initialized")
+        # 模拟摄像头配置
+        self.mock_cameras_config = {
+            0: {"name": "Mock Camera 1", "width": 640, "height": 480, "fps": 30},
+            1: {"name": "Mock Camera 2", "width": 1280, "height": 720, "fps": 30}
+        }
+        logger.info(f"摄像头管理器已初始化 | Camera Manager initialized (Mock mode: {MOCK_CAMERAS})")
     
     def list_available_cameras(self, max_devices: int = 10) -> List[Dict[str, Any]]:
         """列出所有可用的摄像头设备
@@ -45,6 +54,19 @@ class CameraManager:
             可用摄像头设备列表
         """
         available_cameras = []
+        
+        # 如果启用了模拟摄像头或没有实际摄像头可用，则返回模拟摄像头
+        if MOCK_CAMERAS:
+            logger.info("使用模拟摄像头 | Using mock cameras")
+            for cam_id, cam_config in self.mock_cameras_config.items():
+                available_cameras.append({
+                    "id": cam_id,
+                    "name": cam_config["name"],
+                    "width": cam_config["width"],
+                    "height": cam_config["height"],
+                    "fps": cam_config["fps"]
+                })
+            return available_cameras
         
         # 尝试打开摄像头设备以检查是否可用
         for i in range(max_devices):
@@ -72,6 +94,18 @@ class CameraManager:
             # 短暂暂停以避免资源竞争
             time.sleep(0.1)
         
+        # 如果没有找到实际摄像头，返回模拟摄像头
+        if not available_cameras:
+            logger.info("未找到实际摄像头，使用模拟摄像头 | No real cameras found, using mock cameras")
+            for cam_id, cam_config in self.mock_cameras_config.items():
+                available_cameras.append({
+                    "id": cam_id,
+                    "name": cam_config["name"],
+                    "width": cam_config["width"],
+                    "height": cam_config["height"],
+                    "fps": cam_config["fps"]
+                })
+        
         logger.info(f"找到 {len(available_cameras)} 个可用摄像头 | Found {len(available_cameras)} available cameras")
         return available_cameras
     
@@ -97,46 +131,90 @@ class CameraManager:
                     self.camera_locks[camera_id] = threading.Lock()
                 
                 with self.camera_locks[camera_id]:
-                    # 初始化摄像头捕获对象
-                    cap = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
+                    # 检查是否使用模拟摄像头
+                    is_mock_camera = MOCK_CAMERAS or camera_id in self.mock_cameras_config
                     
-                    if not cap.isOpened():
-                        logger.error(f"无法打开摄像头 {camera_id} | Failed to open camera {camera_id}")
-                        return False
-                    
-                    # 应用摄像头参数
-                    if params:
-                        if "width" in params and "height" in params:
-                            cap.set(cv2.CAP_PROP_FRAME_WIDTH, params["width"])
-                            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, params["height"])
-                        if "fps" in params:
-                            cap.set(cv2.CAP_PROP_FPS, params["fps"])
-                        if "brightness" in params:
-                            cap.set(cv2.CAP_PROP_BRIGHTNESS, params["brightness"])
-                        if "contrast" in params:
-                            cap.set(cv2.CAP_PROP_CONTRAST, params["contrast"])
-                        if "saturation" in params:
-                            cap.set(cv2.CAP_PROP_SATURATION, params["saturation"])
+                    if is_mock_camera:
+                        logger.info(f"启动模拟摄像头 {camera_id} | Starting mock camera {camera_id}")
                         
-                    # 保存当前设置
-                    self.settings[camera_id] = {
-                        "width": int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
-                        "height": int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
-                        "fps": cap.get(cv2.CAP_PROP_FPS),
-                        "brightness": cap.get(cv2.CAP_PROP_BRIGHTNESS),
-                        "contrast": cap.get(cv2.CAP_PROP_CONTRAST),
-                        "saturation": cap.get(cv2.CAP_PROP_SATURATION)
-                    }
-                    
-                    # 创建摄像头数据
-                    self.cameras[camera_id] = {
-                        "capture": cap,
-                        "last_frame": None,
-                        "last_error": None,
-                        "is_running": True,
-                        "start_time": datetime.now().isoformat(),
-                        "params": params or {}
-                    }
+                        # 获取模拟摄像头配置
+                        cam_config = self.mock_cameras_config.get(camera_id, {
+                            "width": 640,
+                            "height": 480,
+                            "fps": 30
+                        })
+                        
+                        # 应用参数（如果有）
+                        width = params.get("width", cam_config["width"]) if params else cam_config["width"]
+                        height = params.get("height", cam_config["height"]) if params else cam_config["height"]
+                        fps = params.get("fps", cam_config["fps"]) if params else cam_config["fps"]
+                        
+                        # 保存设置
+                        self.settings[camera_id] = {
+                            "width": width,
+                            "height": height,
+                            "fps": fps,
+                            "brightness": 0.5,
+                            "contrast": 0.5,
+                            "saturation": 0.5
+                        }
+                        
+                        # 创建模拟摄像头数据
+                        self.cameras[camera_id] = {
+                            "capture": "mock",  # 标记为模拟摄像头
+                            "last_frame": None,
+                            "last_error": None,
+                            "is_running": True,
+                            "start_time": datetime.now().isoformat(),
+                            "params": params or {},
+                            "mock_config": {
+                                "width": width,
+                                "height": height,
+                                "frame_count": 0
+                            }
+                        }
+                        
+                    else:
+                        # 初始化真实摄像头捕获对象
+                        cap = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
+                        
+                        if not cap.isOpened():
+                            logger.error(f"无法打开摄像头 {camera_id} | Failed to open camera {camera_id}")
+                            return False
+                        
+                        # 应用摄像头参数
+                        if params:
+                            if "width" in params and "height" in params:
+                                cap.set(cv2.CAP_PROP_FRAME_WIDTH, params["width"])
+                                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, params["height"])
+                            if "fps" in params:
+                                cap.set(cv2.CAP_PROP_FPS, params["fps"])
+                            if "brightness" in params:
+                                cap.set(cv2.CAP_PROP_BRIGHTNESS, params["brightness"])
+                            if "contrast" in params:
+                                cap.set(cv2.CAP_PROP_CONTRAST, params["contrast"])
+                            if "saturation" in params:
+                                cap.set(cv2.CAP_PROP_SATURATION, params["saturation"])
+                        
+                        # 保存当前设置
+                        self.settings[camera_id] = {
+                            "width": int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+                            "height": int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
+                            "fps": cap.get(cv2.CAP_PROP_FPS),
+                            "brightness": cap.get(cv2.CAP_PROP_BRIGHTNESS),
+                            "contrast": cap.get(cv2.CAP_PROP_CONTRAST),
+                            "saturation": cap.get(cv2.CAP_PROP_SATURATION)
+                        }
+                        
+                        # 创建摄像头数据
+                        self.cameras[camera_id] = {
+                            "capture": cap,
+                            "last_frame": None,
+                            "last_error": None,
+                            "is_running": True,
+                            "start_time": datetime.now().isoformat(),
+                            "params": params or {}
+                        }
                     
                     self.active_cameras.add(camera_id)
                     logger.info(f"摄像头 {camera_id} 已启动 | Camera {camera_id} started successfully")
@@ -211,27 +289,76 @@ class CameraManager:
             if camera_id in self.camera_locks:
                 with self.camera_locks[camera_id]:
                     if camera_id in self.cameras and self.cameras[camera_id]["is_running"]:
-                        cap = self.cameras[camera_id]["capture"]
-                        ret, frame = cap.read()
+                        camera = self.cameras[camera_id]
                         
-                        if not ret:
-                            logger.error(f"无法从摄像头 {camera_id} 获取帧 | Failed to read frame from camera {camera_id}")
-                            self.cameras[camera_id]["last_error"] = "Failed to read frame"
-                            return None
-                        
-                        # 保存最后一帧
-                        self.cameras[camera_id]["last_frame"] = frame
-                        
-                        # 转换为base64编码以便网络传输
-                        _, buffer = cv2.imencode('.jpg', frame)
-                        jpg_as_text = base64.b64encode(buffer).decode('utf-8')
-                        
-                        return {
-                            "camera_id": camera_id,
-                            "frame": jpg_as_text,
-                            "timestamp": datetime.now().isoformat(),
-                            "error": None
-                        }
+                        # 检查是否是模拟摄像头
+                        if camera["capture"] == "mock":
+                            # 生成模拟帧
+                            mock_config = camera.get("mock_config", {"width": 640, "height": 480, "frame_count": 0})
+                            width = mock_config["width"]
+                            height = mock_config["height"]
+                            frame_count = mock_config["frame_count"]
+                            
+                            # 创建一个简单的测试图像（渐变背景+移动方块）
+                            frame = np.zeros((height, width, 3), dtype=np.uint8)
+                            
+                            # 渐变背景
+                            for i in range(height):
+                                for j in range(width):
+                                    r = int((i / height) * 100 + 50)
+                                    g = int((j / width) * 100 + 50)
+                                    b = 100
+                                    frame[i, j] = [b, g, r]  # OpenCV uses BGR format
+                            
+                            # 移动方块
+                            block_size = 50
+                            x = (frame_count * 5) % (width - block_size)
+                            y = (frame_count * 3) % (height - block_size)
+                            frame[y:y+block_size, x:x+block_size] = [0, 255, 0]  # Green block
+                            
+                            # 添加文本
+                            cv2.putText(frame, f"Mock Camera {camera_id}", (10, 30), 
+                                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+                            cv2.putText(frame, f"Frame: {frame_count}", (10, 70), 
+                                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                            
+                            # 更新帧计数器
+                            mock_config["frame_count"] += 1
+                            
+                            # 转换为base64编码以便网络传输
+                            _, buffer = cv2.imencode('.jpg', frame)
+                            jpg_as_text = base64.b64encode(buffer).decode('utf-8')
+                            
+                            return {
+                                "camera_id": camera_id,
+                                "frame": jpg_as_text,
+                                "timestamp": datetime.now().isoformat(),
+                                "error": None,
+                                "is_mock": True
+                            }
+                        else:
+                            # 真实摄像头处理
+                            cap = camera["capture"]
+                            ret, frame = cap.read()
+                            
+                            if not ret:
+                                logger.error(f"无法从摄像头 {camera_id} 获取帧 | Failed to read frame from camera {camera_id}")
+                                camera["last_error"] = "Failed to read frame"
+                                return None
+                            
+                            # 保存最后一帧
+                            camera["last_frame"] = frame
+                            
+                            # 转换为base64编码以便网络传输
+                            _, buffer = cv2.imencode('.jpg', frame)
+                            jpg_as_text = base64.b64encode(buffer).decode('utf-8')
+                            
+                            return {
+                                "camera_id": camera_id,
+                                "frame": jpg_as_text,
+                                "timestamp": datetime.now().isoformat(),
+                                "error": None
+                            }
             
             return None
             

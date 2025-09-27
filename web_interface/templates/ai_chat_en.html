@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat Interface</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/chat_style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-light">
+    <div class="container-fluid p-0">
+        {% extends "base_monochrome.html" %}
+        
+        {% block content %}
+        <div class="container mt-4">
+            <div class="row">
+                <div class="col-md-12">
+                    <h1 class="text-center mb-4">AI Chat Interface</h1>
+                    
+                    <!-- Multi-modal interaction area -->
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white border-bottom">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h5>Chat Session</h5>
+                                </div>
+                                <div class="col-md-4 text-right">
+                                    <button id="clear-chat-btn" class="btn btn-secondary btn-sm">
+                                        <i class="fas fa-trash-alt"></i> Clear Chat
+                                    </button>
+                                    <button id="voice-command-btn" class="btn btn-secondary btn-sm ml-2">
+                                        <i class="fas fa-microphone"></i> Voice Command
+                                    </button>
+                                    <button id="video-call-btn" class="btn btn-secondary btn-sm ml-2">
+                                        <i class="fas fa-video"></i> Video Call
+                                    </button>
+                                    <button id="test-functions-btn" class="btn btn-secondary btn-sm ml-2">
+                                        <i class="fas fa-cog"></i> Test Functions
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Chat display container -->
+                            <div id="chat-display" class="chat-messages bg-gray-50 p-3 mb-3 border rounded overflow-auto" style="height: 400px;">
+                                <!-- Chat messages will appear here -->
+                            </div>
+                            
+                            <!-- Model selector -->
+                            <div class="model-selector mb-3">
+                                <label class="font-weight-bold">Select Model:</label>
+                                <div class="model-buttons">
+                                    <button class="model-btn active btn btn-sm btn-light" data-model="A_management">A: Management</button>
+                                    <button class="model-btn btn btn-sm btn-light" data-model="B_language">B: Language</button>
+                                    <button class="model-btn btn btn-sm btn-light" data-model="C_audio">C: Audio</button>
+                                    <button class="model-btn btn btn-sm btn-light" data-model="D_image">D: Image</button>
+                                    <button class="model-btn btn btn-sm btn-light" data-model="E_video">E: Video</button>
+                                    <button class="model-btn btn btn-sm btn-light" data-model="F_spatial">F: Spatial</button>
+                                    <button class="model-btn btn btn-sm btn-light" data-model="G_sensor">G: Sensor</button>
+                                    <button class="model-btn btn btn-sm btn-light" data-model="H_computer_control">H: Computer Control</button>
+                                    <button class="model-btn btn btn-sm btn-light" data-model="I_knowledge">I: Knowledge</button>
+                                    <button class="model-btn btn btn-sm btn-light" data-model="J_motion">J: Motion</button>
+                                    <button class="model-btn btn btn-sm btn-light" data-model="K_programming">K: Programming</button>
+                                </div>
+                            </div>
+                            
+                            <!-- File upload component -->
+                            <div class="file-upload mb-3">
+                                <label class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-upload"></i> Upload File
+                                    <input type="file" id="file-upload-input" style="display: none;">
+                                </label>
+                                <span id="file-name" class="ml-2 text-sm text-muted">No file selected</span>
+                            </div>
+                            
+                            <!-- Input source selection -->
+                            <div class="input-sources mb-3">
+                                <label class="font-weight-bold">Input Sources:</label>
+                                <div class="source-buttons">
+                                    <button class="source-btn btn btn-sm btn-light" data-source="camera">
+                                        <i class="fas fa-camera"></i> Camera
+                                    </button>
+                                    <button class="source-btn btn btn-sm btn-light" data-source="microphone">
+                                        <i class="fas fa-microphone-alt"></i> Microphone
+                                    </button>
+                                    <button class="source-btn btn btn-sm btn-light" data-source="screen">
+                                        <i class="fas fa-desktop"></i> Screen Share
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Message input area -->
+                            <div class="message-input-area">
+                                <div class="input-group">
+                                    <textarea id="message-input" class="form-control" placeholder="Type your message here..." rows="3"></textarea>
+                                    <div class="input-group-append">
+                                        <button id="send-btn" class="btn btn-primary">
+                                            <i class="fas fa-paper-plane"></i> Send
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <script src="/static/js/chat_functions.js"></script>
+    <script src="/static/js/multi_modal.js"></script>
+    <script src="/static/js/audio_processing.js"></script>
+    <script src="/static/js/vision_processing.js"></script>
+    <script src="/static/js/model_communication.js"></script>
+    
+    <script>
+        // Initialize chat interface
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set active model
+            let activeModel = 'A_management';
+            
+            // Add click event listeners to model buttons
+            document.querySelectorAll('.model-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Remove active class from all buttons
+                    document.querySelectorAll('.model-btn').forEach(b => b.classList.remove('active'));
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    // Update active model
+                    activeModel = this.getAttribute('data-model');
+                });
+            });
+            
+            // File upload handling
+            const fileUploadInput = document.getElementById('file-upload-input');
+            const fileName = document.getElementById('file-name');
+            
+            fileUploadInput.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    fileName.textContent = this.files[0].name;
+                } else {
+                    fileName.textContent = 'No file selected';
+                }
+            });
+            
+            // Send message functionality
+            const messageInput = document.getElementById('message-input');
+            const sendBtn = document.getElementById('send-btn');
+            const chatDisplay = document.getElementById('chat-display');
+            
+            function sendMessage() {
+                const message = messageInput.value.trim();
+                if (message) {
+                    // Display user message
+                    const userMessageDiv = document.createElement('div');
+                    userMessageDiv.className = 'message user-message mb-3';
+                    userMessageDiv.innerHTML = `
+                        <div class="message-header">
+                            <span class="message-sender">You</span>
+                            <span class="message-time">${new Date().toLocaleTimeString()}</span>
+                        </div>
+                        <div class="message-content">${message}</div>
+                    `;
+                    chatDisplay.appendChild(userMessageDiv);
+                    
+                    // Clear input
+                    messageInput.value = '';
+                    
+                    // Scroll to bottom
+                    chatDisplay.scrollTop = chatDisplay.scrollHeight;
+                    
+                    // Send message to server
+                    socket.emit('send_message', {
+                        model: activeModel,
+                        message: message
+                    });
+                    
+                    // Show typing indicator
+                    const typingIndicator = document.createElement('div');
+                    typingIndicator.id = 'typing-indicator';
+                    typingIndicator.className = 'message bot-message mb-3';
+                    typingIndicator.innerHTML = `
+                        <div class="message-header">
+                            <span class="message-sender">AI (${activeModel})</span>
+                            <span class="message-time">${new Date().toLocaleTimeString()}</span>
+                        </div>
+                        <div class="message-content typing">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    `;
+                    chatDisplay.appendChild(typingIndicator);
+                    chatDisplay.scrollTop = chatDisplay.scrollHeight;
+                }
+            }
+            
+            sendBtn.addEventListener('click', sendMessage);
+            
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // Clear chat functionality
+            const clearChatBtn = document.getElementById('clear-chat-btn');
+            
+            clearChatBtn.addEventListener('click', function() {
+                chatDisplay.innerHTML = '';
+            });
+            
+            // Voice command functionality
+            const voiceCommandBtn = document.getElementById('voice-command-btn');
+            let isListening = false;
+            
+            voiceCommandBtn.addEventListener('click', function() {
+                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    const recognition = new SpeechRecognition();
+                    
+                    recognition.lang = 'en-US';
+                    recognition.interimResults = false;
+                    
+                    if (!isListening) {
+                        isListening = true;
+                        voiceCommandBtn.innerHTML = '<i class="fas fa-microphone-slash"></i> Stop Listening';
+                        voiceCommandBtn.classList.remove('btn-secondary');
+                        voiceCommandBtn.classList.add('btn-danger');
+                        
+                        recognition.start();
+                        
+                        recognition.onresult = function(event) {
+                            const speechResult = event.results[0][0].transcript;
+                            messageInput.value = speechResult;
+                            showToast('Voice recognition completed');
+                        };
+                        
+                        recognition.onend = function() {
+                            isListening = false;
+                            voiceCommandBtn.innerHTML = '<i class="fas fa-microphone"></i> Voice Command';
+                            voiceCommandBtn.classList.remove('btn-danger');
+                            voiceCommandBtn.classList.add('btn-secondary');
+                        };
+                        
+                        recognition.onerror = function(event) {
+                            console.error('Speech recognition error:', event.error);
+                            showToast('Speech recognition error: ' + event.error, 'error');
+                            isListening = false;
+                            voiceCommandBtn.innerHTML = '<i class="fas fa-microphone"></i> Voice Command';
+                            voiceCommandBtn.classList.remove('btn-danger');
+                            voiceCommandBtn.classList.add('btn-secondary');
+                        };
+                    } else {
+                        recognition.stop();
+                    }
+                } else {
+                    showToast('Speech recognition is not supported in this browser', 'error');
+                }
+            });
+            
+            // Video call functionality
+            const videoCallBtn = document.getElementById('video-call-btn');
+            
+            videoCallBtn.addEventListener('click', function() {
+                window.location.href = '/peerjs_test';
+            });
+            
+            // Test functions button
+            const testFunctionsBtn = document.getElementById('test-functions-btn');
+            
+            testFunctionsBtn.addEventListener('click', function() {
+                window.location.href = '/test-functions';
+            });
+            
+            // Initialize Socket.IO connection
+            const socket = io();
+            
+            // Listen for incoming messages
+            socket.on('receive_message', function(data) {
+                // Remove typing indicator
+                const typingIndicator = document.getElementById('typing-indicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+                
+                // Display AI message
+                const aiMessageDiv = document.createElement('div');
+                aiMessageDiv.className = 'message bot-message mb-3';
+                aiMessageDiv.innerHTML = `
+                    <div class="message-header">
+                        <span class="message-sender">AI (${data.model})</span>
+                        <span class="message-time">${new Date().toLocaleTimeString()}</span>
+                    </div>
+                    <div class="message-content">${data.message}</div>
+                `;
+                chatDisplay.appendChild(aiMessageDiv);
+                
+                // Scroll to bottom
+                chatDisplay.scrollTop = chatDisplay.scrollHeight;
+            });
+            
+            // System status updates
+            socket.on('system_status', function(status) {
+                updateSystemStatus(status);
+            });
+            
+            // Initial status check
+            socket.emit('request_status');
+            
+            // Welcome message
+            const welcomeMessage = document.createElement('div');
+            welcomeMessage.className = 'message system-message mb-3 text-center';
+            welcomeMessage.innerHTML = '<div class="message-content text-muted">Welcome to the AI Chat Interface. Select a model and start chatting!</div>';
+            chatDisplay.appendChild(welcomeMessage);
+        });
+    </script>
+</body>
+</html>

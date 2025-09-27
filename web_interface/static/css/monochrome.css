@@ -39,28 +39,28 @@
 }
 
 /* Navigation */
-.navbar-dark {
-    background-color: var(--gray-900) !important;
-    border-bottom: 1px solid var(--gray-700);
+.navbar-light {
+    background-color: var(--white) !important;
+    border-bottom: 1px solid var(--gray-200);
 }
 
-.navbar-dark .navbar-brand {
-    color: var(--white) !important;
+.navbar-light .navbar-brand {
+    color: var(--gray-900) !important;
     font-weight: 600;
 }
 
-.navbar-dark .nav-link {
-    color: var(--gray-300) !important;
+.navbar-light .nav-link {
+    color: var(--gray-600) !important;
     transition: color 0.3s ease;
 }
 
-.navbar-dark .nav-link:hover {
-    color: var(--white) !important;
+.navbar-light .nav-link:hover {
+    color: var(--gray-900) !important;
 }
 
-.navbar-dark .nav-link.active {
-    color: var(--white) !important;
-    border-bottom: 2px solid var(--white);
+.navbar-light .nav-link.active {
+    color: var(--gray-900) !important;
+    border-bottom: 2px solid var(--gray-900);
 }
 
 /* Cards */
@@ -386,52 +386,5 @@
     
     .monochrome-theme .btn {
         margin-bottom: 0.5rem;
-    }
-}
-
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-    .monochrome-theme {
-        background-color: var(--gray-900);
-        color: var(--gray-100);
-    }
-    
-    .monochrome-theme h1,
-    .monochrome-theme h2,
-    .monochrome-theme h3,
-    .monochrome-theme h4,
-    .monochrome-theme h5,
-    .monochrome-theme h6 {
-        color: var(--white);
-    }
-    
-    .monochrome-theme p,
-    .monochrome-theme .text-muted {
-        color: var(--gray-300);
-    }
-    
-    .card {
-        background-color: var(--gray-800);
-        border-color: var(--gray-700);
-        color: var(--gray-100);
-    }
-    
-    .card-header {
-        background-color: var(--gray-700);
-        border-color: var(--gray-600);
-    }
-    
-    .form-control,
-    .form-select {
-        background-color: var(--gray-800);
-        border-color: var(--gray-600);
-        color: var(--gray-100);
-    }
-    
-    .form-control:focus,
-    .form-select:focus {
-        background-color: var(--gray-700);
-        border-color: var(--gray-500);
-        color: var(--gray-100);
     }
 }

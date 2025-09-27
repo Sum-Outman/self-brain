@@ -44,13 +44,50 @@
                                 <div class="row">
                                     <div class="col-md-6 mb-2">
                                         <button class="btn btn-outline-danger w-100" onclick="cleanKnowledgeDatabase()">
-                                    <i class="bi bi-trash"></i> Clean Database
-                                </button>
+                                            <i class="bi bi-trash"></i> Clean Database
+                                        </button>
                                     </div>
                                     <div class="col-md-6 mb-2">
                                         <button class="btn btn-outline-secondary w-100" onclick="optimizeDatabase()">
                                             <i class="bi bi-gear"></i> Optimize Database
                                         </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Self-Learning Control -->
+                    <div class="row mt-3" id="learning-control-section">
+                        <div class="col-12">
+                            <div class="border-top pt-3">
+                                <h6 class="text-muted mb-2">Self-Learning Control</h6>
+                                <div class="row">
+                                    <div class="col-md-8 mb-2">
+                                        <select class="form-select" id="model-selector">
+                                            <option value="all">All Models</option>
+                                            <option value="A">Model A - Management</option>
+                                            <option value="B">Model B - Language</option>
+                                            <option value="C">Model C - Audio</option>
+                                            <option value="D">Model D - Image</option>
+                                            <option value="E">Model E - Video</option>
+                                            <option value="F">Model F - Spatial</option>
+                                            <option value="G">Model G - Sensor</option>
+                                            <option value="H">Model H - Computer</option>
+                                            <option value="I">Model I - Motion</option>
+                                            <option value="J">Model J - Knowledge</option>
+                                            <option value="K">Model K - Programming</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button class="btn btn-dark w-100" id="learning-control-btn" onclick="toggleSelfLearning()">
+                                            <i class="bi bi-play-circle"></i> Start Self-Learning
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <div id="self-learning-status" class="text-muted text-sm">
+                                        Self-learning is inactive
                                     </div>
                                 </div>
                             </div>
@@ -724,9 +761,322 @@ function showToast(message, type = 'info') {
         });
     }
 
+// Self-learning functionality
+let selfLearningActive = false;
+let currentLearningModel = 'all';
+let learningProgressInterval = null;
+
+// Toggle self-learning
+function toggleSelfLearning() {
+    const btn = document.getElementById('learning-control-btn');
+    const statusEl = document.getElementById('self-learning-status');
+    const model = document.getElementById('model-selector').value;
+    
+    if (selfLearningActive && model === currentLearningModel) {
+        // Stop self-learning
+        stopSelfLearning(model);
+    } else {
+        // Start self-learning
+        startSelfLearning(model);
+    }
+}
+
+// Start self-learning
+function startSelfLearning(model) {
+    const btn = document.getElementById('learning-control-btn');
+    const statusEl = document.getElementById('self-learning-status');
+    
+    showToast(`Starting self-learning for ${model === 'all' ? 'all models' : getModelName(model)}`, 'info');
+    
+    // Update UI immediately
+    btn.innerHTML = '<i class="bi bi-pause-circle"></i> Stop Self-Learning';
+    btn.className = 'btn btn-danger w-100';
+    statusEl.innerHTML = `Self-learning is active for ${model === 'all' ? 'all models' : getModelName(model)}`;
+    statusEl.className = 'text-success text-sm';
+    
+    // API call to start self-learning
+    fetch('/api/knowledge/self_learning/start', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ model: model })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.status === 'success') {
+            selfLearningActive = true;
+            currentLearningModel = model;
+            showToast(`Self-learning started successfully for ${model === 'all' ? 'all models' : getModelName(model)}`, 'success');
+            
+            // Start polling for progress updates
+            startProgressPolling();
+        } else {
+            // Revert UI changes if API call fails
+            btn.innerHTML = '<i class="bi bi-play-circle"></i> Start Self-Learning';
+            btn.className = 'btn btn-dark w-100';
+            statusEl.innerHTML = 'Self-learning is inactive';
+            statusEl.className = 'text-muted text-sm';
+            showToast('Error starting self-learning: ' + (result.error || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Revert UI changes if API call fails
+        btn.innerHTML = '<i class="bi bi-play-circle"></i> Start Self-Learning';
+        btn.className = 'btn btn-dark w-100';
+        statusEl.innerHTML = 'Self-learning is inactive';
+        statusEl.className = 'text-muted text-sm';
+        showToast('Error starting self-learning', 'error');
+    });
+}
+
+// Stop self-learning
+function stopSelfLearning(model) {
+    const btn = document.getElementById('learning-control-btn');
+    const statusEl = document.getElementById('self-learning-status');
+    
+    showToast(`Stopping self-learning for ${model === 'all' ? 'all models' : getModelName(model)}`, 'info');
+    
+    // Stop progress polling
+    stopProgressPolling();
+    
+    // Clear progress bar
+    clearProgressDisplay();
+    
+    // API call to stop self-learning
+    fetch('/api/knowledge/self_learning/stop', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ model: model })
+    })
+    .then(response => response.json())
+    .then(result => {
+        // Update UI regardless of API response (best effort)
+        btn.innerHTML = '<i class="bi bi-play-circle"></i> Start Self-Learning';
+        btn.className = 'btn btn-dark w-100';
+        statusEl.innerHTML = 'Self-learning is inactive';
+        statusEl.className = 'text-muted text-sm';
+        
+        if (result.status === 'success') {
+            selfLearningActive = false;
+            showToast(`Self-learning stopped successfully for ${model === 'all' ? 'all models' : getModelName(model)}`, 'success');
+        } else {
+            showToast('Error stopping self-learning: ' + (result.error || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Update UI regardless of API response (best effort)
+        btn.innerHTML = '<i class="bi bi-play-circle"></i> Start Self-Learning';
+        btn.className = 'btn btn-dark w-100';
+        statusEl.innerHTML = 'Self-learning is inactive';
+        statusEl.className = 'text-muted text-sm';
+        showToast('Error stopping self-learning', 'error');
+    });
+}
+
+// Get model name by code
+function getModelName(code) {
+    const modelNames = {
+        'A': 'Model A - Management',
+        'B': 'Model B - Language',
+        'C': 'Model C - Audio',
+        'D': 'Model D - Image',
+        'E': 'Model E - Video',
+        'F': 'Model F - Spatial',
+        'G': 'Model G - Sensor',
+        'H': 'Model H - Computer',
+        'I': 'Model I - Motion',
+        'J': 'Model J - Knowledge',
+        'K': 'Model K - Programming'
+    };
+    return modelNames[code] || code;
+}
+
+// Check self-learning status on page load
+function checkSelfLearningStatus() {
+    fetch('/api/knowledge/self_learning/status', {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.data && result.data.active) {
+            selfLearningActive = true;
+            currentLearningModel = result.data.model || 'all';
+            
+            const btn = document.getElementById('learning-control-btn');
+            const statusEl = document.getElementById('self-learning-status');
+            const modelSelector = document.getElementById('model-selector');
+            
+            btn.innerHTML = '<i class="bi bi-pause-circle"></i> Stop Self-Learning';
+            btn.className = 'btn btn-danger w-100';
+            statusEl.innerHTML = `Self-learning is active for ${currentLearningModel === 'all' ? 'all models' : getModelName(currentLearningModel)}`;
+            statusEl.className = 'text-success text-sm';
+            modelSelector.value = currentLearningModel;
+            
+            // Start polling for progress updates
+            startProgressPolling();
+        }
+    })
+    .catch(error => {
+        console.error('Error checking self-learning status:', error);
+        // Continue with default inactive state
+    });
+}
+
+// Start polling for progress updates
+function startProgressPolling() {
+    // Clear existing interval if any
+    stopProgressPolling();
+    
+    // Create interval to poll every 2 seconds
+    learningProgressInterval = setInterval(() => {
+        fetch('/api/knowledge/self_learning/progress', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === 'success' && result.data) {
+                updateProgressDisplay(result.data);
+                
+                // Check if learning has completed
+                if (result.data.status === 'completed') {
+                    showToast('Self-learning process has completed successfully', 'success');
+                    stopProgressPolling();
+                    
+                    // Update UI
+                    const btn = document.getElementById('learning-control-btn');
+                    const statusEl = document.getElementById('self-learning-status');
+                    
+                    btn.innerHTML = '<i class="bi bi-play-circle"></i> Start Self-Learning';
+                    btn.className = 'btn btn-dark w-100';
+                    statusEl.innerHTML = 'Self-learning is inactive';
+                    statusEl.className = 'text-muted text-sm';
+                    selfLearningActive = false;
+                }
+                
+                // Check if there was an error
+                if (result.data.status === 'error') {
+                    showToast('Self-learning process encountered an error', 'error');
+                    stopProgressPolling();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching self-learning progress:', error);
+            // Continue polling despite errors
+        });
+    }, 2000);
+}
+
+// Stop progress polling
+function stopProgressPolling() {
+    if (learningProgressInterval) {
+        clearInterval(learningProgressInterval);
+        learningProgressInterval = null;
+    }
+}
+
+// Update progress display
+function updateProgressDisplay(data) {
+    // Create progress container if it doesn't exist
+    let progressContainer = document.getElementById('learning-progress-container');
+    if (!progressContainer) {
+        const cardBody = document.querySelector('.card-body');
+        
+        // Create progress container
+        progressContainer = document.createElement('div');
+        progressContainer.id = 'learning-progress-container';
+        progressContainer.className = 'mt-4';
+        
+        // Add progress bar
+        progressContainer.innerHTML = `
+            <div class="mb-2">
+                <div class="d-flex justify-content-between">
+                    <span class="text-sm font-medium text-gray-700">Learning Progress</span>
+                    <span id="progress-percentage" class="text-sm font-medium text-gray-700">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="progress-bar" class="bg-success h-2 rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+            <div class="mt-3">
+                <span class="text-sm font-medium text-gray-700">Current Status: <span id="progress-status" class="text-gray-900"></span></span>
+            </div>
+            <div class="mt-3">
+                <span class="text-sm font-medium text-gray-700">Duration: <span id="progress-duration" class="text-gray-900">00:00:00</span></span>
+            </div>
+        `;
+        
+        // Insert after the learning control section
+        const learningControlSection = document.getElementById('learning-control-section');
+        if (learningControlSection) {
+            cardBody.insertBefore(progressContainer, learningControlSection.nextSibling);
+        } else {
+            cardBody.appendChild(progressContainer);
+        }
+    }
+    
+    // Update progress bar
+    const progressBar = document.getElementById('progress-bar');
+    const progressPercentage = document.getElementById('progress-percentage');
+    const progressStatus = document.getElementById('progress-status');
+    const progressDuration = document.getElementById('progress-duration');
+    
+    if (progressBar && progressPercentage) {
+        const progress = Math.min(Math.max(data.progress || 0, 0), 100);
+        progressBar.style.width = `${progress}%`;
+        progressPercentage.textContent = `${progress}%`;
+    }
+    
+    if (progressStatus) {
+        progressStatus.textContent = data.status || 'Unknown';
+        
+        // Update status color based on status
+        switch (data.status) {
+            case 'running':
+                progressStatus.className = 'text-success font-medium';
+                break;
+            case 'stopping':
+                progressStatus.className = 'text-warning font-medium';
+                break;
+            case 'completed':
+                progressStatus.className = 'text-primary font-medium';
+                break;
+            case 'error':
+                progressStatus.className = 'text-danger font-medium';
+                break;
+            default:
+                progressStatus.className = 'text-gray-900';
+        }
+    }
+    
+    if (progressDuration && data.duration) {
+        progressDuration.textContent = data.duration || '00:00:00';
+    }
+}
+
+// Clear progress display
+function clearProgressDisplay() {
+    const progressContainer = document.getElementById('learning-progress-container');
+    if (progressContainer) {
+        progressContainer.remove();
+    }
+}
+
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {
     loadKnowledgeEntries();
+    checkSelfLearningStatus();
     
     // Search and filter listeners
     document.getElementById('search-input').addEventListener('input', () => loadKnowledgeEntries(1));
@@ -736,6 +1086,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Modal listeners
     document.getElementById('save-edit').addEventListener('click', saveEdit);
     document.getElementById('confirm-delete').addEventListener('click', confirmDelete);
+    
+    // Disable model selector when self-learning is active
+    document.getElementById('model-selector').addEventListener('change', function() {
+        if (selfLearningActive) {
+            this.value = currentLearningModel;
+            showToast('Cannot change model while self-learning is active. Stop it first.', 'error');
+        }
+    });
 });
 </script>
 {% endblock %}

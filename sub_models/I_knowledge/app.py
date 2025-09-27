@@ -299,6 +299,16 @@ class KnowledgeBaseExpert:
             self.neo4j_driver = None
             self.neo4j_available = False
             self.in_memory_knowledge = {}
+            
+        # Self-learning parameters
+        self.self_learning_params = {
+            'enabled': True,
+            'learning_rate': 0.01,
+            'confidence_threshold': 0.75,
+            'exploration_factor': 0.3,
+            'knowledge_gap_detection_interval': 60 * 60,  # Check every hour
+            'external_source_fetch_interval': 24 * 60 * 60,  # Fetch from external sources daily
+        }
         self.data_bus = None  # Will be initialized externally
         
         # Multilingual support configuration
@@ -590,38 +600,350 @@ class KnowledgeBaseExpert:
         """设置数据总线 | Set data bus"""
         self.data_bus = data_bus
         
+    def set_self_learning_params(self, params):
+        """设置自主学习参数"""
+        for key, value in params.items():
+            if key in self.self_learning_params:
+                self.self_learning_params[key] = value
+        return self.self_learning_params
+    
+    def detect_knowledge_gaps(self):
+        """检测知识库中的知识缺口"""
+        try:
+            if not self.self_learning_params['enabled']:
+                return []
+                
+            knowledge_gaps = []
+            
+            # 分析低置信度知识区域
+            low_confidence_concepts = self._get_low_confidence_concepts()
+            for concept in low_confidence_concepts:
+                knowledge_gaps.append({
+                    'type': 'low_confidence',
+                    'concept': concept['name'],
+                    'domain': concept['domain'],
+                    'confidence': concept['confidence']
+                })
+                
+            # 分析知识关系稀疏区域
+            sparse_relation_areas = self._identify_sparse_relation_areas()
+            knowledge_gaps.extend(sparse_relation_areas)
+            
+            # 分析频繁查询但返回结果有限的概念
+            frequently_queried = self._get_frequently_queried_concepts()
+            knowledge_gaps.extend(frequently_queried)
+            
+            return knowledge_gaps
+        except Exception as e:
+            logging.error(f"知识缺口检测错误: {str(e)} | Knowledge gap detection error: {str(e)}")
+            return []
+            
+    def _get_low_confidence_concepts(self):
+        """获取低置信度的概念"""
+        try:
+            if not self.neo4j_available:
+                return []
+                
+            low_confidence_threshold = self.self_learning_params['confidence_threshold'] - 0.2
+            result_list = []
+            
+            with self.neo4j_driver.session() as session:
+                result = session.run(
+                    "MATCH (c:Concept) WHERE c.confidence < $threshold RETURN c.name AS name, c.domain AS domain, c.confidence AS confidence",
+                    threshold=low_confidence_threshold
+                )
+                
+                for record in result:
+                    result_list.append({
+                        'name': record['name'],
+                        'domain': record['domain'],
+                        'confidence': record['confidence']
+                    })
+                    
+            return result_list
+        except Exception as e:
+            logging.error(f"获取低置信度概念错误: {str(e)}")
+            return []
+            
+    def _identify_sparse_relation_areas(self):
+        """识别关系稀疏的知识区域"""
+        try:
+            if not self.neo4j_available:
+                return []
+                
+            sparse_areas = []
+            relation_threshold = 3  # 关系数量低于此值视为稀疏
+            
+            with self.neo4j_driver.session() as session:
+                result = session.run(
+                    "MATCH (c:Concept) OPTIONAL MATCH (c)-[:HAS_RELATION]->(r) WITH c, COUNT(r) AS relation_count WHERE relation_count < $threshold RETURN c.name AS name, c.domain AS domain, relation_count",
+                    threshold=relation_threshold
+                )
+                
+                for record in result:
+                    sparse_areas.append({
+                        'type': 'sparse_relations',
+                        'concept': record['name'],
+                        'domain': record['domain'],
+                        'current_relations': record['relation_count']
+                    })
+                    
+            return sparse_areas
+        except Exception as e:
+            logging.error(f"识别稀疏关系区域错误: {str(e)}")
+            return []
+            
+    def _get_frequently_queried_concepts(self):
+        """获取频繁查询但结果有限的概念"""
+        # 实际实现中应使用查询日志数据
+        # 这里简化为返回示例数据
+        return []
+        
+    def self_explore(self, gaps=None):
+        """基于知识缺口进行自主探索学习"""
+        try:
+            if not self.self_learning_params['enabled']:
+                return {"status": "self_learning_disabled"}
+                
+            # 如果没有提供缺口数据，自动检测
+            if gaps is None:
+                gaps = self.detect_knowledge_gaps()
+                
+            if not gaps:
+                # 当没有明确缺口时，随机探索
+                if random.random() < self.self_learning_params['exploration_factor']:
+                    return self._random_exploration()
+                return {"status": "no_gaps_detected"}
+                
+            # 优先处理高优先级缺口
+            sorted_gaps = sorted(gaps, key=lambda x: self._get_gap_priority(x))
+            
+            exploration_results = []
+            for gap in sorted_gaps[:5]:  # 每次最多探索5个缺口
+                result = self._explore_gap(gap)
+                if result:
+                    exploration_results.append(result)
+                    
+            return {
+                "status": "success",
+                "gaps_explored": len(exploration_results),
+                "results": exploration_results
+            }
+        except Exception as e:
+            logging.error(f"自主探索错误: {str(e)} | Self-exploration error: {str(e)}")
+            return {"status": "error", "message": str(e)}
+            
+    def _get_gap_priority(self, gap):
+        """计算知识缺口的优先级"""
+        # 实现优先级计算逻辑
+        # 简单示例：低置信度缺口优先级更高
+        if gap.get('type') == 'low_confidence':
+            return gap.get('confidence', 1)  # 置信度越低，优先级越高
+        return 1
+        
+    def _explore_gap(self, gap):
+        """针对特定知识缺口进行探索"""
+        try:
+            gap_type = gap.get('type', 'unknown')
+            concept = gap.get('concept')
+            domain = gap.get('domain')
+            
+            if not concept or not domain:
+                return None
+                
+            # 根据缺口类型执行不同的探索策略
+            if gap_type == 'low_confidence':
+                # 查找相关知识来源来增强此概念
+                exploration_data = self._find_reinforcement_materials(domain, concept)
+            elif gap_type == 'sparse_relations':
+                # 寻找可能的关系连接
+                exploration_data = self._find_potential_relations(domain, concept)
+            else:
+                # 默认探索策略
+                exploration_data = self._default_exploration(domain, concept)
+                
+            # 将探索结果整合到知识库
+            if exploration_data:
+                self._integrate_exploration_results(exploration_data, gap)
+                return {"concept": concept, "domain": domain, "status": "integrated"}
+                
+            return None
+        except Exception as e:
+            logging.error(f"缺口探索错误: {str(e)} | Gap exploration error: {str(e)}")
+            return None
+            
+    def _random_exploration(self):
+        """随机探索知识库中的区域"""
+        try:
+            # 选择一个随机领域
+            random_domain = random.choice(list(self.domain_mappings.keys()))
+            
+            # 执行简单的随机探索
+            return {
+                "status": "success",
+                "domain": random_domain,
+                "type": "random_exploration"
+            }
+        except Exception as e:
+            logging.error(f"随机探索错误: {str(e)} | Random exploration error: {str(e)}")
+            return {"status": "error"}
+            
+    def _find_reinforcement_materials(self, domain, concept):
+        """寻找用于增强特定概念的学习材料"""
+        # 实际实现中应查询外部知识源
+        # 这里简化为返回模拟数据
+        return {
+            "domain": domain,
+            "concept": concept,
+            "reinforcement_materials": [
+                {"type": "text", "content": f"关于{concept}的补充信息"}
+            ]
+        }
+        
+    def _find_potential_relations(self, domain, concept):
+        """寻找概念间可能存在的关系"""
+        # 实际实现中应使用更复杂的关系发现算法
+        return {
+            "domain": domain,
+            "concept": concept,
+            "potential_relations": []
+        }
+        
+    def _default_exploration(self, domain, concept):
+        """默认探索策略"""
+        return {
+            "domain": domain,
+            "concept": concept,
+            "exploration_data": []
+        }
+        
+    def _integrate_exploration_results(self, exploration_data, gap):
+        """将探索结果整合到知识库"""
+        try:
+            # 提取并整合新发现的知识
+            domain = exploration_data.get('domain')
+            concept = exploration_data.get('concept')
+            
+            # 简化实现：增加概念的置信度
+            if self.neo4j_available and concept:
+                with self.neo4j_driver.session() as session:
+                    session.run(
+                        "MATCH (c:Concept {name: $concept}) SET c.confidence = COALESCE(c.confidence, 0.5) + $increment",
+                        concept=concept,
+                        increment=self.self_learning_params['learning_rate']
+                    )
+        except Exception as e:
+            logging.error(f"整合探索结果错误: {str(e)} | Integration error: {str(e)}")
+            
+    def evaluate_self_learning_effectiveness(self):
+        """评估自主学习的效果"""
+        try:
+            # 收集学习前后的知识库状态数据
+            metrics_before = self.collect_performance_metrics()
+            
+            # 计算学习效果评分
+            # 简单示例：基于新增知识数量和置信度提升
+            knowledge_count = metrics_before.get('knowledge_count', 0)
+            success_rate = metrics_before.get('success_rate', 0)
+            
+            effectiveness_score = min(1.0, (knowledge_count * 0.001) + success_rate)
+            
+            return {
+                "effectiveness_score": effectiveness_score,
+                "metrics": metrics_before
+            }
+        except Exception as e:
+            logging.error(f"评估学习效果错误: {str(e)} | Learning effectiveness evaluation error: {str(e)}")
+            return {"effectiveness_score": 0.5, "error": str(e)}
+        
     def continuous_learning(self):
         """持续学习机制，不断更新和优化知识库 | Continuous learning mechanism"""
-        if not self.data_bus:
-            logging.warning("数据总线未初始化，无法进行持续学习 | Data bus not initialized for continuous learning")
-            return
-        
-        learning_materials = self.data_bus.subscribe("knowledge/learning", timeout=5) or []
-        
-        for material in learning_materials:
-            if self._validate_learning_material(material):
-                learning_type = material.get("learning_type", "general")
+        try:
+            if not self.self_learning_enabled:
+                logging.info("持续学习功能未启用 | Continuous learning is disabled")
+                return
                 
-                if learning_type == "model_output":
-                    self._learn_from_model_output(material)
-                elif learning_type == "user_input":
-                    self._learn_from_user_input(material)
-                elif learning_type == "external_knowledge":
-                    self._integrate_external_knowledge(material)
+            # 定期检查并执行学习
+            while self.running:
+                try:
+                    # 1. 检查是否启用了自主学习
+                    if hasattr(self, 'self_learning_params') and self.self_learning_params.get('enabled', False):
+                        # 2. 执行自主学习过程
+                        # 2.1 检测知识缺口
+                        knowledge_gaps = self.detect_knowledge_gaps()
+                        
+                        # 2.2 基于知识缺口进行自主探索
+                        exploration_results = self.self_explore(knowledge_gaps)
+                        
+                        # 2.3 评估自主学习效果
+                        effectiveness = self.evaluate_self_learning_effectiveness()
+                        
+                        # 2.4 记录学习活动
+                        if hasattr(self, '_log_self_learning_activity'):
+                            self._log_self_learning_activity(exploration_results, effectiveness)
+                        
+                        logging.info(f"自主学习完成 - 探索缺口数: {exploration_results.get('gaps_explored', 0)}, 效果评分: {effectiveness.get('effectiveness_score', 0):.2f}")
+                    
+                    # 3. 执行常规持续学习
+                    if self.data_bus:
+                        learning_materials = self.data_bus.subscribe("knowledge/learning", timeout=5) or []
+                        
+                        for material in learning_materials:
+                            if self._validate_learning_material(material):
+                                learning_type = material.get("learning_type", "general")
+                                
+                                if learning_type == "model_output":
+                                    self._learn_from_model_output(material)
+                                elif learning_type == "user_input":
+                                    self._learn_from_user_input(material)
+                                elif learning_type == "external_knowledge":
+                                    self._integrate_external_knowledge(material)
+                                
+                                effectiveness = self._evaluate_learning_effectiveness(material)
+                                self.learning_history.append({
+                                    "timestamp": time.time(),
+                                    "material": material,
+                                    "effectiveness": effectiveness
+                                })
+                                
+                                self.data_bus.publish("knowledge/learning_result", {
+                                    "material_id": material.get("id", "unknown"),
+                                    "effectiveness": effectiveness
+                                })
+                        
+                        self._optimize_knowledge_base()
+                except Exception as e:
+                    logging.error(f"持续学习循环异常: {str(e)} | Continuous learning loop exception: {str(e)}")
                 
-                effectiveness = self._evaluate_learning_effectiveness(material)
-                self.learning_history.append({
-                    "timestamp": time.time(),
-                    "material": material,
-                    "effectiveness": effectiveness
-                })
+                # 等待下一次检查
+                check_interval = 60  # 默认每分钟检查一次
+                if hasattr(self, 'self_learning_params') and self.self_learning_params.get('enabled', False):
+                    # 如果启用了自主学习，根据配置调整检查间隔
+                    knowledge_gap_interval = self.self_learning_params.get('knowledge_gap_detection_interval', 300)
+                    check_interval = min(check_interval, knowledge_gap_interval)
                 
-                self.data_bus.publish("knowledge/learning_result", {
-                    "material_id": material.get("id", "unknown"),
-                    "effectiveness": effectiveness
-                })
-        
-        self._optimize_knowledge_base()
+                for _ in range(check_interval):
+                    if not self.running:
+                        break
+                    time.sleep(1)
+        except Exception as e:
+            logging.error(f"持续学习机制异常: {str(e)} | Continuous learning mechanism exception: {str(e)}")
+            
+    def _log_self_learning_activity(self, exploration_results, effectiveness):
+        """记录自主学习活动日志"""
+        try:
+            # 记录学习活动到内部日志
+            activity_log = {
+                'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'exploration_results': exploration_results,
+                'effectiveness': effectiveness,
+                'self_learning_params': self.self_learning_params.copy() if hasattr(self, 'self_learning_params') else {}
+            }
+            
+            # 在实际应用中，这里可以将日志保存到数据库或文件
+            logging.debug(f"自主学习活动日志: {json.dumps(activity_log, ensure_ascii=False)}")
+        except Exception as e:
+            logging.error(f"记录学习活动日志错误: {str(e)} | Logging error: {str(e)}")
 
     def _validate_learning_material(self, material):
         """验证学习材料 | Validate learning material"""
@@ -1060,6 +1382,66 @@ def set_language():
     if kb_expert.set_language(lang):
         return jsonify({'status': f'Language set to {lang}'})
     return jsonify({'error': 'Invalid language code. Use zh or en'}), 400
+
+@app.route('/self_learning/params', methods=['GET'])
+def get_self_learning_params():
+    """获取自主学习参数配置 | Get self-learning parameters configuration"""
+    try:
+        if hasattr(kb_expert, 'self_learning_params'):
+            return jsonify({
+                'status': 'success',
+                'params': kb_expert.self_learning_params
+            })
+        else:
+            # 返回默认参数配置
+            return jsonify({
+                'status': 'success',
+                'params': {
+                    'enabled': False,
+                    'learning_rate': 0.01,
+                    'confidence_threshold': 0.7,
+                    'exploration_factor': 0.1,
+                    'knowledge_gap_detection_interval': 300,
+                    'external_source_fetch_interval': 600
+                }
+            })
+    except Exception as e:
+        logging.error(f"获取自主学习参数错误: {str(e)} | Error getting self-learning params: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/self_learning/params', methods=['POST'])
+def update_self_learning_params():
+    """更新自主学习参数配置 | Update self-learning parameters configuration"""
+    try:
+        data = request.json
+        params = data.get('params', {})
+        
+        if not isinstance(params, dict):
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid parameters format. Expected a dictionary.'
+            }), 400
+        
+        if hasattr(kb_expert, 'set_self_learning_params'):
+            updated_params = kb_expert.set_self_learning_params(params)
+            return jsonify({
+                'status': 'success',
+                'params': updated_params
+            })
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': 'Self-learning functionality not available.'
+            }), 500
+    except Exception as e:
+        logging.error(f"更新自主学习参数错误: {str(e)} | Error updating self-learning params: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5009, debug=True)

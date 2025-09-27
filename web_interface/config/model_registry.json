@@ -1,0 +1,172 @@
+{
+  "B_language": {
+    "name": "Large Language Model",
+    "description": "Multilingual interaction and emotional reasoning",
+    "type": "local",
+    "enabled": true,
+    "port": 8001,
+    "api_url": "",
+    "api_key": "",
+    "local_model_path": "sub_models/B_language",
+    "capabilities": [
+      "text_generation",
+      "emotion_analysis",
+      "multilingual"
+    ],
+    "health_endpoint": "/health",
+    "check_interval": 30
+  },
+  "C_audio": {
+    "name": "Audio Processing Model",
+    "description": "Speech recognition, music synthesis and audio processing",
+    "type": "local",
+    "enabled": true,
+    "port": 8002,
+    "api_url": "",
+    "api_key": "",
+    "local_model_path": "sub_models/C_audio",
+    "capabilities": [
+      "speech_recognition",
+      "music_generation",
+      "audio_effects"
+    ],
+    "health_endpoint": "/health",
+    "check_interval": 30
+  },
+  "D_image": {
+    "name": "Image Vision Processing Model",
+    "description": "Image recognition, editing and generation",
+    "type": "local",
+    "enabled": true,
+    "port": 8003,
+    "api_url": "",
+    "api_key": "",
+    "local_model_path": "sub_models/D_image",
+    "capabilities": [
+      "image_recognition",
+      "image_editing",
+      "image_generation"
+    ],
+    "health_endpoint": "/health",
+    "check_interval": 30
+  },
+  "E_video": {
+    "name": "Video Stream Vision Processing Model",
+    "description": "Video analysis, editing and generation",
+    "type": "local",
+    "enabled": true,
+    "port": 8004,
+    "api_url": "",
+    "api_key": "",
+    "local_model_path": "sub_models/E_video",
+    "capabilities": [
+      "video_analysis",
+      "video_editing",
+      "video_generation"
+    ],
+    "health_endpoint": "/health",
+    "check_interval": 30
+  },
+  "F_spatial": {
+    "name": "Stereo Spatial Localization Model",
+    "description": "3D spatial modeling and localization",
+    "type": "local",
+    "enabled": true,
+    "port": 8005,
+    "api_url": "",
+    "api_key": "",
+    "local_model_path": "sub_models/F_spatial",
+    "capabilities": [
+      "3d_mapping",
+      "spatial_localization",
+      "motion_prediction"
+    ],
+    "health_endpoint": "/health",
+    "check_interval": 30
+  },
+  "G_sensor": {
+    "name": "Sensor Perception Model",
+    "description": "Multi-sensor data collection and processing",
+    "type": "local",
+    "enabled": true,
+    "port": 8006,
+    "api_url": "",
+    "api_key": "",
+    "local_model_path": "sub_models/G_sensor",
+    "capabilities": [
+      "sensor_data",
+      "environment_monitoring",
+      "real_time_processing"
+    ],
+    "health_endpoint": "/health",
+    "check_interval": 10
+  },
+  "H_computer_control": {
+    "name": "Computer Control Model",
+    "description": "System command execution and control",
+    "type": "local",
+    "enabled": true,
+    "port": 8007,
+    "api_url": "",
+    "api_key": "",
+    "local_model_path": "sub_models/H_computer_control",
+    "capabilities": [
+      "system_control",
+      "batch_processing",
+      "multi_platform"
+    ],
+    "health_endpoint": "/health",
+    "check_interval": 30
+  },
+  "I_knowledge": {
+    "name": "Knowledge Base Expert Model",
+    "description": "Multi-domain knowledge retrieval and reasoning",
+    "type": "local",
+    "enabled": true,
+    "port": 8008,
+    "api_url": "",
+    "api_key": "",
+    "local_model_path": "sub_models/I_knowledge",
+    "capabilities": [
+      "knowledge_retrieval",
+      "expert_system",
+      "teaching_assistance"
+    ],
+    "health_endpoint": "/health",
+    "check_interval": 30
+  },
+  "J_motion": {
+    "name": "Motion and Actuator Control Model",
+    "description": "Multi-port device control",
+    "type": "local",
+    "enabled": true,
+    "port": 8009,
+    "api_url": "",
+    "api_key": "",
+    "local_model_path": "sub_models/J_motion",
+    "capabilities": [
+      "motion_control",
+      "actuator_management",
+      "multi_protocol"
+    ],
+    "health_endpoint": "/health",
+    "check_interval": 30
+  },
+  "K_programming": {
+    "name": "Programming Model",
+    "description": "Code generation and system optimization",
+    "type": "local",
+    "enabled": true,
+    "port": 8010,
+    "api_url": "",
+    "api_key": "",
+    "local_model_path": "sub_models/K_programming",
+    "capabilities": [
+      "code_generation",
+      "system_optimization",
+      "debugging"
+    ],
+    "health_endpoint": "/health",
+    "check_interval": 30
+  }
+}

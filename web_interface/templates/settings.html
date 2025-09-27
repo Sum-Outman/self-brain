@@ -1,0 +1,708 @@
+{% extends 'base_monochrome.html' %}
+
+{% block title %}System Settings - Self Brain AGI{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Monochrome style with black, white and gray colors */
+    .settings-card {
+        border-radius: 0.5rem;
+        border: 1px solid #e0e0e0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        background-color: #ffffff;
+        margin-bottom: 1.5rem;
+    }
+    .settings-card-header {
+        border-bottom: 1px solid #e0e0e0;
+        background-color: #f9f9f9;
+        padding: 1rem 1.25rem;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+    .settings-card-body {
+        padding: 1.25rem;
+    }
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    .btn-action {
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .api-status {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 5px;
+    }
+    .api-status-connected {
+        background-color: #555555;
+    }
+    .api-status-disconnected {
+        background-color: #cccccc;
+    }
+    .model-card {
+        border-radius: 0.5rem;
+        border: 1px solid #e0e0e0;
+        margin-bottom: 1rem;
+        overflow: hidden;
+        background-color: #ffffff;
+    }
+    .model-card-header {
+        padding: 0.75rem 1rem;
+        background-color: #f9f9f9;
+        border-bottom: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .model-card-body {
+        padding: 1rem;
+    }
+    .tab-content {
+        padding: 1rem 0;
+    }
+    .nav-tabs {
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    .nav-tabs .nav-link {
+        color: #666666;
+        border: 1px solid transparent;
+        border-top-left-radius: 0.375rem;
+        border-top-right-radius: 0.375rem;
+    }
+    .nav-tabs .nav-link.active {
+        color: #333333;
+        background-color: #ffffff;
+        border-color: #e0e0e0 #e0e0e0 #ffffff;
+    }
+    .btn-primary {
+        background-color: #333333;
+        border-color: #333333;
+        color: #ffffff;
+    }
+    .btn-primary:hover {
+        background-color: #555555;
+        border-color: #555555;
+    }
+    .btn-secondary {
+        background-color: #777777;
+        border-color: #777777;
+        color: #ffffff;
+    }
+    .btn-secondary:hover {
+        background-color: #999999;
+        border-color: #999999;
+    }
+    .btn-danger {
+        background-color: #666666;
+        border-color: #666666;
+        color: #ffffff;
+    }
+    .btn-danger:hover {
+        background-color: #888888;
+        border-color: #888888;
+    }
+    .form-control {
+        border: 1px solid #e0e0e0;
+        border-radius: 0.375rem;
+        background-color: #ffffff;
+        color: #333333;
+    }
+    .form-control:focus {
+        border-color: #777777;
+        box-shadow: 0 0 0 0.2rem rgba(119, 119, 119, 0.25);
+    }
+    .form-check-input:checked {
+        background-color: #333333;
+        border-color: #333333;
+    }
+    .text-muted {
+        color: #888888 !important;
+    }
+    .text-success {
+        color: #555555 !important;
+    }
+    h1, h2, h3, h4, h5, h6 {
+        color: #333333;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4">System Settings</h1>
+    
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            <a class="nav-link active" data-toggle="tab" href="#api-configuration">API Configuration</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#model-management">Model Management</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#self-learning-config">Self Learning</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#system-parameters">System Parameters</a>
+        </li>
+    </ul>
+    
+    <!-- Tab Content -->
+    <div class="tab-content">
+        <!-- API Configuration Tab -->
+        <div id="api-configuration" class="tab-pane fade show active">
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <h2 class="h5 mb-0">External API Connections</h2>
+                </div>
+                <div class="settings-card-body">
+                    <p class="text-muted mb-4">Configure external API connections for models. When connected, these APIs can replace local models.</p>
+                    
+                    <div class="mb-4">
+                        <label for="model-select" class="form-label">Select Model</label>
+                        <select id="model-select" class="form-control">
+                            {% for model_id, model_info in model_registry.items() %}
+                            <option value="{{ model_id }}">{{ model_info.type }} - {{ model_id }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <form id="api-config-form">
+                        <div class="form-group">
+                            <label for="api-url" class="form-label">API URL</label>
+                            <input type="url" id="api-url" class="form-control" placeholder="https://api.example.com/v1/chat/completions">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="api-key" class="form-label">API Key</label>
+                            <input type="password" id="api-key" class="form-control" placeholder="Enter your API key">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="model-name" class="form-label">Model Name</label>
+                            <input type="text" id="model-name" class="form-control" placeholder="e.g., gpt-4, llama3-70b-instruct">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="api-type" class="form-label">API Type</label>
+                            <select id="api-type" class="form-control">
+                                <option value="openai">OpenAI Compatible</option>
+                                <option value="anthropic">Anthropic</option>
+                                <option value="google">Google Gemini</option>
+                                <option value="ollama">Ollama</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input type="checkbox" id="replace-local" class="form-check-input">
+                                <label for="replace-local" class="form-check-label">Replace local model with this API</label>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="test-connection" class="btn btn-secondary btn-action">Test Connection</button>
+                        <button type="button" id="save-api-config" class="btn btn-primary btn-action">Save Configuration</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <h3 class="h5 mb-3">Active API Connections</h3>
+                <div id="api-connections-list">
+                    {% for model_id, model_info in model_registry.items() %}
+                    {% if model_info.api_url %}
+                    <div class="model-card">
+                        <div class="model-card-header">
+                            <div>
+                                <span class="font-weight-medium">{{ model_id }}</span>
+                                <span class="text-muted ml-2">({{ model_info.type }})</span>
+                            </div>
+                            <div>
+                                <span class="api-status api-status-connected"></span>
+                                <span class="text-success text-sm">Connected</span>
+                            </div>
+                        </div>
+                        <div class="model-card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="text-sm mb-1"><strong>API URL:</strong> {{ model_info.api_url }}</p>
+                                    <p class="text-sm mb-1"><strong>Model Name:</strong> {{ model_info.api_model_name or 'N/A' }}</p>
+                                    <p class="text-sm mb-1"><strong>API Type:</strong> {{ model_info.api_type or 'Custom' }}</p>
+                                </div>
+                                <div class="col-md-6 text-right">
+                                    <button class="btn btn-sm btn-secondary" onclick="editApiConfig('{{ model_id }}')">Edit</button>
+                                    <button class="btn btn-sm btn-danger" onclick="disconnectApi('{{ model_id }}')">Disconnect</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if not model_registry or model_registry.values() | selectattr('api_url') | list | length == 0 %}
+                    <div class="text-center text-muted py-4">
+                        No active API connections
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Model Management Tab -->
+        <div id="model-management" class="tab-pane fade">
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <h2 class="h5 mb-0">Model Registry</h2>
+                </div>
+                <div class="settings-card-body">
+                    <p class="text-muted mb-4">Manage all models in the Self Brain AGI system. Toggle between local and external models.</p>
+                    
+                    <div class="row">
+                        {% for model_id, model_info in model_registry.items() %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="model-card">
+                                <div class="model-card-header">
+                                    <div>
+                                        <span class="font-weight-medium">{{ model_id }}</span>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="model-{{ model_id }}" {% if model_info.active %}checked{% endif %} onchange="toggleModel('{{ model_id }}', this.checked)">
+                                    </div>
+                                </div>
+                                <div class="model-card-body">
+                                    <p class="text-sm mb-1"><strong>Type:</strong> {{ model_info.type }}</p>
+                                    <p class="text-sm mb-1"><strong>Description:</strong> {{ model_info.description[:100] }}{% if model_info.description|length > 100 %}...{% endif %}</p>
+                                    <p class="text-sm mb-1"><strong>Source:</strong> {{ 'External API' if model_info.api_url else 'Local' }}</p>
+                                    <p class="text-sm mb-1"><strong>Trainable:</strong> {{ 'Yes' if model_info.trainable else 'No' }}</p>
+                                    <button class="btn btn-sm btn-secondary mt-2" onclick="viewModelDetails('{{ model_id }}')">View Details</button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Self Learning Configuration Tab -->
+        <div id="self-learning-config" class="tab-pane fade">
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <h2 class="h5 mb-0">Self Learning Configuration</h2>
+                </div>
+                <div class="settings-card-body">
+                    <form id="self-learning-form">
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input type="checkbox" id="enable-self-learning" class="form-check-input">
+                                <label for="enable-self-learning" class="form-check-label">Enable Self Learning</label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="self-learning-rate" class="form-label">Learning Rate</label>
+                            <input type="number" id="self-learning-rate" class="form-control" min="0.0001" max="1" step="0.0001">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="confidence-threshold" class="form-label">Confidence Threshold</label>
+                            <input type="number" id="confidence-threshold" class="form-control" min="0" max="1" step="0.01">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="exploration-factor" class="form-label">Exploration Factor</label>
+                            <input type="number" id="exploration-factor" class="form-control" min="0" max="1" step="0.01">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="gap-detection-interval" class="form-label">Gap Detection Interval (seconds)</label>
+                            <input type="number" id="gap-detection-interval" class="form-control" min="10" max="3600" step="5">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="external-source-interval" class="form-label">External Source Interval (seconds)</label>
+                            <input type="number" id="external-source-interval" class="form-control" min="60" max="86400" step="30">
+                        </div>
+                        
+                        <button type="button" id="load-self-learning-params" class="btn btn-secondary mr-2">Load Defaults</button>
+                        <button type="button" id="save-self-learning-params" class="btn btn-primary">Save Configuration</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- System Parameters Tab -->
+        <div id="system-parameters" class="tab-pane fade">
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <h2 class="h5 mb-0">System Configuration</h2>
+                </div>
+                <div class="settings-card-body">
+                    <form id="system-config-form">
+                        <div class="form-group">
+                <label for="system-language" class="form-label">System Language</label>
+                <select id="system-language" class="form-control">
+                    <option value="en">English</option>
+                </select>
+            </div>
+                        
+                        <div class="form-group">
+                            <label for="learning-rate" class="form-label">Default Learning Rate</label>
+                            <input type="number" id="learning-rate" class="form-control" min="0.0001" max="1" step="0.0001" value="0.001">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="batch-size" class="form-label">Default Batch Size</label>
+                            <input type="number" id="batch-size" class="form-control" min="1" max="1000" value="32">
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input type="checkbox" id="enable-gpu" class="form-check-input" checked>
+                                <label for="enable-gpu" class="form-check-label">Enable GPU Acceleration</label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input type="checkbox" id="auto-update" class="form-check-input">
+                                <label for="auto-update" class="form-check-label">Enable Auto-update Models</label>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="save-system-config" class="btn btn-primary">Save System Configuration</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize with current model data
+    const modelRegistry = JSON.parse('{{ model_registry_json | safe }}');
+    let currentModelId = null;
+    
+    // Load self-learning parameters on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSelfLearningParams();
+    });
+    
+    // Load self-learning parameters from server
+    async function loadSelfLearningParams() {
+        try {
+            const response = await utils.fetchWithRetry('/self_learning/params', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            const params = await response.json();
+            
+            document.getElementById('enable-self-learning').checked = params.enable_self_learning;
+            document.getElementById('self-learning-rate').value = params.learning_rate;
+            document.getElementById('confidence-threshold').value = params.confidence_threshold;
+            document.getElementById('exploration-factor').value = params.exploration_factor;
+            document.getElementById('gap-detection-interval').value = params.gap_detection_interval;
+            document.getElementById('external-source-interval').value = params.external_source_interval;
+        } catch (error) {
+            utils.handleApiError(error, 'load self-learning parameters');
+        }
+    }
+    
+    // Save self-learning parameters
+    document.getElementById('save-self-learning-params').addEventListener('click', async function() {
+        const enableSelfLearning = document.getElementById('enable-self-learning').checked;
+        const learningRate = parseFloat(document.getElementById('self-learning-rate').value);
+        const confidenceThreshold = parseFloat(document.getElementById('confidence-threshold').value);
+        const explorationFactor = parseFloat(document.getElementById('exploration-factor').value);
+        const gapDetectionInterval = parseInt(document.getElementById('gap-detection-interval').value);
+        const externalSourceInterval = parseInt(document.getElementById('external-source-interval').value);
+        
+        try {
+            const response = await utils.fetchWithRetry('/self_learning/params', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    enable_self_learning: enableSelfLearning,
+                    learning_rate: learningRate,
+                    confidence_threshold: confidenceThreshold,
+                    exploration_factor: explorationFactor,
+                    gap_detection_interval: gapDetectionInterval,
+                    external_source_interval: externalSourceInterval
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast('Self-learning configuration saved successfully', 'success');
+            } else {
+                showToast('Failed to save self-learning configuration: ' + result.error, 'error');
+            }
+        } catch (error) {
+            utils.handleApiError(error, 'save self-learning configuration');
+        }
+    });
+    
+    // Load default self-learning parameters
+    document.getElementById('load-self-learning-params').addEventListener('click', function() {
+        document.getElementById('enable-self-learning').checked = true;
+        document.getElementById('self-learning-rate').value = 0.001;
+        document.getElementById('confidence-threshold').value = 0.7;
+        document.getElementById('exploration-factor').value = 0.3;
+        document.getElementById('gap-detection-interval').value = 60;
+        document.getElementById('external-source-interval').value = 300;
+        showToast('Default parameters loaded', 'info');
+    });
+    
+    // When model is selected, load its API config
+    document.getElementById('model-select').addEventListener('change', function() {
+        const modelId = this.value;
+        currentModelId = modelId;
+        const model = modelRegistry[modelId];
+        
+        // Load existing API configuration if available
+        document.getElementById('api-url').value = model.api_url || '';
+        document.getElementById('api-key').value = model.api_key || '';
+        document.getElementById('model-name').value = model.api_model_name || '';
+        document.getElementById('api-type').value = model.api_type || 'openai';
+        document.getElementById('replace-local').checked = model.model_source === 'external';
+    });
+    
+    // Trigger change event on load to populate form
+    document.getElementById('model-select').dispatchEvent(new Event('change'));
+    
+    // Test API connection
+    document.getElementById('test-connection').addEventListener('click', async function() {
+        const apiUrl = document.getElementById('api-url').value;
+        const apiKey = document.getElementById('api-key').value;
+        const modelName = document.getElementById('model-name').value;
+        const apiType = document.getElementById('api-type').value;
+        
+        if (!apiUrl || !apiKey || !modelName) {
+            showToast('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        try {
+            showToast('Testing connection...', 'info');
+            
+            // Simple connection test based on API type
+            const testResult = await testApiConnection(apiUrl, apiKey, modelName, apiType);
+            
+            if (testResult.success) {
+                showToast('Connection successful!', 'success');
+            } else {
+                showToast('Connection failed: ' + testResult.error, 'error');
+            }
+        } catch (error) {
+            showToast('Test failed: ' + error.message, 'error');
+        }
+    });
+    
+    // Save API configuration
+    document.getElementById('save-api-config').addEventListener('click', async function() {
+        const apiUrl = document.getElementById('api-url').value;
+        const apiKey = document.getElementById('api-key').value;
+        const modelName = document.getElementById('model-name').value;
+        const apiType = document.getElementById('api-type').value;
+        const replaceLocal = document.getElementById('replace-local').checked;
+        
+        if (!currentModelId) {
+            showToast('Please select a model first', 'error');
+            return;
+        }
+        
+        try {
+            const response = await utils.fetchWithRetry('/api/save_api_config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model_id: currentModelId,
+                    api_url: apiUrl,
+                    api_key: apiKey,
+                    api_model_name: modelName,
+                    api_type: apiType,
+                    replace_local: replaceLocal
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast('API configuration saved successfully', 'success');
+                // Refresh the page to show updated connections
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast('Failed to save configuration: ' + result.error, 'error');
+            }
+        } catch (error) {
+            utils.handleApiError(error, 'save API config');
+        }
+    });
+    
+    // Toggle model activation
+    function toggleModel(modelId, active) {
+        fetch('/api/toggle_model', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model_id: modelId, active: active })
+        }).then(response => response.json())
+          .then(result => {
+              if (result.success) {
+                  showToast(`Model ${modelId} ${active ? 'activated' : 'deactivated'}`, 'success');
+              } else {
+                  showToast('Failed to toggle model: ' + result.error, 'error');
+              }
+          })
+          .catch(error => utils.handleApiError(error, 'toggle model'));
+    }
+    
+    // Disconnect API
+    function disconnectApi(modelId) {
+        if (confirm(`Are you sure you want to disconnect the API for model ${modelId}?`)) {
+            fetch('/api/disconnect_api', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model_id: modelId })
+            }).then(response => response.json())
+              .then(result => {
+                  if (result.success) {
+                      showToast(`API disconnected for model ${modelId}`, 'success');
+                      window.location.reload();
+                  } else {
+                      showToast('Failed to disconnect API: ' + result.error, 'error');
+                  }
+              })
+              .catch(error => utils.handleApiError(error, 'disconnect API'));
+        }
+    }
+    
+    // View model details
+    function viewModelDetails(modelId) {
+        // In a real implementation, this would open a modal with detailed model information
+        const model = modelRegistry[modelId];
+        let detailsHtml = `<h4>${modelId}</h4>`;
+        detailsHtml += `<p><strong>Type:</strong> ${model.type}</p>`;
+        detailsHtml += `<p><strong>Description:</strong> ${model.description}</p>`;
+        detailsHtml += `<p><strong>Version:</strong> ${model.version}</p>`;
+        detailsHtml += `<p><strong>Source:</strong> ${model.api_url ? 'External API' : 'Local'}</p>`;
+        detailsHtml += `<p><strong>Trainable:</strong> ${model.trainable ? 'Yes' : 'No'}</p>`;
+        
+        if (model.api_url) {
+            detailsHtml += `<p><strong>API URL:</strong> ${model.api_url}</p>`;
+            detailsHtml += `<p><strong>API Model:</strong> ${model.api_model_name || 'N/A'}</p>`;
+        }
+        
+        showToast(detailsHtml, 'info', 10000);
+    }
+    
+    // Test API connection function
+    async function testApiConnection(apiUrl, apiKey, modelName, apiType) {
+        try {
+            // Simple test based on API type
+            let testUrl = apiUrl;
+            let testHeaders = { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
+            let testBody = null;
+            
+            // Default test message
+            const testMessage = "Hello, this is a test message.";
+            
+            switch(apiType) {
+                case 'openai':
+                    // Ensure we have the correct endpoint
+                    if (!apiUrl.endsWith('/chat/completions')) {
+                        if (apiUrl.endsWith('/')) {
+                            testUrl += 'chat/completions';
+                        } else {
+                            testUrl += '/chat/completions';
+                        }
+                    }
+                    testBody = JSON.stringify({
+                        model: modelName,
+                        messages: [{ role: "user", content: testMessage }],
+                        max_tokens: 10
+                    });
+                    break;
+                case 'anthropic':
+                    testHeaders['anthropic-version'] = '2023-06-01';
+                    testBody = JSON.stringify({
+                        model: modelName,
+                        messages: [{ role: "user", content: testMessage }],
+                        max_tokens: 10
+                    });
+                    break;
+                case 'ollama':
+                    if (!apiUrl.endsWith('/api/chat')) {
+                        if (apiUrl.endsWith('/')) {
+                            testUrl += 'api/chat';
+                        } else {
+                            testUrl += '/api/chat';
+                        }
+                    }
+                    testBody = JSON.stringify({
+                        model: modelName,
+                        messages: [{ role: "user", content: testMessage }]
+                    });
+                    break;
+                default:
+                    // Custom API test
+                    testBody = JSON.stringify({ message: testMessage });
+            }
+            
+            const response = await fetch(testUrl, {
+                method: 'POST',
+                headers: testHeaders,
+                body: testBody,
+                timeout: 5000
+            });
+            
+            if (response.ok) {
+                return { success: true };
+            } else {
+                const errorText = await response.text();
+                return { success: false, error: `HTTP ${response.status}: ${errorText}` };
+            }
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    }
+    
+    // Save system configuration
+    document.getElementById('save-system-config').addEventListener('click', async function() {
+        const systemLanguage = document.getElementById('system-language').value;
+        const learningRate = document.getElementById('learning-rate').value;
+        const batchSize = document.getElementById('batch-size').value;
+        const enableGpu = document.getElementById('enable-gpu').checked;
+        const autoUpdate = document.getElementById('auto-update').checked;
+        
+        try {
+            const response = await utils.fetchWithRetry('/api/save_system_config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    language: systemLanguage,
+                    learning_rate: parseFloat(learningRate),
+                    batch_size: parseInt(batchSize),
+                    enable_gpu: enableGpu,
+                    auto_update: autoUpdate
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast('System configuration saved successfully', 'success');
+            } else {
+                showToast('Failed to save system configuration: ' + result.error, 'error');
+            }
+        } catch (error) {
+            utils.handleApiError(error, 'save system config');
+        }
+    });
+</script>
+{% endblock %}

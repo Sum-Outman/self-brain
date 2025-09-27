@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self Brain - Advanced AI Management System</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <!-- Socket.IO -->
+    <script src="/static/js/socket.io.js"></script>
+    <!-- Vue.js -->
+    <script src="/static/js/vue.global.js"></script>
+    <!-- PeerJS -->
+    <script src="/static/js/peerjs.min.js"></script>
+    <!-- Bootstrap Bundle -->
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom Styles -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            }
+            .transition-bg {
+                transition: background-color 0.2s ease;
+            }
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#333333',
+                        secondary: '#666666',
+                        success: '#222222',
+                        warning: '#444444',
+                        danger: '#555555',
+                        dark: '#111111',
+                        light: '#F9F9F9'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: #F9F9F9;
+            color: #111111;
+        }
+        .bg-gray-light {
+            background-color: #F1F1F1;
+        }
+        .bg-gray-lighter {
+            background-color: #F9F9F9;
+        }
+        .border-gray {
+            border-color: #E0E0E0;
+        }
+        .text-gray {
+            color: #666666;
+        }
+        .btn-gray {
+            background-color: #E0E0E0;
+            color: #111111;
+        }
+        .btn-gray:hover {
+            background-color: #CCCCCC;
+        }
+        .shadow-sm {
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header Navigation -->
+    <header class="bg-white border-b border-gray">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white">
+                        <i class="fa fa-brain text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-dark">Self Brain</h1>
+                        <p class="text-xs text-gray">Advanced AI Management System</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray hover:text-primary transition-colors" id="toggleTheme">
+                        <i class="fa fa-moon-o"></i>
+                    </button>
+                    <button class="text-gray hover:text-primary transition-colors">
+                        <i class="fa fa-cog"></i>
+                    </button>
+                    <div class="relative">
+                        <button class="w-8 h-8 bg-gray-light rounded-full flex items-center justify-center text-gray">
+                            <i class="fa fa-user"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-6">
+        <!-- System Status Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl shadow-sm p-4 border border-gray card-hover transition-all duration-300">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray">System Status</h3>
+                    <span class="text-xs px-2 py-1 bg-success/10 text-success rounded-full">Operational</span>
+                </div>
+                <p class="text-2xl font-bold text-dark">All Systems Online</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm p-4 border border-gray card-hover transition-all duration-300">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray">Hardware Status</h3>
+                    <div class="flex items-center space-x-1">
+                        <i class="fa fa-microchip text-xs text-primary"></i>
+                        <i class="fa fa-memory text-xs text-primary"></i>
+                    </div>
+                </div>
+                <p class="text-2xl font-bold text-dark">Optimal</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm p-4 border border-gray card-hover transition-all duration-300">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray">Models Online</h3>
+                    <i class="fa fa-server text-xs text-primary"></i>
+                </div>
+                <p class="text-2xl font-bold text-dark">11/11</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm p-4 border border-gray card-hover transition-all duration-300">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray">Response Time</h3>
+                    <i class="fa fa-clock-o text-xs text-primary"></i>
+                </div>
+                <p class="text-2xl font-bold text-dark" id="responseTime">85ms</p>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column - Chat Interface -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Chat Area -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray overflow-hidden">
+                    <div class="p-4 border-b border-gray">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-lg font-bold text-dark">A Management Model</h2>
+                            <div class="flex space-x-2">
+                                <button class="btn-gray rounded-lg p-2 hover:bg-gray-300 transition-colors" onclick="clearChat()">
+                                    <i class="fa fa-refresh"></i>
+                                </button>
+                                <button class="btn-gray rounded-lg p-2 hover:bg-gray-300 transition-colors" onclick="exportChat()">
+                                    <i class="fa fa-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Chat Messages Container -->
+                    <div id="messagesContainer" class="p-4 h-[400px] overflow-y-auto">
+                        <!-- Messages will be appended here -->
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="p-3 border-t border-gray flex flex-wrap gap-2">
+                        <button class="px-3 py-1 text-xs bg-gray-light rounded-full text-gray hover:bg-gray-300 transition-colors" onclick="quickAction('summarize')">
+                            <i class="fa fa-list-ul mr-1"></i>Summarize
+                        </button>
+                        <button class="px-3 py-1 text-xs bg-gray-light rounded-full text-gray hover:bg-gray-300 transition-colors" onclick="quickAction('translate')">
+                            <i class="fa fa-language mr-1"></i>Translate
+                        </button>
+                        <button class="px-3 py-1 text-xs bg-gray-light rounded-full text-gray hover:bg-gray-300 transition-colors" onclick="quickAction('code')">
+                            <i class="fa fa-code mr-1"></i>Generate Code
+                        </button>
+                        <button class="px-3 py-1 text-xs bg-gray-light rounded-full text-gray hover:bg-gray-300 transition-colors" onclick="quickAction('analyze')">
+                            <i class="fa fa-bar-chart mr-1"></i>Analyze
+                        </button>
+                        <button class="px-3 py-1 text-xs bg-gray-light rounded-full text-gray hover:bg-gray-300 transition-colors" onclick="quickAction('brainstorm')">
+                            <i class="fa fa-lightbulb-o mr-1"></i>Brainstorm
+                        </button>
+                    </div>
+                    
+                    <!-- Message Input Area -->
+                    <div class="p-4 border-t border-gray">
+                        <div class="relative">
+                            <textarea id="messageInput" class="w-full p-3 border border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none" rows="1" placeholder="Type your message here..." onkeydown="handleKeyDown(event)" oninput="adjustTextareaHeight(this)"></textarea>
+                            
+                            <div class="absolute right-3 bottom-3 flex space-x-2">
+                                <button class="text-gray hover:text-primary transition-colors" onclick="toggleVoice()">
+                                    <i class="fa fa-microphone"></i>
+                                </button>
+                                <label class="text-gray hover:text-primary transition-colors cursor-pointer">
+                                    <i class="fa fa-paperclip"></i>
+                                    <input type="file" multiple style="display: none;" onchange="window.chatManager.handleFileUpload(this.files)">
+                                </label>
+                                <button class="bg-primary text-white px-4 py-1.5 rounded-lg hover:bg-primary/90 transition-colors send-btn" onclick="sendMessage()">
+                                    <i class="fa fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Training Control -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray overflow-hidden">
+                    <div class="p-4 border-b border-gray">
+                        <h2 class="text-lg font-bold text-dark">Training Control</h2>
+                    </div>
+                    
+                    <div class="p-4">
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            <button class="btn-gray rounded-lg py-2 hover:bg-gray-300 transition-colors text-center">
+                                <i class="fa fa-play-circle mr-1"></i>Start Training
+                            </button>
+                            <button class="btn-gray rounded-lg py-2 hover:bg-gray-300 transition-colors text-center">
+                                <i class="fa fa-stop-circle mr-1"></i>Stop Training
+                            </button>
+                            <button class="btn-gray rounded-lg py-2 hover:bg-gray-300 transition-colors text-center">
+                                <i class="fa fa-book mr-1"></i>Import Knowledge
+                            </button>
+                            <button class="btn-gray rounded-lg py-2 hover:bg-gray-300 transition-colors text-center">
+                                <i class="fa fa-upload mr-1"></i>Upload Data
+                            </button>
+                            <button class="btn-gray rounded-lg py-2 hover:bg-gray-300 transition-colors text-center">
+                                <i class="fa fa-download mr-1"></i>Export Data
+                            </button>
+                            <button class="btn-gray rounded-lg py-2 hover:bg-gray-300 transition-colors text-center">
+                                <i class="fa fa-stethoscope mr-1"></i>System Check
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column - System Status and Controls -->
+            <div class="space-y-6">
+                <!-- Model Architecture -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray overflow-hidden">
+                    <div class="p-4 border-b border-gray">
+                        <h2 class="text-lg font-bold text-dark">AI System Architecture</h2>
+                    </div>
+                    
+                    <div class="p-4">
+                        <div class="flex justify-center mb-4">
+                            <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white">
+                                <span class="text-xl font-bold">A</span>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="flex items-center justify-center p-2 bg-gray-light rounded-lg">
+                                <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary mr-2">
+                                    <span class="text-sm font-bold">B</span>
+                                </div>
+                                <span class="text-xs text-gray">Language</span>
+                            </div>
+                            <div class="flex items-center justify-center p-2 bg-gray-light rounded-lg">
+                                <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary mr-2">
+                                    <span class="text-sm font-bold">C</span>
+                                </div>
+                                <span class="text-xs text-gray">Audio</span>
+                            </div>
+                            <div class="flex items-center justify-center p-2 bg-gray-light rounded-lg">
+                                <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary mr-2">
+                                    <span class="text-sm font-bold">D</span>
+                                </div>
+                                <span class="text-xs text-gray">Image</span>
+                            </div>
+                            <div class="flex items-center justify-center p-2 bg-gray-light rounded-lg">
+                                <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary mr-2">
+                                    <span class="text-sm font-bold">E</span>
+                                </div>
+                                <span class="text-xs text-gray">Video</span>
+                            </div>
+                            <div class="flex items-center justify-center p-2 bg-gray-light rounded-lg">
+                                <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary mr-2">
+                                    <span class="text-sm font-bold">F</span>
+                                </div>
+                                <span class="text-xs text-gray">Spatial</span>
+                            </div>
+                            <div class="flex items-center justify-center p-2 bg-gray-light rounded-lg">
+                                <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary mr-2">
+                                    <span class="text-sm font-bold">G</span>
+                                </div>
+                                <span class="text-xs text-gray">Sensor</span>
+                            </div>
+                            <div class="flex items-center justify-center p-2 bg-gray-light rounded-lg">
+                                <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary mr-2">
+                                    <span class="text-sm font-bold">H</span>
+                                </div>
+                                <span class="text-xs text-gray">Computer</span>
+                            </div>
+                            <div class="flex items-center justify-center p-2 bg-gray-light rounded-lg">
+                                <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary mr-2">
+                                    <span class="text-sm font-bold">I</span>
+                                </div>
+                                <span class="text-xs text-gray">Actuator</span>
+                            </div>
+                            <div class="flex items-center justify-center p-2 bg-gray-light rounded-lg">
+                                <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary mr-2">
+                                    <span class="text-sm font-bold">J</span>
+                                </div>
+                                <span class="text-xs text-gray">Knowledge</span>
+                            </div>
+                            <div class="flex items-center justify-center p-2 bg-gray-light rounded-lg">
+                                <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary mr-2">
+                                    <span class="text-sm font-bold">K</span>
+                                </div>
+                                <span class="text-xs text-gray">Programming</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Training Progress -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray overflow-hidden">
+                    <div class="p-4 border-b border-gray">
+                        <h2 class="text-lg font-bold text-dark">Training Progress</h2>
+                    </div>
+                    
+                    <div class="p-4">
+                        <div class="mb-4">
+                            <div class="flex justify-between mb-1">
+                                <span class="text-xs text-gray">Progress</span>
+                                <span class="text-xs font-medium text-dark">68%</span>
+                            </div>
+                            <div class="h-2 bg-gray-light rounded-full overflow-hidden">
+                                <div class="h-full bg-primary rounded-full" style="width: 68%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-3 text-center">
+                            <div class="p-2 bg-gray-light rounded-lg">
+                                <p class="text-xs text-gray mb-1">CPU</p>
+                                <p class="text-lg font-bold text-dark">42%</p>
+                            </div>
+                            <div class="p-2 bg-gray-light rounded-lg">
+                                <p class="text-xs text-gray mb-1">Memory</p>
+                                <p class="text-lg font-bold text-dark">76%</p>
+                            </div>
+                            <div class="p-2 bg-gray-light rounded-lg">
+                                <p class="text-xs text-gray mb-1">GPU</p>
+                                <p class="text-lg font-bold text-dark">31%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Enhanced Multi-Camera System with Stereo Vision -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray overflow-hidden">
+                    <div class="p-4 border-b border-gray">
+                        <h2 class="text-lg font-bold text-dark">Multi-Camera System (Stereo Vision Support)</h2>
+                    </div>
+                    
+                    <div class="p-4">
+                        <div class="flex flex-wrap justify-between items-center gap-3 mb-3">
+                            <div class="flex space-x-2">
+                                <select id="leftCameraSelect" class="text-xs bg-gray-light rounded-lg py-1.5 px-2 border border-gray focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+                                    <option value="">Select Left Camera</option>
+                                </select>
+                                <select id="rightCameraSelect" class="text-xs bg-gray-light rounded-lg py-1.5 px-2 border border-gray focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+                                    <option value="">Select Right Camera</option>
+                                </select>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="text-xs bg-gray-light rounded-lg py-1.5 px-3 hover:bg-gray-300 transition-colors" id="refreshCameras">
+                                    <i class="fa fa-refresh mr-1"></i>Refresh Cameras
+                                </button>
+                                <button class="text-xs bg-primary text-white rounded-lg py-1.5 px-3 hover:bg-primary/90 transition-colors" id="toggleStereoVision">
+                                    <i class="fa fa-eye mr-1"></i>Start Stereo
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Camera Preview -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="camera-container">
+                                <h4 class="text-sm font-medium text-gray mb-2">Left Camera</h4>
+                                <div class="bg-gray-light rounded-lg overflow-hidden relative h-32">
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <i class="fa fa-video-camera text-2xl text-gray/50"></i>
+                                    </div>
+                                    <video id="leftCameraPreview" class="w-full h-full object-cover" autoplay muted playsinline></video>
+                                </div>
+                            </div>
+                            <div class="camera-container">
+                                <h4 class="text-sm font-medium text-gray mb-2">Right Camera</h4>
+                                <div class="bg-gray-light rounded-lg overflow-hidden relative h-32">
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <i class="fa fa-video-camera text-2xl text-gray/50"></i>
+                                    </div>
+                                    <video id="rightCameraPreview" class="w-full h-full object-cover" autoplay muted playsinline></video>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="flex flex-wrap justify-center gap-2 mt-3">
+                            <button class="text-xs bg-gray-light rounded-lg py-1.5 px-3 hover:bg-gray-300 transition-colors" id="startAllCameras">
+                                <i class="fa fa-play mr-1"></i>Start All Cameras
+                            </button>
+                            <button class="text-xs bg-gray-light rounded-lg py-1.5 px-3 hover:bg-gray-300 transition-colors" id="stopAllCameras">
+                                <i class="fa fa-stop mr-1"></i>Stop All Cameras
+                            </button>
+                            <button class="text-xs bg-gray-light rounded-lg py-1.5 px-3 hover:bg-gray-300 transition-colors" id="takeSnapshotAll">
+                                <i class="fa fa-camera mr-1"></i>Take Snapshots
+                            </button>
+                        </div>
+                        
+                        <!-- Stereo Vision Analysis Result -->
+                        <div id="stereoVisionResult" class="mt-4 p-3 bg-gray-lighter rounded-md hidden">
+                            <h4 class="text-sm font-medium text-gray mb-2">Stereo Vision Analysis Result</h4>
+                            <p id="depthMapData" class="text-xs text-gray">Analysis data will appear here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray py-4 mt-6">
+        <div class="container mx-auto px-4 text-center text-gray text-sm">
+            <p>Self Brain - Advanced AI Management System</p>
+            <p class="mt-1">Contact: silencecrowtom@qq.com</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="/static/js/chat.js"></script>
+    <script src="/static/js/camera_control.js"></script>
+    <script src="/static/js/training_control.js"></script>
+    <script src="/static/js/device_communication.js"></script>
+    <script src="/static/js/models_management.js"></script>
+    <script src="/static/js/external_api_config.js"></script>
+    
+    <script>
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Camera Control
+            if (window.CameraControl) {
+                window.CameraControl.init();
+                setupCameraControls();
+            }
+            
+            // Initialize Device Communication
+            if (window.DeviceCommunication) {
+                window.DeviceCommunication.initialize().then(result => {
+                    console.log('Device communication initialized:', result);
+                });
+            }
+            
+            // System status monitoring
+            setInterval(updateSystemStatus, 5000);
+        });
+        
+        // Update system status
+        function updateSystemStatus() {
+            // Simulated response time update
+            const responseTime = Math.floor(Math.random() * 150) + 50;
+            document.getElementById('responseTime').textContent = responseTime + 'ms';
+        }
+        
+        // Setup camera controls
+        function setupCameraControls() {
+            const toggleStereoBtn = document.getElementById('toggleStereoVision');
+            const takeSnapshotBtn = document.getElementById('takeSnapshot');
+            const cameraSelector = document.getElementById('cameraSelector');
+            
+            if (toggleStereoBtn) {
+                toggleStereoBtn.addEventListener('click', function() {
+                    const isActive = this.classList.contains('bg-primary');
+                    if (isActive) {
+                        this.classList.remove('bg-primary');
+                        this.classList.add('bg-gray-light');
+                        this.classList.remove('text-white');
+                        this.classList.add('text-dark');
+                        this.innerHTML = '<i class="fa fa-eye mr-1"></i>Start Stereo';
+                        stopStereoVision();
+                    } else {
+                        this.classList.add('bg-primary');
+                        this.classList.remove('bg-gray-light');
+                        this.classList.add('text-white');
+                        this.classList.remove('text-dark');
+                        this.innerHTML = '<i class="fa fa-eye-slash mr-1"></i>Stop Stereo';
+                        startStereoVision();
+                    }
+                });
+            }
+            
+            if (takeSnapshotBtn) {
+                takeSnapshotBtn.addEventListener('click', function() {
+                    window.CameraControl.takeSnapshot('leftCameraPreview');
+                    window.CameraControl.takeSnapshot('rightCameraPreview');
+                    showNotification('Snapshots taken successfully', 'success');
+                });
+            }
+            
+            if (cameraSelector) {
+                cameraSelector.addEventListener('change', function() {
+                    const cameraId = this.value;
+                    updateCameraPreview(cameraId);
+                });
+            }
+        }
+        
+        // Start stereo vision
+        function startStereoVision() {
+            // Try to start both cameras for stereo vision
+            window.CameraControl.getAvailableCameras().then(cameras => {
+                if (cameras.length >= 2) {
+                    // Start first camera on left preview
+                    window.CameraControl.startCameraStream({video: {deviceId: {exact: cameras[0].deviceId}}})
+                        .then(stream => {
+                            window.CameraControl.attachStreamToVideo(stream, 'leftCameraPreview');
+                        })
+                        .catch(error => {
+                            console.error('Error starting left camera:', error);
+                        });
+                    
+                    // Start second camera on right preview
+                    window.CameraControl.startCameraStream({video: {deviceId: {exact: cameras[1].deviceId}}})
+                        .then(stream => {
+                            window.CameraControl.attachStreamToVideo(stream, 'rightCameraPreview');
+                        })
+                        .catch(error => {
+                            console.error('Error starting right camera:', error);
+                        });
+                } else {
+                    showNotification('Not enough cameras available for stereo vision', 'warning');
+                }
+            });
+        }
+        
+        // Stop stereo vision
+        function stopStereoVision() {
+            // Stop all camera streams
+            const leftVideo = document.getElementById('leftCameraPreview');
+            const rightVideo = document.getElementById('rightCameraPreview');
+            
+            if (leftVideo && leftVideo.srcObject) {
+                window.CameraControl.stopCameraStream(leftVideo.srcObject);
+                leftVideo.srcObject = null;
+            }
+            
+            if (rightVideo && rightVideo.srcObject) {
+                window.CameraControl.stopCameraStream(rightVideo.srcObject);
+                rightVideo.srcObject = null;
+            }
+        }
+        
+        // Update camera preview based on selection
+        function updateCameraPreview(cameraId) {
+            if (cameraId === 'stereo') {
+                startStereoVision();
+            } else {
+                window.CameraControl.getAvailableCameras().then(cameras => {
+                    if (cameras.length > 0) {
+                        const cameraIndex = cameraId === 'camera1' ? 0 : 1;
+                        
+                        // Use the same camera for both previews if only one is available
+                        const deviceId = cameras[Math.min(cameraIndex, cameras.length - 1)].deviceId;
+                        
+                        // Start camera stream
+                        window.CameraControl.startCameraStream({video: {deviceId: {exact: deviceId}}})
+                            .then(stream => {
+                                // Show on both previews
+                                const leftVideo = document.getElementById('leftCameraPreview');
+                                const rightVideo = document.getElementById('rightCameraPreview');
+                                
+                                if (leftVideo) {
+                                    if (leftVideo.srcObject) {
+                                        window.CameraControl.stopCameraStream(leftVideo.srcObject);
+                                    }
+                                    window.CameraControl.attachStreamToVideo(stream, 'leftCameraPreview');
+                                }
+                                
+                                if (rightVideo) {
+                                    if (rightVideo.srcObject) {
+                                        window.CameraControl.stopCameraStream(rightVideo.srcObject);
+                                    }
+                                    // Clone the stream for the second preview
+                                    const clonedStream = stream.clone();
+                                    window.CameraControl.attachStreamToVideo(clonedStream, 'rightCameraPreview');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error starting camera:', error);
+                            });
+                    }
+                });
+            }
+        }
+        
+        // Helper function for notifications
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-3 rounded-lg shadow-md max-w-xs transition-all duration-300 transform translate-x-full z-50 bg-${type === 'success' ? 'green' : type === 'error' ? 'red' : type === 'warning' ? 'amber' : 'blue'}-50 text-${type === 'success' ? 'green' : type === 'error' ? 'red' : type === 'warning' ? 'amber' : 'blue'}-800 border border-${type === 'success' ? 'green' : type === 'error' ? 'red' : type === 'warning' ? 'amber' : 'blue'}-200`;
+            
+            notification.innerHTML = `
+                <div class="flex items-start">
+                    <i class="fa fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'} mt-0.5 mr-2"></i>
+                    <p class="text-sm">${message}</p>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+                notification.classList.add('translate-x-0');
+            }, 10);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('translate-x-0');
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+        
+        // Handle textarea auto-resize
+        function adjustTextareaHeight(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+        
+        // Handle keydown event for message input
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>

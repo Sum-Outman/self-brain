@@ -53,18 +53,57 @@ class ChatManager {
     }
 
     setupSocketIO() {
-        // Create Socket.IO connection
-        this.socket = io(window.location.origin);
-        
-        this.socket.on('connect', () => {
-            console.log('Connected to Self Brain AGI System');
-            this.showNotification('System connected', 'success');
-        });
+        // Create Socket.IO connection with robust configuration
+        try {
+            this.socket = io(window.location.origin, {
+                transports: ['websocket', 'polling'],
+                reconnection: true,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000,
+                reconnectionAttempts: 10,
+                timeout: 20000,
+                autoConnect: true,
+                upgrade: true,
+                rememberUpgrade: true,
+                forceNew: true
+            });
+            
+            this.socket.on('connect', () => {
+                console.log('Connected to Self Brain AGI System');
+                this.showNotification('System connected', 'success');
+            });
 
-        this.socket.on('disconnect', () => {
-            console.log('Disconnected from Self Brain AGI System');
-            this.showNotification('System connection lost', 'warning');
-        });
+            this.socket.on('disconnect', (reason) => {
+                console.log('Disconnected from Self Brain AGI System:', reason);
+                this.showNotification('System connection lost', 'warning');
+            });
+            
+            this.socket.on('connect_error', (error) => {
+                console.error('Socket.IO connection error:', error);
+                this.showNotification('Failed to connect to system', 'error');
+            });
+            
+            this.socket.on('reconnect', (attemptNumber) => {
+                console.log('Reconnected to system after', attemptNumber, 'attempts');
+                this.showNotification('System reconnected', 'success');
+            });
+            
+            this.socket.on('reconnect_attempt', (attemptNumber) => {
+                console.log('Attempting to reconnect to system...', attemptNumber);
+            });
+            
+            this.socket.on('reconnect_error', (error) => {
+                console.error('Socket.IO reconnection error:', error);
+            });
+            
+            this.socket.on('reconnect_failed', () => {
+                console.error('Failed to reconnect to system');
+                this.showNotification('Failed to reconnect to system', 'error');
+            });
+        } catch (error) {
+            console.error('Socket.IO setup failed:', error);
+            this.showNotification('System connection initialization failed', 'error');
+        }
 
         this.socket.on('ai_response', (data) => {
             this.handleAIResponse(data);

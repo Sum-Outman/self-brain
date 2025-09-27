@@ -298,7 +298,7 @@ class LanguageCorpusDataset(Dataset):
 
 class LanguageModel(nn.Module):
     """
-    语言模型类，支持从零开始训练和预训练两种模式
+    语言模型类，支持从零开始训练和预训练两种模式，增强了情感推理能力
     """
     def __init__(self, vocab_size=None, embedding_dim=256, hidden_dim=512, 
                  num_layers=2, dropout=0.3, model_name=None):
@@ -316,12 +316,38 @@ class LanguageModel(nn.Module):
         super(LanguageModel, self).__init__()
         
         self.is_pretrained = model_name is not None
+        self.dropout = dropout
+        
+        # 定义情感类别数量
+        self.num_emotion_classes = 7  # 7种基本情绪
+        self.num_sub_emotion_classes = 21  # 细粒度子情绪类别
         
         if self.is_pretrained:
             # 预训练模式：加载预训练模型
             self.base_model = AutoModel.from_pretrained(model_name)
             self.tokenizer = AutoTokenizer.from_pretrained(model_name)
             self.hidden_dim = self.base_model.config.hidden_size
+            
+            # 情感特征提取层
+            self.emotion_feature_extractor = nn.Sequential(
+                nn.Dropout(dropout),
+                nn.Linear(self.hidden_dim, 512),
+                nn.LayerNorm(512),
+                nn.GELU(),
+                nn.Dropout(dropout),
+                nn.Linear(512, 256),
+                nn.LayerNorm(256),
+                nn.GELU()
+            )
+            
+            # 主情感分类头
+            self.emotion_head = nn.Linear(256, self.num_emotion_classes)
+            
+            # 细粒度子情感分类头
+            self.sub_emotion_head = nn.Linear(256, self.num_sub_emotion_classes)
+            
+            # 情感强度回归头
+            self.emotion_intensity_head = nn.Linear(256, 1)
         else:
             # 从零开始训练模式：构建自定义模型
             self.embedding = nn.Embedding(vocab_size, embedding_dim)
@@ -333,17 +359,31 @@ class LanguageModel(nn.Module):
                 bidirectional=True,
                 dropout=dropout if num_layers > 1 else 0
             )
-            self.dropout = nn.Dropout(dropout)
+            self.dropout_layer = nn.Dropout(dropout)
             self.hidden_dim = hidden_dim
-        
-        # 情感分类头
-        self.emotion_head = nn.Linear(
-            self.hidden_dim * 2 if not self.is_pretrained else self.hidden_dim, 
-            7  # 7种基本情绪
-        )
-        
-        # 语言建模头（仅在从零开始训练模式下使用）
-        if not self.is_pretrained:
+            
+            # 情感特征提取层
+            self.emotion_feature_extractor = nn.Sequential(
+                nn.Dropout(dropout),
+                nn.Linear(self.hidden_dim * 2, 512),  # *2 因为是双向LSTM
+                nn.LayerNorm(512),
+                nn.GELU(),
+                nn.Dropout(dropout),
+                nn.Linear(512, 256),
+                nn.LayerNorm(256),
+                nn.GELU()
+            )
+            
+            # 主情感分类头
+            self.emotion_head = nn.Linear(256, self.num_emotion_classes)
+            
+            # 细粒度子情感分类头
+            self.sub_emotion_head = nn.Linear(256, self.num_sub_emotion_classes)
+            
+            # 情感强度回归头
+            self.emotion_intensity_head = nn.Linear(256, 1)
+            
+            # 语言建模头（仅在从零开始训练模式下使用）
             self.lm_head = nn.Linear(self.hidden_dim * 2, vocab_size)
         
         # 初始化统计跟踪属性
@@ -366,27 +406,40 @@ class LanguageModel(nn.Module):
         self._request_times = deque(maxlen=100)  # 存储最近100个请求的处理时间
     
     def forward(self, input_ids, attention_mask=None):
-        """前向传播"""
+        """前向传播，增强了情感推理能力"""
         if self.is_pretrained:
             # 预训练模式
             outputs = self.base_model(input_ids, attention_mask=attention_mask)
             sequence_output = outputs.last_hidden_state
+            # 使用CLS标记的表示作为句子表示
+            cls_representation = sequence_output[:, 0, :]
         else:
             # 从零开始训练模式
             embedded = self.embedding(input_ids)
-            embedded = self.dropout(embedded)
+            embedded = self.dropout_layer(embedded)
             lstm_out, _ = self.lstm(embedded)
-            sequence_output = self.dropout(lstm_out)
+            # 使用最后一个时间步的输出作为句子表示
+            cls_representation = lstm_out[:, -1, :]
+            sequence_output = self.dropout_layer(lstm_out)
         
-        # 情感预测（使用第一个token的表示）
-        emotion_logits = self.emotion_head(sequence_output[:, 0, :])
+        # 提取情感特征
+        emotion_features = self.emotion_feature_extractor(cls_representation)
+        
+        # 主情感分类
+        emotion_logits = self.emotion_head(emotion_features)
+        
+        # 细粒度子情感分类
+        sub_emotion_logits = self.sub_emotion_head(emotion_features)
+        
+        # 情感强度回归（使用sigmoid将输出限制在0-1之间）
+        emotion_intensity = torch.sigmoid(self.emotion_intensity_head(emotion_features))
         
         # 语言建模预测（仅在从零开始训练模式下）
         lm_logits = None
         if not self.is_pretrained:
             lm_logits = self.lm_head(sequence_output)
         
-        return lm_logits, emotion_logits
+        return lm_logits, emotion_logits, sub_emotion_logits, emotion_intensity
     
     def _update_stats(self, success=True, process_time=None, language=None):
         """更新模型统计信息"""
@@ -465,7 +518,7 @@ class LanguageModel(nn.Module):
 
 class ModelTrainer:
     """
-    模型训练器类，负责模型的训练、评估和保存
+    模型训练器类，负责模型的训练、评估和保存，支持增强的情感推理功能
     """
     def __init__(self, model, config=None):
         """
@@ -488,7 +541,12 @@ class ModelTrainer:
             'checkpoint_dir': './checkpoints',
             'log_interval': 10,
             'main_metric': 'accuracy',
-            'metric_direction': 'max'
+            'metric_direction': 'max',
+            # 情感任务相关配置
+            'emotion_weight': 0.6,        # 主情感分类损失权重
+            'sub_emotion_weight': 0.3,    # 子情感分类损失权重
+            'intensity_weight': 0.1,      # 情感强度回归损失权重
+            'has_sub_emotion_labels': False  # 是否有子情感标签
         }
         
         # 更新用户配置
@@ -504,6 +562,9 @@ class ModelTrainer:
         
         # 创建损失函数
         self.criterion_emotion = nn.CrossEntropyLoss()
+        self.criterion_sub_emotion = nn.CrossEntropyLoss()
+        self.criterion_intensity = nn.MSELoss()
+        
         if hasattr(self.model, 'lm_head'):
             self.criterion_lm = nn.CrossEntropyLoss(ignore_index=self.model.vocab.get_idx('<pad>') if hasattr(self.model, 'vocab') else 0)
         
@@ -523,12 +584,16 @@ class ModelTrainer:
         # 创建检查点目录
         os.makedirs(self.config['checkpoint_dir'], exist_ok=True)
         
-        # 初始化训练历史
+        # 初始化训练历史，扩展以支持更多情感指标
         self.train_history = {
             'train_loss': [],
             'val_loss': [],
-            'train_acc': [],
-            'val_acc': []
+            'train_emotion_acc': [],
+            'val_emotion_acc': [],
+            'train_sub_emotion_acc': [],
+            'val_sub_emotion_acc': [],
+            'train_intensity_mse': [],
+            'val_intensity_mse': []
         }
     
     def create_data_loaders(self, train_dataset, val_dataset=None, test_dataset=None):
@@ -573,22 +638,52 @@ class ModelTrainer:
         return correct / len(labels)
     
     def train_epoch(self):
-        """训练一个epoch"""
+        """训练一个epoch，支持增强的情感推理功能"""
         self.model.train()
         total_loss = 0
-        total_accuracy = 0
+        total_emotion_accuracy = 0
+        total_sub_emotion_accuracy = 0
+        total_intensity_mse = 0
         
         for batch_idx, batch in enumerate(self.train_loader):
             input_ids = batch['input_ids']
             attention_mask = batch['attention_mask']
-            labels = batch['labels']
+            emotion_labels = batch['labels']
+            
+            # 初始化子情感标签和强度标签
+            sub_emotion_labels = None
+            intensity_labels = None
+            
+            # 如果批次中包含子情感标签
+            if 'sub_emotion_labels' in batch and self.config['has_sub_emotion_labels']:
+                sub_emotion_labels = batch['sub_emotion_labels']
+            
+            # 如果批次中包含强度标签
+            if 'intensity_labels' in batch:
+                intensity_labels = batch['intensity_labels']
             
             # 前向传播
             self.optimizer.zero_grad()
-            lm_logits, emotion_logits = self.model(input_ids, attention_mask)
+            lm_logits, emotion_logits, sub_emotion_logits, emotion_intensity = self.model(input_ids, attention_mask)
             
-            # 计算损失
-            loss = self.criterion_emotion(emotion_logits, labels)
+            # 初始化损失
+            loss = 0
+            
+            # 计算主情感分类损失
+            emotion_loss = self.criterion_emotion(emotion_logits, emotion_labels)
+            loss += emotion_loss * self.config['emotion_weight']
+            
+            # 计算子情感分类损失（如果有标签）
+            if sub_emotion_labels is not None:
+                sub_emotion_loss = self.criterion_sub_emotion(sub_emotion_logits, sub_emotion_labels)
+                loss += sub_emotion_loss * self.config['sub_emotion_weight']
+            
+            # 计算情感强度回归损失（如果有标签）
+            if intensity_labels is not None:
+                # 确保强度标签形状匹配
+                intensity_labels = intensity_labels.view(-1, 1).float()
+                intensity_loss = self.criterion_intensity(emotion_intensity, intensity_labels)
+                loss += intensity_loss * self.config['intensity_weight']
             
             # 如果有语言建模头，添加语言建模损失
             if lm_logits is not None:
@@ -607,24 +702,43 @@ class ModelTrainer:
             
             # 累积损失和准确率
             total_loss += loss.item()
-            accuracy = self._calculate_accuracy(emotion_logits, labels)
-            total_accuracy += accuracy
+            emotion_accuracy = self._calculate_accuracy(emotion_logits, emotion_labels)
+            total_emotion_accuracy += emotion_accuracy
+            
+            # 如果有子情感标签，计算子情感准确率
+            if sub_emotion_labels is not None:
+                sub_emotion_accuracy = self._calculate_accuracy(sub_emotion_logits, sub_emotion_labels)
+                total_sub_emotion_accuracy += sub_emotion_accuracy
+            
+            # 如果有强度标签，计算强度MSE
+            if intensity_labels is not None:
+                intensity_mse = self.criterion_intensity(emotion_intensity, intensity_labels).item()
+                total_intensity_mse += intensity_mse
             
             # 打印进度
             if (batch_idx + 1) % self.config['log_interval'] == 0:
-                print(f'Batch {batch_idx+1}/{len(self.train_loader)}, Loss: {loss.item():.4f}, Accuracy: {accuracy:.4f}')
+                log_msg = f'Batch {batch_idx+1}/{len(self.train_loader)}, Loss: {loss.item():.4f}, Emotion Acc: {emotion_accuracy:.4f}'
+                if sub_emotion_labels is not None:
+                    log_msg += f', Sub-Emotion Acc: {sub_emotion_accuracy:.4f}'
+                if intensity_labels is not None:
+                    log_msg += f', Intensity MSE: {intensity_mse:.4f}'
+                print(log_msg)
         
         # 计算平均损失和准确率
         avg_loss = total_loss / len(self.train_loader)
-        avg_accuracy = total_accuracy / len(self.train_loader)
+        avg_emotion_accuracy = total_emotion_accuracy / len(self.train_loader)
+        avg_sub_emotion_accuracy = total_sub_emotion_accuracy / len(self.train_loader) if self.config['has_sub_emotion_labels'] else 0
+        avg_intensity_mse = total_intensity_mse / len(self.train_loader) if total_intensity_mse > 0 else 0
         
-        return avg_loss, avg_accuracy
+        return avg_loss, avg_emotion_accuracy, avg_sub_emotion_accuracy, avg_intensity_mse
     
     def evaluate(self, loader=None):
-        """评估模型"""
+        """评估模型，支持增强的情感推理功能"""
         self.model.eval()
         total_loss = 0
-        total_accuracy = 0
+        total_emotion_accuracy = 0
+        total_sub_emotion_accuracy = 0
+        total_intensity_mse = 0
         
         # 默认使用验证加载器
         if loader is None:
@@ -634,13 +748,41 @@ class ModelTrainer:
             for batch in loader:
                 input_ids = batch['input_ids']
                 attention_mask = batch['attention_mask']
-                labels = batch['labels']
+                emotion_labels = batch['labels']
+                
+                # 初始化子情感标签和强度标签
+                sub_emotion_labels = None
+                intensity_labels = None
+                
+                # 如果批次中包含子情感标签
+                if 'sub_emotion_labels' in batch and self.config['has_sub_emotion_labels']:
+                    sub_emotion_labels = batch['sub_emotion_labels']
+                
+                # 如果批次中包含强度标签
+                if 'intensity_labels' in batch:
+                    intensity_labels = batch['intensity_labels']
                 
                 # 前向传播
-                lm_logits, emotion_logits = self.model(input_ids, attention_mask)
+                lm_logits, emotion_logits, sub_emotion_logits, emotion_intensity = self.model(input_ids, attention_mask)
                 
-                # 计算损失
-                loss = self.criterion_emotion(emotion_logits, labels)
+                # 初始化损失
+                loss = 0
+                
+                # 计算主情感分类损失
+                emotion_loss = self.criterion_emotion(emotion_logits, emotion_labels)
+                loss += emotion_loss * self.config['emotion_weight']
+                
+                # 计算子情感分类损失（如果有标签）
+                if sub_emotion_labels is not None:
+                    sub_emotion_loss = self.criterion_sub_emotion(sub_emotion_logits, sub_emotion_labels)
+                    loss += sub_emotion_loss * self.config['sub_emotion_weight']
+                
+                # 计算情感强度回归损失（如果有标签）
+                if intensity_labels is not None:
+                    # 确保强度标签形状匹配
+                    intensity_labels = intensity_labels.view(-1, 1).float()
+                    intensity_loss = self.criterion_intensity(emotion_intensity, intensity_labels)
+                    loss += intensity_loss * self.config['intensity_weight']
                 
                 # 如果有语言建模头，添加语言建模损失
                 if lm_logits is not None:
@@ -651,14 +793,26 @@ class ModelTrainer:
                 
                 # 累积损失和准确率
                 total_loss += loss.item()
-                accuracy = self._calculate_accuracy(emotion_logits, labels)
-                total_accuracy += accuracy
+                emotion_accuracy = self._calculate_accuracy(emotion_logits, emotion_labels)
+                total_emotion_accuracy += emotion_accuracy
+                
+                # 如果有子情感标签，计算子情感准确率
+                if sub_emotion_labels is not None:
+                    sub_emotion_accuracy = self._calculate_accuracy(sub_emotion_logits, sub_emotion_labels)
+                    total_sub_emotion_accuracy += sub_emotion_accuracy
+                
+                # 如果有强度标签，计算强度MSE
+                if intensity_labels is not None:
+                    intensity_mse = self.criterion_intensity(emotion_intensity, intensity_labels).item()
+                    total_intensity_mse += intensity_mse
         
         # 计算平均损失和准确率
         avg_loss = total_loss / len(loader)
-        avg_accuracy = total_accuracy / len(loader)
+        avg_emotion_accuracy = total_emotion_accuracy / len(loader)
+        avg_sub_emotion_accuracy = total_sub_emotion_accuracy / len(loader) if self.config['has_sub_emotion_labels'] else 0
+        avg_intensity_mse = total_intensity_mse / len(loader) if total_intensity_mse > 0 else 0
         
-        return avg_loss, avg_accuracy
+        return avg_loss, avg_emotion_accuracy, avg_sub_emotion_accuracy, avg_intensity_mse
     
     def save_checkpoint(self, epoch, is_best=False):
         """保存模型检查点"""
@@ -721,7 +875,7 @@ class ModelTrainer:
             return 0
     
     def train(self):
-        """训练模型"""
+        """训练模型，支持增强的情感推理功能"""
         # 初始化最佳分数
         if self.best_score is None:
             if self.config['metric_direction'] == 'max':
@@ -734,30 +888,43 @@ class ModelTrainer:
             print(f'\nEpoch {epoch+1}/{self.config['epochs']}')
             print('-' * 50)
             
-            # 训练一个epoch
-            train_loss, train_acc = self.train_epoch()
+            # 训练一个epoch - 新的返回值格式: loss, emotion_acc, sub_emotion_acc, intensity_mse
+            train_loss, train_emotion_acc, train_sub_emotion_acc, train_intensity_mse = self.train_epoch()
             
             # 评估模型
-            val_loss, val_acc = None, None
+            val_loss, val_emotion_acc, val_sub_emotion_acc, val_intensity_mse = None, None, None, None
             if self.val_loader:
-                val_loss, val_acc = self.evaluate()
+                val_loss, val_emotion_acc, val_sub_emotion_acc, val_intensity_mse = self.evaluate()
             
             # 更新训练历史
             self.train_history['train_loss'].append(train_loss)
-            self.train_history['train_acc'].append(train_acc)
+            self.train_history['train_emotion_acc'].append(train_emotion_acc)
+            self.train_history['train_sub_emotion_acc'].append(train_sub_emotion_acc)
+            self.train_history['train_intensity_mse'].append(train_intensity_mse)
             
             if val_loss is not None:
                 self.train_history['val_loss'].append(val_loss)
-                self.train_history['val_acc'].append(val_acc)
+                self.train_history['val_emotion_acc'].append(val_emotion_acc)
+                self.train_history['val_sub_emotion_acc'].append(val_sub_emotion_acc)
+                self.train_history['val_intensity_mse'].append(val_intensity_mse)
             
             # 打印epoch总结
             print(f'\nEpoch Summary:')
-            print(f'Train Loss: {train_loss:.4f}, Train Accuracy: {train_acc:.4f}')
+            print(f'Train Loss: {train_loss:.4f}, Train Emotion Acc: {train_emotion_acc:.4f}')
+            if self.config['has_sub_emotion_labels']:
+                print(f'Train Sub-Emotion Acc: {train_sub_emotion_acc:.4f}')
+            if train_intensity_mse > 0:
+                print(f'Train Intensity MSE: {train_intensity_mse:.4f}')
+            
             if val_loss is not None:
-                print(f'Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_acc:.4f}')
+                print(f'Validation Loss: {val_loss:.4f}, Validation Emotion Acc: {val_emotion_acc:.4f}')
+                if self.config['has_sub_emotion_labels']:
+                    print(f'Validation Sub-Emotion Acc: {val_sub_emotion_acc:.4f}')
+                if val_intensity_mse > 0:
+                    print(f'Validation Intensity MSE: {val_intensity_mse:.4f}')
             
             # 检查是否是最佳模型
-            current_score = val_acc if val_acc is not None else train_acc
+            current_score = val_emotion_acc if val_emotion_acc is not None else train_emotion_acc
             is_best = False
             
             if self.config['metric_direction'] == 'max':
@@ -983,8 +1150,7 @@ class LanguageModelTrainer:
         return train_history
     
     def evaluate(self, dataset_type='test'):
-        """
-        评估模型
+        """评估模型
         
         参数:
             dataset_type: 评估数据集类型 (train, val, test)
@@ -1005,18 +1171,24 @@ class LanguageModelTrainer:
             print(f'Invalid dataset type: {dataset_type}')
             return None
         
-        # 评估模型
-        loss, accuracy = self.trainer.evaluate(loader)
+        # 评估模型 - 新的返回值格式: loss, emotion_acc, sub_emotion_acc, intensity_mse
+        loss, emotion_acc, sub_emotion_acc, intensity_mse = self.trainer.evaluate(loader)
         
         print(f'\n{dataset_type.capitalize()} Evaluation:')
-        print(f'Loss: {loss:.4f}, Accuracy: {accuracy:.4f}')
+        print(f'Loss: {loss:.4f}, Emotion Accuracy: {emotion_acc:.4f}')
+        if self.config['has_sub_emotion_labels']:
+            print(f'Sub-Emotion Accuracy: {sub_emotion_acc:.4f}')
+        if intensity_mse > 0:
+            print(f'Intensity MSE: {intensity_mse:.4f}')
         
         # 计算额外指标
         metrics = self._compute_metrics(loader)
         
         return {
             'loss': loss,
-            'accuracy': accuracy,
+            'emotion_accuracy': emotion_acc,
+            'sub_emotion_accuracy': sub_emotion_acc,
+            'intensity_mse': intensity_mse,
             **metrics
         }
     
@@ -1025,68 +1197,148 @@ class LanguageModelTrainer:
         计算额外评估指标
         """
         self.model.eval()
-        all_predictions = []
-        all_labels = []
-        all_logits = []
+        all_emotion_predictions = []
+        all_emotion_labels = []
+        all_emotion_logits = []
+        all_sub_emotion_predictions = []
+        all_sub_emotion_labels = []
+        all_sub_emotion_logits = []
+        all_intensity_predictions = []
+        all_intensity_labels = []
         
         with torch.no_grad():
             for batch in loader:
                 input_ids = batch['input_ids']
                 attention_mask = batch['attention_mask']
-                labels = batch['labels']
+                emotion_labels = batch['labels']
+                
+                # 初始化子情感标签和强度标签
+                sub_emotion_labels = None
+                intensity_labels = None
+                
+                # 如果批次中包含子情感标签
+                if 'sub_emotion_labels' in batch and self.config.get('has_sub_emotion_labels', False):
+                    sub_emotion_labels = batch['sub_emotion_labels']
+                
+                # 如果批次中包含强度标签
+                if 'intensity_labels' in batch:
+                    intensity_labels = batch['intensity_labels']
                 
                 # 前向传播
-                _, emotion_logits = self.model(input_ids, attention_mask)
+                _, emotion_logits, sub_emotion_logits, emotion_intensity = self.model(input_ids, attention_mask)
                 
-                # 获取预测
-                predictions = torch.argmax(emotion_logits, dim=1)
+                # 获取主情感预测
+                emotion_predictions = torch.argmax(emotion_logits, dim=1)
                 
-                # 收集结果
-                all_predictions.extend(predictions.cpu().numpy())
-                all_labels.extend(labels.cpu().numpy())
-                all_logits.extend(emotion_logits.cpu().numpy())
+                # 收集主情感结果
+                all_emotion_predictions.extend(emotion_predictions.cpu().numpy())
+                all_emotion_labels.extend(emotion_labels.cpu().numpy())
+                all_emotion_logits.extend(emotion_logits.cpu().numpy())
+                
+                # 如果有子情感标签，收集子情感结果
+                if sub_emotion_labels is not None:
+                    sub_emotion_predictions = torch.argmax(sub_emotion_logits, dim=1)
+                    all_sub_emotion_predictions.extend(sub_emotion_predictions.cpu().numpy())
+                    all_sub_emotion_labels.extend(sub_emotion_labels.cpu().numpy())
+                    all_sub_emotion_logits.extend(sub_emotion_logits.cpu().numpy())
+                
+                # 如果有强度标签，收集强度结果
+                if intensity_labels is not None:
+                    all_intensity_predictions.extend(emotion_intensity.cpu().numpy())
+                    all_intensity_labels.extend(intensity_labels.cpu().numpy())
         
         # 转换为numpy数组
-        all_predictions = np.array(all_predictions)
-        all_labels = np.array(all_labels)
-        all_logits = np.array(all_logits)
+        all_emotion_predictions = np.array(all_emotion_predictions)
+        all_emotion_labels = np.array(all_emotion_labels)
+        all_emotion_logits = np.array(all_emotion_logits)
         
-        # 计算精确率、召回率和F1分数
+        # 计算主情感精确率、召回率和F1分数
         from sklearn.metrics import precision_score, recall_score, f1_score
         
-        precision = precision_score(all_labels, all_predictions, average='weighted')
-        recall = recall_score(all_labels, all_predictions, average='weighted')
-        f1 = f1_score(all_labels, all_predictions, average='weighted')
+        emotion_precision = precision_score(all_emotion_labels, all_emotion_predictions, average='weighted')
+        emotion_recall = recall_score(all_emotion_labels, all_emotion_predictions, average='weighted')
+        emotion_f1 = f1_score(all_emotion_labels, all_emotion_predictions, average='weighted')
         
-        # 计算情感强度分析结果
-        emotion_intensity = self._calculate_emotion_intensity(all_logits)
+        # 计算主情感强度分析结果
+        emotion_intensity = self._calculate_emotion_intensity(all_emotion_logits)
         
-        return {
-            'precision': precision,
-            'recall': recall,
-            'f1_score': f1,
+        metrics = {
+            'emotion_precision': emotion_precision,
+            'emotion_recall': emotion_recall,
+            'emotion_f1_score': emotion_f1,
             'emotion_intensity': emotion_intensity
         }
+        
+        # 如果有子情感标签，计算子情感指标
+        if len(all_sub_emotion_labels) > 0:
+            all_sub_emotion_predictions = np.array(all_sub_emotion_predictions)
+            all_sub_emotion_labels = np.array(all_sub_emotion_labels)
+            all_sub_emotion_logits = np.array(all_sub_emotion_logits)
+            
+            sub_emotion_precision = precision_score(all_sub_emotion_labels, all_sub_emotion_predictions, average='weighted')
+            sub_emotion_recall = recall_score(all_sub_emotion_labels, all_sub_emotion_predictions, average='weighted')
+            sub_emotion_f1 = f1_score(all_sub_emotion_labels, all_sub_emotion_predictions, average='weighted')
+            
+            metrics.update({
+                'sub_emotion_precision': sub_emotion_precision,
+                'sub_emotion_recall': sub_emotion_recall,
+                'sub_emotion_f1_score': sub_emotion_f1
+            })
+        
+        # 如果有强度标签，计算强度指标
+        if len(all_intensity_labels) > 0:
+            all_intensity_predictions = np.array(all_intensity_predictions)
+            all_intensity_labels = np.array(all_intensity_labels)
+            
+            # 计算MSE和MAE
+            from sklearn.metrics import mean_squared_error, mean_absolute_error
+            
+            intensity_mse = mean_squared_error(all_intensity_labels, all_intensity_predictions)
+            intensity_mae = mean_absolute_error(all_intensity_labels, all_intensity_predictions)
+            
+            metrics.update({
+                'intensity_mse': intensity_mse,
+                'intensity_mae': intensity_mae
+            })
+        
+        return metrics
     
-    def _calculate_emotion_intensity(self, logits):
+    def _calculate_emotion_intensity(self, logits, emotion_type='main', sub_emotion_map=None):
         """
         计算情感强度分析结果
+        
+        参数:
+            logits: 模型输出的原始预测值
+            emotion_type: 情感类型，'main'表示主情感，'sub'表示子情感
+            sub_emotion_map: 子情感映射字典，键为主情感ID，值为子情感名称列表
+        
+        返回:
+            情感强度字典
         """
         # 转换为概率
         probs = torch.softmax(torch.tensor(logits), dim=-1).numpy()
         
         # 计算每种情感的平均强度
-        emotion_names = ['neutral', 'joy', 'sadness', 'anger', 'fear', 'surprise', 'disgust']
         avg_intensity = {}
         
-        for i, emotion in enumerate(emotion_names):
-            avg_intensity[emotion] = float(np.mean(probs[:, i]))
+        if emotion_type == 'main':
+            # 主情感名称
+            emotion_names = ['neutral', 'joy', 'sadness', 'anger', 'fear', 'surprise', 'disgust']
+            for i, emotion in enumerate(emotion_names):
+                avg_intensity[emotion] = float(np.mean(probs[:, i]))
+        elif emotion_type == 'sub' and sub_emotion_map is not None:
+            # 子情感强度计算
+            for main_emotion_id, sub_emotions in sub_emotion_map.items():
+                # 确保main_emotion_id是有效索引
+                if isinstance(main_emotion_id, int) and main_emotion_id < len(probs[0]):
+                    sub_emotion_key = f"sub_emotion_{main_emotion_id}"
+                    avg_intensity[sub_emotion_key] = float(np.mean(probs[:, main_emotion_id]))
         
         return avg_intensity
     
     def save_training_report(self, train_history):
         """
-        保存训练报告
+        保存训练报告，包括主情感和子情感的所有指标
         """
         report = {
             'model_id': self.config['model_id'],
@@ -1100,8 +1352,34 @@ class LanguageModelTrainer:
             }
         }
         
+        # 计算训练过程中的平均指标
+        report['training_metrics_summary'] = {
+            'avg_train_loss': float(np.mean([h['loss'] for h in train_history['train']])),
+            'avg_val_loss': float(np.mean([h['loss'] for h in train_history['val']])),
+            'avg_train_emotion_acc': float(np.mean([h['emotion_acc'] for h in train_history['train']])),
+            'avg_val_emotion_acc': float(np.mean([h['emotion_acc'] for h in train_history['val']]))
+        }
+        
+        # 如果训练历史中包含子情感指标，也计算平均值
+        if len(train_history['train']) > 0 and 'sub_emotion_acc' in train_history['train'][0]:
+            report['training_metrics_summary'].update({
+                'avg_train_sub_emotion_acc': float(np.mean([h['sub_emotion_acc'] for h in train_history['train']])),
+                'avg_val_sub_emotion_acc': float(np.mean([h['sub_emotion_acc'] for h in train_history['val']]))
+            })
+        
+        # 如果训练历史中包含情感强度指标，也计算平均值
+        if len(train_history['train']) > 0 and 'intensity_mse' in train_history['train'][0]:
+            report['training_metrics_summary'].update({
+                'avg_train_intensity_mse': float(np.mean([h['intensity_mse'] for h in train_history['train']])),
+                'avg_val_intensity_mse': float(np.mean([h['intensity_mse'] for h in train_history['val']]))
+            })
+        
         # 保存报告
         report_path = os.path.join(self.config['checkpoint_dir'], 'training_report.json')
+        
+        # 确保目录存在
+        os.makedirs(os.path.dirname(report_path), exist_ok=True)
+        
         with open(report_path, 'w', encoding='utf-8') as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
         
@@ -1109,30 +1387,52 @@ class LanguageModelTrainer:
 
 # 模型保存和加载函数
 def save_model(model, path):
-    """保存模型到文件"""
+    """保存模型到文件，包含主情感、子情感和情感强度组件"""
+    # 准备配置信息
+    config = {
+        'is_pretrained': model.is_pretrained,
+        'model_name': model.base_model.config._name_or_path if model.is_pretrained else None,
+        'hidden_dim': model.hidden_dim,
+        'num_emotions': model.num_emotions,
+        'has_sub_emotions': hasattr(model, 'sub_emotion_classifier') and model.sub_emotion_classifier is not None,
+        'has_emotion_intensity': hasattr(model, 'emotion_intensity_regressor') and model.emotion_intensity_regressor is not None
+    }
+    
+    # 如果有子情感分类器，保存子情感数量
+    if config['has_sub_emotions']:
+        config['sub_emotion_config'] = model.sub_emotion_config
+    
     torch.save({
         'model_state_dict': model.state_dict(),
-        'config': {
-            'is_pretrained': model.is_pretrained,
-            'model_name': model.base_model.config._name_or_path if model.is_pretrained else None,
-            'hidden_dim': model.hidden_dim
-        }
+        'config': config
     }, path)
 
 def load_model(path, vocab_size=None):
-    """从文件加载模型"""
+    """从文件加载模型，支持包含子情感和情感强度组件的模型"""
     checkpoint = torch.load(path, map_location=device)
     config = checkpoint.get('config', {})
     
+    # 构建模型配置
+    model_config = {
+        'vocab_size': vocab_size,
+        'hidden_dim': config.get('hidden_dim', 512),
+        'num_emotions': config.get('num_emotions', 7)
+    }
+    
+    # 如果有子情感配置，添加到模型配置
+    if config.get('has_sub_emotions', False) and config.get('sub_emotion_config'):
+        model_config['sub_emotion_config'] = config['sub_emotion_config']
+    
+    # 如果有情感强度回归器，添加到模型配置
+    if config.get('has_emotion_intensity', False):
+        model_config['include_emotion_intensity'] = True
+    
     if config.get('is_pretrained', False) and config.get('model_name'):
         # 加载预训练模型
-        model = LanguageModel(model_name=config['model_name'])
+        model = LanguageModel(model_name=config['model_name'], **model_config)
     else:
         # 加载自定义模型
-        model = LanguageModel(
-            vocab_size=vocab_size,
-            hidden_dim=config.get('hidden_dim', 512)
-        )
+        model = LanguageModel(**model_config)
     
     # 加载模型状态字典
     model.load_state_dict(checkpoint['model_state_dict'])
@@ -1308,13 +1608,54 @@ def start_joint_training(model_configs, data_paths, config=None, loss_weights=No
             })
         
         # 计算联合指标
+        # 初始化所有可能的指标
         joint_metrics = {
-            'average_accuracy': np.mean([r['evaluation_results']['accuracy'] for r in results]),
-            'average_f1_score': np.mean([r['evaluation_results']['f1_score'] for r in results]),
-            'weighted_accuracy': np.sum([r['evaluation_results']['accuracy'] * loss_weights[i] for i, r in enumerate(results)]),
-            'weighted_f1_score': np.sum([r['evaluation_results']['f1_score'] * loss_weights[i] for i, r in enumerate(results)]),
             'loss_weights': loss_weights
         }
+        
+        # 检查是否所有结果都包含情感准确率
+        has_emotion_acc = all('emotion_accuracy' in r['evaluation_results'] for r in results)
+        if has_emotion_acc:
+            joint_metrics.update({
+                'average_emotion_accuracy': np.mean([r['evaluation_results']['emotion_accuracy'] for r in results]),
+                'weighted_emotion_accuracy': np.sum([r['evaluation_results']['emotion_accuracy'] * loss_weights[i] for i, r in enumerate(results)])
+            })
+        elif all('accuracy' in r['evaluation_results'] for r in results):
+            # 向后兼容
+            joint_metrics.update({
+                'average_accuracy': np.mean([r['evaluation_results']['accuracy'] for r in results]),
+                'weighted_accuracy': np.sum([r['evaluation_results']['accuracy'] * loss_weights[i] for i, r in enumerate(results)])
+            })
+        
+        # 检查是否所有结果都包含F1分数
+        has_f1_score = all('emotion_f1_score' in r['evaluation_results'] for r in results)
+        if has_f1_score:
+            joint_metrics.update({
+                'average_emotion_f1_score': np.mean([r['evaluation_results']['emotion_f1_score'] for r in results]),
+                'weighted_emotion_f1_score': np.sum([r['evaluation_results']['emotion_f1_score'] * loss_weights[i] for i, r in enumerate(results)])
+            })
+        elif all('f1_score' in r['evaluation_results'] for r in results):
+            # 向后兼容
+            joint_metrics.update({
+                'average_f1_score': np.mean([r['evaluation_results']['f1_score'] for r in results]),
+                'weighted_f1_score': np.sum([r['evaluation_results']['f1_score'] * loss_weights[i] for i, r in enumerate(results)])
+            })
+        
+        # 检查是否所有结果都包含子情感准确率
+        has_sub_emotion_acc = all('sub_emotion_accuracy' in r['evaluation_results'] for r in results)
+        if has_sub_emotion_acc:
+            joint_metrics.update({
+                'average_sub_emotion_accuracy': np.mean([r['evaluation_results']['sub_emotion_accuracy'] for r in results]),
+                'weighted_sub_emotion_accuracy': np.sum([r['evaluation_results']['sub_emotion_accuracy'] * loss_weights[i] for i, r in enumerate(results)])
+            })
+        
+        # 检查是否所有结果都包含情感强度MSE
+        has_intensity_mse = all('intensity_mse' in r['evaluation_results'] for r in results)
+        if has_intensity_mse:
+            joint_metrics.update({
+                'average_intensity_mse': np.mean([r['evaluation_results']['intensity_mse'] for r in results]),
+                'weighted_intensity_mse': np.sum([r['evaluation_results']['intensity_mse'] * loss_weights[i] for i, r in enumerate(results)])
+            })
         
         # 保存联合训练报告
         report = {
@@ -1362,7 +1703,7 @@ if __name__ == '__main__':
     
     # 测试从零开始训练
     print("\n--- 测试从零开始训练 ---")
-    从零_config = {
+    from_scratch_config = {
         'model_id': 'from_scratch',
         'is_pretrained': False,
         'vocab_size': 10000,
@@ -1371,7 +1712,7 @@ if __name__ == '__main__':
         'learning_rate': 1e-3
     }
     
-    from_scratch_result = start_training(从零_config)
+    from_scratch_result = start_training(from_scratch_config)
     print("从零开始训练结果 | From scratch training result:", json.dumps(from_scratch_result, indent=2, ensure_ascii=False))
     
     # 测试联合训练

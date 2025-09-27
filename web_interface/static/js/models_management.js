@@ -146,30 +146,37 @@ function updateModelsTable(models) {
     
     // Add new rows
     models.forEach(model => {
+        // Check if model is valid
+        if (!model || typeof model !== 'object') {
+            console.warn('Invalid model data:', model);
+            return;
+        }
+        
         const newRow = tbody.insertRow();
-        const statusClass = getStatusClass(model.status);
+        const statusClass = getStatusClass(model.status || 'Unknown');
         const isExternal = model.api_source === 'external' || model.provider !== 'local';
+        const modelId = model.id || 'unknown';
         
         newRow.innerHTML = `
-            <td><strong>${model.id}</strong></td>
-            <td>${model.name}</td>
-            <td>${model.type}</td>
-            <td><span class="badge ${statusClass}">${model.status}</span></td>
+            <td><strong>${modelId}</strong></td>
+            <td>${model.name || 'Unnamed Model'}</td>
+            <td>${model.type || 'Unknown'}</td>
+            <td><span class="badge ${statusClass}">${model.status || 'Unknown'}</span></td>
             <td>${model.memory || '0.0 GB'}</td>
             <td>${isExternal ? 'External' : 'Local'}</td>
             <td>${model.provider || 'Local'}</td>
             <td>${model.last_updated || new Date().toISOString().split('T')[0]}</td>
             <td>
-                <button class="btn btn-sm btn-outline-dark" onclick="viewModelDetails('${model.id}', '${model.name}', '${model.type}', '${model.status}', '${model.memory || '0.0 GB'}', '${model.cpu_usage || '0%'}', '${isExternal ? 'External' : 'Local'}', 'REST API', 'localhost', '${model.port || '0'}', '${model.connection_status || 'Unknown'}', '${model.latency || '-'}', '${model.component || model.id.toLowerCase()}_model', '${model.version || '1.0.0'}', '${model.last_updated || new Date().toISOString().split('T')[0]}')">
+                <button class="btn btn-sm btn-outline-dark" onclick="viewModelDetails('${modelId}', '${model.name || 'Unnamed Model'}', '${model.type || 'Unknown'}', '${model.status || 'Unknown'}', '${model.memory || '0.0 GB'}', '${model.cpu_usage || '0%'}', '${isExternal ? 'External' : 'Local'}', 'REST API', 'localhost', '${model.port || '0'}', '${model.connection_status || 'Unknown'}', '${model.latency || '-'}', '${model.component || modelId.toLowerCase()}_model', '${model.version || '1.0.0'}', '${model.last_updated || new Date().toISOString().split('T')[0]}')">
                     View Details
                 </button>
-                <button class="btn btn-sm btn-outline-dark" onclick="showExternalApiModal('${model.id}', '${model.name}')">
+                <button class="btn btn-sm btn-outline-dark" onclick="showExternalApiModal('${modelId}', '${model.name || 'Unnamed Model'}')">
                     ${isExternal ? 'Switch to Local' : 'Switch API'}
                 </button>
-                <button class="btn btn-sm btn-outline-dark" onclick="restartModel('${model.id}')">
+                <button class="btn btn-sm btn-outline-dark" onclick="restartModel('${modelId}')">
                     Restart
                 </button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteModel('${model.id}', '${model.name}')">
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteModel('${modelId}', '${model.name || 'Unnamed Model'}')">
                     Delete
                 </button>
             </td>
@@ -202,10 +209,14 @@ function updateModelCounts() {
     let errorModels = 0;
 
     rows.forEach(row => {
-        const status = row.querySelector('.badge').textContent;
-        if (status === 'Active') activeModels++;
-        else if (status === 'Training') trainingModels++;
-        else if (status === 'Error') errorModels++;
+        const badge = row.querySelector('.badge');
+        // Check if badge exists before accessing textContent
+        if (badge) {
+            const status = badge.textContent;
+            if (status === 'Active') activeModels++;
+            else if (status === 'Training') trainingModels++;
+            else if (status === 'Error') errorModels++;
+        }
     });
 
     // Update the display

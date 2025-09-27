@@ -1,0 +1,42 @@
+[
+  {
+    "input": "What is the current status of project A?",
+    "task_type": "status_query",
+    "expected_output": {
+      "response": "Project A is currently in phase 2 of development",
+      "confidence": 0.95
+    }
+  },
+  {
+    "input": "Schedule a meeting with team B for tomorrow",
+    "task_type": "action_request",
+    "expected_output": {
+      "response": "Meeting with team B has been scheduled for tomorrow at 10:00 AM",
+      "confidence": 0.9
+    }
+  },
+  {
+    "input": "Can you provide a summary of the last quarter's performance?",
+    "task_type": "information_request",
+    "expected_output": {
+      "response": "Last quarter we achieved 95% of our targets with a 10% increase in efficiency",
+      "confidence": 0.92
+    }
+  },
+  {
+    "input": "I'm feeling very happy today!",
+    "task_type": "emotion_feedback",
+    "expected_output": {
+      "response": "That's wonderful to hear! Happy to see you're doing well",
+      "confidence": 0.97
+    }
+  },
+  {
+    "input": "Could you help me resolve the issue with the database connection?",
+    "task_type": "technical_support",
+    "expected_output": {
+      "response": "I'll help you troubleshoot the database connection issue",
+      "confidence": 0.88
+    }
+  }
+]

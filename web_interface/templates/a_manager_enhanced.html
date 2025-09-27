@@ -22,17 +22,21 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#374151',
-                        secondary: '#6B7280',
-                        tertiary: '#9CA3AF',
-                        background: '#F9FAFB',
-                        card: '#FFFFFF',
-                        border: '#E5E7EB',
-                        success: '#10B981',
-                        error: '#EF4444',
-                        warning: '#F59E0B',
-                        info: '#3B82F6'
-                    },
+                            primary: '#374151',
+                            secondary: '#6B7280',
+                            tertiary: '#9CA3AF',
+                            background: '#F9FAFB',
+                            card: '#FFFFFF',
+                            border: '#E5E7EB',
+                            success: '#4B5563',
+                            error: '#4B5563',
+                            warning: '#4B5563',
+                            info: '#4B5563',
+                            gray: {
+                                100: '#F3F4F6',
+                                500: '#6B7280'
+                            }
+                        },
                     fontFamily: {
                         inter: ['Inter', 'sans-serif'],
                     },
@@ -299,6 +303,32 @@
             
             <!-- Settings and Stats Panel -->
             <div class="w-full md:w-72 flex-shrink-0 hidden lg:block">
+                <!-- Emotion Card -->
+                <div class="bg-white border border-border rounded-lg shadow-card p-4 mb-4">
+                    <h3 class="font-medium text-sm text-primary mb-3">Current Emotional State</h3>
+                    <div class="flex flex-col items-center justify-center">
+                        <div id="emotionIndicator" class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                            <i id="emotionIcon" class="bi bi-emoji-neutral text-2xl text-gray-500"></i>
+                        </div>
+                        <h4 id="emotionLabel" class="font-medium text-sm text-primary mb-1">Neutral</h4>
+                        <p id="emotionDescription" class="text-xs text-secondary text-center mb-4">Feeling calm and ready to assist</p>
+                        <div class="grid grid-cols-2 gap-2 mt-3">
+                            <div class="text-center">
+                                <p class="text-xs text-secondary">Text Processing</p>
+                                <p id="valenceValue" class="text-xs font-medium">50%</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs text-secondary">Image Processing</p>
+                                <p id="arousalValue" class="text-xs font-medium">50%</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs text-secondary">Audio Processing</p>
+                                <p id="dominanceValue" class="text-xs font-medium">50%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Stats Card -->
                 <div class="bg-white border border-border rounded-lg shadow-card p-4 mb-4">
                     <h3 class="font-medium text-sm text-primary mb-3">Performance Metrics</h3>
@@ -309,8 +339,8 @@
                                 <span id="responseTime" class="text-xs font-medium">--</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                <div class="bg-primary h-1.5 rounded-full" style="width: 0%"></div>
-                            </div>
+                                    <div class="bg-gray-500 h-1.5 rounded-full" style="width: 0%"></div>
+                                </div>
                         </div>
                         <div>
                             <div class="flex justify-between items-center mb-1">
@@ -318,8 +348,8 @@
                                 <span id="modelsUsed" class="text-xs font-medium">0</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                <div class="bg-info h-1.5 rounded-full" style="width: 0%"></div>
-                            </div>
+                                    <div class="bg-gray-500 h-1.5 rounded-full" style="width: 0%"></div>
+                                </div>
                         </div>
                         <div>
                             <div class="flex justify-between items-center mb-1">
@@ -327,8 +357,8 @@
                                 <span id="contextLength" class="text-xs font-medium">0</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                <div class="bg-warning h-1.5 rounded-full" style="width: 0%"></div>
-                            </div>
+                                    <div class="bg-gray-500 h-1.5 rounded-full" style="width: 0%"></div>
+                                </div>
                         </div>
                     </div>
                 </div>
@@ -473,6 +503,140 @@
     
     <!-- Custom Initialization -->
     <script>
+        // Emotional state management
+        class EmotionManager {
+            constructor() {
+                this.updateInterval = null;
+                this.emotionMapping = {
+                                    'happiness': { icon: 'bi-emoji-smile', color: 'bg-gray-100 text-gray-500', label: 'Happiness', description: 'Feeling positive and joyful' },
+                                    'sadness': { icon: 'bi-emoji-frown', color: 'bg-gray-100 text-gray-500', label: 'Sadness', description: 'Feeling down or sorrowful' },
+                                    'anger': { icon: 'bi-emoji-angry', color: 'bg-gray-100 text-gray-500', label: 'Anger', description: 'Feeling irritated or frustrated' },
+                                    'fear': { icon: 'bi-emoji-expressionless', color: 'bg-gray-100 text-gray-500', label: 'Fear', description: 'Feeling anxious or scared' },
+                                    'surprise': { icon: 'bi-emoji-surprise', color: 'bg-gray-100 text-gray-500', label: 'Surprise', description: 'Feeling amazed or shocked' },
+                                    'disgust': { icon: 'bi-emoji-nauseated', color: 'bg-gray-100 text-gray-500', label: 'Disgust', description: 'Feeling repulsed or averse' },
+                                    'trust': { icon: 'bi-emoji-heart-eyes', color: 'bg-gray-100 text-gray-500', label: 'Trust', description: 'Feeling confident or secure' },
+                                    'anticipation': { icon: 'bi-emoji-wink', color: 'bg-gray-100 text-gray-500', label: 'Anticipation', description: 'Feeling expectant or eager' },
+                                    'neutral': { icon: 'bi-emoji-neutral', color: 'bg-gray-100 text-gray-500', label: 'Neutral', description: 'Feeling calm and ready to assist' }
+                                };
+            }
+            
+            startUpdating() {
+                // Initial update
+                this.updateEmotionalState();
+                
+                // Set up periodic updates every 5 seconds
+                this.updateInterval = setInterval(() => {
+                    this.updateEmotionalState();
+                }, 5000);
+            }
+            
+            stopUpdating() {
+                if (this.updateInterval) {
+                    clearInterval(this.updateInterval);
+                    this.updateInterval = null;
+                }
+            }
+            
+            async updateEmotionalState() {
+                try {
+                    const response = await fetch('/api/emotion/current');
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.status === 'success' && data.emotion) {
+                            this.renderEmotion(data.emotion);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to update emotional state:', error);
+                    // Fallback to neutral if there's an error
+                    this.renderDefaultEmotion();
+                }
+            }
+            
+            renderEmotion(emotionData) {
+                // Get UI elements
+                const emotionIndicator = document.getElementById('emotionIndicator');
+                const emotionIcon = document.getElementById('emotionIcon');
+                const emotionLabel = document.getElementById('emotionLabel');
+                const emotionDescription = document.getElementById('emotionDescription');
+                const valenceValue = document.getElementById('valenceValue');
+                const arousalValue = document.getElementById('arousalValue');
+                const dominanceValue = document.getElementById('dominanceValue');
+                
+                if (!emotionIndicator || !emotionIcon || !emotionLabel) {
+                    return;
+                }
+                
+                // Determine primary emotion
+                let primaryEmotion = 'neutral';
+                let maxScore = 0;
+                
+                if (emotionData.emotions) {
+                    for (const [emotion, score] of Object.entries(emotionData.emotions)) {
+                        if (score > maxScore) {
+                            maxScore = score;
+                            primaryEmotion = emotion;
+                        }
+                    }
+                }
+                
+                // Get emotion details
+                const emotionDetails = this.emotionMapping[primaryEmotion] || this.emotionMapping.neutral;
+                
+                // Update UI elements
+                emotionIndicator.className = `w-16 h-16 rounded-full ${emotionDetails.color.split(' ')[0]} flex items-center justify-center mb-3 transition-colors duration-300`;
+                emotionIcon.className = `bi ${emotionDetails.icon} text-2xl ${emotionDetails.color.split(' ')[1]} transition-colors duration-300`;
+                emotionLabel.textContent = emotionDetails.label;
+                emotionDescription.textContent = emotionDetails.description;
+                
+                // Update VAD values if available
+                if (emotionData.valence !== undefined && valenceValue) {
+                    valenceValue.textContent = Math.round(emotionData.valence * 100) + '%';
+                }
+                if (emotionData.arousal !== undefined && arousalValue) {
+                    arousalValue.textContent = Math.round(emotionData.arousal * 100) + '%';
+                }
+                if (emotionData.dominance !== undefined && dominanceValue) {
+                    dominanceValue.textContent = Math.round(emotionData.dominance * 100) + '%';
+                }
+            }
+            
+            renderDefaultEmotion() {
+                const emotionDetails = this.emotionMapping.neutral;
+                
+                const emotionIndicator = document.getElementById('emotionIndicator');
+                const emotionIcon = document.getElementById('emotionIcon');
+                const emotionLabel = document.getElementById('emotionLabel');
+                const emotionDescription = document.getElementById('emotionDescription');
+                
+                if (emotionIndicator && emotionIcon && emotionLabel) {
+                    emotionIndicator.className = `w-16 h-16 rounded-full ${emotionDetails.color.split(' ')[0]} flex items-center justify-center mb-3`;
+                    emotionIcon.className = `bi ${emotionDetails.icon} text-2xl ${emotionDetails.color.split(' ')[1]}`;
+                    emotionLabel.textContent = emotionDetails.label;
+                    emotionDescription.textContent = emotionDetails.description;
+                }
+            }
+        }
+        
+        // Initialize emotion manager
+        let emotionManager;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Create emotion manager instance
+            emotionManager = new EmotionManager();
+            
+            // Start updating emotional state
+            if (emotionManager) {
+                emotionManager.startUpdating();
+            }
+            
+            // Clean up on page unload
+            window.addEventListener('unload', () => {
+                if (emotionManager) {
+                    emotionManager.stopUpdating();
+                }
+            });
+        });
         // Mobile menu toggle
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const mobileMenu = document.getElementById('mobileMenu');
