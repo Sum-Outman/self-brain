@@ -48,6 +48,12 @@ agi_brain = AGIBrainCore()
 from camera_manager import get_camera_manager
 camera_manager = get_camera_manager()
 
+# Import and initialize Device Communication Manager
+from device_communication_manager import get_device_manager
+device_manager = get_device_manager()
+device_manager.set_camera_manager(camera_manager)
+device_manager.start()
+
 # Import real-time monitoring system
 
 # Import emotion engine
@@ -60,7 +66,9 @@ from web_interface.backend.model_api_manager import get_model_api_manager
 model_api_manager = get_model_api_manager()
 
 # Import device communication module
-from device_communication import device_bp, init_device_communication, cleanup_device_communication
+from device_communication import device_bp
+# Import enhanced device communication manager
+from device_communication_manager import get_device_manager, init_device_communication, cleanup_device_communication
 
 # Import knowledge self-learning API
 from web_interface.backend.knowledge_self_learning_api import knowledge_self_learning_bp
@@ -6451,6 +6459,112 @@ def api_process_stereo_vision(pair_name):
             'message': str(e)
         }), 500
 
+# Device Communication Manager API Endpoints
+@app.route('/api/device_communication/available_devices', methods=['GET'])
+def api_get_available_devices():
+    """Get all available devices (serial ports and cameras)"""
+    try:
+        devices = device_manager.list_available_devices()
+        return jsonify({
+            'status': 'success',
+            'devices': devices
+        })
+    except Exception as e:
+        logger.error(f"Error getting available devices: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/device_communication/serial/connect', methods=['POST'])
+def api_device_connect_serial():
+    """Connect to a serial device using DeviceCommunicationManager"""
+    try:
+        data = request.get_json()
+        port = data.get('port')
+        baudrate = data.get('baudrate', 9600)
+        
+        if not port:
+            return jsonify({'status': 'error', 'message': 'Port is required'}), 400
+        
+        result = device_manager.connect_serial_device(port, baudrate)
+        if result['status'] == 'error':
+            return jsonify(result), 400
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Error connecting to serial device: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/device_communication/serial/disconnect', methods=['POST'])
+def api_device_disconnect_serial():
+    """Disconnect from a serial device using DeviceCommunicationManager"""
+    try:
+        data = request.get_json()
+        port = data.get('port')
+        
+        if not port:
+            return jsonify({'status': 'error', 'message': 'Port is required'}), 400
+        
+        result = device_manager.disconnect_serial_device(port)
+        if result['status'] == 'error':
+            return jsonify(result), 400
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Error disconnecting from serial device: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/device_communication/serial/send', methods=['POST'])
+def api_device_send_serial_command():
+    """Send a command to a serial device using DeviceCommunicationManager"""
+    try:
+        data = request.get_json()
+        port = data.get('port')
+        command = data.get('command')
+        
+        if not port or not command:
+            return jsonify({'status': 'error', 'message': 'Port and command are required'}), 400
+        
+        result = device_manager.send_serial_command(port, command)
+        if result['status'] == 'error':
+            return jsonify(result), 400
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Error sending serial command: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/device_communication/serial/devices', methods=['GET'])
+def api_get_serial_devices():
+    """Get status of all serial devices"""
+    try:
+        devices = device_manager.get_all_serial_devices()
+        return jsonify({
+            'status': 'success',
+            'devices': devices,
+            'count': len(devices)
+        })
+    except Exception as e:
+        logger.error(f"Error getting serial devices: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/device_communication/sensors/data', methods=['GET'])
+def api_get_sensor_data():
+    """Get all sensor data"""
+    try:
+        data = device_manager.get_sensor_data()
+        return jsonify({
+            'status': 'success',
+            'sensors': data
+        })
+    except Exception as e:
+        logger.error(f"Error getting sensor data: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
 # Start application
 # Start A management model API
 threading.Thread(target=lambda: subprocess.Popen([sys.executable, os.path.join(os.path.dirname(__file__), 'backend', 'a_manager_api.py')]), daemon=True).start()
@@ -6474,6 +6588,7 @@ if __name__ == '__main__':
     logger.info("  - Command Execute: http://localhost:5000/api/execute")
     logger.info("  - Models Status: http://localhost:5000/api/models/status")
     logger.info("  - Device Communication: http://localhost:5000/api/devices")
+    logger.info("  - Enhanced Device Communication: http://localhost:5000/api/device_communication")
     logger.info("  - Camera API: http://localhost:5000/api/cameras")
     logger.info("  - Stereo Vision API: http://localhost:5000/api/stereo")
     

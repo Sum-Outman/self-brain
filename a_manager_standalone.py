@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-独立运行的A_management模型API服务 - 使用端口5003
+独立运行的A_management模型API服务 - 使用端口5014
 """
 
 import json
+import os
 import time
 from datetime import datetime
 from flask import Flask, request, jsonify

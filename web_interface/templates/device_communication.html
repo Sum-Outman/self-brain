@@ -339,43 +339,43 @@
                 const response = await fetch('/api/device/sensor_data');
                 const data = await response.json();
                 
-                if (data.status === 'success') {
+                if (data.status === 'success' && data.data) {
                     sensorGrid.innerHTML = '';
                     
                     // Create CPU sensor card
                     const cpuCard = createSensorCard(
                         'CPU Usage', 
-                        `${data.cpu_usage.toFixed(1)}%`,
+                        `${data.data.cpu ? data.data.cpu.percent.toFixed(1) : '0.0'}%`,
                         '',
-                        data.timestamp
+                        data.data.timestamp
                     );
                     sensorGrid.appendChild(cpuCard);
                     
                     // Create Memory sensor card
                     const memoryCard = createSensorCard(
                         'Memory Usage', 
-                        `${(data.memory_usage * 100).toFixed(1)}%`,
+                        `${data.data.memory ? data.data.memory.percent.toFixed(1) : '0.0'}%`,
                         '',
-                        data.timestamp
+                        data.data.timestamp
                     );
                     sensorGrid.appendChild(memoryCard);
                     
                     // Create Disk sensor card
                     const diskCard = createSensorCard(
                         'Disk Usage', 
-                        `${(data.disk_usage * 100).toFixed(1)}%`,
+                        `${data.data.disk ? data.data.disk.percent.toFixed(1) : '0.0'}%`,
                         '',
-                        data.timestamp
+                        data.data.timestamp
                     );
                     sensorGrid.appendChild(diskCard);
                     
                     // Create Temperature sensor card (if available)
-                    if (data.temperature !== undefined) {
+                    if (data.data.temperature !== undefined && data.data.temperature !== null) {
                         const tempCard = createSensorCard(
                             'Temperature', 
-                            `${data.temperature.toFixed(1)}`,
+                            `${data.data.temperature.toFixed(1)}`,
                             '°C',
-                            data.timestamp
+                            data.data.timestamp
                         );
                         sensorGrid.appendChild(tempCard);
                     }
@@ -411,7 +411,31 @@
             
             const sensorUpdate = document.createElement('div');
             sensorUpdate.className = 'sensor-update';
-            sensorUpdate.textContent = `Updated: ${new Date(timestamp).toLocaleTimeString()}`;
+            
+            // Validate and format timestamp to prevent errors
+            try {
+                // Enhanced validation to handle all timestamp formats
+                let date;
+                if (timestamp) {
+                    try {
+                        date = new Date(timestamp);
+                        // Additional check to ensure the date is valid
+                        if (isNaN(date.getTime())) {
+                            throw new Error('Invalid timestamp');
+                        }
+                    } catch {
+                        // If timestamp parsing fails, use current time
+                        date = new Date();
+                        console.warn('Invalid timestamp format, using current time');
+                    }
+                } else {
+                    date = new Date();
+                }
+                sensorUpdate.textContent = `Updated: ${date.toLocaleTimeString()}`;
+            } catch (error) {
+                console.warn('Error formatting timestamp, using current time:', error);
+                sensorUpdate.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+            }
             
             card.appendChild(sensorName);
             card.appendChild(sensorValue);

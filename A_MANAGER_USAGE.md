@@ -63,7 +63,7 @@ curl http://localhost:5014/api/system/stats
 import requests
 
 # 基础使用
-url = "http://localhost:5003/process_message"
+url = "http://localhost:5014/process_message"
 payload = {
     "message": "How do I create a Python class?",
     "task_type": "programming"

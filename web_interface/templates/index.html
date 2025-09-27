@@ -72,7 +72,63 @@
         border-color: var(--gray-700);
         color: white;
     }
-</style>
+    
+    /* Conversation styles */
+    .image-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .conversation-image {
+        transition: transform 0.2s ease;
+    }
+    
+    .conversation-image:hover {
+        transform: scale(1.02);
+    }
+    
+    .image-caption {
+        max-width: 100%;
+        word-wrap: break-word;
+        text-align: center;
+    }
+    
+    /* Animation styles */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    [data-sender] {
+        animation: fadeIn 0.3s ease forwards;
+    }
+    
+    /* Scrollbar styles */
+    #conversation-container {
+        scrollbar-width: thin;
+        scrollbar-color: var(--gray-400) var(--gray-100);
+    }
+    
+    #conversation-container::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #conversation-container::-webkit-scrollbar-track {
+        background: var(--gray-100);
+    }
+    
+    #conversation-container::-webkit-scrollbar-thumb {
+        background-color: var(--gray-400);
+        border-radius: 20px;
+    }
+    </style>
 {% endblock %}
 
 {% block title %}Self Brain AGI - AI Conversation System{% endblock %}
@@ -395,7 +451,6 @@
     <!-- Camera control is already included in base_monochrome.html -->
     <script src="/static/js/system_monitor.js"></script>
     <script src="/static/js/voice_recognition.js"></script>
-    <script src="/static/js/translation.js"></script>
     
     <script>
         // System status update
@@ -416,50 +471,7 @@
         // Update system status every 5 seconds
         setInterval(updateSystemStatus, 5000);
         
-        // Conversation management
-        function sendConversationMessage() {
-            const messageInput = document.getElementById('message-input');
-            const message = messageInput.value.trim();
-            
-            if (message) {
-                // Add user message to conversation
-                addMessageToConversation(message, 'user');
-                messageInput.value = '';
-                
-                // Show typing indicator
-                showTypingIndicator();
-                
-                // Call actual AI model API for real conversation
-                fetch('/api/chat/send', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        message: message,
-                        model_id: 'A_management',
-                        conversation_id: 'current',
-                        knowledge_base: 'all'
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    hideTypingIndicator();
-                    if (data.response) {
-                        addMessageToConversation(data.response, 'ai');
-                    } else if (data.error) {
-                        addMessageToConversation(`Error: ${data.error}`, 'ai');
-                    } else {
-                        addMessageToConversation('Sorry, I couldn\'t process your request at this time.', 'ai');
-                    }
-                })
-                .catch(error => {
-                    hideTypingIndicator();
-                    console.error('Error sending message to AI:', error);
-                    addMessageToConversation('Failed to connect to the AI model. Please try again later.', 'ai');
-                });
-            }
-        }
+        // Conversation management function is implemented at the end of this file using Socket.IO
         
         function handleConversationKeyPress(event) {
             if (event.key === 'Enter') {
@@ -468,12 +480,18 @@
         }
         
         function addMessageToConversation(message, sender) {
-            const container = document.getElementById('conversation-container');
+            const container = document.getElementById('conversation-container') || document.getElementById('conversation');
+            if (!container) {
+                console.error('Conversation container not found');
+                return;
+            }
+            
             const messageDiv = document.createElement('div');
             messageDiv.className = `mb-4 ${sender === 'user' ? 'text-end' : 'text-start'}`;
+            messageDiv.setAttribute('data-sender', sender);
             
             const contentDiv = document.createElement('div');
-            contentDiv.className = `inline-block p-3 rounded-lg ${sender === 'user' ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-800'} max-w-[80%]`;
+            contentDiv.className = `inline-block p-3 rounded-lg shadow-sm ${sender === 'user' ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-800'} max-w-[80%]`;
             
             const messageText = document.createElement('div');
             messageText.innerHTML = formatMessage(message);
@@ -506,30 +524,34 @@
         }
         
         function showTypingIndicator() {
-            const container = document.getElementById('conversation-container');
-            let typingDiv = document.getElementById('typing-indicator');
+            // Remove any existing typing indicator
+            hideTypingIndicator();
             
-            if (!typingDiv) {
-                typingDiv = document.createElement('div');
-                typingDiv.id = 'typing-indicator';
-                typingDiv.className = 'mb-4 text-start';
-                
-                const contentDiv = document.createElement('div');
-                contentDiv.className = 'inline-block p-3 rounded-lg bg-gray-100 text-gray-800 max-w-[80%]';
-                
-                const dots = document.createElement('div');
-                dots.className = 'flex space-x-1';
-                for (let i = 0; i < 3; i++) {
-                    const dot = document.createElement('div');
-                    dot.className = 'w-2 h-2 bg-gray-500 rounded-full animate-bounce';
-                    dot.style.animationDelay = `${i * 0.2}s`;
-                    dots.appendChild(dot);
-                }
-                
-                contentDiv.appendChild(dots);
-                typingDiv.appendChild(contentDiv);
-                container.appendChild(typingDiv);
+            const container = document.getElementById('conversation-container') || document.getElementById('conversation');
+            if (!container) {
+                console.error('Conversation container not found');
+                return;
             }
+            
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'mb-4 text-start';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'inline-block p-3 rounded-lg shadow-sm bg-gray-100 text-gray-800 max-w-[80%]';
+            
+            const dots = document.createElement('div');
+            dots.className = 'flex space-x-1';
+            for (let i = 0; i < 3; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'w-2 h-2 bg-gray-500 rounded-full animate-bounce';
+                dot.style.animationDelay = `${i * 0.2}s`;
+                dots.appendChild(dot);
+            }
+            
+            contentDiv.appendChild(dots);
+            typingDiv.appendChild(contentDiv);
+            container.appendChild(typingDiv);
             
             container.scrollTop = container.scrollHeight;
         }
@@ -778,80 +800,243 @@
             }
         }
         
-        let camera1Stream = null;
-        let camera2Stream = null;
+        // Initialize camera status flags
+        let isCamera1Active = false;
+        let isCamera2Active = false;
+        
+        // Interval IDs for frame updates
+        let camera1FrameInterval = null;
+        let camera2FrameInterval = null;
+        
+        // Initialize camera selectors with available cameras
+        function initCameraSelectors() {
+            // Use the browser's native media devices API to list cameras
+            if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+                navigator.mediaDevices.enumerateDevices()
+                    .then(devices => {
+                        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                        
+                        const camera1Selector = document.getElementById('camera1Selector');
+                        const camera2Selector = document.getElementById('camera2Selector');
+                        
+                        // Clear existing options
+                        camera1Selector.innerHTML = '';
+                        camera2Selector.innerHTML = '';
+                        
+                        // Add default option
+                        const defaultOption1 = document.createElement('option');
+                        defaultOption1.value = 'default';
+                        defaultOption1.textContent = 'Select Camera 1';
+                        camera1Selector.appendChild(defaultOption1);
+                        
+                        const defaultOption2 = document.createElement('option');
+                        defaultOption2.value = 'default';
+                        defaultOption2.textContent = 'Select Camera 2';
+                        camera2Selector.appendChild(defaultOption2);
+                        
+                        // Add available cameras
+                        if (videoDevices.length > 0) {
+                            videoDevices.forEach((camera, index) => {
+                                const option1 = document.createElement('option');
+                                option1.value = camera.deviceId;
+                                option1.textContent = camera.label || `Camera ${index + 1}`;
+                                camera1Selector.appendChild(option1);
+                                
+                                const option2 = document.createElement('option');
+                                option2.value = camera.deviceId;
+                                option2.textContent = camera.label || `Camera ${index + 1}`;
+                                camera2Selector.appendChild(option2);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error enumerating camera devices:', error);
+                    });
+            }
+        }
         
         // Start stereo vision (both cameras)
         function startStereoVision() {
             addMessageToConversation('Starting stereo vision with both cameras...', 'user');
+            
+            // Initialize camera selectors first
+            initCameraSelectors();
             
             try {
                 // Get selected camera IDs
                 const camera1Id = document.getElementById('camera1Selector').value;
                 const camera2Id = document.getElementById('camera2Selector').value;
                 
-                // Start camera 1
-                const constraints1 = {
-                    video: camera1Id !== 'default' ? { deviceId: { exact: camera1Id } } : true
-                };
+                if (camera1Id === 'default' && camera2Id === 'default') {
+                    addMessageToConversation('Please select at least one camera.', 'ai');
+                    return;
+                }
                 
-                // Start camera 2 (use a different device if possible)
-                const constraints2 = {
-                    video: camera2Id !== 'default' ? { deviceId: { exact: camera2Id } } : true
-                };
+                const startPromises = [];
                 
-                // Try to start both cameras
-                Promise.all([
-                    navigator.mediaDevices.getUserMedia(constraints1)
-                        .then(stream => {
-                            camera1Stream = stream;
-                            const videoElement = document.createElement('video');
-                            videoElement.srcObject = stream;
-                            videoElement.autoplay = true;
-                            videoElement.muted = true;
-                            videoElement.style.width = '100%';
-                            videoElement.style.height = '100%';
-                            videoElement.style.objectFit = 'cover';
-                            
-                            const camera1Preview = document.getElementById('camera1Preview');
-                            camera1Preview.innerHTML = '';
-                            camera1Preview.appendChild(videoElement);
-                            
-                            updateCameraStatus('camera1Status', true);
-                        }),
-                    
-                    (camera1Id !== camera2Id || camera1Id === 'default') ? 
-                        navigator.mediaDevices.getUserMedia(constraints2)
-                            .then(stream => {
-                                camera2Stream = stream;
-                                const videoElement = document.createElement('video');
-                                videoElement.srcObject = stream;
-                                videoElement.autoplay = true;
-                                videoElement.muted = true;
-                                videoElement.style.width = '100%';
-                                videoElement.style.height = '100%';
-                                videoElement.style.objectFit = 'cover';
-                                
-                                const camera2Preview = document.getElementById('camera2Preview');
-                                camera2Preview.innerHTML = '';
-                                camera2Preview.appendChild(videoElement);
-                                
-                                updateCameraStatus('camera2Status', true);
-                            }) :
-                        Promise.resolve()
-                ]).then(() => {
-                    const activeCameras = (camera1Stream ? 1 : 0) + (camera2Stream ? 1 : 0);
-                    addMessageToConversation(`${activeCameras} camera(s) started successfully. The vision models (D, E, F) are processing the feeds for spatial awareness.`, 'ai');
-                }).catch(error => {
-                    console.error('Error starting cameras:', error);
-                    addMessageToConversation(`Failed to start cameras: ${error.message}`, 'ai');
-                    // Cleanup in case of partial success
-                    stopAllCameras();
-                });
+                // Start camera 1 if selected
+                if (camera1Id !== 'default' && !isCamera1Active) {
+                    startPromises.push(startCamera(camera1Id, 'camera1'));
+                }
+                
+                // Start camera 2 if selected and different from camera 1
+                if (camera2Id !== 'default' && camera2Id !== camera1Id && !isCamera2Active) {
+                    startPromises.push(startCamera(camera2Id, 'camera2'));
+                }
+                
+                if (startPromises.length === 0) {
+                    addMessageToConversation('No new cameras to start. Please select different cameras or stop existing ones first.', 'ai');
+                    return;
+                }
+                
+                Promise.all(startPromises)
+                    .then(results => {
+                        // Check how many cameras were successfully started
+                        const successfulStarts = results.filter(result => result).length;
+                        addMessageToConversation(`${successfulStarts} camera(s) started successfully. The vision models (D, E, F) are processing the feeds for spatial awareness.`, 'ai');
+                        
+                        // Create stereo pair if both cameras are active
+                        if (isCamera1Active && isCamera2Active) {
+                            createStereoPair(camera1Id, camera2Id);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error starting cameras:', error);
+                        addMessageToConversation(`Failed to start cameras: ${error.message}`, 'ai');
+                        // Cleanup in case of partial success
+                        stopAllCameras();
+                    });
             } catch (error) {
                 console.error('Error in startStereoVision:', error);
                 addMessageToConversation(`Failed to start stereo vision: ${error.message}`, 'ai');
             }
+        }
+        
+        // Start a single camera
+        function startCamera(cameraId, cameraType) {
+            return fetch(`/api/cameras/${cameraId}/start`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ resolution: '1280x720', fps: 30 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Set camera status
+                    if (cameraType === 'camera1') {
+                        isCamera1Active = true;
+                        updateCameraStatus('camera1Status', true);
+                        // Start updating frames for camera 1
+                        startUpdatingFrames(cameraId, 'camera1Preview', 'camera1FrameInterval');
+                    } else {
+                        isCamera2Active = true;
+                        updateCameraStatus('camera2Status', true);
+                        // Start updating frames for camera 2
+                        startUpdatingFrames(cameraId, 'camera2Preview', 'camera2FrameInterval');
+                    }
+                    return true;
+                } else {
+                    console.error(`Failed to start ${cameraType}:`, data.message);
+                    addMessageToConversation(`Failed to start ${cameraType === 'camera1' ? 'Left Eye Camera' : 'Right Eye Camera'}: ${data.message}`, 'ai');
+                    return false;
+                }
+            })
+            .catch(error => {
+                console.error(`Error starting ${cameraType}:`, error);
+                addMessageToConversation(`Error starting ${cameraType === 'camera1' ? 'Left Eye Camera' : 'Right Eye Camera'}: ${error.message}`, 'ai');
+                return false;
+            });
+        }
+        
+        // Start updating frames for a camera
+        function startUpdatingFrames(cameraId, previewElementId, intervalVarName) {
+            const previewElement = document.getElementById(previewElementId);
+            
+            // Create image element for displaying frames
+            if (!previewElement.querySelector('img')) {
+                const imgElement = document.createElement('img');
+                imgElement.style.width = '100%';
+                imgElement.style.height = '100%';
+                imgElement.style.objectFit = 'cover';
+                previewElement.innerHTML = '';
+                previewElement.appendChild(imgElement);
+            }
+            
+            // Set up interval to update frames
+            if (intervalVarName === 'camera1FrameInterval') {
+                if (camera1FrameInterval) clearInterval(camera1FrameInterval);
+                camera1FrameInterval = setInterval(() => updateCameraFrame(cameraId, previewElementId), 100); // Update every 100ms
+            } else {
+                if (camera2FrameInterval) clearInterval(camera2FrameInterval);
+                camera2FrameInterval = setInterval(() => updateCameraFrame(cameraId, previewElementId), 100); // Update every 100ms
+            }
+        }
+        
+        // Update a camera frame
+        function updateCameraFrame(cameraId, previewElementId) {
+            fetch(`/api/cameras/${cameraId}/frame`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success' && data.frame && data.frame.data) {
+                        const imgElement = document.getElementById(previewElementId).querySelector('img');
+                        if (imgElement) {
+                            imgElement.src = data.data;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error(`Error updating frame for camera ${cameraId}:`, error);
+                });
+        }
+        
+        // Create a stereo pair
+        function createStereoPair(leftCameraId, rightCameraId) {
+            fetch('/api/stereo/pairs/default', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    left: leftCameraId,
+                    right: rightCameraId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    console.log('Stereo pair created successfully');
+                    // Start processing stereo vision
+                    processStereoVision('default');
+                } else {
+                    console.error('Failed to create stereo pair:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error creating stereo pair:', error);
+            });
+        }
+        
+        // Process stereo vision
+        function processStereoVision(pairName) {
+            fetch(`/api/stereo/process/${pairName}`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success' && data.stereo_result) {
+                        console.log('Stereo vision processing complete:', data.stereo_result);
+                        // Here you would typically visualize the depth data or use it for spatial awareness
+                    }
+                })
+                .catch(error => {
+                    console.error(`Error processing stereo vision:`, error);
+                });
         }
         
         // Stop all cameras
@@ -859,75 +1044,91 @@
             addMessageToConversation('Stopping all cameras...', 'user');
             
             try {
-                // Stop camera 1
-                if (camera1Stream) {
-                    camera1Stream.getTracks().forEach(track => track.stop());
-                    camera1Stream = null;
-                    const camera1Preview = document.getElementById('camera1Preview');
-                    camera1Preview.innerHTML = `
-                        <div class="text-center">
-                            <i class="bi bi-camera text-gray-400 fs-2"></i>
-                            <p class="text-sm text-gray-500 mt-2">Left Eye Camera</p>
-                        </div>
-                    `;
-                    updateCameraStatus('camera1Status', false);
+                const stopPromises = [];
+                
+                // Stop camera 1 if active
+                if (isCamera1Active) {
+                    const cameraId = document.getElementById('camera1Selector').value;
+                    stopPromises.push(stopCamera(cameraId, 'camera1'));
                 }
                 
-                // Stop camera 2
-                if (camera2Stream) {
-                    camera2Stream.getTracks().forEach(track => track.stop());
-                    camera2Stream = null;
-                    const camera2Preview = document.getElementById('camera2Preview');
-                    camera2Preview.innerHTML = `
-                        <div class="text-center">
-                            <i class="bi bi-camera text-gray-400 fs-2"></i>
-                            <p class="text-sm text-gray-500 mt-2">Right Eye Camera</p>
-                        </div>
-                    `;
-                    updateCameraStatus('camera2Status', false);
+                // Stop camera 2 if active
+                if (isCamera2Active) {
+                    const cameraId = document.getElementById('camera2Selector').value;
+                    stopPromises.push(stopCamera(cameraId, 'camera2'));
                 }
                 
-                addMessageToConversation('All cameras stopped successfully.', 'ai');
+                if (stopPromises.length === 0) {
+                    addMessageToConversation('No active cameras to stop.', 'ai');
+                    return;
+                }
+                
+                Promise.all(stopPromises)
+                    .then(() => {
+                        addMessageToConversation('All cameras stopped successfully.', 'ai');
+                    })
+                    .catch(error => {
+                        console.error('Error stopping cameras:', error);
+                        addMessageToConversation(`Failed to stop all cameras: ${error.message}`, 'ai');
+                    });
             } catch (error) {
                 console.error('Error stopping cameras:', error);
                 addMessageToConversation(`Failed to stop cameras: ${error.message}`, 'ai');
             }
         }
         
-        // Take a snapshot from a video element
-        function takeSnapshot(videoElement, cameraName) {
-            try {
-                const canvas = document.createElement('canvas');
-                canvas.width = videoElement.videoWidth || 640;
-                canvas.height = videoElement.videoHeight || 480;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-                
-                // Convert to data URL
-                const dataUrl = canvas.toDataURL('image/jpeg');
-                
-                // Process the snapshot with vision model D
-                processSnapshotWithVisionModel(dataUrl, cameraName);
-                
-                return dataUrl;
-            } catch (error) {
-                console.error(`Error taking snapshot from ${cameraName}:`, error);
-                return null;
-            }
-        }
-        
-        // Process snapshot with vision model D
-        function processSnapshotWithVisionModel(dataUrl, cameraName) {
-            // This is a placeholder for actual vision model processing
-            console.log(`Processing snapshot from ${cameraName} with Vision Model D`);
-            
-            // In a real implementation, this would send the image data to the backend
-            // for analysis by the vision model
-            
-            // For now, we'll just simulate the processing with a timeout
-            setTimeout(() => {
-                console.log(`Vision Model D analysis complete for ${cameraName}`);
-            }, 1000);
+        // Stop a single camera
+        function stopCamera(cameraId, cameraType) {
+            return fetch(`/api/cameras/${cameraId}/stop`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Set camera status
+                    if (cameraType === 'camera1') {
+                        isCamera1Active = false;
+                        updateCameraStatus('camera1Status', false);
+                        // Stop updating frames
+                        if (camera1FrameInterval) {
+                            clearInterval(camera1FrameInterval);
+                            camera1FrameInterval = null;
+                        }
+                        // Reset preview
+                        const camera1Preview = document.getElementById('camera1Preview');
+                        camera1Preview.innerHTML = `
+                            <div class="text-center">
+                                <i class="bi bi-camera text-gray-400 fs-2"></i>
+                                <p class="text-sm text-gray-500 mt-2">Left Eye Camera</p>
+                            </div>
+                        `;
+                    } else {
+                        isCamera2Active = false;
+                        updateCameraStatus('camera2Status', false);
+                        // Stop updating frames
+                        if (camera2FrameInterval) {
+                            clearInterval(camera2FrameInterval);
+                            camera2FrameInterval = null;
+                        }
+                        // Reset preview
+                        const camera2Preview = document.getElementById('camera2Preview');
+                        camera2Preview.innerHTML = `
+                            <div class="text-center">
+                                <i class="bi bi-camera text-gray-400 fs-2"></i>
+                                <p class="text-sm text-gray-500 mt-2">Right Eye Camera</p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    console.error(`Failed to stop ${cameraType}:`, data.message);
+                }
+            })
+            .catch(error => {
+                console.error(`Error stopping ${cameraType}:`, error);
+            });
         }
         
         // Take snapshots from all active cameras
@@ -937,39 +1138,144 @@
                 
                 let snapshotsTaken = 0;
                 
-                // Take snapshot from camera 1
-                if (camera1Stream && document.getElementById('camera1Preview')) {
-                    const videoElement = document.getElementById('camera1Preview').querySelector('video');
-                    if (videoElement) {
-                        const snapshot = takeSnapshot(videoElement, 'Left Eye Camera');
-                        if (snapshot) {
-                            snapshotsTaken++;
-                        }
-                    }
+                // Take snapshot from camera 1 if active
+                if (isCamera1Active) {
+                    const cameraId = document.getElementById('camera1Selector').value;
+                    takeCameraSnapshot(cameraId, 'Left Eye Camera')
+                        .then(() => snapshotsTaken++);
                 }
                 
-                // Take snapshot from camera 2
-                if (camera2Stream && document.getElementById('camera2Preview')) {
-                    const videoElement = document.getElementById('camera2Preview').querySelector('video');
-                    if (videoElement) {
-                        const snapshot = takeSnapshot(videoElement, 'Right Eye Camera');
-                        if (snapshot) {
-                            snapshotsTaken++;
-                        }
-                    }
+                // Take snapshot from camera 2 if active
+                if (isCamera2Active) {
+                    const cameraId = document.getElementById('camera2Selector').value;
+                    takeCameraSnapshot(cameraId, 'Right Eye Camera')
+                        .then(() => snapshotsTaken++);
                 }
                 
-                if (snapshotsTaken > 0) {
-                    addMessageToConversation(`${snapshotsTaken} snapshot(s) taken successfully. The vision model (D) is analyzing the images.`, 'ai');
-                } else {
-                    addMessageToConversation('No active cameras to take snapshots from. Please start the cameras first.', 'ai');
+                // If no cameras are active, inform the user
+                if (!isCamera1Active && !isCamera2Active) {
+                    addMessageToConversation('No active cameras to take snapshots from.', 'ai');
                 }
-                
             } catch (error) {
                 console.error('Error taking snapshots:', error);
                 addMessageToConversation(`Failed to take snapshots: ${error.message}`, 'ai');
             }
         }
+        
+        // Take a snapshot from a specific camera
+        function takeCameraSnapshot(cameraId, cameraName) {
+            return fetch(`/api/cameras/${cameraId}/snapshot`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success' && data.snapshot && data.snapshot.data) {
+                    // Process the snapshot with vision model D
+                    processSnapshotWithVisionModel(data.snapshot.data, cameraName);
+                    
+                    // Display the snapshot in the conversation
+                    addImageMessageToConversation(data.snapshot.data, `Snapshot from ${cameraName}`);
+                    
+                    console.log(`Snapshot taken successfully from ${cameraName}`);
+                    return true;
+                } else {
+                    console.error(`Failed to take snapshot from ${cameraName}:`, data.message);
+                    addMessageToConversation(`Failed to take snapshot from ${cameraName}: ${data.message}`, 'ai');
+                    return false;
+                }
+            })
+            .catch(error => {
+                console.error(`Error taking snapshot from ${cameraName}:`, error);
+                addMessageToConversation(`Error taking snapshot from ${cameraName}: ${error.message}`, 'ai');
+                return false;
+            });
+        }
+        
+        // Process snapshot with vision model D
+        function processSnapshotWithVisionModel(dataUrl, cameraName) {
+            // Send the image data to the backend for analysis by the vision model
+            fetch('/api/model/D/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    image_data: dataUrl,
+                    camera_name: cameraName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    console.log(`Vision Model D analysis complete for ${cameraName}`, data.result);
+                    // Add analysis results to the conversation
+                    if (data.result && data.result.description) {
+                        addMessageToConversation(`Vision Model D analysis for ${cameraName}: ${data.result.description}`, 'ai');
+                    }
+                } else {
+                    console.error(`Vision Model D analysis failed for ${cameraName}:`, data.message);
+                }
+            })
+            .catch(error => {
+                console.error(`Error processing snapshot with Vision Model D:`, error);
+            });
+        }
+        
+        // Add image message to conversation
+        function addImageMessageToConversation(imageData, caption, sender = 'ai') {
+            const container = document.getElementById('conversation-container') || document.getElementById('conversation');
+            if (!container) {
+                console.error('Conversation container not found');
+                return;
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `mb-4 ${sender === 'user' ? 'text-end' : 'text-start'}`;
+            messageDiv.setAttribute('data-sender', sender);
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = `inline-block p-3 rounded-lg shadow-sm ${sender === 'user' ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-800'} max-w-[80%]`;
+            
+            const imageContainer = document.createElement('div');
+            imageContainer.className = 'image-container';
+            
+            const imgElement = document.createElement('img');
+            imgElement.src = imageData;
+            imgElement.alt = caption || 'Image message';
+            imgElement.className = 'conversation-image img-fluid rounded';
+            imgElement.style.maxWidth = '100%';
+            imgElement.style.height = 'auto';
+            
+            imageContainer.appendChild(imgElement);
+            
+            if (caption) {
+                const captionElement = document.createElement('p');
+                captionElement.className = 'image-caption text-sm text-gray-500 mt-2';
+                captionElement.textContent = caption;
+                imageContainer.appendChild(captionElement);
+            }
+            
+            const timeSpan = document.createElement('small');
+            timeSpan.className = `${sender === 'user' ? 'text-white/70' : 'text-gray-500'} block mb-2`;
+            timeSpan.textContent = new Date().toLocaleTimeString();
+            
+            // Remove welcome message if exists
+            const welcomeDiv = container.querySelector('.text-center');
+            if (welcomeDiv) {
+                welcomeDiv.remove();
+            }
+            
+            contentDiv.appendChild(timeSpan);
+            contentDiv.appendChild(imageContainer);
+            messageDiv.appendChild(contentDiv);
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+
         
         // Update camera status indicator
         function updateCameraStatus(elementId, isActive) {
@@ -979,5 +1285,58 @@
                 statusElement.className = `absolute top-2 right-2 text-white text-xs px-2 py-1 rounded ${isActive ? 'bg-gray-700' : 'bg-gray-500'}`;
             }
         }
+        // Initialize page when DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize camera selectors
+            initCameraSelectors();
+            
+            // Setup interval for system status updates
+            setInterval(updateSystemStatus, 5000);
+            
+            // Initial system status check
+            updateSystemStatus();
+            
+            // Setup camera button event listeners
+            document.getElementById('listAllCamerasBtn').addEventListener('click', listAllCameras);
+            document.getElementById('startStereoVisionBtn').addEventListener('click', startStereoVision);
+            document.getElementById('stopAllCamerasBtn').addEventListener('click', stopAllCameras);
+            document.getElementById('snapshotAllBtn').addEventListener('click', takeAllSnapshots);
+            
+            console.log('Self Brain AGI interface initialized');
+        });
+        
+        // Global reference to sendConversationMessage function
+        window.sendConversationMessage = function() {
+            const messageInput = document.getElementById('message-input');
+            const message = messageInput.value.trim();
+            
+            if (message) {
+                // Since we're in browser mode, we'll use a mock response
+                addMessageToConversation(message, 'user');
+                messageInput.value = '';
+                showTypingIndicator();
+                
+                // Simulate AI response after a delay
+                setTimeout(() => {
+                    hideTypingIndicator();
+                    // Provide a sample response
+                    let mockResponse = '';
+                    
+                    if (message.toLowerCase().includes('system status')) {
+                        mockResponse = 'Self Brain AGI System is running with 11 models online. All systems are operating normally.';
+                    } else if (message.toLowerCase().includes('list all models')) {
+                        mockResponse = 'Available models: A Management Model, B Language Model, C Audio Processing, D Vision System, E Video Analysis, F Spatial Awareness, G Sensor Network, H System Control, I Knowledge Base, J Motion Control, K Programming.';
+                    } else if (message.toLowerCase().includes('what can you do')) {
+                        mockResponse = 'I can engage in conversation, analyze images, process audio, recognize speech, manage cameras for visual input, and perform various AI tasks. Try asking me something specific!';
+                    } else if (message.toLowerCase().includes('help')) {
+                        mockResponse = 'I am Self Brain AGI. You can ask me questions, request system information, or interact with the various AI capabilities. Try typing commands like "system status" or "list all models".';
+                    } else {
+                        mockResponse = 'Thank you for your message. In this demo mode, I can respond to basic commands like "system status", "list all models", "what can you do", or "help".';
+                    }
+                    
+                    addMessageToConversation(mockResponse, 'ai');
+                }, 1000);
+            }
+        };
     </script>
 {% endblock %}
