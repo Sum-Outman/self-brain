@@ -36,23 +36,14 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import training control panel and data bus
 import psutil
-from training_manager.advanced_train_control import AdvancedTrainingController, TrainingMode, get_training_controller
-from manager_model.data_bus import DataBus
-from manager_model.training_control import TrainingController as training_control
+from training_manager.advanced_train_control import get_training_controller
 
-# Import AGI Brain Core
-from enhanced_agi_brain import AGIBrainCore
-agi_brain = AGIBrainCore()
+# Initialize training controller
+training_controller = get_training_controller()
 
 # Import Camera Manager
 from camera_manager import get_camera_manager
 camera_manager = get_camera_manager()
-
-# Import and initialize Device Communication Manager
-from device_communication_manager import get_device_manager
-device_manager = get_device_manager()
-device_manager.set_camera_manager(camera_manager)
-device_manager.start()
 
 # Import real-time monitoring system
 
@@ -65,10 +56,14 @@ from web_interface.backend.enhanced_realtime_monitor import init_enhanced_realti
 from web_interface.backend.model_api_manager import get_model_api_manager
 model_api_manager = get_model_api_manager()
 
-# Import device communication module
-from device_communication import device_bp
-# Import enhanced device communication manager
-from device_communication_manager import get_device_manager, init_device_communication, cleanup_device_communication
+# Import unified device communication module
+from unified_device_communication import device_bp
+from unified_device_communication import get_device_manager, init_device_communication, cleanup_device_communication
+
+# Initialize Device Communication Manager
+device_manager = get_device_manager()
+device_manager.set_camera_manager(camera_manager)
+device_manager.start()
 
 # Import knowledge self-learning API
 from web_interface.backend.knowledge_self_learning_api import knowledge_self_learning_bp
@@ -2398,10 +2393,10 @@ def get_knowledge_status():
     """Get knowledge base status API"""
     try:
         status = training_control.get_knowledge_base_status()
-        return jsonify({'status': 'success', 'knowledge': status})
+        return jsonify({'success': True, 'knowledge': status})
     except Exception as e:
         logger.error(f"Failed to get knowledge status: {str(e)}")
-        return jsonify({'status': 'error', 'message': str(e)})
+        return jsonify({'success': False, 'message': str(e)})
 
 @app.route('/api/knowledge/update', methods=['POST'])
 def update_knowledge():
@@ -2412,12 +2407,12 @@ def update_knowledge():
         
         success = training_control.update_knowledge_base(updates)
         if success:
-            return jsonify({'status': 'success', 'message': 'Knowledge base updated successfully'})
+            return jsonify({'success': True, 'message': 'Knowledge base updated successfully'})
         else:
-            return jsonify({'status': 'error', 'message': 'Failed to update knowledge base'})
+            return jsonify({'success': False, 'message': 'Failed to update knowledge base'})
     except Exception as e:
         logger.error(f"Failed to update knowledge base: {str(e)}")
-        return jsonify({'status': 'error', 'message': str(e)})
+        return jsonify({'success': False, 'message': str(e)})
 
 # Chat related APIs
 @app.route('/api/chat/conversations')
@@ -2544,37 +2539,18 @@ def generate_ai_response(message, knowledge_base, attachments):
         # Generate unique conversation ID
         conversation_id = str(uuid.uuid4())
         
-        # Determine which endpoint to use based on message content
-        message_lower = clean_message.lower()
+        # Use the actual available endpoint in manager_model/app.py
+        endpoint = "http://localhost:5015/api/chat_with_management"
         
-        # For task-specific requests, use process_message endpoint which can call sub-models
-        # Check for keywords that indicate a specific task type
-        if any(keyword in message_lower for keyword in ['code', 'program', 'python', 'javascript', 'write', 'function',
-                                                       'what', 'who', 'when', 'where', 'why', 'how', 'explain',
-                                                       'draw', 'design', 'create', 'imagine', 'story',
-                                                       'play', 'audio', 'sound', 'music', 'hear',
-                                                       'image', 'photo', 'picture', 'visualize',
-                                                       'video', 'stream', 'record',
-                                                       'move', 'motion', 'position',
-                                                       'control', 'execute', 'run', 'command']):
-            endpoint = "http://localhost:5015/process_message"
-            request_data = {
-                "message": clean_message,
-                "conversation_id": conversation_id,
-                "knowledge_base": knowledge_base,
-                "attachments": attachments if attachments else [],
-                "task_type": "general",  # Let A Management Model determine the task type
-                "emotional_context": {}
-            }
-        else:
-            # For general conversation or system queries, use the chat endpoint
-            endpoint = "http://localhost:5015/api/chat"
-            request_data = {
-                "message": clean_message,
-                "conversation_id": conversation_id,
+        # Prepare request data according to the actual API requirements
+        request_data = {
+            "message": clean_message,
+            "conversation_id": conversation_id,
+            "context": {
                 "knowledge_base": knowledge_base,
                 "attachments": attachments if attachments else []
             }
+        }
         
         # Send request to A Management Model
         response = requests.post(
@@ -2591,23 +2567,13 @@ def generate_ai_response(message, knowledge_base, attachments):
             try:
                 result = response.json()
                 
-                # Enhanced response handling for A Management Model
+                # Handle the response format from /api/chat_with_management
                 if isinstance(result, dict):
-                    # Case 1: Response in conversation_data.response (from /api/chat)
-                    if 'conversation_data' in result and isinstance(result['conversation_data'], dict):
-                        conv_data = result['conversation_data']
-                        if 'response' in conv_data:
-                            return str(conv_data['response'])
-                    
-                    # Case 2: Direct response field (common in both endpoints)
+                    # Extract response text from the response field
                     if 'response' in result:
                         return str(result['response'])
                     
-                    # Case 3: Return any available content
-                    if 'content' in result:
-                        return str(result['content'])
-                    
-                    # Case 4: Fallback to message field
+                    # Handle any other potential response formats
                     if 'message' in result:
                         return str(result['message'])
                     
@@ -3592,10 +3558,19 @@ def get_knowledge_entries():
 # 导入新模块
 from metadata_manager import KnowledgeMetadataManager
 from search_engine import KnowledgeSearchEngine
+import logging
+
+# 配置日志
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # 初始化管理器
 metadata_manager = KnowledgeMetadataManager("d:\\shiyan\\knowledge_base_storage")
+
+# 初始化搜索引擎 - 内部已包含增强的错误处理和临时目录回退机制
+logger.info("Initializing knowledge search engine...")
 search_engine = KnowledgeSearchEngine("d:\\shiyan\\search_index")
+logger.info("Knowledge search engine initialized successfully")
 
 @app.route('/api/knowledge/upload', methods=['POST'])
 def upload_knowledge():
@@ -4379,6 +4354,18 @@ def handle_stop_training():
         logger.error(f"Failed to stop training: {str(e)}")
         emit('error', {'message': f'Failed to stop training: {str(e)}'})
 
+@socketio.on('reset_training')
+def handle_reset_training():
+    """Handle reset training request"""
+    try:
+        # Send reset event to training manager
+        socketio.emit('training_reset')
+        logger.info("Training reset")
+        emit('training_reset_ack', {'status': 'success', 'message': 'Training reset'})
+    except Exception as e:
+        logger.error(f"Failed to reset training: {str(e)}")
+        emit('error', {'message': f'Failed to reset training: {str(e)}'})
+
 @socketio.on('training_log')
 def handle_training_log(log_data):
     """Handle training log data and broadcast to all clients"""
@@ -5141,11 +5128,11 @@ def get_knowledge_metadata(metadata_id):
     try:
         metadata = metadata_manager.get_metadata(metadata_id)
         if metadata:
-            return jsonify({'status': 'success', 'metadata': metadata})
+            return jsonify({'success': True, 'metadata': metadata})
         else:
-            return jsonify({'status': 'error', 'message': 'Metadata not found'}), 404
+            return jsonify({'success': False, 'message': 'Metadata not found'}), 404
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
+        return jsonify({'success': False, 'message': str(e)})
 
 @app.route('/api/knowledge/metadata/<metadata_id>', methods=['PUT'])
 def update_knowledge_metadata(metadata_id):
@@ -5156,11 +5143,11 @@ def update_knowledge_metadata(metadata_id):
         if metadata:
             # 更新搜索引擎
             search_engine.update_document(metadata)
-            return jsonify({'status': 'success', 'metadata': metadata})
+            return jsonify({'success': True, 'metadata': metadata})
         else:
-            return jsonify({'status': 'error', 'message': 'Metadata not found'}), 404
+            return jsonify({'success': False, 'message': 'Metadata not found'}), 404
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
+        return jsonify({'success': False, 'message': str(e)})
 
 @app.route('/api/knowledge/categories')
 def get_categories():
@@ -5172,11 +5159,11 @@ def get_categories():
             categories.add(metadata.get('category', 'other'))
         
         return jsonify({
-            'status': 'success',
+            'success': True,
             'categories': sorted(list(categories))
         })
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
+        return jsonify({'success': False, 'message': str(e)})
 
 @app.route('/api/knowledge/tags')
 def get_tags():
@@ -5189,11 +5176,11 @@ def get_tags():
                 tags.add(tag)
         
         return jsonify({
-            'status': 'success',
+            'success': True,
             'tags': sorted(list(tags))
         })
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
+        return jsonify({'success': False, 'message': str(e)})
 
 
 
@@ -6536,7 +6523,7 @@ def api_device_send_serial_command():
 def api_get_serial_devices():
     """Get status of all serial devices"""
     try:
-        devices = device_manager.get_all_serial_devices()
+        devices = device_manager.get_all_devices_status()
         return jsonify({
             'status': 'success',
             'devices': devices,

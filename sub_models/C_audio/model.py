@@ -20,18 +20,19 @@
 
 import torch
 import torchaudio
+import torch.nn as nn
 import numpy as np
-from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
+import librosa
+from typing import Dict, List, Optional
 
 class AudioProcessingModel:
-    def __init__(self, config=None, model_name="facebook/wav2vec2-base-960h"):
+    def __init__(self, config=None):
         """
         初始化音频处理模型
         (Initialize audio processing model)
         
         参数 Parameters:
         config: 模型配置字典 (Model configuration dictionary)
-        model_name: 预训练模型名称 (Pretrained model name)
         """
         self.config = config or {}
         self.use_external_api = self.config.get('use_external_api', False)
@@ -39,8 +40,8 @@ class AudioProcessingModel:
         
         if not self.use_external_api:
             # 本地模型模式 (Local model mode)
-            self.model = Wav2Vec2ForCTC.from_pretrained(model_name)
-            self.processor = Wav2Vec2Processor.from_pretrained(model_name)
+            self.model = LocalAudioModel()
+            self.processor = LocalAudioProcessor()
         else:
             # 外部API模式 (External API mode)
             self.model = None
@@ -62,6 +63,92 @@ class AudioProcessingModel:
         self.realtime_buffer = []
         self.realtime_processing = False
 
+
+class LocalAudioModel(nn.Module):
+    """本地音频处理模型"""
+    def __init__(self, vocab_size=1000, hidden_size=256, num_layers=4):
+        super().__init__()
+        self.vocab_size = vocab_size
+        self.hidden_size = hidden_size
+        
+        # 音频特征提取层
+        self.conv1 = nn.Conv1d(1, 64, kernel_size=10, stride=5, padding=2)
+        self.conv2 = nn.Conv1d(64, 128, kernel_size=8, stride=4, padding=2)
+        self.conv3 = nn.Conv1d(128, 256, kernel_size=4, stride=2, padding=1)
+        self.conv4 = nn.Conv1d(256, 512, kernel_size=4, stride=2, padding=1)
+        
+        # Transformer编码器层
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=512, nhead=8, dim_feedforward=1024, dropout=0.1
+        )
+        self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+        
+        # 输出层
+        self.output_projection = nn.Linear(512, vocab_size)
+        self.dropout = nn.Dropout(0.1)
+        
+    def forward(self, x):
+        # x shape: (batch_size, sequence_length)
+        x = x.unsqueeze(1)  # 添加通道维度
+        
+        # 卷积特征提取
+        x = torch.relu(self.conv1(x))
+        x = torch.relu(self.conv2(x))
+        x = torch.relu(self.conv3(x))
+        x = torch.relu(self.conv4(x))
+        
+        # 重塑为Transformer输入格式
+        x = x.transpose(1, 2)  # (batch_size, seq_len, features)
+        x = x.transpose(0, 1)  # (seq_len, batch_size, features)
+        
+        # Transformer编码
+        x = self.transformer_encoder(x)
+        x = self.dropout(x)
+        
+        # 输出投影
+        x = self.output_projection(x)
+        return x
+
+
+class LocalAudioProcessor:
+    """本地音频处理器"""
+    def __init__(self):
+        self.sample_rate = 16000
+        self.vocab = self._build_vocab()
+        self.char_to_id = {char: idx for idx, char in enumerate(self.vocab)}
+        self.id_to_char = {idx: char for idx, char in enumerate(self.vocab)}
+        
+    def _build_vocab(self):
+        """构建字符词汇表"""
+        vocab = []
+        # 添加ASCII可打印字符
+        for i in range(32, 127):
+            vocab.append(chr(i))
+        # 添加常见中文字符
+        common_chinese = '的一是在不了有和人这中大为上个国我以要他时来用们生到作地于出就分对成会可主发年动同工也能下过子说产种面而方后多定行学法所民得经十三之进着等部度家电力里如水化高自二理起小物现实加量都两体制机当使点从业本去把性好应开它合还因由其些然前外天政四日那社义事平形相全表间样与关各重新线内数正心反你明看原又么利比或但质气第向道命此变条只没结解问意建月公无系军很情者最立代想已通并提直题党程展五果料象员革位入常文总次品式活设及管特件长求老头基资边流路级少图山统接知较将组见计别她手角期根论运农指几九区强放决西被干做必战先回则任取据处队南给色光门即保治北造百规热领七海口东导器压志世金增争济阶油思术极交受联什认六共权收证改清己美再采转更单风切打白教速花带安场身车例真务具万每目至达走积示议声报斗完类八离华名确才科张信马节话米整空元况今集温传土许步群广石记需段研界拉林律叫且究观越织装影算低持音众书布复容儿须际商非验连断深难近矿千周委素技备半办青省列习响约支般史感劳便团往酸历市克何除消构府称太准精值号率族维划选标写存候毛亲快效斯院查江型眼王按格养易置派层片始却专状育厂京识适属圆包火住调满县局照参红细引听该铁价严'
+        vocab.extend(list(common_chinese))
+        return vocab
+    
+    def __call__(self, waveform, sampling_rate=16000, return_tensors="pt"):
+        """处理音频波形"""
+        # 简单的音频预处理：重采样、归一化
+        if sampling_rate != self.sample_rate:
+            resampler = torchaudio.transforms.Resample(sampling_rate, self.sample_rate)
+            waveform = resampler(waveform)
+        
+        # 归一化
+        waveform = waveform / (torch.max(torch.abs(waveform)) + 1e-8)
+        
+        return {'input_values': waveform}
+    
+    def batch_decode(self, predicted_ids):
+        """解码预测的ID为文本"""
+        transcriptions = []
+        for batch in predicted_ids:
+            text = ''.join([self.id_to_char.get(idx.item(), '') for idx in batch if idx.item() in self.id_to_char])
+            transcriptions.append(text)
+        return transcriptions
+
     def speech_to_text(self, audio_path):
         """
         语音识别：将音频转换为文本
@@ -73,25 +160,40 @@ class AudioProcessingModel:
         返回 Returns:
         识别的文本 (Recognized text)
         """
-        # 加载和预处理音频 (Load and preprocess audio)
-        waveform, sample_rate = torchaudio.load(audio_path)
-        if sample_rate != self.sample_rate:
-            resampler = torchaudio.transforms.Resample(sample_rate, self.sample_rate)
-            waveform = resampler(waveform)
-        
-        # 提取特征 (Extract features)
-        input_values = self.processor(waveform, sampling_rate=self.sample_rate, 
-                                     return_tensors="pt").input_values
-        
-        # 执行识别 (Perform recognition)
-        with torch.no_grad():
-            logits = self.model(input_values).logits
-        
-        # 解码结果 (Decode results)
-        predicted_ids = torch.argmax(logits, dim=-1)
-        transcription = self.processor.batch_decode(predicted_ids)[0]
-        
-        return transcription
+        if self.use_external_api:
+            # 外部API模式实现
+            return self._speech_to_text_external(audio_path)
+        else:
+            # 本地模型模式实现
+            return self._speech_to_text_local(audio_path)
+    
+    def _speech_to_text_local(self, audio_path):
+        """本地语音识别实现"""
+        try:
+            # 加载和预处理音频
+            waveform, sample_rate = torchaudio.load(audio_path)
+            
+            # 使用本地处理器处理音频
+            processed = self.processor(waveform, sampling_rate=sample_rate)
+            input_values = processed['input_values']
+            
+            # 使用本地模型进行识别
+            with torch.no_grad():
+                logits = self.model(input_values)
+            
+            # 解码结果
+            predicted_ids = torch.argmax(logits, dim=-1)
+            transcription = self.processor.batch_decode(predicted_ids)[0]
+            
+            return transcription
+        except Exception as e:
+            print(f"本地语音识别错误: {e}")
+            return "语音识别失败"
+    
+    def _speech_to_text_external(self, audio_path):
+        """外部API语音识别实现"""
+        # 占位符实现 - 在实际应用中会调用外部API
+        return "外部API语音识别功能"}]}}}
 
     def analyze_tone(self, audio_path):
         """

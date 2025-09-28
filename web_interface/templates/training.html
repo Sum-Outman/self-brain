@@ -350,14 +350,20 @@ function initializeSocket() {
     
     // Try to connect to training WebSocket with proper configuration
     try {
-        // Use the correct namespace that matches the backend
+        // Use configuration that matches the backend
         socket = io({ 
-            transports: ['websocket', 'polling'],
-            timeout: 10000,
+            transports: ['polling', 'websocket'], // Match backend transport order
+            timeout: 60000, // Increase timeout to match backend ping_timeout (60s)
             reconnection: true,
             reconnectionDelay: 1000,
-            reconnectionAttempts: 10,
-            reconnectionDelayMax: 5000
+            reconnectionAttempts: 20,
+            reconnectionDelayMax: 10000,
+            pingTimeout: 60000, // Match backend ping_timeout
+            pingInterval: 25000, // Match backend ping_interval
+            autoConnect: true,
+            // Add additional debug options
+            forceNew: true, // Force a new connection
+            multiplex: false // Disable multiplexing
         });
         
         socket.on('connect', function() {
@@ -374,31 +380,45 @@ function initializeSocket() {
             addTerminalOutput('Connection lost to training controller');
         });
         
-        socket.on('training_status', function(data) {
-            updateTrainingStatus(data);
-        });
-        
-        socket.on('realtime_metrics', function(data) {
-            updateRealtimeMetrics(data);
-        });
-        
-        socket.on('training_log', function(data) {
+        socket.on('training_start_ack', function(data) {
+            console.log('Training started:', data);
+            updateTrainingStatus({status: 'Running', model_name: data.task_name});
             addLogEntry(data.message);
             addTerminalOutput(data.message);
         });
         
-        socket.on('training_complete', function(data) {
-            addLogEntry(`Training completed for model: ${data.model_name}`);
-            addTerminalOutput(`[SUCCESS] Training completed for model: ${data.model_name}`);
-            alert('Training completed for model: ' + data.model_name);
-            resetTrainingControls();
+        socket.on('training_pause_ack', function(data) {
+            console.log('Training paused:', data);
+            updateTrainingStatus({status: 'Paused'});
+            addLogEntry(data.message);
+            addTerminalOutput(data.message);
         });
         
-        socket.on('training_error', function(data) {
-            addLogEntry(`Error: ${data.error}`, true);
-            addTerminalOutput(`[ERROR] ${data.error}`, true);
-            alert('Training error: ' + data.error);
-            resetTrainingControls();
+        socket.on('training_resume_ack', function(data) {
+            console.log('Training resumed:', data);
+            updateTrainingStatus({status: 'Running'});
+            addLogEntry(data.message);
+            addTerminalOutput(data.message);
+        });
+        
+        socket.on('training_stop_ack', function(data) {
+            console.log('Training stopped:', data);
+            updateTrainingStatus({status: 'Idle'});
+            addLogEntry(data.message);
+            addTerminalOutput(data.message);
+        });
+        
+        socket.on('training_log_update', function(data) {
+            addLogEntry(data.message);
+            addTerminalOutput(data.message);
+        });
+        
+        socket.on('error', function(data) {
+            console.error('Training error:', data);
+            addLogEntry(`Error: ${data.message}`, true);
+            addTerminalOutput(`[ERROR] ${data.message}`, true);
+            alert('Training error: ' + data.message);
+            updateTrainingStatus({status: 'Idle'});
         });
         
         socket.on('connect_error', function(error) {
@@ -587,6 +607,21 @@ async function updateTrainingData() {
         const text = await response.text();
         console.log('Response text:', text);
         
+        // Handle empty or invalid response
+        if (!text.trim()) {
+            console.log('Empty response, using default data');
+            const defaultData = {
+                sessions: [],
+                active_sessions: 0,
+                total_epochs: 0,
+                avg_accuracy: 0,
+                training_time: '0h'
+            };
+            updateStatistics(defaultData);
+            updateSessionsTable(defaultData);
+            return;
+        }
+        
         const data = JSON.parse(text);
         console.log('Parsed data:', data);
         
@@ -595,6 +630,16 @@ async function updateTrainingData() {
         updateSessionsTable(data);
     } catch (error) {
         console.error('Error updating training data:', error);
+        // Use default data in case of error
+        const defaultData = {
+            sessions: [],
+            active_sessions: 0,
+            total_epochs: 0,
+            avg_accuracy: 0,
+            training_time: '0h'
+        };
+        updateStatistics(defaultData);
+        updateSessionsTable(defaultData);
     }
 }
 
@@ -666,9 +711,26 @@ function updateButtonStates() {
     const resetBtn = document.getElementById('resetTrainingBtn');
     
     const status = document.getElementById('currentStatus').textContent;
+    const trainingType = document.getElementById('trainingType').value;
+    const modelSelect = document.getElementById('modelSelect');
+    
+    // Default button states based on connection status
+    if (!socket || !socket.connected) {
+        startBtn.disabled = true;
+        pauseBtn.disabled = true;
+        stopBtn.disabled = true;
+        resetBtn.disabled = false; // Allow reset even when disconnected
+        return;
+    }
     
     if (status === 'Idle') {
-        startBtn.disabled = false;
+        // Check if a model is selected or training type is joint
+        if (trainingType === 'joint') {
+            const selected = document.querySelectorAll('#jointTrainingSection input[type="checkbox"]:checked');
+            startBtn.disabled = selected.length === 0;
+        } else {
+            startBtn.disabled = !modelSelect.value;
+        }
         pauseBtn.disabled = true;
         stopBtn.disabled = true;
         resetBtn.disabled = false;
@@ -783,6 +845,17 @@ function resetTraining() {
     if (socket) {
         // Use the correct event name that the backend uses
         socket.emit('reset_training');
+        
+        // Listen for reset training acknowledgment
+        socket.once('training_reset_ack', function(data) {
+            console.log('Training reset:', data);
+            addLogEntry(data.message);
+            addTerminalOutput(data.message);
+            resetTrainingControls();
+        });
+    } else {
+        // If socket is not connected, still reset the UI controls
+        resetTrainingControls();
     }
 }
 

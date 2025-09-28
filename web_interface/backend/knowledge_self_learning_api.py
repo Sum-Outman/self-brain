@@ -23,9 +23,11 @@ from pathlib import Path
 import os
 import sys
 
-# Import training controller
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from training_manager.advanced_train_control import get_training_controller
+# Import DataBus for real communication with models
+from data_bus import get_data_bus, DataBus
+
+# Initialize DataBus instance for communication
+data_bus = get_data_bus()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -133,11 +135,22 @@ def stop_self_learning():
         self_learning_state['status'] = 'stopping'
         self_learning_state['logs'].append(f'Stopping self-learning at {datetime.now().isoformat()}')
         
+        # Send stop command to all models via data bus
+        model = self_learning_state['model']
+        models_to_stop = [model] if model != 'all' else list(model_learning_configs.keys())
+        
+        for current_model in models_to_stop:
+            data_bus.publish('self_learning_control', {
+                'action': 'stop',
+                'model_id': current_model
+            })
+            self_learning_state['logs'].append(f'Sent stop command to model {current_model}')
+        
+        # Set flag to signal threads to stop
+        self_learning_state['active'] = False
+        
         # Wait for thread to finish
         if self_learning_state['learning_thread'] and self_learning_state['learning_thread'].is_alive():
-            # Set a flag to signal the thread to stop
-            self_learning_state['active'] = False
-            
             # Wait for a short time to allow the thread to stop gracefully
             self_learning_state['learning_thread'].join(timeout=5.0)
         
@@ -228,7 +241,7 @@ def get_self_learning_progress():
 
 def run_self_learning(model):
     """
-    Run the self-learning process in a separate thread
+    Run the self-learning process in a separate thread by communicating with the actual models
     """
     global self_learning_state
     
@@ -237,12 +250,14 @@ def run_self_learning(model):
         self_learning_state['status'] = 'running'
         self_learning_state['logs'].append('Self-learning process is running')
         
-        # Get training controller
-        training_controller = get_training_controller()
-        
         # Determine which models to process
         models_to_process = [model] if model != 'all' else list(model_learning_configs.keys())
         total_models = len(models_to_process)
+        
+        # Start progress monitoring thread
+        progress_monitor = threading.Thread(target=monitor_progress, args=(models_to_process,))
+        progress_monitor.daemon = True
+        progress_monitor.start()
         
         # Process each model
         for idx, current_model in enumerate(models_to_process, 1):
@@ -253,16 +268,27 @@ def run_self_learning(model):
             # Get model configuration
             config = model_learning_configs.get(current_model, {'domains': ['all'], 'learning_rate': 0.01})
             
-            self_learning_state['logs'].append(f'Processing model {current_model} with domains: {config["domains"]}')
+            self_learning_state['logs'].append(f'Starting self-learning for model {current_model} with domains: {config["domains"]}')
             
-            # Simulate learning process for the model
-            simulate_model_learning(current_model, config)
+            # Send start self-learning command to the model via data bus
+            data_bus.publish('self_learning_control', {
+                'action': 'start',
+                'model_id': current_model,
+                'config': config
+            })
             
             # Update progress
             self_learning_state['progress'] = int((idx / total_models) * 100)
         
+        # Wait for a short time to ensure commands are processed
+        time.sleep(2)
+        
+        # Continue running until stopped
+        while self_learning_state['active']:
+            time.sleep(1)
+        
         # Complete the learning process
-        if self_learning_state['active']:  # Only mark as completed if not interrupted
+        if self_learning_state['status'] != 'stopped' and self_learning_state['status'] != 'error':
             self_learning_state['status'] = 'completed'
             self_learning_state['end_time'] = datetime.now().isoformat()
             self_learning_state['logs'].append(f'Self-learning completed at {self_learning_state["end_time"]}')
@@ -278,45 +304,32 @@ def run_self_learning(model):
             self_learning_state['active'] = False
 
 
-def simulate_model_learning(model, config):
+def monitor_progress(models_to_process):
     """
-    Simulate the self-learning process for a specific model
+    Monitor the progress of self-learning for all models
     """
-    # This is a simulation - in a real implementation, this would interface with the actual model and knowledge base
+    # Subscribe to progress updates
+    progress_updates = {model: 0 for model in models_to_process}
     
-    # Get domains and learning rate from config
-    domains = config.get('domains', ['all'])
-    learning_rate = config.get('learning_rate', 0.01)
+    # Define callback for progress updates
+    def progress_callback(data):
+        model_id = data.get('model_id', '')
+        progress = data.get('progress', 0)
+        if model_id in progress_updates:
+            progress_updates[model_id] = progress
+            avg_progress = sum(progress_updates.values()) / len(progress_updates)
+            self_learning_state['progress'] = int(avg_progress)
+            self_learning_state['logs'].append(f'Model {model_id} self-learning progress: {progress}%')
     
-    # Simulate learning phases
-    phases = ['Initialization', 'Knowledge extraction', 'Pattern recognition', 'Integration', 'Validation']
+    # Subscribe to self-learning progress updates
+    data_bus.subscribe('self_learning_progress', progress_callback)
     
-    for phase in phases:
-        if not self_learning_state['active']:  # Check if we should stop
-            break
-        
-        self_learning_state['logs'].append(f'Model {model}: Starting {phase} phase')
-        
-        # Simulate work by sleeping
-        for i in range(1, 6):
-            if not self_learning_state['active']:
-                break
-            
-            # Calculate phase progress
-            phase_progress = int((i / 5) * 100)
-            
-            # Update logs with phase progress
-            if i % 2 == 0:  # Log every other step to avoid too many logs
-                self_learning_state['logs'].append(f'Model {model}: {phase} phase {phase_progress}% complete')
-            
-            # Sleep for a short time to simulate work
-            time.sleep(0.5)
-        
-        if self_learning_state['active']:  # Only log completion if not interrupted
-            self_learning_state['logs'].append(f'Model {model}: Completed {phase} phase')
+    # Continue monitoring until self-learning is stopped
+    while self_learning_state['active']:
+        time.sleep(5)
     
-    if self_learning_state['active']:  # Only log final completion if not interrupted
-        self_learning_state['logs'].append(f'Model {model}: Self-learning simulation completed')
+    # Unsubscribe when done
+    data_bus.unsubscribe('self_learning_progress', progress_callback)
 
 @knowledge_self_learning_bp.route('/api/knowledge/self_learning/models', methods=['GET'])
 def get_available_models():

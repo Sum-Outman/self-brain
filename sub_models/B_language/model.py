@@ -20,33 +20,143 @@
 
 import torch
 import torch.nn as nn
-from transformers import AutoModel, AutoTokenizer
+import torch.nn.functional as F
+import math
 
-class MultilingualEmotionalLLM(nn.Module):
+class LocalTokenizer:
+    """本地字符级分词器"""
+    def __init__(self):
+        self.vocab = {}
+        self.id_to_char = {}
+        self.vocab_size = 0
+        self.pad_token_id = 0
+        self.build_vocab()
+    
+    def build_vocab(self):
+        """构建字符词汇表"""
+        # 基本字符集
+        chars = ['<PAD>', '<UNK>']
+        # 添加ASCII可打印字符
+        for i in range(32, 127):
+            chars.append(chr(i))
+        # 添加常见中文字符
+        common_chinese = '的一是在不了有和人这中大为上个国我以要他时来用们生到作地于出就分对成会可主发年动同工也能下过子说产种面而方后多定行学法所民得经十三之进着等部度家电力里如水化高自二理起小物现实加量都两体制机当使点从业本去把性好应开它合还因由其些然前外天政四日那社义事平形相全表间样与关各重新线内数正心反你明看原又么利比或但质气第向道命此变条只没结解问意建月公无系军很情者最立代想已通并提直题党程展五果料象员革位入常文总次品式活设及管特件长求老头基资边流路级少图山统接知较将组见计别她手角期根论运农指几九区强放决西被干做必战先回则任取据处队南给色光门即保治北造百规热领七海口东导器压志世金增争济阶油思术极交受联什认六共权收证改清己美再采转更单风切打白教速花带安场身车例真务具万每目至达走积示议声报斗完类八离华名确才科张信马节话米整空元况今集温传土许步群广石记需段研界拉林律叫且究观越织装影算低持音众书布复容儿须际商非验连断深难近矿千周委素技备半办青省列习响约支般史感劳便团往酸历市克何除消构府称太准精值号率族维划选标写存候毛亲快效斯院查江型眼王按格养易置派层片始却专状育厂京识适属圆包火住调满县局照参红细引听该铁价严'
+        chars.extend(list(common_chinese))
+        
+        # 构建词汇表
+        for idx, char in enumerate(chars):
+            self.vocab[char] = idx
+            self.id_to_char[idx] = char
+        
+        self.vocab_size = len(self.vocab)
+    
+    def encode(self, text, max_length=512):
+        """编码文本为token ID"""
+        tokens = []
+        for char in text[:max_length]:
+            tokens.append(self.vocab.get(char, self.vocab['<UNK>']))
+        
+        # 填充到最大长度
+        if len(tokens) < max_length:
+            tokens.extend([self.pad_token_id] * (max_length - len(tokens)))
+        
+        return tokens
+    
+    def decode(self, token_ids):
+        """解码token ID为文本"""
+        text = ''
+        for token_id in token_ids:
+            if token_id in self.id_to_char and token_id != self.pad_token_id:
+                text += self.id_to_char[token_id]
+        return text
+    
+    def __len__(self):
+        return self.vocab_size
+
+class PositionalEncoding(nn.Module):
+    """位置编码层"""
+    def __init__(self, d_model, max_len=512):
+        super().__init__()
+        
+        pe = torch.zeros(max_len, d_model)
+        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
+        
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        pe = pe.unsqueeze(0).transpose(0, 1)
+        
+        self.register_buffer('pe', pe)
+    
+    def forward(self, x):
+        return x + self.pe[:x.size(0), :]
+
+class LocalMultilingualLLM(nn.Module):
     """
-    多语言情感大语言模型
-    (Multilingual Emotional Large Language Model)
+    本地多语言情感大语言模型
+    (Local Multilingual Emotional Large Language Model)
     """
-    def __init__(self, model_name="xlm-roberta-base"):
+    def __init__(self, vocab_size=3000, d_model=256, nhead=8, num_layers=6, max_length=512):
         """
-        初始化多语言情感模型
-        (Initialize multilingual emotional model)
+        初始化本地多语言情感模型
+        (Initialize local multilingual emotional model)
         
         参数 Parameters:
-        model_name: 预训练模型名称 (Pretrained model name)
+        vocab_size: 词汇表大小 (Vocabulary size)
+        d_model: 模型维度 (Model dimension)
+        nhead: 注意力头数 (Number of attention heads)
+        num_layers: Transformer层数 (Number of transformer layers)
+        max_length: 最大序列长度 (Maximum sequence length)
         """
         super().__init__()
-        # 加载多语言基础模型 (Load multilingual base model)
-        self.base_model = AutoModel.from_pretrained(model_name)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         
-        # 情感分析层 (Emotional analysis layer)
-        self.emotion_head = nn.Linear(self.base_model.config.hidden_size, 7)  # 7种基本情绪
+        # 词嵌入层
+        self.embedding = nn.Embedding(vocab_size, d_model)
         
-        # 语言输出层 (Language output layer)
-        self.lm_head = nn.Linear(self.base_model.config.hidden_size, self.tokenizer.vocab_size)
+        # 位置编码
+        self.pos_encoding = PositionalEncoding(d_model, max_length)
+        
+        # Transformer编码器层
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model,
+            nhead=nhead,
+            dim_feedforward=d_model * 4,
+            dropout=0.1,
+            activation='gelu'
+        )
+        self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers)
+        
+        # 情感分析层 (7种基本情绪)
+        self.emotion_head = nn.Linear(d_model, 7)
+        
+        # 语言输出层
+        self.lm_head = nn.Linear(d_model, vocab_size)
+        
+        # 本地分词器
+        self.tokenizer = LocalTokenizer()
+        
+        # 模型配置
+        self.config = {
+            'vocab_size': vocab_size,
+            'd_model': d_model,
+            'nhead': nhead,
+            'num_layers': num_layers,
+            'max_length': max_length
+        }
+        
+        # 初始化权重
+        self.apply(self._init_weights)
+    
+    def _init_weights(self, module):
+        """初始化模型权重"""
+        if isinstance(module, nn.Linear):
+            torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
+            if module.bias is not None:
+                torch.nn.init.zeros_(module.bias)
+        elif isinstance(module, nn.Embedding):
+            torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
 
-    def forward(self, input_ids, attention_mask):
+    def forward(self, input_ids, attention_mask=None):
         """
         前向传播
         (Forward propagation)
@@ -55,8 +165,20 @@ class MultilingualEmotionalLLM(nn.Module):
         input_ids: 输入token ID (Input token IDs)
         attention_mask: 注意力掩码 (Attention mask)
         """
-        outputs = self.base_model(input_ids, attention_mask=attention_mask)
-        sequence_output = outputs.last_hidden_state
+        # 词嵌入
+        x = self.embedding(input_ids)
+        
+        # 位置编码
+        x = self.pos_encoding(x.transpose(0, 1))
+        
+        # Transformer编码
+        if attention_mask is None:
+            # 创建默认的注意力掩码
+            seq_len = input_ids.size(1)
+            attention_mask = torch.ones(seq_len, seq_len, device=input_ids.device)
+        
+        sequence_output = self.transformer_encoder(x, attention_mask)
+        sequence_output = sequence_output.transpose(0, 1)
         
         # 情感预测 (Emotion prediction)
         emotion_logits = self.emotion_head(sequence_output[:, 0, :])

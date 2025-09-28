@@ -1,11 +1,13 @@
-import cv2
+# -*- coding: utf-8 -*-
 import threading
 import time
 import os
 from datetime import datetime
 import json
 import numpy as np
+import cv2
 from typing import Dict, List, Optional, Tuple
+from manager_model.data_bus import get_data_bus, DataBus
 
 class CameraManager:
     """Camera Manager class for managing multiple cameras and stereo vision functionality"""
@@ -22,6 +24,16 @@ class CameraManager:
         # Directory for storing snapshots
         self.snapshot_dir = os.path.join(os.path.dirname(__file__), '../../data/snapshots')
         os.makedirs(self.snapshot_dir, exist_ok=True)
+        
+        # DataBus integration
+        self.data_bus: DataBus = get_data_bus()
+        self.component_id = "camera_manager"
+        
+        # Register with data bus
+        self._register_with_data_bus()
+        
+        # Subscribe to relevant channels
+        self._subscribe_to_channels()
         
     def get_available_cameras(self) -> List[Dict]:
         """Get list of available cameras"""
@@ -370,6 +382,189 @@ class CameraManager:
                 return {'status': 'error', 'message': f'No settings found for camera {camera_id}'}
             
             return {'status': 'success', 'settings': self.camera_settings[camera_id].copy()}
+    
+    def _register_with_data_bus(self):
+        """Register this component with the data bus"""
+        try:
+            # Register the component with its capabilities
+            self.data_bus.register_component(
+                component_id=self.component_id,
+                metadata={
+                    "name": "Camera Manager",
+                    "version": "1.0",
+                    "type": "vision",
+                    "capabilities": [
+                        "camera_management",
+                        "multi_camera_support",
+                        "stereo_vision",
+                        "depth_perception",
+                        "snapshot_capture"
+                    ],
+                    "dependencies": []
+                }
+            )
+        except Exception as e:
+            print(f"Error registering with data bus: {e}")
+    
+    def _subscribe_to_channels(self):
+        """Subscribe to relevant data bus channels"""
+        try:
+            # Subscribe to camera control channel
+            self.data_bus.subscribe(
+                channel_id="camera_control",
+                component_id=self.component_id,
+                handler=self._handle_camera_control
+            )
+            
+            # Subscribe to stereo vision control channel
+            self.data_bus.subscribe(
+                channel_id="stereo_vision_control",
+                component_id=self.component_id,
+                handler=self._handle_stereo_vision_control
+            )
+        except Exception as e:
+            print(f"Error subscribing to channels: {e}")
+    
+    def _handle_camera_control(self, message: Dict):
+        """Handle camera control messages from the data bus"""
+        try:
+            action = message.get("action", "")
+            
+            if action == "start":
+                camera_id = message.get("camera_id", "")
+                settings = message.get("settings", None)
+                result = self.start_camera(camera_id, settings)
+                
+                # Publish the result back to the data bus
+                self.data_bus.publish(
+                    channel_id="camera_status",
+                    message={
+                        "request_id": message.get("request_id", ""),
+                        "camera_id": camera_id,
+                        "status": "started",
+                        "result": result
+                    }
+                )
+            elif action == "stop":
+                camera_id = message.get("camera_id", "")
+                result = self.stop_camera(camera_id)
+                
+                # Publish the result back to the data bus
+                self.data_bus.publish(
+                    channel_id="camera_status",
+                    message={
+                        "request_id": message.get("request_id", ""),
+                        "camera_id": camera_id,
+                        "status": "stopped",
+                        "result": result
+                    }
+                )
+            elif action == "update_settings":
+                camera_id = message.get("camera_id", "")
+                settings = message.get("settings", {})
+                result = self.update_camera_settings(camera_id, settings)
+                
+                # Publish the result back to the data bus
+                self.data_bus.publish(
+                    channel_id="camera_status",
+                    message={
+                        "request_id": message.get("request_id", ""),
+                        "camera_id": camera_id,
+                        "status": "settings_updated",
+                        "result": result
+                    }
+                )
+        except Exception as e:
+            print(f"Error handling camera control message: {e}")
+    
+    def _handle_stereo_vision_control(self, message: Dict):
+        """Handle stereo vision control messages from the data bus"""
+        try:
+            action = message.get("action", "")
+            
+            if action == "create_pair":
+                pair_id = message.get("pair_id", "")
+                left_camera_id = message.get("left_camera_id", "")
+                right_camera_id = message.get("right_camera_id", "")
+                result = self.create_stereo_pair(pair_id, left_camera_id, right_camera_id)
+                
+                # Publish the result back to the data bus
+                self.data_bus.publish(
+                    channel_id="stereo_vision_status",
+                    message={
+                        "request_id": message.get("request_id", ""),
+                        "pair_id": pair_id,
+                        "status": "created",
+                        "result": result
+                    }
+                )
+            elif action == "enable":
+                pair_id = message.get("pair_id", "")
+                result = self.enable_stereo_vision(pair_id)
+                
+                # Publish the result back to the data bus
+                self.data_bus.publish(
+                    channel_id="stereo_vision_status",
+                    message={
+                        "request_id": message.get("request_id", ""),
+                        "pair_id": pair_id,
+                        "status": "enabled",
+                        "result": result
+                    }
+                )
+            elif action == "disable":
+                pair_id = message.get("pair_id", "")
+                result = self.disable_stereo_vision(pair_id)
+                
+                # Publish the result back to the data bus
+                self.data_bus.publish(
+                    channel_id="stereo_vision_status",
+                    message={
+                        "request_id": message.get("request_id", ""),
+                        "pair_id": pair_id,
+                        "status": "disabled",
+                        "result": result
+                    }
+                )
+            elif action == "get_depth":
+                pair_id = message.get("pair_id", "")
+                result = self.get_depth_data(pair_id)
+                
+                # Publish the depth data back to the data bus
+                if result.get("status") == "success":
+                    self.data_bus.publish(
+                        channel_id="depth_data_update",
+                        message={
+                            "request_id": message.get("request_id", ""),
+                            "pair_id": pair_id,
+                            "data": result.get("depth_data", ""),
+                            "timestamp": time.time()
+                        }
+                    )
+                
+                # Publish the result to status channel
+                self.data_bus.publish(
+                    channel_id="stereo_vision_status",
+                    message={
+                        "request_id": message.get("request_id", ""),
+                        "pair_id": pair_id,
+                        "status": "depth_data",
+                        "result": result
+                    }
+                )
+        except Exception as e:
+            print(f"Error handling stereo vision control message: {e}")
+    
+    def close(self):
+        """Close all cameras and clean up"""
+        # Stop all cameras
+        self.stop_all_cameras()
+        
+        # Unregister from data bus
+        try:
+            self.data_bus.unregister_component(self.component_id)
+        except Exception as e:
+            print(f"Error unregistering from data bus: {e}")
 
 # Create a global instance of CameraManager
 global_camera_manager = CameraManager()

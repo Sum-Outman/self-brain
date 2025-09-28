@@ -59,7 +59,7 @@
                             Knowledge
                         </a>
                     </li>
-                    
+                     
 
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'training' %}active{% endif %}" href="/training">
@@ -108,6 +108,15 @@
     
     <!-- Socket.IO connection -->
     <script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>
+    
+    <!-- Model API Configuration -->
+    <script src="{{ url_for('static', filename='js/model_api_config.js') }}"></script>
+    
+    <!-- Camera Control -->
+    <script src="{{ url_for('static', filename='js/camera_control.js') }}"></script>
+    
+    <!-- Device Communication -->
+    <script src="{{ url_for('static', filename='js/device_communication.js') }}"></script>
     
     <script>
         // Global Socket.IO management

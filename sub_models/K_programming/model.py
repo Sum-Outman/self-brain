@@ -44,15 +44,10 @@ class EnhancedProgrammingModel:
         self.language = language
         self.model_name = model_name
         
-        # Load code generation model
-        try:
-            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-            self.model = AutoModelForCausalLM.from_pretrained(model_name)
-            logger.info(f"Code generation model loaded successfully: {model_name}")
-        except Exception as e:
-            logger.warning(f"Failed to load pretrained model {model_name}: {str(e)}")
-            self.model = None
-            self.tokenizer = None
+        # Create local model architecture from scratch
+        self.model = self._build_local_model()
+        self.tokenizer = self._build_tokenizer()
+        logger.info("Initialized local programming model from scratch")
         
         # Supported programming languages and frameworks
         self.supported_languages = {
@@ -198,25 +193,137 @@ class EnhancedProgrammingModel:
         
         return prompt
 
-    def _generate_with_model(self, prompt: str, language: str) -> str:
-        """Generate code using AI model"""
-        try:
-            # Encode input
-            inputs = self.tokenizer.encode(prompt, return_tensors='pt')
-            
-            # Generate code
-            with torch.no_grad():
-                outputs = self.model.generate(
-                    inputs, 
-                    max_length=1024,
-                    num_return_sequences=1,
-                    temperature=0.7,
-                    do_sample=True,
-                    pad_token_id=self.tokenizer.eos_token_id
+    def _build_local_model(self):
+        """Build local model architecture from scratch"""
+        class LocalProgrammingModel(nn.Module):
+            def __init__(self, config):
+                super().__init__()
+                self.config = config
+                self.token_embedding = nn.Embedding(config['vocab_size'], config['hidden_dim'])
+                self.position_embedding = nn.Embedding(config['max_length'], config['hidden_dim'])
+                
+                # Transformer layers
+                encoder_layer = nn.TransformerEncoderLayer(
+                    d_model=config['hidden_dim'],
+                    nhead=config['num_heads'],
+                    dim_feedforward=config['hidden_dim'] * 4,
+                    dropout=0.1,
+                    activation='gelu'
                 )
+                self.transformer = nn.TransformerEncoder(encoder_layer, config['num_layers'])
+                
+                # Output layer
+                self.output_layer = nn.Linear(config['hidden_dim'], config['vocab_size'])
+                
+            def forward(self, input_ids, attention_mask=None):
+                batch_size, seq_len = input_ids.shape
+                
+                # Token embeddings
+                token_embeds = self.token_embedding(input_ids)
+                
+                # Position embeddings
+                positions = torch.arange(0, seq_len, device=input_ids.device).unsqueeze(0).expand(batch_size, seq_len)
+                position_embeds = self.position_embedding(positions)
+                
+                # Combine embeddings
+                embeddings = token_embeds + position_embeds
+                
+                # Transformer processing
+                if attention_mask is not None:
+                    # Adjust mask format
+                    mask = attention_mask.float().masked_fill(attention_mask == 0, float('-inf')).masked_fill(attention_mask == 1, float(0.0))
+                    mask = mask.unsqueeze(1).unsqueeze(2)
+                else:
+                    mask = None
+                
+                transformer_output = self.transformer(embeddings.transpose(0, 1), mask=mask)
+                transformer_output = transformer_output.transpose(0, 1)
+                
+                # Output logits
+                logits = self.output_layer(transformer_output)
+                return logits
+        
+        return LocalProgrammingModel({
+            'vocab_size': 50257,
+            'hidden_dim': 768,
+            'num_layers': 12,
+            'num_heads': 12,
+            'max_length': 1024
+        })
+
+    def _build_tokenizer(self):
+        """Build local tokenizer from scratch"""
+        class LocalTokenizer:
+            def __init__(self):
+                self.vocab = {}
+                self.inverse_vocab = {}
+                self.special_tokens = {
+                    '<pad>': 0,
+                    '<bos>': 1,
+                    '<eos>': 2,
+                    '<unk>': 3
+                }
+                self._build_vocab()
+                
+            def _build_vocab(self):
+                """Build vocabulary"""
+                # Basic characters
+                chars = list("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 \n\t.,;:!?()[]{}<>+=_-*/\\|&^%$#@~`'\"")
+                
+                # Add special tokens
+                for token, idx in self.special_tokens.items():
+                    self.vocab[token] = idx
+                    self.inverse_vocab[idx] = token
+                
+                # Add characters
+                for i, char in enumerate(chars):
+                    idx = i + len(self.special_tokens)
+                    self.vocab[char] = idx
+                    self.inverse_vocab[idx] = char
+                
+            def encode(self, text):
+                """Encode text to token IDs"""
+                tokens = []
+                for char in text:
+                    if char in self.vocab:
+                        tokens.append(self.vocab[char])
+                    else:
+                        tokens.append(self.vocab['<unk>'])
+                return tokens
+                
+            def decode(self, token_ids):
+                """Decode token IDs to text"""
+                text = ''
+                for token_id in token_ids:
+                    if token_id in self.inverse_vocab:
+                        text += self.inverse_vocab[token_id]
+                    else:
+                        text += self.inverse_vocab[self.vocab['<unk>']]
+                return text
+                
+            def __len__(self):
+                return len(self.vocab)
+        
+        return LocalTokenizer()
+
+    def _generate_with_model(self, prompt: str, language: str) -> str:
+        """Generate code using local model"""
+        try:
+            # Encode input using local tokenizer
+            input_ids = self.tokenizer.encode(prompt)
+            
+            # Convert to tensor and add batch dimension
+            input_tensor = torch.tensor([input_ids], dtype=torch.long)
+            
+            # Generate code using local model
+            with torch.no_grad():
+                # Simple generation: use the model to predict next tokens
+                # This is a simplified version - for production use, implement proper autoregressive generation
+                outputs = self.model(input_tensor)
+                predicted_ids = torch.argmax(outputs, dim=-1)[0].tolist()
             
             # Decode output
-            generated_code = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+            generated_code = self.tokenizer.decode(predicted_ids)
             
             # Extract code section
             code_start = generated_code.find("```")

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-设备通信模块
-Device Communication Module
+统一设备通信模块
+Unified Device Communication Module
 
 负责管理与外部设备的通信，提供设备控制、传感器数据获取和设备状态监控等功能
 """
@@ -12,14 +12,17 @@ import threading
 import time
 import logging
 import json
-import re
+import os
+import platform
+import subprocess
+import psutil
+from datetime import datetime
 from typing import Dict, Any, List, Optional, Tuple
-import concurrent.futures
 from flask import Blueprint, request, jsonify
 
 # 设置日志 | Setup logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("DeviceCommunication")
+logger = logging.getLogger("UnifiedDeviceCommunication")
 
 # 创建设备通信蓝图
 device_bp = Blueprint('device', __name__, url_prefix='/api/devices')
@@ -38,8 +41,86 @@ class DeviceManager:
         self.global_lock = threading.Lock()
         self.device_configs = {}
         self.sensor_readings = {}
+        self.running = False
+        self.sensor_manager = None
+        self.camera_manager = None
         logger.info("设备管理器已初始化 | Device Manager initialized")
         
+    def set_camera_manager(self, camera_manager):
+        """设置摄像头管理器以实现集成
+        Set camera manager for integration
+        
+        参数:
+            camera_manager: CameraManager实例
+        """
+        self.camera_manager = camera_manager
+        logger.info("摄像头管理器已与设备通信集成 | Camera manager integrated with device communication")
+    
+    def start(self):
+        """启动设备通信管理器
+        Start device communication manager
+        """
+        with self.global_lock:
+            if self.running:
+                logger.warning("设备通信管理器已经在运行 | Device communication manager is already running")
+                return
+            
+            self.running = True
+            # 初始化传感器管理器
+            self.sensor_manager = self._SensorManager()
+            self.sensor_manager.start()
+            logger.info("设备通信管理器已启动 | Device communication manager started")
+    
+    def stop(self):
+        """停止设备通信管理器
+        Stop device communication manager
+        """
+        with self.global_lock:
+            if not self.running:
+                logger.warning("设备通信管理器未运行 | Device communication manager is not running")
+                return
+            
+            self.running = False
+            # 停止传感器管理器
+            if self.sensor_manager:
+                self.sensor_manager.stop()
+            
+            # 关闭所有设备
+            for device_id in list(self.active_devices):
+                self.disconnect_device(device_id)
+            
+            logger.info("设备通信管理器已停止 | Device communication manager stopped")
+    
+    def list_available_devices(self) -> Dict[str, List[Dict[str, Any]]]:
+        """列出所有可用设备
+        List all available devices
+        
+        返回:
+            包含各种设备类型的字典
+        """
+        devices = {
+            'serial_ports': [],
+            'cameras': []
+        }
+        
+        # 获取可用串口
+        try:
+            serial_ports = self.list_available_serial_ports()
+            for port_info in serial_ports:
+                devices['serial_ports'].append(port_info)
+        except Exception as e:
+            logger.error(f"列出串口设备时出错: {str(e)} | Error listing serial ports: {str(e)}")
+        
+        # 获取可用摄像头（如果已集成camera_manager）
+        if self.camera_manager:
+            try:
+                cameras = self.camera_manager.list_available_cameras()
+                devices['cameras'] = cameras
+            except Exception as e:
+                logger.error(f"列出摄像头时出错: {str(e)} | Error listing cameras: {str(e)}")
+        
+        return devices
+    
     def list_available_serial_ports(self) -> List[Dict[str, Any]]:
         """列出所有可用的串口设备
         List all available serial port devices
@@ -47,7 +128,7 @@ class DeviceManager:
         available_ports = []
         
         # 尝试不同平台的串口检测方法
-        if sys.platform.startswith('win'):
+        if platform.system() == 'Windows':
             import serial.tools.list_ports
             ports = serial.tools.list_ports.comports()
             for port in ports:
@@ -59,7 +140,7 @@ class DeviceManager:
                         'hwid': port.hwid
                     })
                 except Exception as e:
-                    logger.warning(f"无法获取端口信息: {str(e)}")
+                    logger.warning(f"无法获取端口信息: {str(e)} | Failed to get port information: {str(e)}")
         else:
             # Linux/MacOS平台的简单检测
             import glob
@@ -222,7 +303,7 @@ class DeviceManager:
                     
                     time.sleep(0.01)  # 短暂休眠避免CPU占用过高
                 except Exception as e:
-                    logger.error(f"接收设备 {device_id} 数据时出错: {str(e)}")
+                    logger.error(f"接收设备 {device_id} 数据时出错: {str(e)} | Error receiving data from device {device_id}: {str(e)}")
                     device['last_error'] = str(e)
                     time.sleep(0.5)
         
@@ -256,9 +337,9 @@ class DeviceManager:
             else:
                 # 处理非JSON格式数据
                 self.devices[device_id]['last_data'] = data
-                logger.debug(f"接收到设备 {device_id} 的非JSON数据: {data}")
+                logger.debug(f"接收到设备 {device_id} 的非JSON数据: {data} | Received non-JSON data from device {device_id}: {data}")
         except Exception as e:
-            logger.error(f"处理设备 {device_id} 数据时出错: {str(e)}")
+            logger.error(f"处理设备 {device_id} 数据时出错: {str(e)} | Error processing data from device {device_id}: {str(e)}")
     
     def send_command(self, device_id: str, command: str, timeout: float = 2.0) -> Tuple[bool, Optional[str]]:
         """向设备发送命令
@@ -273,7 +354,7 @@ class DeviceManager:
             (成功标志, 响应数据或错误信息)
         """
         if device_id not in self.active_devices:
-            return False, f"设备 {device_id} 未连接"
+            return False, f"设备 {device_id} 未连接 | Device {device_id} is not connected"
         
         try:
             with self.device_locks[device_id]:
@@ -281,7 +362,7 @@ class DeviceManager:
                 conn = device['connection']
                 
                 if not conn or not conn.is_open:
-                    return False, "设备连接已关闭"
+                    return False, "设备连接已关闭 | Device connection is closed"
                 
                 # 发送命令（确保以换行符结束）
                 if not command.endswith('\n'):
@@ -290,7 +371,7 @@ class DeviceManager:
                 conn.write(command.encode('utf-8'))
                 conn.flush()
                 
-                logger.info(f"向设备 {device_id} 发送命令: {command.strip()}")
+                logger.info(f"向设备 {device_id} 发送命令: {command.strip()} | Sent command to device {device_id}: {command.strip()}")
                 
                 # 等待响应
                 start_time = time.time()
@@ -308,7 +389,7 @@ class DeviceManager:
                 return True, None  # 命令发送成功但没有响应
         except Exception as e:
             error_msg = str(e)
-            logger.error(f"向设备 {device_id} 发送命令时出错: {error_msg}")
+            logger.error(f"向设备 {device_id} 发送命令时出错: {error_msg} | Error sending command to device {device_id}: {error_msg}")
             return False, error_msg
     
     def get_device_status(self, device_id: str) -> Optional[Dict[str, Any]]:
@@ -354,7 +435,7 @@ class DeviceManager:
             
             return status
         except Exception as e:
-            logger.error(f"获取设备 {device_id} 状态时出错: {str(e)}")
+            logger.error(f"获取设备 {device_id} 状态时出错: {str(e)} | Error getting device {device_id} status: {str(e)}")
             return None
     
     def get_all_devices_status(self) -> Dict[str, Dict[str, Any]]:
@@ -403,9 +484,117 @@ class DeviceManager:
                         'timestamp': readings[-1]['timestamp']
                     })
             return all_readings
+    
+    def get_sensor_data(self) -> Dict[str, Any]:
+        """获取所有传感器数据
+        Get all sensor data
+        
+        返回:
+            传感器数据字典
+        """
+        if not self.sensor_manager:
+            return {'status': 'error', 'message': '传感器管理器未初始化 | Sensor manager not initialized'}
+        
+        try:
+            return self.sensor_manager.get_sensor_data()
+        except Exception as e:
+            logger.error(f"获取传感器数据时出错: {str(e)} | Error getting sensor data: {str(e)}")
+            return {'status': 'error', 'message': str(e)}
+    
+    # 内部传感器管理器类
+    class _SensorManager:
+        def __init__(self):
+            self.sensor_data = {}
+            self.running = False
+            self.polling_thread = None
+            self._lock = threading.Lock()
+            logger.info("传感器管理器已初始化 | SensorManager initialized")
+        
+        def start(self):
+            """启动传感器轮询"""
+            with self._lock:
+                if self.running:
+                    logger.warning("传感器管理器已经在运行 | Sensor manager is already running")
+                    return
+                
+                self.running = True
+                self.polling_thread = threading.Thread(target=self._poll_sensors, daemon=True)
+                self.polling_thread.start()
+                logger.info("传感器管理器已启动 | Sensor manager started")
+        
+        def stop(self):
+            """停止传感器轮询"""
+            with self._lock:
+                if not self.running:
+                    logger.warning("传感器管理器未运行 | Sensor manager is not running")
+                    return
+                
+                self.running = False
+                if self.polling_thread and self.polling_thread.is_alive():
+                    self.polling_thread.join(timeout=2.0)
+                logger.info("传感器管理器已停止 | Sensor manager stopped")
+        
+        def _poll_sensors(self):
+            """在单独线程中轮询传感器"""
+            while self.running:
+                try:
+                    # 更新系统传感器
+                    self.sensor_data['system'] = self._get_system_sensors()
+                    
+                    # 可以在这里添加其他传感器的轮询逻辑
+                    
+                    time.sleep(1.0)  # 每秒轮询一次
+                except Exception as e:
+                    logger.error(f"轮询传感器时出错: {str(e)} | Error polling sensors: {str(e)}")
+                    time.sleep(1.0)
+        
+        def _get_system_sensors(self) -> Dict[str, Any]:
+            """获取系统传感器数据"""
+            try:
+                # 获取CPU和内存使用率
+                cpu_usage = psutil.cpu_percent(interval=0.1)
+                memory = psutil.virtual_memory()
+                
+                # 获取磁盘使用率
+                disk_percent = None
+                try:
+                    # 获取系统根目录的磁盘使用率
+                    if platform.system() == 'Windows':
+                        disk_percent = psutil.disk_usage('C:').percent
+                    else:
+                        disk_percent = psutil.disk_usage('/').percent
+                except Exception as disk_error:
+                    logger.warning(f"获取磁盘使用率时出错: {str(disk_error)} | Error getting disk usage: {str(disk_error)}")
+                    disk_percent = 0.0  # 回退值
+                
+                # 获取系统温度（如果可用）
+                temperature = None
+                
+                return {
+                    'cpu_usage': cpu_usage,
+                    'memory_usage': memory.percent,
+                    'disk_usage': disk_percent,
+                    'temperature': temperature,
+                    'timestamp': datetime.now().isoformat()
+                }
+            except Exception as e:
+                logger.error(f"获取系统传感器数据时出错: {str(e)} | Error getting system sensors: {str(e)}")
+                # 返回默认值而不是错误
+                return {
+                    'cpu_usage': 0.0,
+                    'memory_usage': 0.0,
+                    'disk_usage': 0.0,
+                    'temperature': None,
+                    'timestamp': datetime.now().isoformat()
+                }
+        
+        def get_sensor_data(self):
+            """获取所有传感器数据"""
+            with self._lock:
+                return self.sensor_data.copy()
 
 # 全局设备管理器实例
-global_device_manager = None
+global_device_manager = DeviceManager()
 
 # API端点路由
 @device_bp.route('/list_serial_ports', methods=['GET'])
@@ -418,7 +607,7 @@ def list_serial_ports():
             'ports': ports
         })
     except Exception as e:
-        logger.error(f"列出串口设备时出错: {str(e)}")
+        logger.error(f"列出串口设备时出错: {str(e)} | Error listing serial ports: {str(e)}")
         return jsonify({
             'status': 'error',
             'message': str(e)
@@ -432,7 +621,7 @@ def connect_device():
         if not data:
             return jsonify({
                 'status': 'error',
-                'message': '无效的JSON数据'
+                'message': '无效的JSON数据 | Invalid JSON data'
             }), 400
         
         device_id = data.get('device_id')
@@ -441,7 +630,7 @@ def connect_device():
         if not device_id:
             return jsonify({
                 'status': 'error',
-                'message': '设备ID不能为空'
+                'message': '设备ID不能为空 | Device ID cannot be empty'
             }), 400
         
         if device_type == 'serial':
@@ -452,27 +641,27 @@ def connect_device():
             if not port:
                 return jsonify({
                     'status': 'error',
-                    'message': '串口名称不能为空'
+                    'message': '串口名称不能为空 | Serial port cannot be empty'
                 }), 400
             
             success = global_device_manager.connect_serial_device(device_id, port, baudrate, timeout)
             if success:
                 return jsonify({
                     'status': 'success',
-                    'message': f'设备 {device_id} 连接成功'
+                    'message': f'设备 {device_id} 连接成功 | Device {device_id} connected successfully'
                 })
             else:
                 return jsonify({
                     'status': 'error',
-                    'message': f'设备 {device_id} 连接失败'
+                    'message': f'设备 {device_id} 连接失败 | Failed to connect to device {device_id}'
                 }), 500
         else:
             return jsonify({
                 'status': 'error',
-                'message': f'不支持的设备类型: {device_type}'
+                'message': f'不支持的设备类型: {device_type} | Unsupported device type: {device_type}'
             }), 400
     except Exception as e:
-        logger.error(f"连接设备时出错: {str(e)}")
+        logger.error(f"连接设备时出错: {str(e)} | Error connecting device: {str(e)}")
         return jsonify({
             'status': 'error',
             'message': str(e)
@@ -486,15 +675,15 @@ def disconnect_device_route(device_id):
         if success:
             return jsonify({
                 'status': 'success',
-                'message': f'设备 {device_id} 断开连接成功'
+                'message': f'设备 {device_id} 断开连接成功 | Device {device_id} disconnected successfully'
             })
         else:
             return jsonify({
                 'status': 'error',
-                'message': f'设备 {device_id} 断开连接失败'
+                'message': f'设备 {device_id} 断开连接失败 | Failed to disconnect device {device_id}'
             }), 500
     except Exception as e:
-        logger.error(f"断开设备连接时出错: {str(e)}")
+        logger.error(f"断开设备连接时出错: {str(e)} | Error disconnecting device: {str(e)}")
         return jsonify({
             'status': 'error',
             'message': str(e)
@@ -513,10 +702,10 @@ def get_device_status_route(device_id):
         else:
             return jsonify({
                 'status': 'error',
-                'message': f'设备 {device_id} 未连接'
+                'message': f'设备 {device_id} 未连接 | Device {device_id} is not connected'
             }), 404
     except Exception as e:
-        logger.error(f"获取设备状态时出错: {str(e)}")
+        logger.error(f"获取设备状态时出错: {str(e)} | Error getting device status: {str(e)}")
         return jsonify({
             'status': 'error',
             'message': str(e)
@@ -533,7 +722,7 @@ def get_all_devices_status_route():
             'devices_status': statuses
         })
     except Exception as e:
-        logger.error(f"获取所有设备状态时出错: {str(e)}")
+        logger.error(f"获取所有设备状态时出错: {str(e)} | Error getting all devices status: {str(e)}")
         return jsonify({
             'status': 'error',
             'message': str(e)
@@ -547,7 +736,7 @@ def send_device_command(device_id):
         if not data:
             return jsonify({
                 'status': 'error',
-                'message': '无效的JSON数据'
+                'message': '无效的JSON数据 | Invalid JSON data'
             }), 400
         
         command = data.get('command')
@@ -556,7 +745,7 @@ def send_device_command(device_id):
         if not command:
             return jsonify({
                 'status': 'error',
-                'message': '命令不能为空'
+                'message': '命令不能为空 | Command cannot be empty'
             }), 400
         
         success, response = global_device_manager.send_command(device_id, command, timeout)
@@ -572,7 +761,7 @@ def send_device_command(device_id):
                 'message': response
             }), 500
     except Exception as e:
-        logger.error(f"向设备发送命令时出错: {str(e)}")
+        logger.error(f"向设备发送命令时出错: {str(e)} | Error sending command to device: {str(e)}")
         return jsonify({
             'status': 'error',
             'message': str(e)
@@ -592,28 +781,94 @@ def get_device_sensors(device_id):
             'readings': readings
         })
     except Exception as e:
-        logger.error(f"获取传感器读数时出错: {str(e)}")
+        logger.error(f"获取传感器读数时出错: {str(e)} | Error getting sensor readings: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@device_bp.route('/test', methods=['GET'])
+def test_devices():
+    """测试设备权限和可用性"""
+    try:
+        # 检查麦克风可用性（简单检查，并非实际访问）
+        microphone_available = True
+        try:
+            # 这是一个模拟检查，因为没有用户权限我们无法直接检查
+            if platform.system() == 'Windows':
+                # 尝试列出Windows上的音频设备
+                subprocess.run(['powershell', 'Get-WmiObject -Query "SELECT * FROM Win32_SoundDevice WHERE Status=\'OK\'"'],
+                               capture_output=True, text=True, timeout=2)
+        except:
+            microphone_available = False
+        
+        # 检查串口
+        serial_ports = global_device_manager.list_available_serial_ports()
+        
+        return jsonify({
+            'status': 'success',
+            'permissions': {
+                'microphone': microphone_available,
+                'serial': len(serial_ports) > 0
+            },
+            'devices': {
+                'serial_ports': serial_ports
+            }
+        })
+    except Exception as e:
+        logger.error(f"测试设备时出错: {str(e)} | Error testing devices: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@device_bp.route('/sensors/data', methods=['GET'])
+def get_sensor_data():
+    """获取所有传感器数据"""
+    try:
+        data = global_device_manager.get_sensor_data()
+        return jsonify({
+            'status': 'success',
+            'sensors': data
+        })
+    except Exception as e:
+        logger.error(f"获取传感器数据时出错: {str(e)} | Error getting sensor data: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@device_bp.route('/available_devices', methods=['GET'])
+def get_available_devices():
+    """获取所有可用设备"""
+    try:
+        devices = global_device_manager.list_available_devices()
+        return jsonify({
+            'status': 'success',
+            'devices': devices
+        })
+    except Exception as e:
+        logger.error(f"获取可用设备时出错: {str(e)} | Error getting available devices: {str(e)}")
         return jsonify({
             'status': 'error',
             'message': str(e)
         }), 500
 
 # 初始化和清理函数
+def get_device_manager() -> DeviceManager:
+    """获取全局设备通信管理器实例
+    Get global device communication manager instance
+    """
+    return global_device_manager
+
 def init_device_communication():
     """初始化设备通信系统"""
-    global global_device_manager
-    global_device_manager = DeviceManager()
+    manager = get_device_manager()
+    manager.start()
     logger.info("设备通信系统已初始化 | Device communication system initialized")
-
 
 def cleanup_device_communication():
     """清理设备通信系统"""
-    global global_device_manager
-    if global_device_manager:
-        # 断开所有设备连接
-        for device_id in list(global_device_manager.active_devices):
-            global_device_manager.disconnect_device(device_id)
-        logger.info("设备通信系统已清理 | Device communication system cleaned up")
+    manager = get_device_manager()
+    manager.stop()
+    logger.info("设备通信系统已清理 | Device communication system cleaned up")
 
 # 导入sys模块
 try:

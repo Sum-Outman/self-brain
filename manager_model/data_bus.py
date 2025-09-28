@@ -22,6 +22,10 @@ import threading  # 用于直接通道的线程安全 | For thread safety in dir
 import subprocess  # 用于编程模型命令执行 | For programming model command execution
 import shlex  # 用于安全拆分命令行参数 | For safely splitting command line arguments
 
+# DataBus singleton instance
+_data_bus_instance = None
+_data_bus_lock = threading.RLock()
+
 class DataBus:
     def __init__(self, storage_path: str = "data_bus_storage"):
         self.channels = {}  # 通信通道字典 | Communication channels dictionary
@@ -1080,3 +1084,22 @@ class DataBus:
             if component_id in self.component_metadata:
                 return self.component_metadata[component_id].get("capabilities", [])
             return []
+
+
+def get_data_bus(storage_path: str = "data_bus_storage") -> DataBus:
+    """获取DataBus的单例实例
+    参数:
+        storage_path: 存储路径，仅在首次创建实例时有效
+    返回:
+        DataBus实例
+    """
+    global _data_bus_instance
+    
+    # 使用双重检查锁定模式确保线程安全
+    if _data_bus_instance is None:
+        with _data_bus_lock:
+            if _data_bus_instance is None:
+                _data_bus_instance = DataBus(storage_path)
+                logging.getLogger("DataBus").info("DataBus singleton instance created")
+    
+    return _data_bus_instance

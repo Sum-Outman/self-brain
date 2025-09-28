@@ -110,8 +110,21 @@ class ExternalAPIConfig:
         # Connection status tracking
         self.connection_status = {}
         
-        # Configuration file path
+        # Global settings from config file
+        self.global_settings = {
+            'timeout': 30,
+            'retry_count': 3,
+            'proxy': ''
+        }
+        
+        # Configuration file path - now using the new api_settings.json
         self.config_file_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            '..', 'config', 'api_settings.json'
+        )
+        
+        # Legacy external config file path (for migration)
+        self.legacy_config_file_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             '..', 'config', 'external_api_config.json'
         )
@@ -128,42 +141,136 @@ class ExternalAPIConfig:
         self.start_monitoring()
     
     def load_config(self):
-        """Load external API configuration from file"""
+        """Load external API configuration from the new api_settings.json file"""
         try:
             if os.path.exists(self.config_file_path):
-                with open(self.config_file_path, 'r') as f:
+                with open(self.config_file_path, 'r', encoding='utf-8') as f:
                     config_data = json.load(f)
-                    
-                # Load API keys
-                self.api_keys = config_data.get('api_keys', {})
+                
+                # Load global settings
+                if 'global_settings' in config_data:
+                    self.global_settings.update(config_data['global_settings'])
                 
                 # Load model-specific configurations
-                self.model_external_configs = defaultdict(dict, config_data.get('model_configs', {}))
-                
-                # Load connection status
-                self.connection_status = config_data.get('connection_status', {})
+                if 'models' in config_data:
+                    for model_id, model_config in config_data['models'].items():
+                        # Extract the model letter (e.g., 'B' from 'B_language')
+                        model_letter = model_id.split('_')[0] if '_' in model_id else model_id
+                        
+                        if model_letter in self.model_type_mapping:
+                            # Map to the format expected by existing code
+                            provider_name = self._determine_provider(model_config.get('api_url', ''))
+                            
+                            if provider_name:
+                                self.model_external_configs[model_letter] = {
+                                    'provider': provider_name,
+                                    'model': model_config.get('model_name', ''),
+                                    'enabled': model_config.get('enabled', False),
+                                    'use_external': model_config.get('use_external', False),
+                                    'timeout': model_config.get('timeout', self.global_settings['timeout'])
+                                }
+                                
+                                # Store API key if provided
+                                if model_config.get('api_key'):
+                                    self.api_keys[provider_name] = model_config['api_key']
                 
                 logger.info(f"Loaded external API configuration from {self.config_file_path}")
             else:
                 logger.info(f"No existing configuration found at {self.config_file_path}, using defaults")
-                # Create default config file
-                self.save_config()
-                
+                # Check for legacy config and migrate if needed
+                if os.path.exists(self.legacy_config_file_path):
+                    self._migrate_legacy_config()
+                else:
+                    # Create default config file
+                    self.save_config()
+                    
         except Exception as e:
             logger.error(f"Failed to load external API configuration: {str(e)}")
+    
+    def _migrate_legacy_config(self):
+        """Migrate configuration from legacy file to new format"""
+        try:
+            with open(self.legacy_config_file_path, 'r', encoding='utf-8') as f:
+                legacy_config = json.load(f)
+            
+            # Create new config structure
+            new_config = {
+                'global_settings': self.global_settings,
+                'models': {}
+            }
+            
+            # Migrate model configurations
+            for model_id, config in legacy_config.get('model_configs', {}).items():
+                if config.get('enabled', False) and config.get('provider'):
+                    provider_config = self.get_provider_config(config['provider'])
+                    model_name = f"{model_id}_{self.model_type_mapping.get(model_id, 'model')}"
+                    
+                    new_config['models'][model_name] = {
+                        'use_external': True,
+                        'api_url': provider_config.get('base_url', ''),
+                        'api_key': legacy_config.get('api_keys', {}).get(config['provider'], ''),
+                        'model_name': config.get('model', ''),
+                        'headers': {},
+                        'timeout': self.global_settings['timeout'],
+                        'enabled': True
+                    }
+            
+            # Save new config
+            with open(self.config_file_path, 'w', encoding='utf-8') as f:
+                json.dump(new_config, f, indent=2)
+            
+            logger.info(f"Migrated legacy configuration to {self.config_file_path}")
+        except Exception as e:
+            logger.error(f"Failed to migrate legacy configuration: {str(e)}")
+    
+    def _determine_provider(self, api_url):
+        """Determine provider based on API URL"""
+        if not api_url:
+            return None
+        
+        for provider, config in self.providers.items():
+            if config['base_url'] in api_url:
+                return provider
+        
+        # Default to openai if not matched
+        return 'openai'
     
     def save_config(self):
         """Save external API configuration to file"""
         try:
-            config_data = {
-                'api_keys': self.api_keys,
-                'model_configs': dict(self.model_external_configs),
-                'connection_status': self.connection_status,
-                'last_updated': datetime.now().isoformat()
-            }
+            # First load existing config to preserve manual edits
+            existing_config = {}
+            if os.path.exists(self.config_file_path):
+                with open(self.config_file_path, 'r', encoding='utf-8') as f:
+                    existing_config = json.load(f)
             
-            with open(self.config_file_path, 'w') as f:
-                json.dump(config_data, f, indent=2)
+            # Update with current settings
+            if 'global_settings' not in existing_config:
+                existing_config['global_settings'] = {}
+            existing_config['global_settings'].update(self.global_settings)
+            
+            # Update model configurations
+            if 'models' not in existing_config:
+                existing_config['models'] = {}
+            
+            for model_letter, config in self.model_external_configs.items():
+                if config.get('enabled', False) and config.get('provider'):
+                    provider_config = self.get_provider_config(config['provider'])
+                    model_name = f"{model_letter}_{self.model_type_mapping.get(model_letter, 'model')}"
+                    
+                    if model_name not in existing_config['models']:
+                        existing_config['models'][model_name] = {
+                            'use_external': config.get('use_external', False),
+                            'api_url': provider_config.get('base_url', ''),
+                            'api_key': self.api_keys.get(config['provider'], ''),
+                            'model_name': config.get('model', ''),
+                            'headers': {},
+                            'timeout': config.get('timeout', self.global_settings['timeout']),
+                            'enabled': True
+                        }
+            
+            with open(self.config_file_path, 'w', encoding='utf-8') as f:
+                json.dump(existing_config, f, indent=2)
                 
             logger.info(f"Saved external API configuration to {self.config_file_path}")
             return True
@@ -223,7 +330,8 @@ class ExternalAPIConfig:
             self.model_external_configs[model_id] = {
                 'provider': provider_name,
                 'model': model_name,
-                'enabled': True
+                'enabled': True,
+                'use_external': True
             }
             
             # Update API key if provided
@@ -251,6 +359,7 @@ class ExternalAPIConfig:
         """Disable external API for a specific model"""
         if model_id in self.model_external_configs:
             self.model_external_configs[model_id]['enabled'] = False
+            self.model_external_configs[model_id]['use_external'] = False
             self.save_config()
             logger.info(f"Disabled external API for model {model_id}")
             return True
@@ -260,6 +369,7 @@ class ExternalAPIConfig:
         """Enable external API for a specific model"""
         if model_id in self.model_external_configs:
             self.model_external_configs[model_id]['enabled'] = True
+            self.model_external_configs[model_id]['use_external'] = True
             self.save_config()
             logger.info(f"Enabled external API for model {model_id}")
             # Test the connection
@@ -269,14 +379,14 @@ class ExternalAPIConfig:
     def is_model_using_external_api(self, model_id):
         """Check if a model is configured to use external API"""
         config = self.get_model_external_config(model_id)
-        return config.get('enabled', False)
+        return config.get('enabled', False) and config.get('use_external', False)
     
     def test_connection(self, model_id):
         """Test connection to external API for a specific model"""
         try:
             config = self.get_model_external_config(model_id)
             
-            if not config.get('enabled', False):
+            if not config.get('enabled', False) or not config.get('use_external', False):
                 logger.info(f"External API is not enabled for model {model_id}")
                 return False
             
@@ -433,7 +543,7 @@ class ExternalAPIConfig:
             try:
                 # Test connections for all enabled models
                 for model_id, config in self.model_external_configs.items():
-                    if config.get('enabled', False):
+                    if config.get('enabled', False) and config.get('use_external', False):
                         # Test connection every 5 minutes
                         last_checked = self.connection_status.get(model_id, {}).get('last_checked')
                         if not last_checked or self._should_check_connection(last_checked):

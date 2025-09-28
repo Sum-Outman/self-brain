@@ -7,6 +7,7 @@ import platform
 import psutil
 import os
 from typing import Dict, List, Optional, Tuple
+from manager_model.data_bus import get_data_bus, DataBus
 
 class DeviceCommunicationManager:
     """Device Communication Manager class for managing external device communication and sensors"""
@@ -19,12 +20,22 @@ class DeviceCommunicationManager:
         # Serial port data buffer
         self.serial_data_buffer = []
         # Connected device list
-        self.connected_devices: Dict[str, Dict] = {}
+        self.connected_devices: Dict[str, Dict] = {}        
         # Sensor data cache
-        self.sensor_data_cache: Dict[str, Dict] = {}
+        self.sensor_data_cache: Dict[str, Dict] = {}        
         # Serial port read thread
         self.serial_read_thread: Optional[threading.Thread] = None
         self.serial_thread_stop_event = threading.Event()
+        
+        # DataBus integration
+        self.data_bus: DataBus = get_data_bus()
+        self.component_id = "device_communication_manager"
+        
+        # Register with data bus
+        self._register_with_data_bus()
+        
+        # Subscribe to relevant channels
+        self._subscribe_to_channels()
         
     def get_available_serial_ports(self) -> List[str]:
         """Get list of available serial ports"""
@@ -168,6 +179,107 @@ class DeviceCommunicationManager:
                 print(f"Error in serial read thread: {e}")
                 break
     
+    def _register_with_data_bus(self):
+        """Register this component with the data bus"""
+        try:
+            # Register the component with its capabilities
+            self.data_bus.register_component(
+                component_id=self.component_id,
+                metadata={
+                    "name": "Device Communication Manager",
+                    "version": "1.0",
+                    "type": "communication",
+                    "capabilities": [
+                        "serial_port_management",
+                        "device_connection",
+                        "sensor_data_collection",
+                        "system_monitoring"
+                    ],
+                    "dependencies": []
+                }
+            )
+        except Exception as e:
+            print(f"Error registering with data bus: {e}")
+    
+    def _subscribe_to_channels(self):
+        """Subscribe to relevant data bus channels"""
+        try:
+            # Subscribe to device control channel
+            self.data_bus.subscribe(
+                channel_id="device_control",
+                component_id=self.component_id,
+                handler=self._handle_device_control
+            )
+            
+            # Subscribe to serial command channel
+            self.data_bus.subscribe(
+                channel_id="serial_command",
+                component_id=self.component_id,
+                handler=self._handle_serial_command
+            )
+        except Exception as e:
+            print(f"Error subscribing to channels: {e}")
+    
+    def _handle_device_control(self, message: Dict):
+        """Handle device control messages from the data bus"""
+        try:
+            action = message.get("action", "")
+            
+            if action == "connect_serial":
+                port = message.get("port", "")
+                baud_rate = message.get("baud_rate", 9600)
+                result = self.connect_serial_port(port, baud_rate)
+                
+                # Publish the result back to the data bus
+                self.data_bus.publish(
+                    channel_id="device_control_response",
+                    message={
+                        "request_id": message.get("request_id", ""),
+                        "result": result
+                    }
+                )
+            elif action == "disconnect_serial":
+                result = self.disconnect_serial_port()
+                
+                # Publish the result back to the data bus
+                self.data_bus.publish(
+                    channel_id="device_control_response",
+                    message={
+                        "request_id": message.get("request_id", ""),
+                        "result": result
+                    }
+                )
+            elif action == "get_sensor_data":
+                result = self.get_sensor_data()
+                
+                # Publish the result back to the data bus
+                self.data_bus.publish(
+                    channel_id="sensor_data_update",
+                    message={
+                        "request_id": message.get("request_id", ""),
+                        "data": result.get("data", {})
+                    }
+                )
+        except Exception as e:
+            print(f"Error handling device control message: {e}")
+    
+    def _handle_serial_command(self, message: Dict):
+        """Handle serial command messages from the data bus"""
+        try:
+            command = message.get("command", "")
+            result = self.send_serial_command(command)
+            
+            # Publish the result back to the data bus
+            self.data_bus.publish(
+                channel_id="serial_response",
+                message={
+                    "request_id": message.get("request_id", ""),
+                    "result": result
+                }
+            )
+        except Exception as e:
+            print(f"Error handling serial command: {e}")
+    
     def get_sensor_data(self) -> Dict:
         """Get system sensor data"""
         try:
@@ -232,6 +344,15 @@ class DeviceCommunicationManager:
             with self.lock:
                 self.sensor_data_cache = sensor_data
             
+            # Publish sensor data to data bus
+            try:
+                self.data_bus.publish(
+                    channel_id="sensor_data_update",
+                    message=sensor_data
+                )
+            except Exception as e:
+                print(f"Error publishing sensor data: {e}")
+            
             return {'status': 'success', 'data': sensor_data}
         except Exception as e:
             return {'status': 'error', 'message': str(e)}
@@ -291,6 +412,12 @@ class DeviceCommunicationManager:
         
         # Signal all threads to stop
         self.serial_thread_stop_event.set()
+        
+        # Unregister from data bus
+        try:
+            self.data_bus.unregister_component(self.component_id)
+        except Exception as e:
+            print(f"Error unregistering from data bus: {e}")
 
 # Create a global instance of DeviceCommunicationManager
 global_device_manager = DeviceCommunicationManager()

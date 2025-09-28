@@ -17,6 +17,9 @@ from pydub import AudioSegment
 import subprocess
 import logging
 
+# Import the external API configuration module
+from external_api_config import get_external_api_config
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -43,237 +46,266 @@ conversations = {}
 
 # A Management Model Configuration
 class AManagementModel:
-    """A Management Model - Coordinates multiple internal AI models"""
+    """A Management Model that handles various types of messages and coordinates with other models"""
     
     def __init__(self):
-        self.models = {
-            'language': 'http://localhost:5002/api/predict',
-            'vision': 'http://localhost:5004/api/predict',
-            'audio': 'http://localhost:5003/api/predict',
-            'video': 'http://localhost:5005/api/predict',
-            'document': 'http://localhost:5009/api/predict'
-        }
-        self.external_apis = {}
-        self.load_external_api_config()
+        # Initialize logger
+        self.logger = logging.getLogger('AManagementModel')
         
-    def load_external_api_config(self):
-        """加载外部API配置"""
-        try:
-            config_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'api_settings.json')
-            if os.path.exists(config_path):
-                with open(config_path, 'r') as f:
-                    self.external_apis = json.load(f)
-        except Exception as e:
-            logger.error(f"Failed to load external API config: {str(e)}")
+        # Initialize conversation history storage
+        self.conversation_history = {}
+        
+        # Initialize model components
+        self.initialize_model_components()
+        
+        # Initialize external API config
+        self.api_config = get_external_api_config()
+        
+        # Initialize task queue and processing thread
+        self.task_queue = []
+        self.processing_thread = threading.Thread(target=self._process_task_queue)
+        self.processing_thread.daemon = True
+        self.processing_thread.start()
+        
+        # Initialize knowledge base searcher
+        self.knowledge_searcher = None
+        
+    def initialize_model_components(self):
+        """Initialize the various model components"""
+        # This would be where you initialize actual model components
+        # For now, we'll just log that initialization is happening
+        self.logger.info("Initializing model components...")
+        
+        # In a real implementation, you would load actual model weights here
+        # For example:
+        # self.language_model = load_language_model()
+        # self.vision_model = load_vision_model()
+        # etc.
+        
+        self.logger.info("Model components initialized successfully")
     
-    def process_message(self, message, media=None, conversation_id=None, context=None):
-        """Process user messages and coordinate relevant models"""
+    def process_message(self, message, message_type="text", model_id="B", context=None):
+        """Process a message based on its type"""
+        self.logger.info(f"Processing {message_type} message: {message[:50]}...")
         
-        response = {
-            'success': True,
-            'message': '',
-            'models_used': [],
-            'processing_time': 0
-        }
+        # Handle different message types
+        if message_type == "text":
+            return self.process_text(message, model_id, context)
+        elif message_type == "media":
+            return self.process_media(message)
+        elif message_type == "voice":
+            return self.process_voice(message)
+        else:
+            return {"error": "Unsupported message type"}
         
-        start_time = datetime.now()
-        
+    def process_text(self, text, model_id="B", context=None):
+        """Process text messages with context awareness"""
         try:
-            # 优先使用外部API（如果配置并启用）
-            if 'management' in self.external_apis and self.external_apis['management'].get('enabled', False):
-                response = self._call_external_api('management', message, context)
-            else:
-                # 使用内部模型处理
-                # 分析消息类型和意图
-                analysis = self.analyze_message(message, media)
+            self.logger.info(f"Processing text with model {model_id}: {text[:50]}...")
+            
+            # Check if the model is configured to use external API
+            if self.api_config.is_model_using_external_api(model_id):
+                self.logger.info(f"Using external API for model {model_id}")
                 
-                # 根据分析调用适当的模型
-                if media:
-                    # 处理多媒体内容
-                    media_response = self.process_media(media, analysis)
-                    response['message'] = media_response['message']
-                    response['models_used'] = media_response['models_used']
+                # Prepare message with context for external API
+                messages = []
+                
+                # Add system prompt
+                system_prompt = "You are a helpful assistant."
+                if model_id == "B":
+                    system_prompt = "You are a helpful language assistant with emotional reasoning capabilities."
+                elif model_id == "A":
+                    system_prompt = "You are an AI management model that coordinates other models and handles emotional interactions."
+                
+                # Format messages based on provider requirements
+                provider_config = self.api_config.get_model_external_config(model_id)
+                if provider_config.get('provider') == 'anthropic':
+                    # Anthropic format doesn't have explicit system role
+                    messages.append({"role": "user", "content": system_prompt + "\n" + text})
                 else:
-                    # 处理纯文本
-                    text_response = self.process_text(message, analysis, context)
-                    response['message'] = text_response['message']
-                    response['models_used'] = text_response['models_used']
+                    # Standard format with system and user messages
+                    messages.append({"role": "system", "content": system_prompt})
                     
-                # 实时语音/视频处理
-                if analysis.get('is_voice_request'):
-                    voice_response = self.process_voice(message)
-                    response['voice_data'] = voice_response
+                    # Add context messages if available
+                    if context:
+                        # Include relevant context messages (last 5 for brevity)
+                        for msg in context[-5:]:
+                            messages.append(msg)
                     
-            response['processing_time'] = (datetime.now() - start_time).total_seconds()
+                    # Add the current user message
+                    messages.append({"role": "user", "content": text})
+                
+                # Prepare request data
+                request_data = {
+                    "messages": messages,
+                    "max_tokens": 1000,
+                    "temperature": 0.7
+                }
+                
+                # Call the external API
+                response, error = self.api_config.call_external_api(model_id, request_data)
+                
+                if error:
+                    self.logger.error(f"External API call failed: {error}")
+                    # Fall back to default response generation if API call fails
+                    return self._generate_default_response(text, context)
+                
+                if response and 'content' in response:
+                    return {"response": response['content'], "model": model_id, "source": "external"}
+                else:
+                    self.logger.error("Invalid response from external API")
+                    return self._generate_default_response(text, context)
+            
+            # If not using external API, generate default response
+            return self._generate_default_response(text, context)
             
         except Exception as e:
-            logger.error(f"Failed to process message: {str(e)}")
-            response = {
-                'success': False,
-                'message': 'Sorry, an error occurred while processing your request. Please try again later.',
-                'error': str(e)
-            }
+            self.logger.error(f"Error processing text: {str(e)}")
+            return {"error": str(e)}
             
-        return response
-        
-    def _call_external_api(self, model_type, message, context=None):
-        """调用外部API处理请求"""
-        import requests
-        
-        api_config = self.external_apis.get(model_type)
-        if not api_config or not api_config.get('enabled', False):
-            return {
-                'success': False,
-                'message': 'External API not configured or disabled'
-            }
-        
+    def _generate_default_response(self, text, context=None):
+        """Generate responses using the main management model"""
         try:
-            headers = {
-                'Content-Type': 'application/json'
-            }
+            # Import and use the main management model for real interaction
+            from manager_model.main_model import ManagementModel
             
-            if api_config.get('api_key'):
-                headers['Authorization'] = f"Bearer {api_config['api_key']}"
+            # Initialize management model if not already done
+            if not hasattr(self, 'management_model'):
+                self.management_model = ManagementModel()
             
-            payload = {
-                'model': api_config.get('model_name', ''),
-                'messages': [
-                    {'role': 'system', 'content': 'You are a helpful assistant.'}
-                ]
-            }
+            # Process input through the management model
+            response = self.management_model.process_input(text, context)
             
-            # 添加上下文和当前消息
-            if context:
-                for item in context:
-                    if 'user' in item:
-                        payload['messages'].append({'role': 'user', 'content': item['user']})
-                    if 'ai' in item:
-                        payload['messages'].append({'role': 'assistant', 'content': item['ai']})
-            
-            payload['messages'].append({'role': 'user', 'content': message})
-            
-            # 根据不同API的格式调整payload
-            if api_config.get('api_type') == 'openai':
-                url = f"{api_config['base_url']}/v1/chat/completions"
+            if response and 'response' in response:
+                return response
             else:
-                url = api_config['base_url']
+                return {"response": "I'm processing your request. Please wait while I coordinate with my models.", "model": "A", "source": "local"}
+                
+        except Exception as e:
+            self.logger.error(f"Error in management model processing: {str(e)}")
+            return {"response": "I'm currently optimizing my systems. Please try again in a moment.", "model": "A", "source": "local"}
+    
+    def process_media(self, media_data):
+        """Process media messages"""
+        try:
+            self.logger.info("Processing media message")
             
-            response = requests.post(url, headers=headers, json=payload, timeout=30)
-            response_json = response.json()
-            
-            # 解析响应
-            if api_config.get('api_type') == 'openai' and 'choices' in response_json:
-                content = response_json['choices'][0]['message']['content']
-            elif 'result' in response_json:
-                content = response_json['result']
+            # Check if media data is a dictionary with required fields
+            if isinstance(media_data, dict) and "type" in media_data and "data" in media_data:
+                media_type = media_data["type"]
+                media_data = media_data["data"]
+                
+                # Process based on media type
+                if media_type.startswith("image/"):
+                    return self.process_image(media_data, media_type)
+                elif media_type.startswith("video/"):
+                    return self.process_video(media_data, media_type)
+                elif media_type in ["application/pdf", "text/plain", "application/msword", 
+                                   "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
+                    return self.extract_text_from_document(media_data, media_type)
+                else:
+                    return {"error": f"Unsupported media type: {media_type}"}
             else:
-                content = str(response_json)
-            
-            return {
-                'success': True,
-                'message': content,
-                'models_used': [f"external_{model_type}"],
-                'external_api': model_type
-            }
+                return {"error": "Invalid media data format"}
             
         except Exception as e:
-            logger.error(f"Error calling external API: {str(e)}")
-            return {
-                'success': False,
-                'message': f'Error calling external API: {str(e)}',
-                'error': str(e)
-            }
+            self.logger.error(f"Error processing media: {str(e)}")
+            return {"error": str(e)}
+            
+    def process_image(self, image_data, image_type):
+        """Process image data using visual processing model"""
+        try:
+            self.logger.info(f"Processing image of type {image_type}")
+            
+            # Use the actual image processing model (Model D)
+            from sub_models.D_image.app import ImageProcessingModel
+            
+            if not hasattr(self, 'image_model'):
+                self.image_model = ImageProcessingModel()
+            
+            # Process image through model D
+            result = self.image_model.process_image(image_data)
+            
+            return {"response": result.get('analysis', 'Image processed successfully'), "model": "D", "source": "local"}
+            
+        except Exception as e:
+            self.logger.error(f"Error processing image: {str(e)}")
+            return {"error": str(e)}
+            
+    def process_video(self, video_data, video_type):
+        """Process video data using video processing model"""
+        try:
+            self.logger.info(f"Processing video of type {video_type}")
+            
+            # Use the actual video processing model (Model E)
+            from sub_models.E_video.app import VideoProcessingModel
+            
+            if not hasattr(self, 'video_model'):
+                self.video_model = VideoProcessingModel()
+            
+            # Process video through model E
+            result = self.video_model.process_video(video_data)
+            
+            return {"response": result.get('analysis', 'Video processed successfully'), "model": "E", "source": "local"}
+            
+        except Exception as e:
+            self.logger.error(f"Error processing video: {str(e)}")
+            return {"error": str(e)}
+            
+    def extract_text_from_document(self, document_data, document_type):
+        """Extract text from document files using language model"""
+        try:
+            self.logger.info(f"Extracting text from document of type {document_type}")
+            
+            # Use the actual language model (Model B) for text extraction
+            from sub_models.B_language.app import LanguageModel
+            
+            if not hasattr(self, 'language_model'):
+                self.language_model = LanguageModel()
+            
+            # Extract text through model B
+            result = self.language_model.process_document(document_data)
+            
+            return {"response": result.get('extracted_text', 'Text extracted successfully'), "model": "B", "source": "local"}
+            
+        except Exception as e:
+            self.logger.error(f"Error extracting text from document: {str(e)}")
+            return {"error": str(e)}
     
-    def analyze_message(self, message, media=None):
-        """Analyze user message intent and type"""
-        analysis = {
-            'intent': 'general',
-            'type': 'text',
-            'confidence': 0.8,
-            'is_voice_request': False,
-            'is_visual_request': False
-        }
-        
-        # Intent recognition
-        message_lower = message.lower()
-        
-        if any(word in message_lower for word in ['image', 'picture', 'photo', 'graph']):
-            analysis['intent'] = 'image_analysis'
-            analysis['is_visual_request'] = True
-        elif any(word in message_lower for word in ['video', 'movie', 'film', 'clip']):
-            analysis['intent'] = 'video_analysis'
-            analysis['is_visual_request'] = True
-        elif any(word in message_lower for word in ['voice', 'speech', 'audio', 'sound']):
-            analysis['intent'] = 'voice_processing'
-            analysis['is_voice_request'] = True
-        elif any(word in message_lower for word in ['document', 'file', 'pdf', 'text']):
-            analysis['intent'] = 'document_analysis'
-        elif any(word in message_lower for word in ['translate', 'translation']):
-            analysis['intent'] = 'translation'
-        elif any(word in message_lower for word in ['summarize', 'summary', 'overview']):
-            analysis['intent'] = 'summarization'
+    def process_voice(self, voice_data):
+        """Process voice messages using audio processing model"""
+        try:
+            self.logger.info("Processing voice message")
             
-        # Media type analysis
-        if media:
-            analysis['type'] = media.get('type', 'unknown')
+            # Use the actual audio processing model (Model C)
+            from sub_models.C_audio.app import AudioProcessingModel
             
-        return analysis
-    
-    def process_text(self, message, analysis):
-        """Process plain text messages"""
-        models_used = ['language_model']
-        
-        # Generate response based on intent
-        intent_handlers = {
-            'image_analysis': "I can help you analyze image content. Please upload an image, and I will provide a detailed description and analysis.",
-            'video_analysis': "I can help you analyze video content. Please upload a video, and I will provide a summary and analysis.",
-            'document_analysis': "I can help you process documents. Please upload a document, and I will extract key information and provide a summary.",
-            'translation': "I can provide translation services. Please tell me the content to translate and the target language.",
-            'summarization': "I can help you summarize content. Please provide the text or document to summarize.",
-            'general': f"I understand your message: {message}. As an A Management Model, I will coordinate the most suitable internal AI models to provide you with accurate responses."
-        }
-        
-        response_message = intent_handlers.get(
-            analysis['intent'], 
-            f"Received your message: {message}"
-        )
-        
-        return {
-            'message': response_message,
-            'models_used': models_used
-        }
-    
-    def process_media(self, media, analysis):
-        """Process multimedia content"""
-        models_used = []
-        response_message = ""
-        
-        media_type = media.get('type')
-        
-        if media_type == 'image':
-            models_used.extend(['vision_model', 'language_model'])
-            response_message = f"Received image: {media.get('name', 'Unknown image')}. I will use vision AI models to analyze the image content, including object recognition, scene description, text extraction, etc."
+            if not hasattr(self, 'audio_model'):
+                self.audio_model = AudioProcessingModel()
             
-        elif media_type == 'video':
-            models_used.extend(['video_model', 'vision_model', 'language_model'])
-            response_message = f"Received video: {media.get('name', 'Unknown video')}. I will use video AI models to analyze the video content, including keyframe extraction, action recognition, content summarization, etc."
+            # Process voice through model C
+            result = self.audio_model.process_audio(voice_data)
             
-        elif media_type == 'file':
-            models_used.extend(['document_model', 'language_model'])
-            response_message = f"Received document: {media.get('name', 'Unknown document')}. I will use document AI models to process the content, including text extraction, key information identification, content summarization, etc."
+            return {"response": result.get('transcription', 'Voice processed successfully'), "model": "C", "source": "local"}
             
-        return {
-            'message': response_message,
-            'models_used': models_used
-        }
-    
-    def process_voice(self, message):
-        """Process voice-related requests"""
-        return {
-            'type': 'voice_response',
-            'text': 'Voice processing started',
-            'audio_url': None  # This will generate the URL for voice response
-        }
+        except Exception as e:
+            self.logger.error(f"Error processing voice: {str(e)}")
+            return {"error": str(e)}
+            
+    def _process_task_queue(self):
+        """Process tasks in the queue"""
+        while True:
+            if self.task_queue:
+                task = self.task_queue.pop(0)
+                try:
+                    # Process the task
+                    self.logger.info(f"Processing task: {task[:50]}...")
+                    # In a real implementation, you would do actual task processing here
+                    time.sleep(1)  # Simulate processing time
+                except Exception as e:
+                    self.logger.error(f"Error processing task: {str(e)}")
+            else:
+                time.sleep(0.1)  # Sleep briefly to avoid busy waiting
 
 # Initialize A Management Model
 a_model = AManagementModel()
@@ -408,47 +440,31 @@ def get_conversations():
         }), 500
 
 @app.route('/api/chat', methods=['POST'])
+@app.route('/api/chat/send', methods=['POST'])
 def chat():
-    """Process chat messages"""
     try:
         data = request.json
         message = data.get('message', '')
-        media = data.get('media')
-        conversation_id = data.get('conversationId')
+        message_type = data.get('type', 'text')
+        model_id = data.get('model', 'B')
+        context = data.get('context', [])
         
-        if not message and not media:
-            return jsonify({
-                'status': 'error',
-                'message': 'Message content cannot be empty'
-            }), 400
+        # Log the received message
+        logger.info(f"Received chat message: {message[:50]}... from model {model_id}")
         
-        # Use A Management Model to process message
-        response = a_model.process_message(message, media, conversation_id)
+        # Process the message using the A model
+        response = a_model.process_message(message, message_type, model_id, context)
         
-        if response['success']:
-            return jsonify({
-                'status': 'success',
-                'message': {
-                    'id': str(uuid.uuid4()),
-                    'type': 'ai',
-                    'content': response['message'],
-                    'timestamp': datetime.now().isoformat(),
-                    'models_used': response.get('models_used', []),
-                    'processing_time': response.get('processing_time', 0)
-                }
-            })
-        else:
-            return jsonify({
-                'status': 'error',
-                'message': response['message']
-            }), 500
-            
+        # Log the response
+        if 'response' in response:
+            logger.info(f"Sent response: {response['response'][:50]}...")
+        elif 'message' in response:
+            logger.info(f"Sent response: {response['message'][:50]}...")
+        
+        return jsonify(response)
     except Exception as e:
-        logger.error(f"Chat API error: {str(e)}")
-        return jsonify({
-            'status': 'error',
-            'message': 'Internal server error'
-        }), 500
+        logger.error(f"Error in chat endpoint: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
@@ -556,10 +572,13 @@ def process_voice():
             # Use A Management Model to process recognition result
             response = a_model.process_message(text)
             
+            # Get the response text from the appropriate field
+            response_text = response.get('response', response.get('message', ''))
+            
             return jsonify({
                 'status': 'success',
                 'text': text,
-                'response': response['message']
+                'response': response_text
             })
             
         except sr.UnknownValueError:
@@ -591,7 +610,7 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
-        'models': list(a_model.models.keys())
+        'model': 'AManagementModel'
     })
 
 if __name__ == '__main__':
