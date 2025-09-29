@@ -62,25 +62,36 @@ def load_config(config_path="config/system_config.yaml"):
         # Return default configuration if loading fails
         return {
             "ports": {
-                "B_language": 5002,
-                "C_audio": 5003,
-                "D_image": 5004,
-                "E_video": 5005,
-                "F_spatial": 5006,
-                "G_sensor": 5007,
-                "H_computer_control": 5008,
-                "I_knowledge": 5009,
-                "J_motion": 5010,
-                "K_programming": 5011
+                "language": 5001,
+                "audio": 5002,
+                "image": 5003,
+                "video": 5004,
+                "spatial": 5005,
+                "sensor": 5006,
+                "computer_control": 5007,
+                "knowledge": 5008,
+                "motion": 5009,
+                "programming": 5010,
+                "web_backend": 8000,
+                "web_frontend": 8080,
+                "manager_api": 5015,
+                "agi_core": 5014,
+                "device_manager": 5013
             },
-            "web_interface": {
-                "port": 5000
-            },
-            "manager_model": {
-                "port": 5015
-            },
-            "agi_core": {
-                "port": 5014
+            "models": {
+                "local_models": {
+                    "A_management": True,
+                    "B_language": True,
+                    "C_audio": True,
+                    "D_image": True,
+                    "E_video": True,
+                    "F_spatial": True,
+                    "G_sensor": True,
+                    "H_computer_control": True,
+                    "I_knowledge": True,
+                    "J_motion": True,
+                    "K_programming": True
+                }
             }
         }
 
@@ -219,7 +230,8 @@ def start_agi_core():
     """Start AGI core system"""
     logger.info("Starting AGI core system...")
     agi_core_dir = BASE_DIR / "agi_core"
-    agi_core_port = 5014
+    config = load_config()
+    agi_core_port = config.get('ports', {}).get('agi_core', 5014)
     
     # Skip if already running
     if "agi_core" in processes:
@@ -321,7 +333,8 @@ def start_device_manager():
     """Start device manager service"""
     logger.info("Starting device manager...")
     device_manager_dir = BASE_DIR / "device_manager"
-    device_manager_port = 5013
+    config = load_config()
+    device_manager_port = config.get('ports', {}).get('device_manager', 5013)
     
     # Skip if already running
     if "device_manager" in processes:
@@ -416,7 +429,8 @@ def start_web_interface():
     """Start web interface service"""
     logger.info("Starting web interface...")
     web_interface_dir = BASE_DIR / "web_interface"
-    web_port = 5000
+    config = load_config()
+    web_port = config.get('ports', {}).get('web_frontend', 8080)
     
     # Skip if already running
     if "web_interface" in processes:
@@ -470,7 +484,8 @@ def start_manager_model():
     """Start manager model service"""
     logger.info("Starting manager model...")
     manager_dir = BASE_DIR / "manager_model"
-    manager_port = 5015
+    config = load_config()
+    manager_port = config.get('ports', {}).get('manager_api', 5015)
     
     # Skip if already running
     if "manager_model" in processes:
@@ -603,18 +618,24 @@ def start_all_models():
     """Start all submodels"""
     logger.info("Starting all submodels...")
     
-    # Use fixed model list instead of loading from config
+    # Load config to get model ports
+    config = load_config()
+    ports = config.get('ports', {})
+    model_config = config.get('models', {})
+    local_models = model_config.get('local_models', {})
+    
+    # Map model names to ports based on system_config.yaml
     model_ports = {
-        "B_language": 5002,
-        "C_audio": 5003,
-        "D_image": 5004,
-        "E_video": 5005,
-        "F_spatial": 5006,
-        "G_sensor": 5007,
-        "H_computer_control": 5008,
-        "I_knowledge": 5009,
-        "J_motion": 5010,
-        "K_programming": 5011
+        "B_language": ports.get('language', 5001),
+        "C_audio": ports.get('audio', 5002),
+        "D_image": ports.get('image', 5003),
+        "E_video": ports.get('video', 5004),
+        "F_spatial": ports.get('spatial', 5005),
+        "G_sensor": ports.get('sensor', 5006),
+        "H_computer_control": ports.get('computer_control', 5007),
+        "I_knowledge": ports.get('knowledge', 5008),
+        "J_motion": ports.get('motion', 5009),
+        "K_programming": ports.get('programming', 5010)
     }
     
     # Start each model
@@ -715,18 +736,22 @@ def init_training_directories():
     """Initialize training data directories for trainable models"""
     training_root = BASE_DIR / "training_data"
     
-    # Get model registry if available
+    # Load config to get model information
+    config = load_config()
+    ports = config.get('ports', {})
+    
+    # Map model names to ports based on system_config.yaml
     model_ports = {
-        "B_language": 5002,
-        "C_audio": 5003,
-        "D_image": 5004,
-        "E_video": 5005,
-        "F_spatial": 5006,
-        "G_sensor": 5007,
-        "H_computer_control": 5008,
-        "I_knowledge": 5009,
-        "J_motion": 5010,
-        "K_programming": 5011
+        "B_language": ports.get('language', 5001),
+        "C_audio": ports.get('audio', 5002),
+        "D_image": ports.get('image', 5003),
+        "E_video": ports.get('video', 5004),
+        "F_spatial": ports.get('spatial', 5005),
+        "G_sensor": ports.get('sensor', 5006),
+        "H_computer_control": ports.get('computer_control', 5007),
+        "I_knowledge": ports.get('knowledge', 5008),
+        "J_motion": ports.get('motion', 5009),
+        "K_programming": ports.get('programming', 5010)
     }
     
     # Create training directories for each model
@@ -824,12 +849,17 @@ def main():
         except Exception as e:
             logger.error(f"Failed to open browser: {str(e)}")
     
-    browser_thread = threading.Thread(target=open_browser)
-    browser_thread.start()
-    
-    logger.info("="*50)
-    logger.info("Self Brain AGI System startup completed!")
-    logger.info("="*50)
+    # Get web port from config
+        config = load_config()
+        web_port = config.get('ports', {}).get('web_frontend', 8080)
+        
+        browser_thread = threading.Thread(target=open_browser)
+        browser_thread.start()
+        
+        logger.info("="*50)
+        logger.info("Self Brain AGI System startup completed!")
+        logger.info(f"Web interface available at http://localhost:{web_port}")
+        logger.info("="*50)
     
     # Keep main thread running
     try:

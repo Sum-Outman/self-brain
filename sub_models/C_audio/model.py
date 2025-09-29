@@ -193,7 +193,7 @@ class LocalAudioProcessor:
     def _speech_to_text_external(self, audio_path):
         """外部API语音识别实现"""
         # 占位符实现 - 在实际应用中会调用外部API
-        return "外部API语音识别功能"}]}}}
+        return "外部API语音识别功能"
 
     def analyze_tone(self, audio_path):
         """
@@ -478,34 +478,24 @@ class LocalAudioProcessor:
         
         print("训练完成 (Training completed)")
 
-# 模型保存和加载函数 (Model save/load functions)
-def save_model(model, path):
-    """保存模型到文件 (Save model to file)"""
-    # 保存完整模型而不仅是状态字典 (Save full model not just state dict)
-    torch.save(model, path)
+    # 新增特效方法 (New effect methods)
+    def apply_robot_voice(self, audio_path, intensity=0.8):
+        """应用机器人声音效果 (Apply robot voice effect)"""
+        # 实际实现应使用声码器或音高变换
+        # (Actual implementation should use vocoder or pitch shifting)
+        return "output/robot_voice.wav"
 
-def load_model(path):
-    """从文件加载模型 (Load model from file)"""
-    return torch.load(path)
+    def apply_chorus(self, audio_path, voices=3, depth=0.5):
+        """应用合唱效果 (Apply chorus effect)"""
+        # 实际实现应使用延迟和音高微调
+        # (Actual implementation should use delays and slight pitch detuning)
+        return "output/chorus_effect.wav"
 
-# 新增特效方法 (New effect methods)
-def apply_robot_voice(self, audio_path, intensity=0.8):
-    """应用机器人声音效果 (Apply robot voice effect)"""
-    # 实际实现应使用声码器或音高变换
-    # (Actual implementation should use vocoder or pitch shifting)
-    return "output/robot_voice.wav"
-
-def apply_chorus(self, audio_path, voices=3, depth=0.5):
-    """应用合唱效果 (Apply chorus effect)"""
-    # 实际实现应使用延迟和音高微调
-    # (Actual implementation should use delays and slight pitch detuning)
-    return "output/chorus_effect.wav"
-
-def apply_alien_voice(self, audio_path, formant_shift=1.5):
-    """应用外星人声音效果 (Apply alien voice effect)"""
-    # 实际实现应使用共振峰移动
-    # (Actual implementation should use formant shifting)
-    return "output/alien_voice.wav"
+    def apply_alien_voice(self, audio_path, formant_shift=1.5):
+        """应用外星人声音效果 (Apply alien voice effect)"""
+        # 实际实现应使用共振峰移动
+        # (Actual implementation should use formant shifting)
+        return "output/alien_voice.wav"
 
     def get_status(self):
         """
@@ -567,3 +557,14 @@ def apply_alien_voice(self, audio_path, formant_shift=1.5):
             },
             "realtime_buffer_size": len(self.realtime_buffer)
         }
+
+
+# 模型保存和加载函数 (Model save/load functions)
+def save_model(model, path):
+    """保存模型到文件 (Save model to file)"""
+    # 保存完整模型而不仅是状态字典 (Save full model not just state dict)
+    torch.save(model, path)
+
+def load_model(path):
+    """从文件加载模型 (Load model from file)"""
+    return torch.load(path)

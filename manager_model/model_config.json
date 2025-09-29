@@ -1,0 +1,233 @@
+{
+  "model_name": "Self Brain AGI System",
+  "version": "1.0.0",
+  "build_date": "2025-09-11",
+  "author": "Silence Crow Team",
+  "email": "silencecrowtom@qq.com",
+  "description": "A Multi-Modal Autonomous Learning System",
+  
+  "main_model": {
+    "id": "A",
+    "name": "Management Model",
+    "type": "management",
+    "port": 5001,
+    "api_base_url": "/api/v1/management",
+    "config": {
+      "max_tokens": 4096,
+      "temperature": 0.7,
+      "top_p": 0.9,
+      "enable_emotion": true,
+      "enable_self_learning": true,
+      "learning_rate": 0.001
+    }
+  },
+  
+  "sub_models": [
+    {
+      "id": "B",
+      "name": "Language Model",
+      "type": "language",
+      "port": 5002,
+      "api_base_url": "/api/v1/language",
+      "config": {
+        "max_tokens": 8192,
+        "temperature": 0.8,
+        "top_p": 0.95,
+        "enable_translation": true,
+        "supported_languages": ["en", "zh", "de", "ja", "ru"],
+        "enable_emotion_analysis": true
+      }
+    },
+    {
+      "id": "C",
+      "name": "Audio Model",
+      "type": "audio",
+      "port": 5003,
+      "api_base_url": "/api/v1/audio",
+      "config": {
+        "sample_rate": 44100,
+        "bit_depth": 16,
+        "channels": 1,
+        "enable_speech_recognition": true,
+        "enable_speech_synthesis": true,
+        "enable_music_generation": true
+      }
+    },
+    {
+      "id": "D",
+      "name": "Image Model",
+      "type": "image",
+      "port": 5004,
+      "api_base_url": "/api/v1/image",
+      "config": {
+        "default_resolution": "1920x1080",
+        "enable_object_detection": true,
+        "enable_image_generation": true,
+        "enable_image_editing": true,
+        "enable_ocr": true
+      }
+    },
+    {
+      "id": "E",
+      "name": "Video Model",
+      "type": "video",
+      "port": 5005,
+      "api_base_url": "/api/v1/video",
+      "config": {
+        "default_resolution": "1920x1080",
+        "default_fps": 30,
+        "enable_object_tracking": true,
+        "enable_action_recognition": true,
+        "enable_video_editing": true
+      }
+    },
+    {
+      "id": "F",
+      "name": "Spatial Model",
+      "type": "spatial",
+      "port": 5006,
+      "api_base_url": "/api/v1/spatial",
+      "config": {
+        "enable_depth_perception": true,
+        "enable_3d_reconstruction": true,
+        "enable_object_volume_estimation": true,
+        "enable_motion_prediction": true
+      }
+    },
+    {
+      "id": "G",
+      "name": "Sensor Model",
+      "type": "sensor",
+      "port": 5007,
+      "api_base_url": "/api/v1/sensor",
+      "config": {
+        "enable_temperature_sensor": true,
+        "enable_humidity_sensor": true,
+        "enable_gyroscope": true,
+        "enable_accelerometer": true,
+        "enable_pressure_sensor": true,
+        "enable_light_sensor": true,
+        "polling_interval": 1000
+      }
+    },
+    {
+      "id": "H",
+      "name": "Computer Control Model",
+      "type": "computer_control",
+      "port": 5008,
+      "api_base_url": "/api/v1/computer_control",
+      "config": {
+        "enable_file_operations": true,
+        "enable_process_control": true,
+        "enable_system_monitoring": true,
+        "enable_network_operations": true
+      }
+    },
+    {
+      "id": "I",
+      "name": "Knowledge Model",
+      "type": "knowledge",
+      "port": 5009,
+      "api_base_url": "/api/v1/knowledge",
+      "config": {
+        "enable_knowledge_graph": true,
+        "enable_reasoning": true,
+        "enable_confidence_evaluation": true,
+        "knowledge_import_formats": ["json", "csv", "pdf", "docx"]
+      }
+    },
+    {
+      "id": "J",
+      "name": "Motion Control Model",
+      "type": "motion_control",
+      "port": 5010,
+      "api_base_url": "/api/v1/motion_control",
+      "config": {
+        "enable_serial_communication": true,
+        "enable_mqtt": true,
+        "enable_udp": true,
+        "default_baudrate": 9600
+      }
+    },
+    {
+      "id": "K",
+      "name": "Programming Model",
+      "type": "programming",
+      "port": 5011,
+      "api_base_url": "/api/v1/programming",
+      "config": {
+        "supported_languages": ["python", "javascript", "java", "c++", "go", "rust"],
+        "enable_code_generation": true,
+        "enable_code_completion": true,
+        "enable_code_debugging": true,
+        "enable_code_refactoring": true
+      }
+    }
+  ],
+  
+  "system": {
+    "default_port": 5000,
+    "api_port": 5015,
+    "enable_cors": true,
+    "allowed_origins": ["*"],
+    "enable_gpu": true,
+    "max_threads": 8,
+    "log_level": "INFO",
+    "log_file": "self_brain.log",
+    "data_dir": "data",
+    "model_dir": "models",
+    "knowledge_dir": "knowledge",
+    "temp_dir": "temp"
+  },
+  
+  "database": {
+    "type": "sqlite",
+    "path": "data/self_brain.db",
+    "max_connections": 10,
+    "enable_encryption": false
+  },
+  
+  "training": {
+    "default_learning_rate": 0.001,
+    "default_batch_size": 32,
+    "default_epochs": 100,
+    "early_stopping_patience": 10,
+    "enable_checkpoints": true,
+    "checkpoint_interval": 5,
+    "enable_tensorboard": true
+  },
+  
+  "security": {
+    "enable_authentication": false,
+    "enable_encryption": false,
+    "api_key_required": false,
+    "allowed_ips": ["127.0.0.1", "::1"]
+  },
+  
+  "external_apis": {
+    "openai": {
+      "enabled": false,
+      "api_key": "",
+      "base_url": "https://api.openai.com/v1",
+      "models": ["gpt-4", "gpt-3.5-turbo"]
+    },
+    "anthropic": {
+      "enabled": false,
+      "api_key": "",
+      "base_url": "https://api.anthropic.com/v1",
+      "models": ["claude-3-opus-20240229", "claude-3-sonnet-20240229"]
+    },
+    "google": {
+      "enabled": false,
+      "api_key": "",
+      "base_url": "https://generativelanguage.googleapis.com/v1beta2",
+      "models": ["gemini-pro", "gemini-ultra"]
+    },
+    "meta": {
+      "enabled": false,
+      "api_key": "",
+      "base_url": "https://api.meta.ai",
+      "models": ["llama3"]
+    }
+  }
+}

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
+'
 Self Brain System Initialization Script
 This script initializes the Self Brain AGI system, ensuring all models are properly configured
 for training from scratch and all features are enabled.
-"""
+'
 
 import os
 import sys
@@ -34,7 +34,7 @@ SYSTEM_CONFIG_PATH = BASE_DIR / "config" / "system_config.yaml"
 
 # Check Python version
 def check_python_version():
-    """Check if the Python version is compatible with the system"""
+    'Check if the Python version is compatible with the system'
     required_version = (3, 8)
     current_version = sys.version_info
     
@@ -50,7 +50,7 @@ def check_python_version():
 
 # Create configuration files
 def create_config_files():
-    """Create default configuration files if they don't exist"""
+    'Create default configuration files if they don't exist'
     logger.info("Checking configuration files...")
     
     # Create web interface config
@@ -272,7 +272,7 @@ def create_config_files():
 
 # Initialize model directories
 def initialize_model_directories():
-    """Create necessary model directories and basic structure"""
+    'Create necessary model directories and basic structure'
     logger.info("Initializing model directories...")
     
     # Create main directories
@@ -316,7 +316,7 @@ def initialize_model_directories():
 
 # Initialize model structures
 def initialize_model_structures():
-    """Create basic structure for each model"""
+    'Create basic structure for each model'
     logger.info("Initializing model structures...")
     
     # Read model registry to get all models
@@ -337,17 +337,17 @@ def initialize_model_structures():
 
 # Create basic model files
 def create_model_files(model_path, model_id, model_type):
-    """Create basic files for a model"""
+    'Create basic files for a model'
     # Create app.py for FastAPI
     app_py_path = model_path / "app.py"
     if not app_py_path.exists():
-        # Using a safer approach to create app.py content without nested triple quotes
-        app_content = '''#!/usr/bin/env python
+        # 使用单引号的多行字符串来避免嵌套三引号问题
+        app_content = '''
 # -*- coding: utf-8 -*-
-"""
+'
 {model_name} Model API
 This is the main API file for the {model_name} model in the Self Brain system.
-"""
+'
 
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -375,6 +375,40 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+'''.strip().format(
+            model_name=model_id.upper(),
+            model_id=model_id
+        )
+
+
+
+
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+import logging
+import json
+import os
+from pathlib import Path
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - {model_id} - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(f"SelfBrain.{model_id}")
+
+# Initialize FastAPI app
+app = FastAPI(title="{model_id.upper()} Model API", version="1.0.0")
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Model parameters
 MODEL_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
@@ -382,26 +416,26 @@ CONFIG_PATH = MODEL_DIR / "config.json"
 
 # Load model configuration
 def load_config():
-    """Load model configuration"""
+    'Load model configuration'
     if not CONFIG_PATH.exists():
         # Create default config
-        default_config = {{
+        default_config = {
             "model_id": "{model_id}",
             "model_type": "{model_type}",
             "version": "1.0.0",
-            "training": {{
+            "training": {
                 "from_scratch": True,
                 "batch_size": 32,
                 "learning_rate": 0.001,
                 "epochs": 100
-            }},
-            "external_api": {{
+            },
+            "external_api": {
                 "enabled": False,
                 "api_url": "",
                 "api_key": "",
                 "model_name": ""
-            }}
-        }}
+            }
+        }
         
         with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
             json.dump(default_config, f, indent=2, ensure_ascii=False)
@@ -416,7 +450,7 @@ config = load_config()
 
 # Define request/response models
 def define_specific_models():
-    """Define specific request/response models based on model type"""
+    'Define specific request/response models based on model type'
     global ProcessRequest, ProcessResponse
     
     if "{model_id}" == "a_manager":
@@ -454,41 +488,41 @@ define_specific_models()
 
 # Initialize model
 def initialize_model():
-    """Initialize the model - from scratch implementation"""
-    logger.info(f"Initializing {{model_id.upper()}} model from scratch")
+    'Initialize the model - from scratch implementation'
+    logger.info(f"Initializing {model_id.upper()} model from scratch")
     # This is where the actual model initialization would happen
     # For now, we'll just log that we're starting from scratch
-    return {{"status": "initialized", "from_scratch": True}}
+    return {"status": "initialized", "from_scratch": True}
 
 # Health check endpoint
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
-    return {{"status": "healthy", "model": "{model_id}", "version": config["version"]}}
+    'Health check endpoint'
+    return {"status": "healthy", "model": "{model_id}", "version": config["version"]}
 
 # Model configuration endpoint
 @app.get("/config")
 async def get_config():
-    """Get current model configuration"""
+    'Get current model configuration'
     return config
 
 # Update model configuration
 @app.post("/config/update")
 async def update_config(new_config: dict):
-    """Update model configuration"""
+    'Update model configuration'
     global config
     config.update(new_config)
     
     with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
     
-    logger.info(f"Updated {{model_id.upper()}} model configuration")
-    return {{"status": "success", "message": "Configuration updated"}}
+    logger.info(f"Updated {model_id.upper()} model configuration")
+    return {"status": "success", "message": "Configuration updated"}
 
 # Process request endpoint
 @app.post("/process", response_model=ProcessResponse)
 async def process_request(request: ProcessRequest):
-    """Process incoming requests based on model type"""
+    'Process incoming requests based on model type'
     import time
     start_time = time.time()
     
@@ -499,13 +533,13 @@ async def process_request(request: ProcessRequest):
         else:
             return process_local_model(request, start_time)
     except Exception as e:
-        logger.error(f"Error processing request: {{str(e)}}")
-        raise HTTPException(status_code=500, detail=f"Error processing request: {{str(e)}}")
+        logger.error(f"Error processing request: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
 
 # Process using local model
 def process_local_model(request: ProcessRequest, start_time: float):
-    """Process request using local model"""
-    logger.info(f"Processing request with local {{model_id.upper()}} model")
+    'Process request using local model'
+    logger.info(f"Processing request with local {model_id.upper()} model")
     
     # Model-specific processing logic would be implemented here
     # For now, we'll return a placeholder response
@@ -513,7 +547,7 @@ def process_local_model(request: ProcessRequest, start_time: float):
         # Manager model specific processing
         return ProcessResponse(
             response="This is a response from the manager model",
-            emotional_state={{"happiness": 0.5, "excitement": 0.3}},
+            emotional_state={"happiness": 0.5, "excitement": 0.3},
             processed_by="local_model"
         )
     elif "{model_id}" == "b_language":
@@ -521,38 +555,38 @@ def process_local_model(request: ProcessRequest, start_time: float):
         return ProcessResponse(
             processed_text=request.text,
             language=request.language,
-            emotional_score={{"positive": 0.7}} if request.emotional_analysis else None
+            emotional_score={"positive": 0.7} if request.emotional_analysis else None
         )
     else:
         # Generic model response
         return ProcessResponse(
-            result={{"processed": True, "data": request.data}},
+            result={"processed": True, "data": request.data},
             status="success",
             processing_time=time.time() - start_time
         )
 
 # Process using external API
 def process_external_api(request: ProcessRequest, start_time: float):
-    """Process request using external API"""
-    logger.info(f"Processing request with external API for {{model_id.upper()}} model")
+    'Process request using external API'
+    logger.info(f"Processing request with external API for {model_id.upper()} model")
     
     # In a real implementation, this would make an API call to the external service
     # For now, we'll return a placeholder response indicating external API usage
     if "{model_id}" == "a_manager":
         return ProcessResponse(
             response="This is a response from an external manager API",
-            emotional_state={{"happiness": 0.6, "excitement": 0.4}},
+            emotional_state={"happiness": 0.6, "excitement": 0.4},
             processed_by="external_api"
         )
     elif "{model_id}" == "b_language":
         return ProcessResponse(
             processed_text=request.text,
             language=request.language,
-            emotional_score={{"positive": 0.8}} if request.emotional_analysis else None
+            emotional_score={"positive": 0.8} if request.emotional_analysis else None
         )
     else:
         return ProcessResponse(
-            result={{"processed": True, "data": request.data, "source": "external_api"}},
+            result={"processed": True, "data": request.data, "source": "external_api"},
             status="success",
             processing_time=time.time() - start_time
         )
@@ -560,8 +594,8 @@ def process_external_api(request: ProcessRequest, start_time: float):
 # Train model endpoint
 @app.post("/train")
 async def train_model(training_params: dict = None):
-    """Train the model"""
-    logger.info(f"Starting training for {{model_id.upper()}} model")
+    'Train the model'
+    logger.info(f"Starting training for {model_id.upper()} model")
     
     # Use provided params or default from config
     params = training_params or config["training"]
@@ -573,19 +607,19 @@ async def train_model(training_params: dict = None):
     
     # In a real implementation, this would start the training process
     # For now, we'll return a placeholder response
-    return {{
+    return {
         "status": "training_started",
         "model": "{model_id}",
         "params": params,
         "message": "Training process has started"
-    }}
+    }
 
 # Connect to knowledge base
 def connect_to_knowledge_base():
-    """Connect to the knowledge base model"""
-    logger.info(f"Connecting {{model_id.upper()}} model to knowledge base")
+    'Connect to the knowledge base model'
+    logger.info(f"Connecting {model_id.upper()} model to knowledge base")
     # In a real implementation, this would establish a connection to the knowledge base service
-    return {{"status": "connected"}}
+    return {"status": "connected"}
 
 # Initialize the model on startup
 model = initialize_model()
@@ -593,12 +627,13 @@ knowledge_base_connection = connect_to_knowledge_base()
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))'''.format(model_name=model_id.upper(), model_id=model_id, model_type=model_type)
-    
-    with open(app_py_path, 'w', encoding='utf-8') as f:
-        f.write(app_content)
-    
-    logger.info(f"Created app.py for {model_id}")
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+'
+        
+        with open(app_py_path, 'w', encoding='utf-8') as f:
+            f.write(app_content.format(model_id=model_id, model_type=model_type))
+        
+        logger.info(f"Created app.py for {model_id}")
     
     # Create config.json
     config_json_path = model_path / "config.json"
@@ -632,7 +667,7 @@ if __name__ == "__main__":
 
 # Create training structure
 def create_training_structure(model_path, model_id):
-    """Create training structure for a model"""
+    'Create training structure for a model'
     # Create training directory
     training_dir = model_path / "training"
     training_dir.mkdir(parents=True, exist_ok=True)
@@ -652,12 +687,11 @@ def create_training_structure(model_path, model_id):
     # Create training script
     train_script_path = training_dir / "train_model.py"
     if not train_script_path.exists():
-        train_content = '''#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-Training script for the {model_name} model
+        train_content = f'# -*- coding: utf-8 -*-
+'
+Training script for the {model_id.upper()} model
 This script handles training the model from scratch using the specified parameters.
-"""
+'
 
 import os
 import sys
@@ -685,14 +719,14 @@ CONFIG_PATH = BASE_DIR / "config.json"
 
 # Load configuration
 def load_config():
-    """Load model configuration"""
+    'Load model configuration'
     with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
         return json.load(f)
 
 # Initialize model architecture
 def create_model_architecture(config):
-    """Create model architecture from scratch"""
-    logger.info(f"Creating {{model_name}} model architecture from scratch")
+    'Create model architecture from scratch'
+    logger.info(f"Creating {model_id.upper()} model architecture from scratch")
     
     # This is where the actual model architecture would be defined
     # For now, we'll return a placeholder model object
@@ -712,8 +746,8 @@ def create_model_architecture(config):
 
 # Load training data
 def load_training_data(data_dir):
-    """Load training data"""
-    logger.info(f"Loading training data from {{data_dir}}")
+    'Load training data'
+    logger.info(f"Loading training data from {data_dir}")
     
     # In a real implementation, this would load actual training data
     # For now, we'll return placeholder data
@@ -725,8 +759,8 @@ def load_training_data(data_dir):
 
 # Create data loaders
 def create_data_loaders(data, batch_size):
-    """Create data loaders for training"""
-    logger.info(f"Creating data loaders with batch size: {{batch_size}}")
+    'Create data loaders for training'
+    logger.info(f"Creating data loaders with batch size: {batch_size}")
     
     # In a real implementation, this would create actual data loaders
     # For now, we'll return placeholder loaders
@@ -738,13 +772,13 @@ def create_data_loaders(data, batch_size):
 
 # Define loss function
 def get_loss_function():
-    """Define loss function"""
+    'Define loss function'
     # In a real implementation, this would return an appropriate loss function
     return lambda x, y: 0.0
 
 # Define optimizer
 def get_optimizer(model, learning_rate):
-    """Define optimizer"""
+    'Define optimizer'
     # In a real implementation, this would return an appropriate optimizer
     class PlaceholderOptimizer:
         def __init__(self):
@@ -760,13 +794,13 @@ def get_optimizer(model, learning_rate):
 
 # Train model
 def train_model(model, data_loaders, loss_function, optimizer, epochs, config):
-    """Train the model"""
-    logger.info(f"Starting training for {{epochs}} epochs")
+    'Train the model'
+    logger.info(f"Starting training for {epochs} epochs")
     
     # Training loop placeholder
     for epoch in range(epochs):
         start_time = time.time()
-        logger.info(f"Epoch {{epoch+1}}/{{epochs}}")
+        logger.info(f"Epoch {epoch+1}/{epochs}")
         
         # Training phase
         model.train()
@@ -780,7 +814,7 @@ def train_model(model, data_loaders, loss_function, optimizer, epochs, config):
         if (epoch + 1) % 10 == 0:
             save_checkpoint(model, optimizer, epoch, config)
         
-        logger.info(f"Epoch {{epoch+1}} completed in {{time.time() - start_time:.2f}} seconds")
+        logger.info(f"Epoch {epoch+1} completed in {time.time() - start_time:.2f} seconds")
     
     # Final checkpoint
     save_checkpoint(model, optimizer, epochs, config, is_best=True)
@@ -788,12 +822,12 @@ def train_model(model, data_loaders, loss_function, optimizer, epochs, config):
 
 # Save model checkpoint
 def save_checkpoint(model, optimizer, epoch, config, is_best=False):
-    """Save model checkpoint"""
+    'Save model checkpoint'
     checkpoint_dir = BASE_DIR / "training" / "checkpoints"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     
     # In a real implementation, this would save the actual model state
-    checkpoint_path = checkpoint_dir / f"checkpoint_epoch_{{epoch}}.pt"
+    checkpoint_path = checkpoint_dir / f"checkpoint_epoch_{epoch}.pt"
     
     # Placeholder checkpoint content
     checkpoint = {
@@ -807,18 +841,18 @@ def save_checkpoint(model, optimizer, epoch, config, is_best=False):
     with open(checkpoint_path.with_suffix('.json'), 'w', encoding='utf-8') as f:
         json.dump(checkpoint, f, indent=2, ensure_ascii=False)
     
-    logger.info(f"Checkpoint saved: {{checkpoint_path}}")
+    logger.info(f"Checkpoint saved: {checkpoint_path}")
     
     # Save best model
     if is_best:
         best_model_path = checkpoint_dir / "best_model.json"
         with open(best_model_path, 'w', encoding='utf-8') as f:
             json.dump(checkpoint, f, indent=2, ensure_ascii=False)
-        logger.info(f"Best model saved: {{best_model_path}}")
+        logger.info(f"Best model saved: {best_model_path}")
 
 # Evaluate model
 def evaluate_model(model, data_loader):
-    """Evaluate model performance"""
+    'Evaluate model performance'
     logger.info("Evaluating model performance")
     
     # In a real implementation, this would include evaluation logic
@@ -830,8 +864,8 @@ def evaluate_model(model, data_loader):
 
 # Main training function
 def main():
-    """Main training function"""
-    logger.info(f"===== {{model_name}} Model Training =====")
+    'Main training function'
+    logger.info(f"===== {model_id.upper()} Model Training =====")
     
     # Load configuration
     config = load_config()
@@ -863,7 +897,7 @@ def main():
     
     # Evaluate model
     evaluation_results = evaluate_model(model, data_loaders["test"])
-    logger.info(f"Evaluation results: {{evaluation_results}}")
+    logger.info(f"Evaluation results: {evaluation_results}")
     
     # Save evaluation results
     results_path = BASE_DIR / "training" / "logs" / "evaluation_results.json"
@@ -871,16 +905,17 @@ def main():
         json.dump(evaluation_results, f, indent=2, ensure_ascii=False)
 
 if __name__ == "__main__":
-    main()'''.format(model_name=model_id.upper(), model_id=model_id)
-    
-    with open(train_script_path, 'w', encoding='utf-8') as f:
-        f.write(train_content)
-    
-    logger.info(f"Created training script for {model_id}")
+    main()
+'
+        
+        with open(train_script_path, 'w', encoding='utf-8') as f:
+            f.write(train_content.format(model_id=model_id))
+        
+        logger.info(f"Created training script for {model_id}")
 
 # Create device manager configuration
 def create_device_manager_config():
-    """Create device manager configuration"""
+    'Create device manager configuration'
     device_manager_dir = BASE_DIR / "device_manager"
     device_manager_dir.mkdir(parents=True, exist_ok=True)
     
@@ -923,7 +958,7 @@ def create_device_manager_config():
 
 # Create AGI core configuration
 def create_agi_core_config():
-    """Create AGI core configuration"""
+    'Create AGI core configuration'
     agi_core_dir = BASE_DIR / "agi_core"
     agi_core_dir.mkdir(parents=True, exist_ok=True)
     
@@ -957,7 +992,7 @@ def create_agi_core_config():
 
 # Main initialization function
 def main():
-    """Main initialization function"""
+    'Main initialization function'
     logger.info("===== Self Brain AGI System Initialization =====")
     
     # Check Python version

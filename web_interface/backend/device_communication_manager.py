@@ -232,8 +232,8 @@ class DeviceCommunicationManager:
                 
                 # Publish the result back to the data bus
                 self.data_bus.publish(
-                    channel_id="device_control_response",
-                    message={
+                    "device_control_response",
+                    {
                         "request_id": message.get("request_id", ""),
                         "result": result
                     }
@@ -243,8 +243,8 @@ class DeviceCommunicationManager:
                 
                 # Publish the result back to the data bus
                 self.data_bus.publish(
-                    channel_id="device_control_response",
-                    message={
+                    "device_control_response",
+                    {
                         "request_id": message.get("request_id", ""),
                         "result": result
                     }
@@ -254,8 +254,8 @@ class DeviceCommunicationManager:
                 
                 # Publish the result back to the data bus
                 self.data_bus.publish(
-                    channel_id="sensor_data_update",
-                    message={
+                    "sensor_data_update",
+                    {
                         "request_id": message.get("request_id", ""),
                         "data": result.get("data", {})
                     }
@@ -271,8 +271,8 @@ class DeviceCommunicationManager:
             
             # Publish the result back to the data bus
             self.data_bus.publish(
-                channel_id="serial_response",
-                message={
+                "serial_response",
+                {
                     "request_id": message.get("request_id", ""),
                     "result": result
                 }
@@ -347,8 +347,8 @@ class DeviceCommunicationManager:
             # Publish sensor data to data bus
             try:
                 self.data_bus.publish(
-                    channel_id="sensor_data_update",
-                    message=sensor_data
+                    "sensor_data_update",
+                    sensor_data
                 )
             except Exception as e:
                 print(f"Error publishing sensor data: {e}")

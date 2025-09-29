@@ -7,9 +7,12 @@ class DeviceCommunication {
      */
     constructor() {
         this.baseUrl = '/api/device';
+        this.deviceCommunicationBaseUrl = '/api/device_communication';
         this.serialConnection = null;
         this.isConnected = false;
         this.sensorUpdateCallbacks = [];
+        this.sensorPollingInterval = null;
+        this.sensorPollingRate = 1000; // 1 second
     }
 
     /**
@@ -98,28 +101,56 @@ class DeviceCommunication {
      */
     async connectSerialPort(port, baudRate) {
         try {
-            const response = await fetch(`${this.baseUrl}/serial_connect`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    port: port,
-                    baud_rate: baudRate
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                this.isConnected = true;
-                this.serialConnection = {
-                    port: port,
-                    baudRate: baudRate
-                };
+            // Try the new API path first
+            try {
+                const response = await fetch(`${this.deviceCommunicationBaseUrl}/serial/connect`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        port: port,
+                        baudrate: baudRate
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    this.isConnected = true;
+                    this.serialConnection = {
+                        port: port,
+                        baudRate: baudRate
+                    };
+                }
+                
+                return data;
+            } catch (newApiError) {
+                console.warn('New API failed, trying legacy API:', newApiError);
+                // Fallback to legacy API if new API fails
+                const response = await fetch(`${this.baseUrl}/serial_connect`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        port: port,
+                        baud_rate: baudRate
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    this.isConnected = true;
+                    this.serialConnection = {
+                        port: port,
+                        baudRate: baudRate
+                    };
+                }
+                
+                return data;
             }
-            
-            return data;
         } catch (error) {
             console.error('Error connecting to serial port:', error);
             return {
@@ -136,18 +167,42 @@ class DeviceCommunication {
      */
     async disconnectSerialPort() {
         try {
-            const response = await fetch(`${this.baseUrl}/serial_disconnect`, {
-                method: 'POST'
-            });
-            
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                this.isConnected = false;
-                this.serialConnection = null;
+            // Try the new API path first
+            try {
+                const response = await fetch(`${this.deviceCommunicationBaseUrl}/serial/disconnect`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        port: this.serialConnection?.port
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    this.isConnected = false;
+                    this.serialConnection = null;
+                }
+                
+                return data;
+            } catch (newApiError) {
+                console.warn('New API failed, trying legacy API:', newApiError);
+                // Fallback to legacy API if new API fails
+                const response = await fetch(`${this.baseUrl}/serial_disconnect`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    this.isConnected = false;
+                    this.serialConnection = null;
+                }
+                
+                return data;
             }
-            
-            return data;
         } catch (error) {
             console.error('Error disconnecting from serial port:', error);
             return {
@@ -172,22 +227,101 @@ class DeviceCommunication {
         }
         
         try {
-            const response = await fetch(`${this.baseUrl}/serial_command`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    command: command
-                })
-            });
-            
-            return await response.json();
+            // Try the new API path first
+            try {
+                const response = await fetch(`${this.deviceCommunicationBaseUrl}/serial/send`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        port: this.serialConnection.port,
+                        command: command
+                    })
+                });
+                
+                return await response.json();
+            } catch (newApiError) {
+                console.warn('New API failed, trying legacy API:', newApiError);
+                // Fallback to legacy API if new API fails
+                const response = await fetch(`${this.baseUrl}/serial_command`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        command: command
+                    })
+                });
+                
+                return await response.json();
+            }
         } catch (error) {
             console.error('Error sending serial command:', error);
             return {
                 status: 'error',
                 message: 'Failed to send serial command',
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * Get all available devices (serial ports, cameras, etc.)
+     * @returns {Promise<Object>} The available devices response
+     */
+    async getAvailableDevices() {
+        try {
+            const response = await fetch(`${this.deviceCommunicationBaseUrl}/available_devices`);
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching available devices:', error);
+            return {
+                status: 'error',
+                message: 'Failed to fetch available devices',
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * Get status of all connected serial devices
+     * @returns {Promise<Object>} The serial devices status response
+     */
+    async getSerialDevicesStatus() {
+        try {
+            const response = await fetch(`${this.deviceCommunicationBaseUrl}/serial/devices`);
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching serial devices status:', error);
+            return {
+                status: 'error',
+                message: 'Failed to fetch serial devices status',
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * Get all sensor data from the device communication manager
+     * @returns {Promise<Object>} The sensor data response
+     */
+    async getAllSensorData() {
+        try {
+            const response = await fetch(`${this.deviceCommunicationBaseUrl}/sensors/data`);
+            const data = await response.json();
+            
+            // Notify callbacks if data is successful
+            if (data.status === 'success') {
+                this.notifySensorUpdate(data);
+            }
+            
+            return data;
+        } catch (error) {
+            console.error('Error fetching all sensor data:', error);
+            return {
+                status: 'error',
+                message: 'Failed to fetch all sensor data',
                 error: error.message
             };
         }
@@ -230,13 +364,46 @@ class DeviceCommunication {
     }
 
     /**
+     * Start polling for sensor data updates
+     * @param {number} rate - Polling rate in milliseconds (default: 1000)
+     */
+    startSensorPolling(rate = 1000) {
+        // Stop any existing polling
+        this.stopSensorPolling();
+        
+        this.sensorPollingRate = rate;
+        this.sensorPollingInterval = setInterval(async () => {
+            try {
+                await this.getSensorData();
+            } catch (error) {
+                console.error('Error in sensor polling:', error);
+            }
+        }, this.sensorPollingRate);
+        
+        console.log(`Sensor polling started with rate: ${this.sensorPollingRate}ms`);
+    }
+
+    /**
+     * Stop polling for sensor data updates
+     */
+    stopSensorPolling() {
+        if (this.sensorPollingInterval) {
+            clearInterval(this.sensorPollingInterval);
+            this.sensorPollingInterval = null;
+            console.log('Sensor polling stopped');
+        }
+    }
+
+    /**
      * Get current connection status
      * @returns {Object} Connection status information
      */
     getConnectionStatus() {
         return {
             isConnected: this.isConnected,
-            connection: this.serialConnection
+            connection: this.serialConnection,
+            isPolling: !!this.sensorPollingInterval,
+            pollingRate: this.sensorPollingRate
         };
     }
 
@@ -250,11 +417,21 @@ class DeviceCommunication {
             this.baseUrl = options.baseUrl;
         }
         
+        if (options.deviceCommunicationBaseUrl) {
+            this.deviceCommunicationBaseUrl = options.deviceCommunicationBaseUrl;
+        }
+        
         // Test if device communication API is available
         try {
             const response = await fetch(`${this.baseUrl}/ping`);
             if (response.ok) {
                 console.log('Device communication initialized successfully');
+                
+                // If autoStartPolling is enabled, start polling for sensor data
+                if (options.autoStartPolling !== false) {
+                    this.startSensorPolling(options.pollingRate || this.sensorPollingRate);
+                }
+                
                 return { status: 'success', message: 'Device communication initialized' };
             } else {
                 console.warn('Device communication API is not available');
@@ -264,6 +441,18 @@ class DeviceCommunication {
             console.error('Error initializing device communication:', error);
             return { status: 'error', message: 'Failed to initialize device communication', error: error.message };
         }
+    }
+
+    /**
+     * Cleanup resources and disconnect
+     */
+    async cleanup() {
+        this.stopSensorPolling();
+        if (this.isConnected) {
+            await this.disconnectSerialPort();
+        }
+        this.sensorUpdateCallbacks = [];
+        console.log('Device communication resources cleaned up');
     }
 }
 

@@ -1,5 +1,7 @@
 {% extends "base_monochrome.html" %}
 
+{% extends "base.html" %}
+
 {% block title %}Device Communication{% endblock %}
 
 {% block styles %}
@@ -219,12 +221,42 @@
         color: #721c24;
         border: 1px solid #f5c6cb;
     }
+    .device-connection-status {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        padding: 10px;
+        border-radius: 4px;
+        background-color: #f1f1f1;
+    }
+    .connection-status-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 10px;
+    }
+    .indicator-connected {
+        background-color: #4CAF50;
+    }
+    .indicator-disconnected {
+        background-color: #f44336;
+    }
+    .connection-status-text {
+        font-size: 14px;
+        color: #666;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container">
     <h1>Device Communication</h1>
+    
+    <!-- Connection Status Bar -->
+    <div class="device-connection-status">
+        <div id="connection-status-indicator" class="connection-status-indicator indicator-disconnected"></div>
+        <div id="connection-status-text" class="connection-status-text">Initializing device communication...</div>
+    </div>
     
     <!-- System Sensors Section -->
     <div class="section">
@@ -298,6 +330,7 @@
     </div>
 </div>
 
+<script src="{{ url_for('static', filename='js/device_communication.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Reference to UI elements
@@ -313,77 +346,107 @@
         const microphoneTestResult = document.getElementById('microphone-test-result');
         const testSerialPermissionBtn = document.getElementById('test-serial-permission-btn');
         const serialPermissionTestResult = document.getElementById('serial-permission-test-result');
+        const connectionStatusIndicator = document.getElementById('connection-status-indicator');
+        const connectionStatusText = document.getElementById('connection-status-text');
         
-        let isConnected = false;
-        let connectedPort = null;
-        let sensorUpdateInterval = null;
-        let serialPortUpdateInterval = null;
+        // Get reference to the global DeviceCommunication instance
+        const deviceComm = window.DeviceCommunication;
         
         // Initialize device communication
         initDeviceCommunication();
         
         // Function to initialize device communication
-        function initDeviceCommunication() {
-            // Load initial data
-            loadSensorData();
-            loadSerialPorts();
-            
-            // Set up periodic updates
-            sensorUpdateInterval = setInterval(loadSensorData, 5000); // Update sensors every 5 seconds
-            serialPortUpdateInterval = setInterval(loadSerialPorts, 10000); // Update ports every 10 seconds
-        }
-        
-        // Function to load sensor data
-        async function loadSensorData() {
+        async function initDeviceCommunication() {
             try {
-                const response = await fetch('/api/device/sensor_data');
-                const data = await response.json();
+                // Initialize the device communication system
+                const result = await deviceComm.initialize({
+                    autoStartPolling: true,
+                    pollingRate: 5000 // Update sensors every 5 seconds
+                });
                 
-                if (data.status === 'success' && data.data) {
-                    sensorGrid.innerHTML = '';
+                if (result.status === 'success') {
+                    updateConnectionStatus(true, 'Device communication initialized successfully');
                     
-                    // Create CPU sensor card
-                    const cpuCard = createSensorCard(
-                        'CPU Usage', 
-                        `${data.data.cpu ? data.data.cpu.percent.toFixed(1) : '0.0'}%`,
-                        '',
-                        data.data.timestamp
-                    );
-                    sensorGrid.appendChild(cpuCard);
+                    // Register sensor update callback
+                    deviceComm.onSensorUpdate(onSensorDataUpdate);
                     
-                    // Create Memory sensor card
-                    const memoryCard = createSensorCard(
-                        'Memory Usage', 
-                        `${data.data.memory ? data.data.memory.percent.toFixed(1) : '0.0'}%`,
-                        '',
-                        data.data.timestamp
-                    );
-                    sensorGrid.appendChild(memoryCard);
+                    // Load initial data
+                    loadSerialPorts();
                     
-                    // Create Disk sensor card
-                    const diskCard = createSensorCard(
-                        'Disk Usage', 
-                        `${data.data.disk ? data.data.disk.percent.toFixed(1) : '0.0'}%`,
-                        '',
-                        data.data.timestamp
-                    );
-                    sensorGrid.appendChild(diskCard);
+                    // Set up periodic port updates
+                    setInterval(loadSerialPorts, 10000); // Update ports every 10 seconds
                     
-                    // Create Temperature sensor card (if available)
-                    if (data.data.temperature !== undefined && data.data.temperature !== null) {
-                        const tempCard = createSensorCard(
-                            'Temperature', 
-                            `${data.data.temperature.toFixed(1)}`,
-                            '°C',
-                            data.data.timestamp
-                        );
-                        sensorGrid.appendChild(tempCard);
-                    }
+                    // Set up status update interval
+                    setInterval(updateConnectionStatusDisplay, 1000);
                 } else {
-                    console.error('Failed to load sensor data:', data.message);
+                    updateConnectionStatus(false, result.message || 'Device communication initialization failed');
+                    console.warn('Device communication initialization:', result.message);
                 }
             } catch (error) {
-                console.error('Error loading sensor data:', error);
+                updateConnectionStatus(false, 'Error initializing device communication');
+                console.error('Error initializing device communication:', error);
+            }
+        }
+        
+        // Callback function for sensor data updates
+        function onSensorDataUpdate(sensorData) {
+            if (sensorData.status === 'success' && sensorData.data) {
+                updateSensorGrid(sensorData.data);
+            }
+        }
+        
+        // Function to update sensor grid
+        function updateSensorGrid(data) {
+            sensorGrid.innerHTML = '';
+            
+            // Create CPU sensor card
+            const cpuCard = createSensorCard(
+                'CPU Usage', 
+                `${data.cpu ? data.cpu.percent.toFixed(1) : '0.0'}%`,
+                '',
+                data.timestamp
+            );
+            sensorGrid.appendChild(cpuCard);
+            
+            // Create Memory sensor card
+            const memoryCard = createSensorCard(
+                'Memory Usage', 
+                `${data.memory ? data.memory.percent.toFixed(1) : '0.0'}%`,
+                '',
+                data.timestamp
+            );
+            sensorGrid.appendChild(memoryCard);
+            
+            // Create Disk sensor card
+            const diskCard = createSensorCard(
+                'Disk Usage', 
+                `${data.disk ? data.disk.percent.toFixed(1) : '0.0'}%`,
+                '',
+                data.timestamp
+            );
+            sensorGrid.appendChild(diskCard);
+            
+            // Create Temperature sensor card (if available)
+            if (data.temperature !== undefined && data.temperature !== null) {
+                const tempCard = createSensorCard(
+                    'Temperature', 
+                    `${data.temperature.toFixed(1)}`,
+                    '°C',
+                    data.timestamp
+                );
+                sensorGrid.appendChild(tempCard);
+            }
+            
+            // Add more sensor cards based on available data
+            // Example for additional sensors if they exist in the data
+            if (data.system_info) {
+                const systemCard = createSensorCard(
+                    'System', 
+                    `${data.system_info.os || 'Unknown'}`,
+                    `v${data.system_info.version || 'N/A'}`,
+                    data.timestamp
+                );
+                sensorGrid.appendChild(systemCard);
             }
         }
         
@@ -447,8 +510,7 @@
         // Function to load serial ports
         async function loadSerialPorts() {
             try {
-                const response = await fetch('/api/device/serial_ports');
-                const data = await response.json();
+                const data = await deviceComm.getSerialPorts();
                 
                 if (data.status === 'success') {
                     // Save current selection
@@ -478,9 +540,11 @@
                     });
                 } else {
                     console.error('Failed to load serial ports:', data.message);
+                    appendToSerialOutput(`Failed to load serial ports: ${data.message}`);
                 }
             } catch (error) {
                 console.error('Error loading serial ports:', error);
+                appendToSerialOutput(`Error loading serial ports: ${error.message}`);
             }
         }
         
@@ -498,22 +562,9 @@
                 connectBtn.disabled = true;
                 connectBtn.textContent = 'Connecting...';
                 
-                const response = await fetch('/api/device/serial_connect', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        port: port,
-                        baud_rate: baudRate
-                    })
-                });
-                
-                const data = await response.json();
+                const data = await deviceComm.connectSerialPort(port, baudRate);
                 
                 if (data.status === 'success') {
-                    isConnected = true;
-                    connectedPort = port;
                     connectBtn.textContent = 'Disconnect';
                     connectBtn.className = 'btn btn-danger';
                     sendCommandBtn.disabled = false;
@@ -525,7 +576,7 @@
                 }
             } catch (error) {
                 console.error('Error connecting to serial port:', error);
-                appendToSerialOutput('Error connecting to serial port. Please try again.');
+                appendToSerialOutput(`Error connecting to serial port: ${error.message}`);
             } finally {
                 connectBtn.disabled = false;
             }
@@ -537,15 +588,9 @@
                 connectBtn.disabled = true;
                 connectBtn.textContent = 'Disconnecting...';
                 
-                const response = await fetch('/api/device/serial_disconnect', {
-                    method: 'POST'
-                });
-                
-                const data = await response.json();
+                const data = await deviceComm.disconnectSerialPort();
                 
                 if (data.status === 'success') {
-                    isConnected = false;
-                    connectedPort = null;
                     connectBtn.textContent = 'Connect';
                     connectBtn.className = 'btn btn-primary';
                     sendCommandBtn.disabled = true;
@@ -557,7 +602,7 @@
                 }
             } catch (error) {
                 console.error('Error disconnecting from serial port:', error);
-                appendToSerialOutput('Error disconnecting from serial port.');
+                appendToSerialOutput(`Error disconnecting from serial port: ${error.message}`);
             } finally {
                 connectBtn.disabled = false;
             }
@@ -576,17 +621,7 @@
                 sendCommandBtn.disabled = true;
                 sendCommandBtn.textContent = 'Sending...';
                 
-                const response = await fetch('/api/device/serial_command', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        command: command
-                    })
-                });
-                
-                const data = await response.json();
+                const data = await deviceComm.sendSerialCommand(command);
                 
                 if (data.status === 'success') {
                     appendToSerialOutput(`> ${command}`);
@@ -599,7 +634,7 @@
                 }
             } catch (error) {
                 console.error('Error sending serial command:', error);
-                appendToSerialOutput('Error sending command. Please try again.');
+                appendToSerialOutput(`Error sending command: ${error.message}`);
             } finally {
                 sendCommandBtn.disabled = false;
                 sendCommandBtn.textContent = 'Send Command';
@@ -620,8 +655,7 @@
                 testMicrophoneBtn.textContent = 'Testing...';
                 microphoneTestResult.style.display = 'none';
                 
-                const response = await fetch('/api/device/test_microphone');
-                const data = await response.json();
+                const data = await deviceComm.testMicrophone();
                 
                 if (data.status === 'success') {
                     microphoneTestResult.textContent = data.message;
@@ -632,7 +666,7 @@
                 }
             } catch (error) {
                 console.error('Error testing microphone:', error);
-                microphoneTestResult.textContent = 'Error testing microphone. Please try again.';
+                microphoneTestResult.textContent = `Error testing microphone: ${error.message}`;
                 microphoneTestResult.className = 'test-result test-error';
             } finally {
                 microphoneTestResult.style.display = 'block';
@@ -648,8 +682,7 @@
                 testSerialPermissionBtn.textContent = 'Testing...';
                 serialPermissionTestResult.style.display = 'none';
                 
-                const response = await fetch('/api/device/test_serial_permission');
-                const data = await response.json();
+                const data = await deviceComm.testSerialPermission();
                 
                 if (data.status === 'success') {
                     serialPermissionTestResult.textContent = data.message;
@@ -660,7 +693,7 @@
                 }
             } catch (error) {
                 console.error('Error testing serial permission:', error);
-                serialPermissionTestResult.textContent = 'Error testing serial permission. Please try again.';
+                serialPermissionTestResult.textContent = `Error testing serial permission: ${error.message}`;
                 serialPermissionTestResult.className = 'test-result test-error';
             } finally {
                 serialPermissionTestResult.style.display = 'block';
@@ -669,9 +702,37 @@
             }
         }
         
+        // Function to update connection status display
+        function updateConnectionStatusDisplay() {
+            const status = deviceComm.getConnectionStatus();
+            const isConnected = status.isConnected;
+            const isPolling = status.isPolling;
+            
+            if (isConnected && isPolling) {
+                updateConnectionStatus(true, `Connected to ${status.connection?.port || 'device'} and polling sensors`);
+            } else if (isConnected) {
+                updateConnectionStatus(true, `Connected to ${status.connection?.port || 'device'}`);
+            } else if (isPolling) {
+                updateConnectionStatus(true, 'Polling sensors (not connected to serial)');
+            } else {
+                updateConnectionStatus(false, 'Not connected');
+            }
+        }
+        
+        // Helper function to update connection status UI
+        function updateConnectionStatus(isConnected, message) {
+            if (isConnected) {
+                connectionStatusIndicator.className = 'connection-status-indicator indicator-connected';
+            } else {
+                connectionStatusIndicator.className = 'connection-status-indicator indicator-disconnected';
+            }
+            connectionStatusText.textContent = message;
+        }
+        
         // Event listeners
         connectBtn.addEventListener('click', function() {
-            if (isConnected) {
+            const status = deviceComm.getConnectionStatus();
+            if (status.isConnected) {
                 disconnectFromSerialPort();
             } else {
                 connectToSerialPort();
@@ -696,18 +757,8 @@
         
         // Handle page unload
         window.addEventListener('beforeunload', function() {
-            // Clear intervals
-            if (sensorUpdateInterval) {
-                clearInterval(sensorUpdateInterval);
-            }
-            if (serialPortUpdateInterval) {
-                clearInterval(serialPortUpdateInterval);
-            }
-            
-            // Disconnect from serial port if connected
-            if (isConnected) {
-                disconnectFromSerialPort();
-            }
+            // Cleanup resources
+            deviceComm.cleanup();
         });
     });
 </script>

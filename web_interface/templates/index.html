@@ -2,16 +2,20 @@
 {% block head %}
 {{ super() }}
 <style>
-    /* 单色主题样式 */
+    /* Monochrome theme styles */
     :root {
-        --primary-color: #333;
-        --secondary-color: #666;
-        --background-color: #fff;
-        --card-background: #f9f9f9;
-        --border-color: #ddd;
+        --primary-color: #333333;
+        --secondary-color: #666666;
+        --accent-color: #999999;
+        --background-color: #ffffff;
+        --card-background: #f5f5f5;
+        --border-color: #e0e0e0;
+        --success-color: #444444;
+        --warning-color: #555555;
+        --danger-color: #666666;
     }
     
-    /* 对话样式 */
+    /* Conversation styles */
     .message-bubble {
         position: relative;
         max-width: 80%;
@@ -36,7 +40,7 @@
         border-bottom-left-radius: 4px;
     }
     
-    /* 动画效果 */
+    /* Animation effects */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
@@ -46,7 +50,7 @@
         animation: fadeIn 0.3s ease-out;
     }
     
-    /* 滚动条样式 */
+    /* Scrollbar styles */
     .scrollbar-custom {
         scrollbar-width: thin;
         scrollbar-color: var(--secondary-color) var(--background-color);
@@ -64,9 +68,163 @@
         background-color: var(--secondary-color);
         border-radius: 3px;
     }
+    
+    /* Camera frame styles */
+    .camera-frame {
+        position: relative;
+        overflow: hidden;
+        border: 2px solid var(--accent-color);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .camera-frame:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        border-color: var(--primary-color);
+    }
+    
+    .depth-map-overlay {
+        opacity: 0.6;
+        mix-blend-mode: overlay;
+        transition: opacity 0.3s ease;
+    }
+    
+    .depth-map-overlay:hover {
+        opacity: 0.9;
+    }
+    
+    .camera-status {
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: var(--accent-color);
+        z-index: 10;
+    }
+    
+    .camera-status.active {
+        background-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(51, 51, 51, 0.3);
+    }
+    
+    /* Toggle switch styles */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+    }
+    
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ddd;
+        transition: .4s;
+        border-radius: 24px;
+    }
+    
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    
+    input:checked + .toggle-slider {
+        background-color: var(--primary-color);
+    }
+    
+    input:checked + .toggle-slider:before {
+        transform: translateX(20px);
+    }
+    
+    /* Button styles */
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+    }
+    
+    .btn-secondary {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: var(--accent-color);
+        border-color: var(--accent-color);
+    }
+    
+    .btn-outline-primary {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+    
+    .btn-outline-secondary {
+        border-color: var(--secondary-color);
+        color: var(--secondary-color);
+    }
+    
+    .btn-outline-secondary:hover {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+        color: white;
+    }
+    
+    /* Depth map visualization */
+    .depth-legend {
+        display: flex;
+        margin-top: 5px;
+        height: 10px;
+        border-radius: 5px;
+        overflow: hidden;
+    }
+    
+    .depth-legend-gradient {
+        flex: 1;
+        background: linear-gradient(90deg, black, #333, #666, #999, #ccc, white);
+    }
+    
+    .depth-legend-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 8px;
+        color: var(--secondary-color);
+        margin-top: 2px;
+    }
 </style>
 {% endblock %}
-{% block title %}Self Brain AGI - AI Conversation System{% endblock %}
+{% block title %}Self Brain AGI - Multi-Modal Autonomous Learning System{% endblock %}
 {% block content %}
 <div class="container-fluid">
     <!-- System Status Overview -->
@@ -166,7 +324,7 @@
                 <!-- Training Controls -->
                 <div class="card mb-4">
                     <div class="card-header bg-light text-gray-700">
-                        <h4 class="card-title text-sm font-semibold">Quick Actions</h4>
+                        <h4 class="card-title text-sm font-semibold">Training Controls</h4>
                     </div>
                     <div class="card-body p-3">
                         <div class="grid grid-cols-2 gap-2 mb-3">
@@ -226,7 +384,7 @@
                     </div>
                 </div>
                 
-                <!-- System Resources -->
+                <!-- System Resources Monitoring -->
                 <div class="card mb-4">
                     <div class="card-header bg-light text-gray-700">
                         <h4 class="card-title text-sm font-semibold">System Resources</h4>
@@ -260,6 +418,15 @@
                                     <div class="progress-bar bg-success" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                                 </div>
                             </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span>Disk I/O</span>
+                                    <span id="disk-usage">0%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -271,7 +438,7 @@
                     </div>
                     <div class="card-body p-3">
                         <div class="mb-3">
-                            <div class="grid grid-cols-2 gap-2 mb-3">
+                            <div class="grid grid-cols-3 gap-2 mb-3">
                                 <div>
                                     <label for="camera1Selector" class="text-xs font-medium text-gray-500 mb-1 block">Left Eye Camera</label>
                                     <select id="camera1Selector" class="form-select form-select-sm text-xs">
@@ -284,33 +451,119 @@
                                         <option value="default">Select Camera</option>
                                     </select>
                                 </div>
+                                <div>
+                                    <label for="camera3Selector" class="text-xs font-medium text-gray-500 mb-1 block">Top View Camera</label>
+                                    <select id="camera3Selector" class="form-select form-select-sm text-xs">
+                                        <option value="default">Select Camera</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div class="grid grid-cols-2 gap-2">
+                            
+                            <!-- Advanced Camera Controls -->
+                            <div class="grid grid-cols-3 gap-2 mb-3">
                                 <button id="listAllCamerasBtn" class="btn btn-sm btn-outline-primary" onclick="listAllCameras()">List Cameras</button>
-                                <button id="startStereoVisionBtn" class="btn btn-sm btn-outline-success" onclick="startStereoVision()">Start Vision</button>
-                                <button id="stopAllCamerasBtn" class="btn btn-sm btn-outline-danger" onclick="stopAllCameras()">Stop Vision</button>
-                                <button id="snapshotAllBtn" class="btn btn-sm btn-outline-warning" onclick="takeAllSnapshots()">Take Snapshots</button>
+                                <button id="startStereoVisionBtn" class="btn btn-sm btn-outline-primary" onclick="startStereoVision()">Start Vision</button>
+                                <button id="stopAllCamerasBtn" class="btn btn-sm btn-outline-secondary" onclick="stopAllCameras()">Stop Vision</button>
+                                <button id="snapshotAllBtn" class="btn btn-sm btn-outline-secondary" onclick="takeAllSnapshots()">Take Snapshots</button>
+                                <button id="showDepthMapBtn" class="btn btn-sm btn-outline-secondary" onclick="toggleDepthMap()">Toggle Depth Map</button>
+                                <button id="cameraSettingsBtn" class="btn btn-sm btn-outline-secondary" onclick="openCameraSettings()">Camera Settings</button>
+                            </div>
+                            
+                            <!-- Vision Processing Options -->
+                            <div class="grid grid-cols-2 gap-2 mb-3">
+                                <div class="flex items-center">
+                                    <span class="text-xs font-medium text-gray-500 mr-2">Depth Calculation:</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="depthCalculationToggle" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-xs font-medium text-gray-500 mr-2">Object Detection:</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="objectDetectionToggle">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-xs font-medium text-gray-500 mr-2">3D Reconstruction:</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="reconstructionToggle">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-xs font-medium text-gray-500 mr-2">Motion Tracking:</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="motionTrackingToggle">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                         
                         <!-- Camera Preview Area -->
-                        <div class="grid grid-cols-2 gap-2 mb-2">
-                            <!-- Left Camera Preview -->
-                            <div id="camera1Preview" class="relative bg-black rounded aspect-video flex items-center justify-center">
-                                <span id="camera1Status" class="absolute top-1 right-1 text-white text-xs px-1 rounded bg-gray-700">Inactive</span>
-                                <div class="text-center">
-                                    <i class="bi bi-camera text-gray-400 fs-2"></i>
-                                    <p class="text-xs text-gray-500 mt-1">Left Eye</p>
-                                </div>
+                    <div class="grid grid-cols-3 gap-2 mb-2">
+                        <!-- Left Camera Preview -->
+                        <div id="camera1Preview" class="camera-frame relative bg-black rounded aspect-video flex items-center justify-center transition-all duration-300 hover:ring-2 hover:ring-primary/50">
+                            <div id="camera1StatusIndicator" class="camera-status"></div>
+                            <span id="camera1Status" class="absolute top-1 right-1 text-white text-xs px-1 rounded bg-gray-700">Inactive</span>
+                            <div class="text-center">
+                                <i class="fa fa-video-camera text-gray-400 fs-2"></i>
+                                <p class="text-xs text-gray-500 mt-1">Left Eye</p>
                             </div>
-                            <!-- Right Camera Preview -->
-                            <div id="camera2Preview" class="relative bg-black rounded aspect-video flex items-center justify-center">
-                                <span id="camera2Status" class="absolute top-1 right-1 text-white text-xs px-1 rounded bg-gray-700">Inactive</span>
-                                <div class="text-center">
-                                    <i class="bi bi-camera text-gray-400 fs-2"></i>
-                                    <p class="text-xs text-gray-500 mt-1">Right Eye</p>
-                                </div>
+                            <video id="camera1Video" class="absolute inset-0 w-full h-full object-cover" autoplay muted playsinline></video>
+                        </div>
+                        
+                        <!-- Right Camera Preview -->
+                        <div id="camera2Preview" class="camera-frame relative bg-black rounded aspect-video flex items-center justify-center transition-all duration-300 hover:ring-2 hover:ring-primary/50">
+                            <div id="camera2StatusIndicator" class="camera-status"></div>
+                            <span id="camera2Status" class="absolute top-1 right-1 text-white text-xs px-1 rounded bg-gray-700">Inactive</span>
+                            <div class="text-center">
+                                <i class="fa fa-video-camera text-gray-400 fs-2"></i>
+                                <p class="text-xs text-gray-500 mt-1">Right Eye</p>
                             </div>
+                            <video id="camera2Video" class="absolute inset-0 w-full h-full object-cover" autoplay muted playsinline></video>
+                        </div>
+                        
+                        <!-- Top View Camera Preview -->
+                        <div id="camera3Preview" class="camera-frame relative bg-black rounded aspect-video flex items-center justify-center transition-all duration-300 hover:ring-2 hover:ring-primary/50">
+                            <div id="camera3StatusIndicator" class="camera-status"></div>
+                            <span id="camera3Status" class="absolute top-1 right-1 text-white text-xs px-1 rounded bg-gray-700">Inactive</span>
+                            <div class="text-center">
+                                <i class="fa fa-video-camera text-gray-400 fs-2"></i>
+                                <p class="text-xs text-gray-500 mt-1">Top View</p>
+                            </div>
+                            <video id="camera3Video" class="absolute inset-0 w-full h-full object-cover" autoplay muted playsinline></video>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Camera Controls -->
+                    <div class="grid grid-cols-2 gap-2 mt-3">
+                        <button id="zoomInBtn" class="btn btn-sm btn-outline-secondary" onclick="zoomIn()">Zoom In</button>
+                        <button id="zoomOutBtn" class="btn btn-sm btn-outline-secondary" onclick="zoomOut()">Zoom Out</button>
+                        <button id="focusAutoBtn" class="btn btn-sm btn-outline-secondary" onclick="autoFocus()">Auto Focus</button>
+                        <button id="whiteBalanceAutoBtn" class="btn btn-sm btn-outline-secondary" onclick="autoWhiteBalance()">Auto White Balance</button>
+                    </div>
+                        
+                        <!-- Depth Map Preview -->
+                        <div id="depthMapContainer" class="mt-3 hidden">
+                            <div class="camera-frame relative bg-black rounded aspect-video flex items-center justify-center">
+                                <span class="absolute top-1 right-1 text-white text-xs px-1 rounded bg-gray-700">Depth Map</span>
+                                <div class="text-center">
+                                    <i class="fa fa-area-chart text-gray-400 fs-2"></i>
+                                    <p class="text-xs text-gray-500 mt-1">3D Spatial Data</p>
+                                </div>
+                                <canvas id="depthMapCanvas" class="absolute inset-0 w-full h-full object-cover"></canvas>
+                            </div>
+                            <!-- Depth map legend will be added dynamically -->
+                        </div>
+                        
+                        <!-- Camera Status Information -->
+                        <div id="cameraInfoPanel" class="mt-3 p-2 bg-light rounded text-xs text-gray-600">
+                            <p class="mb-1"><strong>Camera Status:</strong> <span id="cameraConnectionStatus">Not connected</span></p>
+                            <p class="mb-1"><strong>Resolution:</strong> <span id="cameraResolution">--x--</span></p>
+                            <p><strong>FPS:</strong> <span id="cameraFps">0</span></p>
                         </div>
                     </div>
                 </div>
@@ -326,7 +579,7 @@
                     <div class="text-center text-gray-500 py-5">
                         <i class="bi bi-robot fs-1"></i>
                         <p class="mt-3 text-dark">Start AI Conversation</p>
-                        <small class="text-gray-500">Ask anything - A Management Model is ready to assist</small>
+                        <small class="text-gray-500">Ask anything - The Management Model is ready to assist</small>
                     </div>
                 </div>
             </div>
@@ -356,8 +609,80 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Add welcome message to conversation
         setTimeout(() => {
-            selfBrain.dialog.addMessageToUI('ai', `Hello! I'm A Management Model, your AI system coordinator. I can help you:\n\n• Manage all 11 sub-models (A-K)\n• Monitor system status and performance\n• Control training processes\n• Answer questions about the AGI system\n• Process commands and provide insights\n• Handle knowledge management\n• Control the multi-camera vision system\n\nWhat would you like to know or do?`, 'text');
+            selfBrain.dialog.addMessageToUI('ai', `Hello! I'm the Management Model, your AI system coordinator. I can help you:
+
+• Manage all 11 sub-models (A-K)
+• Monitor system status and performance
+• Control training processes
+• Answer questions about the AGI system
+• Process commands and provide insights
+• Handle knowledge management
+• Control the multi-camera vision system
+
+What would you like to know or do?`, 'text');
         }, 1000);
+        
+        // Initialize additional multi-camera control functions
+        window.zoomIn = function() {
+            if (selfBrain && selfBrain.hardware && selfBrain.hardware.camera) {
+                selfBrain.hardware.camera.zoomIn();
+            } else {
+                console.log('Camera zoom in functionality initialized');
+            }
+        };
+        
+        window.zoomOut = function() {
+            if (selfBrain && selfBrain.hardware && selfBrain.hardware.camera) {
+                selfBrain.hardware.camera.zoomOut();
+            } else {
+                console.log('Camera zoom out functionality initialized');
+            }
+        };
+        
+        window.autoFocus = function() {
+            if (selfBrain && selfBrain.hardware && selfBrain.hardware.camera) {
+                selfBrain.hardware.camera.autoFocus();
+            } else {
+                console.log('Camera auto focus functionality initialized');
+            }
+        };
+        
+        window.autoWhiteBalance = function() {
+            if (selfBrain && selfBrain.hardware && selfBrain.hardware.camera) {
+                selfBrain.hardware.camera.autoWhiteBalance();
+            } else {
+                console.log('Camera auto white balance functionality initialized');
+            }
+        };
+        
+        // Initialize depth map visualization
+        window.initializeDepthMapVisualization = function() {
+            const depthMapCanvas = document.getElementById('depthMapCanvas');
+            if (depthMapCanvas) {
+                const ctx = depthMapCanvas.getContext('2d');
+                // Set up depth map legend
+                const depthLegend = document.createElement('div');
+                depthLegend.className = 'depth-legend';
+                const depthGradient = document.createElement('div');
+                depthGradient.className = 'depth-legend-gradient';
+                depthLegend.appendChild(depthGradient);
+                
+                const depthLabels = document.createElement('div');
+                depthLabels.className = 'depth-legend-labels';
+                depthLabels.innerHTML = '<span>Close</span><span>Far</span>';
+                
+                const depthMapContainer = document.getElementById('depthMapContainer');
+                if (depthMapContainer) {
+                    // Add legend after canvas
+                    const canvasParent = depthMapCanvas.parentElement;
+                    canvasParent.insertAdjacentElement('afterend', depthLegend);
+                    canvasParent.insertAdjacentElement('afterend', depthLabels);
+                }
+            }
+        };
+        
+        // Call depth map initialization
+        initializeDepthMapVisualization();
     });
     
     // Override default sendConversationMessage with selfBrain implementation

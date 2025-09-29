@@ -6583,16 +6583,29 @@ if __name__ == '__main__':
     logger.info("Initializing device communication system...")
     init_device_communication()
     
-    try:
-        # Run Flask application with optimized Socket.IO configuration
-        socketio.run(app, 
-                    host='0.0.0.0', 
-                    port=5000, 
-                    debug=True, 
-                    allow_unsafe_werkzeug=True,
-                    use_reloader=False)
-    finally:
-        # Cleanup device communication system on shutdown
-        logger.info("Cleaning up device communication system...")
-        cleanup_device_communication()
-        logger.info("Self Brain AGI System shutdown complete")
+    # Load port from system config or use default
+    import yaml
+    import os
+    port = 8080  # Default port
+    config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'system_config.yaml')
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f)
+                port = config.get('ports', {}).get('web_frontend', 8080)
+        except Exception as e:
+            logger.warning(f"Failed to load system config: {str(e)}, using default port {port}")
+    
+    logger.info(f"Starting Web Interface on port {port}")
+    
+    # Run Flask application with optimized Socket.IO configuration
+    socketio.run(app, 
+                host='0.0.0.0', 
+                port=port, 
+                debug=True, 
+                allow_unsafe_werkzeug=True,
+                use_reloader=False)
+    # Cleanup device communication system on shutdown
+    logger.info("Cleaning up device communication system...")
+    cleanup_device_communication()
+    logger.info("Self Brain AGI System shutdown complete")
