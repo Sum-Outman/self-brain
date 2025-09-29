@@ -35,7 +35,6 @@ Pillow>=9.0.1
 pyserial>=3.5
 pymodbus>=3.0.2
 pyusb>=1.2.1
-smbus>=1.1.1
 opencv-python>=4.5.5
 
 # System & Monitoring
