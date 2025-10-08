@@ -1,0 +1,21 @@
+{
+  "model_id": "J_motion",
+  "model_type": "Motion Controller",
+  "version": "1.0.0",
+  "training": {
+    "from_scratch": true,
+    "batch_size": 32,
+    "learning_rate": 0.001,
+    "epochs": 100
+  },
+  "external_api": {
+    "enabled": false,
+    "api_url": "",
+    "api_key": "",
+    "model_name": ""
+  },
+  "knowledge_base": {
+    "enabled": true,
+    "auto_learning": false
+  }
+}

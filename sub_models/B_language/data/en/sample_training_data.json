@@ -1,0 +1,9 @@
+[
+  {"text": "I'm very happy today because I received an unexpected gift.", "label": "joy", "language": "en", "intensity": 0.9},
+  {"text": "This movie is really boring and wasted my time.", "label": "sadness", "language": "en", "intensity": 0.7},
+  {"text": "How could you treat me like this? I'm extremely angry.", "label": "anger", "language": "en", "intensity": 0.8},
+  {"text": "I'm shocked to hear this news.", "label": "surprise", "language": "en", "intensity": 0.6},
+  {"text": "This place looks a bit scary, I dare not go in.", "label": "fear", "language": "en", "intensity": 0.5},
+  {"text": "His behavior makes me feel disgusted.", "label": "disgust", "language": "en", "intensity": 0.6},
+  {"text": "The weather is nice today, suitable for a walk.", "label": "neutral", "language": "en", "intensity": 0.3}
+]

@@ -1,0 +1,70 @@
+{
+  "models": {
+    "A_management": {
+      "script": "sub_models/A_management/train.py",
+      "params": "--epochs=20 --batch=16 --lr=0.0001 --from_scratch=True --dataset=management_tasks"
+    },
+    "B_language": {
+      "script": "sub_models/B_language/train.py",
+      "params": "--epochs=100 --batch=32 --lr=0.0001 --from_scratch=True --dataset=multilingual_corpus"
+    },
+    "C_audio": {
+      "script": "sub_models/C_audio/train.py",
+      "params": "--epochs=80 --batch=64 --lr=0.0001 --from_scratch=True --dataset=audio_corpus"
+    },
+    "D_image": {
+      "script": "sub_models/D_image/train.py",
+      "params": "--epochs=120 --batch=16 --lr=0.0001 --from_scratch=True --dataset=image_dataset"
+    },
+    "E_video": {
+      "script": "sub_models/E_video/train.py",
+      "params": "--epochs=50 --batch=8 --lr=0.00005 --from_scratch=True --dataset=video_frames"
+    },
+    "F_spatial": {
+      "script": "sub_models/F_spatial/train.py",
+      "params": "--epochs=80 --batch=16 --lr=0.00005 --from_scratch=True --dataset=spatial_data"
+    },
+    "G_sensor": {
+      "script": "sub_models/G_sensor/train.py",
+      "params": "--epochs=60 --batch=128 --lr=0.0001 --from_scratch=True --dataset=sensor_data"
+    },
+    "H_computer_control": {
+      "script": "sub_models/H_computer_control/train.py",
+      "params": "--epochs=40 --batch=64 --lr=0.0001 --from_scratch=True --dataset=system_commands"
+    },
+    "I_knowledge": {
+      "script": "sub_models/I_knowledge/train.py",
+      "params": "--epochs=200 --batch=32 --lr=0.00001 --from_scratch=True --dataset=knowledge_base --autonomous_learning=True"
+    },
+    "J_motion": {
+      "script": "sub_models/J_motion/train.py",
+      "params": "--epochs=60 --batch=8 --lr=0.00005 --from_scratch=True --dataset=motion_data"
+    },
+    "K_programming": {
+      "script": "sub_models/K_programming/train.py",
+      "params": "--epochs=80 --batch=32 --lr=0.0001 --from_scratch=True --dataset=code_corpus"
+    }
+  },
+  "optimization": {
+    "auto_hyperparam": true,
+    "mixed_precision": true,
+    "early_stopping": true,
+    "data_augmentation": true,
+    "distributed_training": false,
+    "gradient_accumulation": true,
+    "regularization": "l2",
+    "dropout_rate": 0.3
+  },
+  "collaboration": {
+    "joint_training": true,
+    "knowledge_sharing": true,
+    "cross_model_evaluation": true,
+    "collaboration_threshold": 0.75
+  },
+  "autonomous_learning": {
+    "enabled": true,
+    "learning_rate_adjustment": true,
+    "continuous_training": true,
+    "max_idle_time": 3600
+  }
+}

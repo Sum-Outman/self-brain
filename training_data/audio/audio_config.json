@@ -1,0 +1,42 @@
+{
+  "samples": [
+    {
+      "id": "audio_001",
+      "file_path": "training_data/audio/sample_001.wav",
+      "duration": 5.0,
+      "sample_rate": 16000,
+      "channels": 1,
+      "transcript": "这是一个测试音频样本",
+      "audio_features": {
+        "mfcc": [
+          0.1,
+          0.2,
+          0.3
+        ],
+        "spectral_centroid": 1500,
+        "zero_crossing_rate": 0.05
+      }
+    },
+    {
+      "id": "audio_002",
+      "file_path": "training_data/audio/sample_002.wav",
+      "duration": 3.5,
+      "sample_rate": 16000,
+      "channels": 1,
+      "transcript": "另一个测试音频样本",
+      "audio_features": {
+        "mfcc": [
+          0.15,
+          0.25,
+          0.35
+        ],
+        "spectral_centroid": 1800,
+        "zero_crossing_rate": 0.08
+      }
+    }
+  ],
+  "sample_rate": 16000,
+  "channels": 1,
+  "duration": 5.0,
+  "total_samples": 2
+}

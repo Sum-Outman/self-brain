@@ -1,0 +1,185 @@
+{
+    "project_name": "Self Brain",
+    "team_email": "silencecrowtom@qq.com",
+    "version": "1.0.0",
+    "debug": false,
+    "log_level": "INFO",
+    "port": 5000,
+    "management_port": 5015,
+    "auto_start_all_models": true,
+    "models": {
+        "A_management": {
+            "enabled": true,
+            "port": 5001,
+            "path": "../sub_models/A_management",
+            "auto_train": true,
+            "external_api": {
+                "enabled": false,
+                "provider": "",
+                "api_key": "",
+                "base_url": "",
+                "model": ""
+            }
+        },
+        "B_language": {
+            "enabled": true,
+            "port": 5002,
+            "path": "../sub_models/B_language",
+            "auto_train": true,
+            "external_api": {
+                "enabled": false,
+                "provider": "",
+                "api_key": "",
+                "base_url": "",
+                "model": ""
+            }
+        },
+        "C_audio": {
+            "enabled": true,
+            "port": 5003,
+            "path": "../sub_models/C_audio",
+            "auto_train": true,
+            "external_api": {
+                "enabled": false,
+                "provider": "",
+                "api_key": "",
+                "base_url": "",
+                "model": ""
+            }
+        },
+        "D_image": {
+            "enabled": true,
+            "port": 5004,
+            "path": "../sub_models/D_image",
+            "auto_train": true,
+            "external_api": {
+                "enabled": false,
+                "provider": "",
+                "api_key": "",
+                "base_url": "",
+                "model": ""
+            }
+        },
+        "E_video": {
+            "enabled": true,
+            "port": 5005,
+            "path": "../sub_models/E_video",
+            "auto_train": true,
+            "external_api": {
+                "enabled": false,
+                "provider": "",
+                "api_key": "",
+                "base_url": "",
+                "model": ""
+            }
+        },
+        "F_spatial": {
+            "enabled": true,
+            "port": 5006,
+            "path": "../sub_models/F_spatial",
+            "auto_train": true,
+            "external_api": {
+                "enabled": false,
+                "provider": "",
+                "api_key": "",
+                "base_url": "",
+                "model": ""
+            }
+        },
+        "G_sensor": {
+            "enabled": true,
+            "port": 5007,
+            "path": "../sub_models/G_sensor",
+            "auto_train": true,
+            "external_api": {
+                "enabled": false,
+                "provider": "",
+                "api_key": "",
+                "base_url": "",
+                "model": ""
+            }
+        },
+        "H_computer": {
+            "enabled": true,
+            "port": 5008,
+            "path": "../sub_models/H_computer",
+            "auto_train": true,
+            "external_api": {
+                "enabled": false,
+                "provider": "",
+                "api_key": "",
+                "base_url": "",
+                "model": ""
+            }
+        },
+        "I_knowledge": {
+            "enabled": true,
+            "port": 5009,
+            "path": "../sub_models/I_knowledge",
+            "auto_train": true,
+            "external_api": {
+                "enabled": false,
+                "provider": "",
+                "api_key": "",
+                "base_url": "",
+                "model": ""
+            }
+        },
+        "J_motion": {
+            "enabled": true,
+            "port": 5010,
+            "path": "../sub_models/J_motion",
+            "auto_train": true,
+            "external_api": {
+                "enabled": false,
+                "provider": "",
+                "api_key": "",
+                "base_url": "",
+                "model": ""
+            }
+        },
+        "K_programming": {
+            "enabled": true,
+            "port": 5011,
+            "path": "../sub_models/K_programming",
+            "auto_train": true,
+            "external_api": {
+                "enabled": false,
+                "provider": "",
+                "api_key": "",
+                "base_url": "",
+                "model": ""
+            }
+        }
+    },
+    "camera": {
+        "enabled": true,
+        "multi_camera": true,
+        "max_cameras": 4,
+        "default_resolution": {
+            "width": 1280,
+            "height": 720
+        },
+        "default_fps": 30
+    },
+    "knowledge_base": {
+        "enabled": true,
+        "path": "../knowledge_base_storage",
+        "auto_learning": {
+            "enabled": false,
+            "interval_seconds": 3600,
+            "batch_size": 10
+        }
+    },
+    "external_devices": {
+        "enabled": true,
+        "protocols": [
+            "serial",
+            "tcp",
+            "udp",
+            "mqtt",
+            "http"
+        ],
+        "max_connections": 20
+    }
+}

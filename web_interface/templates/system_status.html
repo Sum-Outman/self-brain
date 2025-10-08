@@ -1,0 +1,310 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}System Status - Self Brain AGI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .progress {
+        height: 30px;
+    }
+    .progress-bar {
+        font-weight: bold;
+    }
+    .card {
+        border: 1px solid #dee2e6;
+    }
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">System Status Monitoring</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-btn">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>System Resources</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="progress mb-3" style="height: 30px;">
+                                            <div id="cpu-progress" class="progress-bar bg-info" role="progressbar" style="width: 0%">
+                                                CPU: 0%
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="progress mb-3" style="height: 30px;">
+                                            <div id="memory-progress" class="progress-bar bg-success" role="progressbar" style="width: 0%">
+                                                Memory: 0%
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="progress mb-3" style="height: 30px;">
+                                            <div id="disk-progress" class="progress-bar bg-warning" role="progressbar" style="width: 0%">
+                                                Disk: 0%
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="progress mb-3" style="height: 30px;">
+                                            <div id="gpu-progress" class="progress-bar bg-danger" role="progressbar" style="width: 0%">
+                                                GPU: 0%
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>System Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm">
+                                    <tbody>
+                                        <tr>
+                                            <th scope="row">System Name</th>
+                                            <td id="system-name">Self Brain AGI</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">Version</th>
+                                            <td id="system-version">v1.0.0</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">Uptime</th>
+                                            <td id="uptime">0 days 0 hours 0 minutes</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">Model Count</th>
+                                            <td id="model-count">0</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">Training Sessions</th>
+                                            <td id="training-sessions">0</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Real-time Resource Monitoring</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="resource-chart" height="100"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>System Logs</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Time</th>
+                                                <th>Level</th>
+                                                <th>Message</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="log-entries">
+                                            <tr>
+                                                <td colspan="3" class="text-center">Loading...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+</div>
+
+<script>
+        // Initialize Socket.IO connection
+        const socket = io(window.location.origin, {
+            transports: ['polling', 'websocket'],
+            timeout: 10000,
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionAttempts: 5
+        });
+        
+        // Resource chart configuration
+        const ctx = document.getElementById('resource-chart').getContext('2d');
+        const resourceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'CPU Usage (%)',
+                        data: [],
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Memory Usage (%)',
+                        data: [],
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'GPU Usage (%)',
+                        data: [],
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Resource Usage History'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+
+        // Update progress bar
+        function updateProgressBar(id, value) {
+            const element = document.getElementById(id);
+            element.style.width = `${value}%`;
+            element.textContent = `${id.split('-')[0].toUpperCase()}: ${Math.round(value)}%`;
+            
+            // Set color based on value
+            if (value > 80) {
+                element.classList.remove('bg-info', 'bg-success', 'bg-warning');
+                element.classList.add('bg-danger');
+            } else if (value > 60) {
+                element.classList.remove('bg-info', 'bg-success', 'bg-danger');
+                element.classList.add('bg-warning');
+            } else {
+                const originalClass = id.includes('cpu') ? 'bg-info' : 
+                                    id.includes('memory') ? 'bg-success' : 
+                                    id.includes('disk') ? 'bg-warning' : 'bg-danger';
+                element.classList.remove('bg-danger', 'bg-warning');
+                element.classList.add(originalClass);
+            }
+        }
+
+        // Handle system status updates
+        socket.on('system_status', (data) => {
+            // Update system information
+            document.getElementById('system-name').textContent = data.system_name || 'Self Brain AGI';
+            document.getElementById('system-version').textContent = data.version || 'v1.0.0';
+            document.getElementById('uptime').textContent = data.uptime || '0 days 0 hours 0 minutes';
+            document.getElementById('model-count').textContent = data.models?.total || 0;
+            document.getElementById('training-sessions').textContent = data.training?.total_sessions || 0;
+            
+            // Update resource usage
+            if (data.system) {
+                updateProgressBar('cpu-progress', data.system.cpu_usage || 0);
+                updateProgressBar('memory-progress', data.system.memory_usage?.percent || 0);
+                updateProgressBar('disk-progress', data.system.disk_usage?.percent || 0);
+                
+                // GPU usage
+                const gpuUsage = data.system.gpu_info?.[0]?.utilization || 0;
+                updateProgressBar('gpu-progress', gpuUsage);
+            }
+            
+            // Update chart data
+            const now = new Date();
+            const timeLabel = `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
+            
+            // Limit data points
+            if (resourceChart.data.labels.length > 20) {
+                resourceChart.data.labels.shift();
+                resourceChart.data.datasets.forEach(dataset => dataset.data.shift());
+            }
+            
+            resourceChart.data.labels.push(timeLabel);
+            resourceChart.data.datasets[0].data.push(data.system?.cpu_usage || 0);
+            resourceChart.data.datasets[1].data.push(data.system?.memory_usage?.percent || 0);
+            resourceChart.data.datasets[2].data.push(data.system?.gpu_info?.[0]?.utilization || 0);
+            resourceChart.update();
+        });
+        
+        // Handle system log updates
+        socket.on('system_log', (log) => {
+            const logTable = document.getElementById('log-entries');
+            
+            // Limit log entries
+            if (logTable.rows.length > 50) {
+                logTable.deleteRow(0);
+            }
+            
+            // Add new log entry
+            const row = logTable.insertRow();
+            const timeCell = row.insertCell(0);
+            const levelCell = row.insertCell(1);
+            const messageCell = row.insertCell(2);
+            
+            timeCell.textContent = new Date(log.timestamp).toLocaleTimeString();
+            levelCell.textContent = log.level;
+            messageCell.textContent = log.message;
+            
+            // Set color based on log level
+            if (log.level === 'ERROR') {
+                row.classList.add('table-danger');
+            } else if (log.level === 'WARNING') {
+                row.classList.add('table-warning');
+            } else if (log.level === 'INFO') {
+                row.classList.add('table-info');
+            }
+        });
+        
+        // Refresh button click event
+        document.getElementById('refresh-btn').addEventListener('click', () => {
+            socket.emit('request_status');
+        });
+        
+        // Initial system status request
+        socket.emit('request_status');
+</script>

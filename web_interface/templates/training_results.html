@@ -1,0 +1,476 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}Training Results - Self Brain AGI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h2 mb-4">Training Results</h1>
+            <p class="text-muted">Comprehensive analysis of training sessions and model performance</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-3 col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list"></i> Select Training Session
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <select class="form-select" id="sessionSelector" onchange="loadTrainingResults(this.value)">
+                        <option value="">Select a session...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-diagram-3"></i> Model Management
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <a href="/system_settings#models" class="btn btn-outline-dark w-100" onclick="setTimeout(() => document.getElementById('models-tab').click(), 100)">
+                        <i class="bi bi-diagram-3 me-2"></i>Model Management
+                    </a>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up"></i> Training Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                        <p class="mt-2 mb-0">Training Completed</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9 col-md-8">
+            <div id="resultsContainer" style="display: none;">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title" id="totalTime">-</h5>
+                                <p class="card-text text-muted">
+                                    <i class="bi bi-clock"></i> Total Training Time
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title" id="finalAccuracy">-</h5>
+                                <p class="card-text text-muted">
+                                    <i class="bi bi-graph-up"></i> Final Accuracy
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title" id="finalLoss">-</h5>
+                                <p class="card-text text-muted">
+                                    <i class="bi bi-graph-down"></i> Final Loss
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title" id="modelScore">-</h5>
+                                <p class="card-text text-muted">
+                                    <i class="bi bi-star"></i> Model Score
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>
+                                    <i class="bi bi-graph-up"></i> Training/Validation Accuracy
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="accuracyChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>
+                                    <i class="bi bi-graph-down"></i> Training/Validation Loss
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="lossChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="bi bi-table"></i> Detailed Training Data</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Epoch</th>
+                                                <th>Train Loss</th>
+                                                <th>Train Accuracy</th>
+                                                <th>Val Loss</th>
+                                                <th>Val Accuracy</th>
+                                                <th>Learning Rate</th>
+                                                <th>Time</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="trainingDataTable">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="bi bi-timeline"></i> Training Timeline</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="trainingTimeline">
+                                    <div class="border-start border-dark ps-3 mb-3">
+                                        <strong>Training Started</strong>
+                                        <br>
+                                        <small class="text-muted">Session initialized with parameters</small>
+                                    </div>
+                                    <div class="border-start border-dark ps-3 mb-3">
+                                        <strong>Epoch 50 Complete</strong>
+                                        <br>
+                                        <small class="text-muted">Accuracy: 85.2%, Loss: 0.35</small>
+                                    </div>
+                                    <div class="border-start border-dark ps-3 mb-3">
+                                        <strong>Epoch 100 Complete</strong>
+                                        <br>
+                                        <small class="text-muted">Accuracy: 92.1%, Loss: 0.18</small>
+                                    </div>
+                                    <div class="border-start border-dark ps-3">
+                                        <strong>Training Completed</strong>
+                                        <br>
+                                        <small class="text-muted">Final accuracy: 96.4%</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="bi bi-download"></i> Export Results</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-outline-dark" onclick="exportResults('json')">
+                                        <i class="bi bi-filetype-json"></i> Export as JSON
+                                    </button>
+                                    <button class="btn btn-outline-dark" onclick="exportResults('csv')">
+                                        <i class="bi bi-filetype-csv"></i> Export as CSV
+                                    </button>
+                                    <button class="btn btn-outline-dark" onclick="exportResults('pdf')">
+                                        <i class="bi bi-filetype-pdf"></i> Export as PDF
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="noResults" class="text-center py-5">
+                <i class="bi bi-inbox display-1 text-muted"></i>
+                <h4 class="text-muted">No Training Results Available</h4>
+                <p class="text-muted">Select a training session to view detailed results</p>
+                <a href="/training" class="btn btn-outline-dark">
+                    <i class="bi bi-play"></i> Start Training
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let accuracyChart = null;
+let lossChart = null;
+
+// Sample training sessions
+const trainingSessions = [
+    {
+        id: 'session_001',
+        name: 'A Management Model Training',
+        totalTime: '12h 34m',
+        finalAccuracy: '96.4%',
+        finalLoss: '0.023',
+        modelScore: '9.6/10',
+        data: generateTrainingData()
+    },
+    {
+        id: 'session_002',
+        name: 'B Language Model Training',
+        totalTime: '8h 21m',
+        finalAccuracy: '94.2%',
+        finalLoss: '0.031',
+        modelScore: '9.4/10',
+        data: generateTrainingData()
+    },
+    {
+        id: 'session_003',
+        name: 'C Audio Model Training',
+        totalTime: '6h 45m',
+        finalAccuracy: '92.8%',
+        finalLoss: '0.042',
+        modelScore: '9.2/10',
+        data: generateTrainingData()
+    }
+];
+
+function generateTrainingData() {
+    const data = [];
+    for (let i = 1; i <= 100; i++) {
+        data.push({
+            epoch: i,
+            train_loss: (Math.random() * 0.5 + 0.1).toFixed(3),
+            train_accuracy: (Math.min(0.95, 0.5 + Math.random() * 0.45)).toFixed(3),
+            val_loss: (Math.random() * 0.6 + 0.15).toFixed(3),
+            val_accuracy: (Math.min(0.94, 0.45 + Math.random() * 0.48)).toFixed(3),
+            learning_rate: (0.001 * Math.pow(0.95, i)).toFixed(6),
+            time: `${Math.floor(i * 0.5)}m ${Math.floor(Math.random() * 60)}s`
+        });
+    }
+    return data;
+}
+
+function populateSessionSelector() {
+    const selector = document.getElementById('sessionSelector');
+    trainingSessions.forEach(session => {
+        const option = document.createElement('option');
+        option.value = session.id;
+        option.textContent = session.name;
+        selector.appendChild(option);
+    });
+}
+
+function loadTrainingResults(sessionId) {
+    const session = trainingSessions.find(s => s.id === sessionId);
+    if (!session) {
+        document.getElementById('resultsContainer').style.display = 'none';
+        document.getElementById('noResults').style.display = 'block';
+        return;
+    }
+
+    document.getElementById('resultsContainer').style.display = 'block';
+    document.getElementById('noResults').style.display = 'none';
+
+    // Update metrics
+    document.getElementById('totalTime').textContent = session.totalTime;
+    document.getElementById('finalAccuracy').textContent = session.finalAccuracy;
+    document.getElementById('finalLoss').textContent = session.finalLoss;
+    document.getElementById('modelScore').textContent = session.modelScore;
+
+    // Update charts
+    updateCharts(session.data);
+    
+    // Update table
+    updateTrainingTable(session.data);
+}
+
+function updateCharts(data) {
+    const ctx1 = document.getElementById('accuracyChart').getContext('2d');
+    const ctx2 = document.getElementById('lossChart').getContext('2d');
+
+    if (accuracyChart) accuracyChart.destroy();
+    if (lossChart) lossChart.destroy();
+
+    const labels = data.map(d => d.epoch);
+    const trainAcc = data.map(d => parseFloat(d.train_accuracy));
+    const valAcc = data.map(d => parseFloat(d.val_accuracy));
+    const trainLoss = data.map(d => parseFloat(d.train_loss));
+    const valLoss = data.map(d => parseFloat(d.val_loss));
+
+    accuracyChart = new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Training Accuracy',
+                data: trainAcc,
+                borderColor: '#000000',
+                backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                tension: 0.1
+            }, {
+                label: 'Validation Accuracy',
+                data: valAcc,
+                borderColor: '#666666',
+                backgroundColor: 'rgba(102, 102, 102, 0.1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 1
+                }
+            }
+        }
+    });
+
+    lossChart = new Chart(ctx2, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Training Loss',
+                data: trainLoss,
+                borderColor: '#000000',
+                backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                tension: 0.1
+            }, {
+                label: 'Validation Loss',
+                data: valLoss,
+                borderColor: '#666666',
+                backgroundColor: 'rgba(102, 102, 102, 0.1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function updateTrainingTable(data) {
+    const tableBody = document.getElementById('trainingDataTable');
+    tableBody.innerHTML = '';
+    
+    data.slice(0, 20).forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${row.epoch}</td>
+            <td>${row.train_loss}</td>
+            <td>${row.train_accuracy}</td>
+            <td>${row.val_loss}</td>
+            <td>${row.val_accuracy}</td>
+            <td>${row.learning_rate}</td>
+            <td>${row.time}</td>
+        `;
+        tableBody.appendChild(tr);
+    });
+}
+
+function exportResults(format) {
+    const sessionId = document.getElementById('sessionSelector').value;
+    if (!sessionId) {
+        alert('Please select a training session first');
+        return;
+    }
+
+    const session = trainingSessions.find(s => s.id === sessionId);
+    if (!session) return;
+
+    switch (format) {
+        case 'json':
+            downloadJSON(session, `${session.name}_results.json`);
+            break;
+        case 'csv':
+            downloadCSV(session.data, `${session.name}_results.csv`);
+            break;
+        case 'pdf':
+            alert('PDF export functionality will be implemented soon');
+            break;
+    }
+}
+
+function downloadJSON(data, filename) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function downloadCSV(data, filename) {
+    const headers = ['Epoch', 'Train Loss', 'Train Accuracy', 'Val Loss', 'Val Accuracy', 'Learning Rate', 'Time'];
+    const csvContent = [
+        headers.join(','),
+        ...data.map(row => [
+            row.epoch,
+            row.train_loss,
+            row.train_accuracy,
+            row.val_loss,
+            row.val_accuracy,
+            row.learning_rate,
+            row.time
+        ].join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    populateSessionSelector();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,370 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}Data Upload - Self Brain AGI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .upload-section {
+        background: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .model-selector {
+        margin-bottom: 1.5rem;
+    }
+
+    .model-selector label {
+        font-weight: 600;
+        color: #333333;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .model-selector select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        background-color: #ffffff;
+        color: #333333;
+    }
+
+    .upload-area {
+        border: 2px dashed #6c757d;
+        border-radius: 0.375rem;
+        padding: 3rem 2rem;
+        text-align: center;
+        background-color: #f8f9fa;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .upload-area:hover {
+        border-color: #495057;
+        background-color: #e9ecef;
+    }
+
+    .upload-area.dragover {
+        border-color: #000000;
+        background-color: #dee2e6;
+    }
+
+    .upload-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #6c757d;
+    }
+
+    .upload-options {
+        margin-bottom: 1.5rem;
+    }
+
+    .upload-options label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #333333;
+    }
+
+    .upload-options input[type="checkbox"] {
+        margin-right: 0.5rem;
+    }
+
+    .btn-primary {
+        background-color: #000000;
+        border-color: #000000;
+        color: #ffffff;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        border-radius: 0.375rem;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        background-color: #333333;
+        border-color: #333333;
+    }
+
+    .btn-primary:disabled {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        cursor: not-allowed;
+    }
+
+    .progress-section {
+        background: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 1.5rem;
+        background-color: #e9ecef;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background-color: #000000;
+        border-radius: 0.75rem;
+        transition: width 0.3s ease;
+        width: 0%;
+    }
+
+    .results-section {
+        background: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 1.5rem;
+    }
+
+    .results-section h3 {
+        color: #333333;
+        margin-bottom: 1rem;
+    }
+
+    #uploadResults {
+        color: #333333;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Data Upload Center</h1>
+        <p class="lead">Upload training data for all AI models</p>
+    </div>
+
+    <div class="upload-section">
+        <div class="model-selector">
+            <label for="modelSelect">Select Model:</label>
+            <select id="modelSelect">
+                <option value="A_management">Management Model (A)</option>
+                <option value="B_language">Language Model (B)</option>
+                <option value="C_audio">Audio Processing Model (C)</option>
+                <option value="D_image">Image Analysis Model (D)</option>
+                <option value="E_video">Video Processing Model (E)</option>
+                <option value="F_spatial">Spatial Computing Model (F)</option>
+                <option value="G_sensor">Sensor Data Model (G)</option>
+                <option value="H_computer">Computer Control Model (H)</option>
+                <option value="I_motion">Motion Control Model (I)</option>
+                <option value="J_knowledge">Knowledge Base Model (J)</option>
+                <option value="K_programming">Programming Model (K)</option>
+            </select>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <p>Drag & drop files here or click to browse</p>
+            <input type="file" id="fileInput" multiple accept=".json,.csv,.txt,.py,.jpg,.png,.wav,.mp4,.pdf,.docx,.zip">
+        </div>
+
+        <div class="upload-options">
+            <label>
+                <input type="checkbox" id="jointTraining"> Enable Joint Training with other models
+            </label>
+            <label>
+                <input type="checkbox" id="externalApi"> Use External API for processing
+            </label>
+            <label>
+                <input type="checkbox" id="autoTrain"> Start training automatically after upload
+            </label>
+        </div>
+
+        <button id="uploadBtn" class="btn-primary" disabled>Upload & Train</button>
+    </div>
+
+    <div class="progress-section" id="progressSection" style="display: none;">
+        <h4>Upload Progress</h4>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <p id="progressText">Processing...</p>
+    </div>
+
+    <div class="results-section" id="resultsSection" style="display: none;">
+        <h3>Upload Results</h3>
+        <div id="uploadResults"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const progressSection = document.getElementById('progressSection');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const resultsSection = document.getElementById('resultsSection');
+        const uploadResults = document.getElementById('uploadResults');
+
+        // File input click event
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Drag and drop events
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            uploadArea.classList.add('dragover');
+        }
+
+        function unhighlight() {
+            uploadArea.classList.remove('dragover');
+        }
+
+        // File drop event
+        uploadArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        // File input change event
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+
+        // Handle selected files
+        function handleFiles(files) {
+            if (files.length > 0) {
+                uploadBtn.disabled = false;
+                // You can add file validation here
+            } else {
+                uploadBtn.disabled = true;
+            }
+        }
+
+        // Upload button click event
+        uploadBtn.addEventListener('click', function() {
+            const files = fileInput.files;
+            if (files.length === 0) {
+                alert('Please select files to upload.');
+                return;
+            }
+
+            const modelSelect = document.getElementById('modelSelect').value;
+            const jointTraining = document.getElementById('jointTraining').checked;
+            const externalApi = document.getElementById('externalApi').checked;
+            const autoTrain = document.getElementById('autoTrain').checked;
+
+            uploadFiles(files, modelSelect, jointTraining, externalApi, autoTrain);
+        });
+
+        // Simulate file upload (replace with actual API call)
+        function uploadFiles(files, model, jointTraining, externalApi, autoTrain) {
+            progressSection.style.display = 'block';
+            resultsSection.style.display = 'none';
+            uploadBtn.disabled = true;
+
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                progressFill.style.width = progress + '%';
+                progressText.textContent = `Uploading... ${progress}%`;
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    simulateProcessing();
+                }
+            }, 100);
+        }
+
+        function simulateProcessing() {
+            progressText.textContent = 'Processing files...';
+            
+            setTimeout(() => {
+                progressSection.style.display = 'none';
+                resultsSection.style.display = 'block';
+                
+                // Simulate results
+                uploadResults.innerHTML = `
+                    <div class="alert alert-success">
+                        <h5>Upload Successful!</h5>
+                        <p>Files have been successfully uploaded and processed.</p>
+                        <ul>
+                            <li>Model: ${document.getElementById('modelSelect').value}</li>
+                            <li>Files processed: ${fileInput.files.length}</li>
+                            <li>Joint Training: ${document.getElementById('jointTraining').checked ? 'Enabled' : 'Disabled'}</li>
+                            <li>External API: ${document.getElementById('externalApi').checked ? 'Enabled' : 'Disabled'}</li>
+                            <li>Auto Training: ${document.getElementById('autoTrain').checked ? 'Enabled' : 'Disabled'}</li>
+                        </ul>
+                    </div>
+                `;
+                
+                uploadBtn.disabled = false;
+                fileInput.value = '';
+            }, 2000);
+        }
+
+        // Initialize Socket.IO for real-time updates (if needed)
+        const socket = io();
+        
+        socket.on('upload_progress', (data) => {
+            // Handle real-time upload progress from server
+            if (data.progress !== undefined) {
+                progressFill.style.width = data.progress + '%';
+                progressText.textContent = data.message || `Uploading... ${data.progress}%`;
+            }
+        });
+
+        socket.on('upload_complete', (data) => {
+            // Handle upload completion
+            progressSection.style.display = 'none';
+            resultsSection.style.display = 'block';
+            uploadResults.innerHTML = `
+                <div class="alert alert-success">
+                    <h5>${data.title || 'Upload Complete'}</h5>
+                    <p>${data.message || 'Files have been successfully processed.'}</p>
+                    ${data.details ? `<pre>${JSON.stringify(data.details, null, 2)}</pre>` : ''}
+                </div>
+            `;
+            uploadBtn.disabled = false;
+        });
+
+        socket.on('upload_error', (data) => {
+            // Handle upload errors
+            progressSection.style.display = 'none';
+            resultsSection.style.display = 'block';
+            uploadResults.innerHTML = `
+                <div class="alert alert-danger">
+                    <h5>Upload Error</h5>
+                    <p>${data.message || 'An error occurred during upload.'}</p>
+                </div>
+            `;
+            uploadBtn.disabled = false;
+        });
+    });
+</script>
+{% endblock %}

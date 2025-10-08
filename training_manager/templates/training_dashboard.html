@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self Brain - Training Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/monochrome_dashboard.css') }}">
+</head>
+<body class="bg-white">
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="sidebar-title">Self Brain</h1>
+                <p class="sidebar-subtitle">Training Management</p>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="#" class="active">
+                        <i class="fa fa-home mr-2"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#tasks">
+                        <i class="fa fa-tasks mr-2"></i>
+                        <span>Tasks</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#create">
+                        <i class="fa fa-plus-circle mr-2"></i>
+                        <span>Create Task</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#resources">
+                        <i class="fa fa-microchip mr-2"></i>
+                        <span>Resources</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#history">
+                        <i class="fa fa-history mr-2"></i>
+                        <span>History</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#settings">
+                        <i class="fa fa-cog mr-2"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <div class="status-icon">
+                        <i class="fa fa-circle"></i>
+                    </div>
+                    <div class="status-info">
+                        <p class="status-text">System Status</p>
+                        <p class="status-version">Running</p>
+                    </div>
+                </div>
+                <div class="team-info text-xs text-gray-400 mt-2">
+                    <p>Team: Self Brain Project</p>
+                    <p>Email: silencecrowtom@qq.com</p>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="content-wrapper">
+                <!-- Header -->
+                <div class="main-header">
+                    <div class="header-text">
+                        <h1 class="page-title">Training Dashboard</h1>
+                        <p class="update-time">Last updated: <span id="last-updated">{{ last_updated }}</span></p>
+                    </div>
+                    
+                    <div class="header-actions">
+                        <div class="time-display">
+                            <span id="current-time" class="text-sm text-gray-500"></span>
+                        </div>
+                        
+                        <div class="user-profile">
+                            <button class="profile-btn">
+                                <i class="fa fa-user text-gray-500"></i>
+                                <span>Admin</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Content -->
+                <div class="p-6 space-y-6">
+                    <!-- Stats Overview -->
+                    <section class="stats-overview">
+                        <div class="stats-grid">
+                            <div class="stat-card bg-gray-50">
+                                  <div class="stat-icon text-gray-700">
+                                     <i class="fa fa-tasks"></i>
+                                  </div>
+                                <div class="stat-content">
+                                    <h3 class="stat-title text-gray-600">Active Tasks</h3>
+                                    <p class="stat-value text-gray-900">{{ scheduler_stats.active_tasks }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card bg-gray-50">
+                                <div class="stat-icon text-gray-700">
+                                    <i class="fa fa-hourglass-half"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3 class="stat-title text-gray-600">Queued Tasks</h3>
+                                    <p class="stat-value text-gray-900">{{ queued_count }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card bg-gray-50">
+                                <div class="stat-icon text-gray-700">
+                                    <i class="fa fa-check-circle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3 class="stat-title text-gray-600">Completed Tasks</h3>
+                                    <p class="stat-value text-gray-900">{{ scheduler_stats.completed_tasks }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card bg-gray-50">
+                                <div class="stat-icon text-gray-700">
+                                    <i class="fa fa-exclamation-circle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3 class="stat-title text-gray-600">Failed Tasks</h3>
+                                    <p class="stat-value text-gray-900">{{ scheduler_stats.failed_tasks }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Resource Usage -->
+                    <section id="resources" class="resource-usage-section">
+                        <div class="section-header">
+                            <h2 class="section-title text-gray-800">Resource Usage</h2>
+                            <button id="refresh-resources" class="refresh-btn bg-gray-200 text-gray-800 hover:bg-gray-300">
+                                <i class="fa fa-refresh mr-1"></i> Refresh
+                            </button>
+                        </div>
+                        
+                        <div class="resource-grid">
+                            <div class="resource-item">
+                                <div class="resource-label-container">
+                                    <span class="resource-label text-gray-700">CPU Usage</span>
+                                    <span id="cpu-usage-value" class="resource-value text-gray-900">{{ cpu_usage }}%</span>
+                                </div>
+                                <div class="resource-bar-container bg-gray-200">
+                                    <div id="cpu-progress-bar" class="resource-bar bg-gray-600" style="width:0%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="resource-item">
+                                <div class="resource-label-container">
+                                    <span class="resource-label text-gray-700">Memory Usage</span>
+                                    <span id="memory-usage-value" class="resource-value text-gray-900">{{ memory_usage }}%</span>
+                                </div>
+                                <div class="resource-bar-container bg-gray-200">
+                                    <div id="memory-progress-bar" class="resource-bar bg-gray-600" style="width:0%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="resource-limits">
+                            <div class="limits-header">
+                                <h3 class="limits-title text-gray-800">Resource Limits</h3>
+                            </div>
+                            <div class="limits-grid">
+                                <div class="limit-item">
+                                    <label class="limit-label text-gray-700">CPU Limit (%)</label>
+                                    <input type="range" id="cpu-limit-slider" min="50" max="100" 
+                                           value="{{ scheduler_stats.resource_limits.cpu_usage }}" 
+                                           class="limit-slider bg-gray-200">
+                                    <div class="limit-value-container">
+                                        <span class="limit-min text-gray-600">50%</span>
+                                        <span id="cpu-limit-value" class="limit-current text-gray-900">{{ scheduler_stats.resource_limits.cpu_usage }}%</span>
+                                        <span class="limit-max text-gray-600">100%</span>
+                                    </div>
+                                </div>
+                                <div class="limit-item">
+                                    <label class="limit-label text-gray-700">Memory Limit (%)</label>
+                                    <input type="range" id="memory-limit-slider" min="50" max="100" 
+                                           value="{{ scheduler_stats.resource_limits.memory_usage }}" 
+                                           class="limit-slider bg-gray-200">
+                                    <div class="limit-value-container">
+                                        <span class="limit-min text-gray-600">50%</span>
+                                        <span id="memory-limit-value" class="limit-current text-gray-900">{{ scheduler_stats.resource_limits.memory_usage }}%</span>
+                                        <span class="limit-max text-gray-600">100%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="resource-actions">
+                            <button id="save-resource-limits" class="save-limits-btn bg-gray-200 text-gray-800 hover:bg-gray-300">
+                                Save Limits
+                            </button>
+                        </div>
+                    </section>
+
+                    <!-- Active Tasks -->
+                    <section id="tasks" class="active-tasks-section">
+                        <div class="section-header">
+                            <h2 class="section-title text-gray-800">Active Tasks</h2>
+                            <div class="task-actions">
+                                <div class="search-container">
+                                    <input type="text" id="task-search" placeholder="Search tasks..."
+                                           class="search-input bg-gray-100 border-gray-300 text-gray-800">
+                                    <i class="fa fa-search search-icon text-gray-500"></i>
+                                </div>
+                                <button id="refresh-tasks" class="refresh-btn bg-gray-200 text-gray-800 hover:bg-gray-300">
+                                    <i class="fa fa-refresh"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="task-table-container">
+                            <table class="task-table">
+                                <thead>
+                                    <tr class="task-table-header bg-gray-100">
+                                        <th class="task-table-header-cell text-gray-700">Task ID</th>
+                                        <th class="task-table-header-cell text-gray-700">Models</th>
+                                        <th class="task-table-header-cell text-gray-700">Status</th>
+                                        <th class="task-table-header-cell text-gray-700">Progress</th>
+                                        <th class="task-table-header-cell text-gray-700">Epoch</th>
+                                        <th class="task-table-header-cell text-gray-700">Priority</th>
+                                        <th class="task-table-header-cell text-gray-700">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="active-tasks-table">
+                                    {% for task in active_tasks %}
+                                    <tr class="task-table-row border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="task-table-cell task-id text-gray-800">{{ task.id }}</td>
+                                        <td class="task-table-cell">
+                                            <div class="model-tags">
+                                                {% for model_id in task.model_ids %}
+                                                <span class="model-tag bg-gray-200 text-gray-800">{{ model_id }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </td>
+                                        <td class="task-table-cell">
+                                            <span class="status-badge bg-gray-200 text-gray-800">{{ task.status }}</span>
+                                        </td>
+                                        <td class="task-table-cell">
+                                            <div class="task-progress-container bg-gray-200">
+                                                <div class="task-progress-bar bg-gray-600" style="width:0%"></div>
+                                            </div>
+                                            <span class="task-progress-text text-gray-800">{{ task.progress }}%</span>
+                                        </td>
+                                        <td class="task-table-cell text-gray-800">{{ task.current_epoch }}/{{ task.total_epochs }}</td>
+                                        <td class="task-table-cell">
+                                            <span class="status-badge bg-gray-200 text-gray-800">
+                            Medium
+                        </span>
+                                        </td>
+                                        <td class="task-table-cell">
+                                            <div class="task-operations">
+                                                <button class="action-btn details-btn bg-gray-200 text-gray-800 hover:bg-gray-300" data-task-id="{{ task.id }}">
+                                                    <i class="fa fa-eye"></i>
+                                                </button>
+                                                <button class="action-btn stop-btn bg-gray-200 text-gray-800 hover:bg-gray-300" data-task-id="{{ task.id }}">
+                                                    <i class="fa fa-stop"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr class="no-tasks-row">
+                                        <td colspan="7" class="no-tasks-cell text-gray-500">
+                                            <i class="fa fa-check-circle no-tasks-icon mb-2"></i>
+                                            <p>No active training tasks</p>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <!-- Create Task Form -->
+                    <section id="create" class="create-task-section">
+                        <div class="section-header">
+                            <h2 class="section-title text-gray-800">Create Training Task</h2>
+                        </div>
+
+                        <form id="create-task-form" class="task-form">
+                            <div class="task-form-row">
+                                <!-- Model Selection -->
+                                <div class="task-form-group">
+                                    <label class="task-form-label text-gray-700">Select Models</label>
+                                    <div class="model-selection">
+                                        {% for model in available_models %}
+                                        <div class="model-checkbox">
+                                            <input type="checkbox" id="model-{{ model }}" name="models" value="{{ model }}" class="form-checkbox border-gray-300 text-gray-700">
+                                            <label for="model-{{ model }}" class="checkbox-label text-gray-700">{{ model }}</label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <!-- Training Parameters -->
+                                <div class="task-form-group">
+                                    <label class="task-form-label text-gray-700">Training Parameters</label>
+                                    <div class="task-params">
+                                        <div class="form-field">
+                                            <label class="field-label text-gray-700">Training Type</label>
+                                            <select name="training-type" class="form-select bg-gray-100 border-gray-300 text-gray-800">
+                                                <option value="single">Single Model</option>
+                                                <option value="joint">Joint Training</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="form-field">
+                                            <label class="field-label text-gray-700">Priority</label>
+                                            <select name="priority" class="form-select bg-gray-100 border-gray-300 text-gray-800">
+                                                <option value="0">Critical</option>
+                                                <option value="1">High</option>
+                                                <option value="5" selected>Medium</option>
+                                                <option value="8">Low</option>
+                                                <option value="10">Background</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Advanced Parameters -->
+                            <div class="advanced-params">
+                                <h3 class="advanced-params-title text-gray-800">Advanced Parameters</h3>
+                                <div class="advanced-params-grid">
+                                    <div class="form-field">
+                                        <label class="field-label text-gray-700">Epochs</label>
+                                        <input type="number" name="epochs" value="10" min="1" max="100" 
+                                               class="form-input bg-gray-100 border-gray-300 text-gray-800">
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="field-label text-gray-700">Batch Size</label>
+                                        <input type="number" name="batch-size" value="32" min="1" max="1024" 
+                                               class="form-input bg-gray-100 border-gray-300 text-gray-800">
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="field-label text-gray-700">Learning Rate</label>
+                                        <input type="number" name="learning-rate" value="0.001" step="0.000001" min="0.000001" max="1.0" 
+                                               class="form-input bg-gray-100 border-gray-300 text-gray-800">
+                                    </div>
+                                </div>
+                                
+                                <div class="knowledge-assist">
+                                    <div class="form-checkbox">
+                                        <input type="checkbox" id="knowledge-assisted" name="knowledge-assisted" class="form-checkbox border-gray-300 text-gray-700">
+                                        <label for="knowledge-assisted" class="checkbox-label text-gray-700">Enable Knowledge Assistance</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Schedule Options -->
+                            <div class="schedule-options">
+                                <div class="form-checkbox">
+                                    <input type="checkbox" id="schedule-task" name="schedule-task" class="form-checkbox border-gray-300 text-gray-700">
+                                    <label for="schedule-task" class="checkbox-label schedule-label text-gray-700">Schedule for later</label>
+                                </div>
+                                <div id="schedule-options" class="hidden schedule-fields">
+                                    <div class="form-field schedule-time-field">
+                                        <label class="field-label text-gray-700">Start Time</label>
+                                        <input type="datetime-local" name="scheduled-time" 
+                                               class="form-input bg-gray-100 border-gray-300 text-gray-800">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="form-actions">
+                                <button type="button" id="reset-form" class="form-btn cancel-btn bg-gray-200 text-gray-800 hover:bg-gray-300">
+                                    Reset
+                                </button>
+                                <button type="submit" class="form-btn submit-btn bg-gray-800 text-white hover:bg-gray-700">
+                                    Start Training
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+
+                    <!-- Training History -->
+                    <section id="history" class="training-history-section">
+                        <div class="section-header">
+                            <h2 class="section-title text-gray-800">Recent Activity</h2>
+                            <button id="clear-history" class="clear-history-btn bg-gray-200 text-gray-800 hover:bg-gray-300">
+                                <i class="fa fa-trash mr-1"></i> Clear History
+                            </button>
+                        </div>
+
+                        <div id="training-history" class="history-list max-h-80 overflow-y-auto">
+                            {% for event in training_history %}
+                            <div class="history-item border-b border-gray-200 hover:bg-gray-50">
+                                <div class="history-item-icon text-gray-600">
+                                    <i class="fas fa-tasks"></i>
+                                </div>
+                                <div class="history-item-details">
+                                    <div class="history-item-title text-gray-800">
+                                        Task {{ event.task_id }}
+                                    </div>
+                                    <div class="history-item-status text-gray-600">
+                                        Status: {{ event.status }}
+                                    </div>
+                                </div>
+                                <div class="history-item-meta">
+                                    <div class="history-item-time text-gray-500">{{ event.timestamp }}</div>
+                                    {% if event.models %}
+                                    <div class="history-item-model text-gray-600">{{ ', '.join(event.models) }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="no-history-item text-gray-500">
+                                <i class="fa fa-history text-2xl mb-2"></i>
+                                <p>No recent activity</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Task Details Modal -->
+    <div id="task-modal" class="modal-overlay bg-black bg-opacity-50">
+        <div class="modal-container bg-white">
+            <div class="modal-title-wrapper border-b border-gray-200">
+                <h3 class="modal-title text-gray-800" id="modal-title">Task Details</h3>
+                <button id="close-modal" class="modal-close-btn text-gray-500 hover:text-gray-800">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-content" id="modal-content">
+                <div class="task-details">
+                    <div class="task-detail-row">
+                        <span class="task-detail-label text-gray-700">Task ID:</span>
+                        <span id="modal-task-id" class="task-detail-value text-gray-800">--</span>
+                    </div>
+                    <div class="task-detail-row">
+                        <span class="task-detail-label text-gray-700">Models:</span>
+                        <div id="modal-models" class="task-detail-value text-gray-800">--</div>
+                    </div>
+                    <div class="task-detail-row">
+                        <span class="task-detail-label text-gray-700">Status:</span>
+                        <span id="modal-status" class="task-detail-value text-gray-800">--</span>
+                    </div>
+                    <div class="task-detail-row">
+                        <span class="task-detail-label text-gray-700">Progress:</span>
+                        <div class="task-detail-progress bg-gray-200">
+                            <div id="modal-progress-bar" class="task-progress-bar bg-gray-600" style="width: 0%"></div>
+                        </div>
+                        <span id="modal-progress-text" class="task-detail-value text-gray-800">0%</span>
+                    </div>
+                    <div class="task-detail-row">
+                        <span class="task-detail-label text-gray-700">Epochs:</span>
+                        <span id="modal-epochs" class="task-detail-value text-gray-800">--/--</span>
+                    </div>
+                    <div class="task-detail-row">
+                        <span class="task-detail-label text-gray-700">Priority:</span>
+                        <span id="modal-priority" class="task-detail-value text-gray-800">--</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer border-t border-gray-200">
+                <button id="modal-close-btn" class="btn btn-secondary bg-gray-200 text-gray-800 hover:bg-gray-300">
+                    Close
+                </button>
+                <button id="modal-stop-btn" class="btn btn-danger bg-gray-800 text-white hover:bg-gray-700">
+                    Stop Task
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notification" class="toast-notification hidden bg-gray-100 border border-gray-300">
+        <div class="toast-content">
+            <div id="notification-icon" class="toast-icon text-gray-600">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="toast-text">
+                <h4 id="notification-title" class="toast-title text-gray-800">Info</h4>
+                <p id="notification-message" class="toast-message text-gray-700">Notification message will appear here.</p>
+            </div>
+            <button id="close-notification" class="toast-close-btn text-gray-500 hover:text-gray-800">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

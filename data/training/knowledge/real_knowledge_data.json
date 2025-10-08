@@ -1,0 +1,20 @@
+[
+  {
+    "domain": "artificial_intelligence",
+    "content": "Artificial intelligence is the simulation of human intelligence processes by machines, especially computer systems.",
+    "category": "technology",
+    "importance": "high"
+  },
+  {
+    "domain": "machine_learning",
+    "content": "Machine learning is a method of data analysis that automates analytical model building.",
+    "category": "technology",
+    "importance": "high"
+  },
+  {
+    "domain": "neural_networks",
+    "content": "Neural networks are computing systems inspired by the biological neural networks that constitute animal brains.",
+    "category": "technology",
+    "importance": "high"
+  }
+]

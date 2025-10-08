@@ -1,0 +1,201 @@
+# 系统配置 - System Configuration
+# Self Brain AGI System Configuration
+# Version: 1.0 | 创作团队邮箱: silencecrowtom@qq.com
+
+# 端口配置 - Port Configuration
+ports:
+  manager: 5000
+  language: 5001
+  audio: 5002
+  image: 5003
+  video: 5004
+  spatial: 5005
+  sensor: 5006
+  computer_control: 5007
+  knowledge: 5008
+  motion: 5009
+  programming: 5010
+  web_backend: 8000
+  web_frontend: 8080  # Main web interface port as per README
+  manager_api: 5015
+  agi_core: 5014
+
+# 增强学习配置 - Enhanced Learning Configuration
+enhanced_learning:
+  config_path: "config/enhanced_learning_config.json"
+  enable_auto_config: true
+  learning_strategy: "adaptive"
+
+# 模型配置 - Model Configuration
+models:
+  # 本地模型启用状态 - Local model enable status
+  local_models:
+    A_management: true
+    B_language: true
+    C_audio: true
+    D_image: true
+    E_video: true
+    F_spatial: true
+    G_sensor: true
+    H_computer_control: true
+    I_knowledge: true
+    J_motion: true
+    K_programming: true
+
+  # 外部API配置 - External API Configuration
+  external_apis:
+    openai:
+      enabled: false
+      api_key: ""
+      base_url: "https://api.openai.com/v1"
+    anthropic:
+      enabled: false
+      api_key: ""
+      base_url: "https://api.anthropic.com"
+    huggingface:
+      enabled: false
+      api_key: ""
+      base_url: "https://api-inference.huggingface.co"
+
+# 训练配置 - Training Configuration
+training:
+  # 默认训练参数 - Default training parameters
+  default_epochs: 100
+  default_batch_size: 32
+  default_learning_rate: 0.001
+  validation_split: 0.2
+  
+  # 训练数据路径 - Training data paths
+  data_paths:
+    language: "data/training/language"
+    audio: "data/training/audio"
+    image: "data/training/image"
+    video: "data/training/video"
+    knowledge: "data/training/knowledge"
+
+# 系统性能配置 - System Performance Configuration
+performance:
+  # 资源限制 - Resource limits
+  cpu_limit: 80  # CPU使用率限制百分比
+  memory_limit: 4096  # 内存限制(MB)
+  gpu_memory_limit: 4096  # GPU内存限制(MB)
+  
+  # 超时设置 - Timeout settings
+  api_timeout: 30  # API调用超时(秒)
+  model_timeout: 60  # 模型推理超时(秒)
+  training_timeout: 3600  # 训练超时(秒)
+
+# 日志配置 - Logging Configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  file_path: "logs/system.log"
+  max_size: 10485760  # 10MB
+  backup_count: 5
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# 数据库配置 - Database Configuration
+database:
+  # Neo4j图数据库 - Neo4j Graph Database
+  neo4j:
+    uri: "bolt://localhost:7687"
+    user: "neo4j"
+    password: "password"
+    database: "knowledge"
+  
+  # SQLite缓存数据库 - SQLite Cache Database
+  sqlite:
+    path: "data/cache.db"
+
+# 安全配置 - Security Configuration
+security:
+  # JWT令牌配置 - JWT Token Configuration
+  jwt:
+    secret_key: "your-secret-key-change-in-production"
+    algorithm: "HS256"
+    access_token_expire_minutes: 30
+    refresh_token_expire_days: 7
+  
+  # CORS配置 - CORS Configuration
+  cors:
+    allowed_origins: ["http://localhost:8080", "http://127.0.0.1:8080"]
+    allowed_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allowed_headers: ["*"]
+    allow_credentials: true
+
+# 实时处理配置 - Real-time Processing Configuration
+realtime:
+  # WebSocket配置 - WebSocket Configuration
+  websocket:
+    enabled: true
+    ping_interval: 25
+    ping_timeout: 20
+    max_message_size: 1048576  # 1MB
+    
+  # 传感器数据流 - Sensor Data Stream
+  sensor:
+    sample_rate: 100  # 采样率(Hz)
+    buffer_size: 1024  # 缓冲区大小
+    
+  # 音频流处理 - Audio Stream Processing
+  audio:
+    sample_rate: 16000
+    chunk_size: 1024
+    channels: 1
+
+# 情感引擎配置 - Emotion Engine Configuration
+emotion:
+  # LSTM模型参数 - LSTM Model Parameters
+  lstm:
+    hidden_size: 128
+    num_layers: 2
+    dropout: 0.3
+    
+  # 情感状态阈值 - Emotion State Thresholds
+  thresholds:
+    happiness: 0.6
+    sadness: 0.5
+    anger: 0.4
+    surprise: 0.4
+    neutral: 0.3
+
+# MCP服务器配置 - MCP Server Configuration
+mcp:
+  # 计算机控制MCP - Computer Control MCP
+  computer_control:
+    enabled: true
+    host: "localhost"
+    port: 8081
+    tools: ["execute_command", "file_operation", "process_management"]
+    
+  # 知识库MCP - Knowledge Base MCP
+  knowledge_base:
+    enabled: true
+    host: "localhost"
+    port: 8082
+    resources: ["knowledge://physics", "knowledge://math", "knowledge://chemistry"]
+
+# 监控配置 - Monitoring Configuration
+monitoring:
+  # Prometheus指标 - Prometheus Metrics
+  prometheus:
+    enabled: true
+    port: 9090
+    
+  # 健康检查 - Health Checks
+  health_check:
+    interval: 30  # 检查间隔(秒)
+    timeout: 5  # 超时时间(秒)
+    
+  # 性能指标收集 - Performance Metrics Collection
+  metrics:
+    cpu_interval: 10
+    memory_interval: 10
+    disk_interval: 60
+    network_interval: 30
+
+# 部署环境 - Deployment Environment
+environment: "development"  # development, testing, production
+
+# 版本信息 - Version Information
+version: "2.0.0"
+build_date: "2025-08-23"

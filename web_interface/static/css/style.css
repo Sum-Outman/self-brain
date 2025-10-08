@@ -1,0 +1,6 @@
+/* 
+ * Style.css - 重定向到main.css以保持向后兼容性
+ * 这个文件作为main.css的别名，确保旧版本引用正常工作
+ */
+
+@import url('main.css');

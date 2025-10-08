@@ -1,0 +1,61 @@
+{
+    "cameras": {
+        "max_cameras": 4,
+        "default_resolution": "1280x720",
+        "default_fps": 30,
+        "enable_stereo_vision": true,
+        "stereo_camera_pairs": {}
+    },
+    "sensors": {
+        "temperature_sensors": [],
+        "humidity_sensors": [],
+        "motion_sensors": [],
+        "light_sensors": [],
+        "pressure_sensors": [],
+        "acceleration_sensors": [],
+        "gyroscope_sensors": []
+    },
+    "serial_ports": {
+        "baud_rates": [
+            9600,
+            19200,
+            38400,
+            57600,
+            115200
+        ],
+        "default_timeout": 1.0,
+        "auto_detect": true
+    },
+    "network_devices": {
+        "tcp_ports": [
+            8080,
+            8081,
+            9000
+        ],
+        "udp_ports": [
+            8082,
+            8083
+        ],
+        "websocket_ports": [
+            8765,
+            8766
+        ]
+    },
+    "external_devices": {
+        "robotic_arms": [],
+        "motor_controllers": [],
+        "led_controllers": [],
+        "audio_devices": [],
+        "display_devices": []
+    },
+    "monitoring": {
+        "enable_real_time_monitoring": true,
+        "update_interval": 2.0,
+        "alert_thresholds": {
+            "cpu_usage": 80,
+            "memory_usage": 85,
+            "temperature": 75,
+            "disk_usage": 90
+        }
+    }
+}

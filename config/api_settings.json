@@ -1,0 +1,173 @@
+{
+  "global_settings": {
+    "timeout": 30,
+    "retry_count": 3,
+    "proxy": ""
+  },
+  "providers": {
+    "openai": {
+      "base_url": "https://api.openai.com/v1",
+      "default_model": "gpt-4o",
+      "supported_models": [
+        "gpt-3.5-turbo",
+        "gpt-3.5-turbo-16k",
+        "gpt-4",
+        "gpt-4-turbo",
+        "gpt-4o"
+      ],
+      "auth_type": "bearer",
+      "models_endpoint": "/models",
+      "chat_endpoint": "/chat/completions",
+      "embeddings_endpoint": "/embeddings",
+      "image_endpoint": "/images/generations"
+    },
+    "anthropic": {
+      "base_url": "https://api.anthropic.com/v1",
+      "default_model": "claude-3-sonnet-20240229",
+      "supported_models": [
+        "claude-3-opus-20240229",
+        "claude-3-sonnet-20240229",
+        "claude-3-haiku-20240307"
+      ],
+      "auth_type": "bearer",
+      "api_key_header": "x-api-key",
+      "chat_endpoint": "/messages"
+    },
+    "google": {
+      "base_url": "https://generativelanguage.googleapis.com/v1beta",
+      "default_model": "gemini-pro",
+      "supported_models": [
+        "gemini-pro",
+        "gemini-pro-vision"
+      ],
+      "auth_type": "query_param",
+      "api_key_param": "key",
+      "chat_endpoint": "/models/{model}:generateContent",
+      "embeddings_endpoint": "/models/{model}:embedContent"
+    },
+    "huggingface": {
+      "base_url": "https://api-inference.huggingface.co/models",
+      "default_model": "google/flan-t5-xxl",
+      "supported_models": [],
+      "auth_type": "bearer",
+      "api_key_header": "Authorization",
+      "api_key_prefix": "Bearer"
+    },
+    "custom": {
+      "base_url": "",
+      "default_model": "",
+      "supported_models": [],
+      "auth_type": "custom",
+      "custom_headers": {},
+      "chat_endpoint": ""
+    }
+  },
+  "models": {
+    "A_management": {
+      "use_external": false,
+      "provider": "",
+      "model": "",
+      "api_url": "",
+      "api_key": "",
+      "enabled": false,
+      "timeout": 60
+    },
+    "B_language": {
+      "use_external": false,
+      "provider": "openai",
+      "model": "gpt-4o",
+      "api_url": "https://api.openai.com/v1",
+      "api_key": "",
+      "enabled": false,
+      "timeout": 30
+    },
+    "C_audio": {
+      "use_external": false,
+      "provider": "",
+      "model": "",
+      "api_url": "",
+      "api_key": "",
+      "enabled": false,
+      "timeout": 30
+    },
+    "D_image": {
+      "use_external": false,
+      "provider": "openai",
+      "model": "dall-e-3",
+      "api_url": "https://api.openai.com/v1",
+      "api_key": "",
+      "enabled": false,
+      "timeout": 45
+    },
+    "E_video": {
+      "use_external": false,
+      "provider": "",
+      "model": "",
+      "api_url": "",
+      "api_key": "",
+      "enabled": false,
+      "timeout": 60
+    },
+    "F_spatial": {
+      "use_external": false,
+      "provider": "",
+      "model": "",
+      "api_url": "",
+      "api_key": "",
+      "enabled": false,
+      "timeout": 30
+    },
+    "G_sensor": {
+      "use_external": false,
+      "provider": "",
+      "model": "",
+      "api_url": "",
+      "api_key": "",
+      "enabled": false,
+      "timeout": 15
+    },
+    "H_computer_control": {
+      "use_external": false,
+      "provider": "",
+      "model": "",
+      "api_url": "",
+      "api_key": "",
+      "enabled": false,
+      "timeout": 30
+    },
+    "I_knowledge": {
+      "use_external": false,
+      "provider": "",
+      "model": "",
+      "api_url": "",
+      "api_key": "",
+      "enabled": false,
+      "timeout": 45
+    },
+    "J_motion": {
+      "use_external": false,
+      "provider": "",
+      "model": "",
+      "api_url": "",
+      "api_key": "",
+      "enabled": false,
+      "timeout": 30
+    },
+    "K_programming": {
+      "use_external": false,
+      "provider": "openai",
+      "model": "gpt-4o",
+      "api_url": "https://api.openai.com/v1",
+      "api_key": "",
+      "enabled": false,
+      "timeout": 30
+    }
+  },
+  "connection_status": {
+    "last_checked": null,
+    "status": {}
+  },
+  "version": "1.0.0",
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
+}

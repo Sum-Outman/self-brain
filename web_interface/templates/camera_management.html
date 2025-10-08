@@ -1,0 +1,1300 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}Camera Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .camera-section {
+        background-color: #fff;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        border: 1px solid #e6e6e6;
+    }
+    .camera-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    .camera-item {
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        padding: 12px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        background-color: #fff;
+    }
+    .camera-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+    .camera-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    .camera-name {
+        font-weight: 600;
+        font-size: 15px;
+        color: #333;
+    }
+    .camera-status {
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+        border: 1px solid #ccc;
+    }
+    .status-active {
+        background-color: #f5f5f5;
+        color: #333;
+        border-color: #bbb;
+    }
+    .status-inactive {
+        background-color: #fafafa;
+        color: #666;
+        border-color: #ddd;
+    }
+    .camera-info {
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 8px;
+    }
+    .camera-controls {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .camera-preview {
+        margin-top: 15px;
+        background-color: #000;
+        border-radius: 4px;
+        overflow: hidden;
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .preview-placeholder {
+        color: #666;
+        text-align: center;
+        background-color: #f8f9fa;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .camera-settings {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #eee;
+    }
+    .snapshot-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+    }
+    .snapshot-item {
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        padding: 8px;
+        text-align: center;
+        background-color: #fafafa;
+    }
+    .snapshot-image {
+        max-width: 100%;
+        height: auto;
+        border-radius: 3px;
+        margin-bottom: 8px;
+        border: 1px solid #ddd;
+    }
+    .snapshot-info {
+        font-size: 11px;
+        color: #666;
+    }
+    .modal-title {
+        margin: 0;
+        color: #333;
+    }
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    /* Stereo Vision Styles */
+    .stereo-section {
+        background-color: #fff;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        border: 1px solid #e6e6e6;
+    }
+    .stereo-pair-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    .stereo-pair-item {
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        padding: 12px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        background-color: #fff;
+    }
+    .stereo-pair-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+    .stereo-pair-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    .stereo-pair-name {
+        font-weight: 600;
+        font-size: 15px;
+        color: #333;
+    }
+    .stereo-pair-status {
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+        border: 1px solid #ccc;
+    }
+    .status-stereo-active {
+        background-color: #f0f0f0;
+        color: #333;
+        border-color: #bbb;
+    }
+    .status-stereo-inactive {
+        background-color: #fafafa;
+        color: #666;
+        border-color: #ddd;
+    }
+    .stereo-pair-cameras {
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 8px;
+    }
+    .stereo-pair-controls {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .stereo-vision-preview {
+        margin-top: 15px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    .depth-map-container {
+        margin-top: 15px;
+        text-align: center;
+    }
+    .depth-map-canvas {
+        border: 1px solid #ddd;
+        background-color: #f8f9fa;
+        max-width: 100%;
+    }
+    .depth-map-info {
+        font-size: 13px;
+        color: #666;
+        margin-top: 8px;
+    }
+    .multi-camera-operations {
+        margin-bottom: 15px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4">Camera Management</h1>
+    
+    <!-- Multi-camera Operations -->
+    <div class="multi-camera-operations">
+        <button class="btn btn-outline-dark" id="start-all-cameras-btn">Start All Cameras</button>
+        <button class="btn btn-outline-dark" id="stop-all-cameras-btn">Stop All Cameras</button>
+        <button class="btn btn-outline-dark" id="refresh-cameras-btn">Refresh Camera List</button>
+    </div>
+    
+    <div class="camera-section">
+        <h2 class="h4 mb-3">Available Cameras</h2>
+        <div class="camera-list" id="camera-list">
+            <!-- Camera items will be inserted here by JavaScript -->
+            <div class="camera-item">
+                <div class="preview-placeholder">Loading cameras...</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stereo Vision Section -->
+    <div class="stereo-section">
+        <h2 class="h4 mb-3">Stereo Vision Pairs</h2>
+        <div class="stereo-pair-list" id="stereo-pair-list">
+            <!-- Stereo pair items will be inserted here by JavaScript -->
+            <div class="stereo-pair-item">
+                <div class="preview-placeholder">Loading stereo pairs...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Camera Preview Modal -->
+<div id="preview-modal" class="modal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="previewModalLabel">Camera Preview <span id="modal-camera-id"></span></h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div style="text-align: center; padding: 20px 0;">
+                <img id="modal-preview-image" src="" alt="Camera Preview" style="max-width: 100%; max-height: 500px;">
+            </div>
+            <div style="text-align: center; margin-top: 15px;">
+                <button class="btn btn-outline-dark" id="take-snapshot-btn">Take Snapshot</button>
+                <button class="btn btn-outline-dark" id="refresh-preview-btn">Refresh Preview</button>
+                <button class="btn btn-outline-dark" id="close-preview-btn" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="modal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="settingsModalLabel">Camera Settings <span id="settings-camera-id"></span></h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div id="settings-form" class="p-3">
+                <!-- Settings form will be inserted here by JavaScript -->
+            </div>
+            <div style="text-align: center; margin-top: 20px; padding: 15px;">
+                <button class="btn btn-outline-dark" id="save-settings-btn">Save Settings</button>
+                <button class="btn btn-outline-dark" id="close-settings-btn" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Snapshots Modal -->
+<div id="snapshots-modal" class="modal" tabindex="-1" aria-labelledby="snapshotsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="snapshotsModalLabel">Camera Snapshots <span id="snapshots-camera-id"></span></h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div id="snapshots-container" class="p-3">
+                <!-- Snapshots will be inserted here by JavaScript -->
+                <p style="text-align: center; color: #666;">Loading snapshots...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stereo Vision Modal -->
+<div id="stereo-vision-modal" class="modal" tabindex="-1" aria-labelledby="stereoVisionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="stereoVisionModalLabel">Stereo Vision Preview <span id="stereo-pair-id"></span></h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="p-3">
+                <!-- Left and right camera views -->
+                <div class="stereo-vision-preview">
+                    <div>
+                        <h3 style="text-align: center; margin-bottom: 10px;">Left Camera</h3>
+                        <img id="stereo-left-image" src="" alt="Left Camera View" style="max-width: 100%; height: auto;">
+                    </div>
+                    <div>
+                        <h3 style="text-align: center; margin-bottom: 10px;">Right Camera</h3>
+                        <img id="stereo-right-image" src="" alt="Right Camera View" style="max-width: 100%; height: auto;">
+                    </div>
+                </div>
+                
+                <!-- Depth map -->
+                <div class="depth-map-container">
+                    <h3 style="margin-bottom: 10px;">Depth Map</h3>
+                    <canvas id="depth-map-canvas" class="depth-map-canvas" width="640" height="480"></canvas>
+                    <div id="depth-map-info" class="depth-map-info">Processing depth data...</div>
+                </div>
+                
+                <!-- Controls -->
+                <div style="text-align: center; margin-top: 20px; padding: 15px;">
+                    <button class="btn btn-outline-dark" id="refresh-stereo-btn">Refresh Views</button>
+                    <button class="btn btn-outline-dark" id="capture-depth-btn">Capture Depth Data</button>
+                    <button class="btn btn-outline-dark" id="close-stereo-btn" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/camera_control.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Reference to UI elements
+        const cameraList = document.getElementById('camera-list');
+        const previewModal = new bootstrap.Modal(document.getElementById('preview-modal'));
+        const modalCameraId = document.getElementById('modal-camera-id');
+        const modalPreviewImage = document.getElementById('modal-preview-image');
+        const takeSnapshotBtn = document.getElementById('take-snapshot-btn');
+        const refreshPreviewBtn = document.getElementById('refresh-preview-btn');
+        const closePreviewBtn = document.getElementById('close-preview-btn');
+        
+        const settingsModal = new bootstrap.Modal(document.getElementById('settings-modal'));
+        const settingsCameraId = document.getElementById('settings-camera-id');
+        const settingsForm = document.getElementById('settings-form');
+        const saveSettingsBtn = document.getElementById('save-settings-btn');
+        const closeSettingsBtn = document.getElementById('close-settings-btn');
+        
+        const snapshotsModal = new bootstrap.Modal(document.getElementById('snapshots-modal'));
+        const snapshotsCameraId = document.getElementById('snapshots-camera-id');
+        const snapshotsContainer = document.getElementById('snapshots-container');
+        
+        // Stereo vision elements
+        const stereoPairList = document.getElementById('stereo-pair-list');
+        const stereoVisionModal = new bootstrap.Modal(document.getElementById('stereo-vision-modal'));
+        const stereoPairId = document.getElementById('stereo-pair-id');
+        const stereoLeftImage = document.getElementById('stereo-left-image');
+        const stereoRightImage = document.getElementById('stereo-right-image');
+        const depthMapCanvas = document.getElementById('depth-map-canvas');
+        const depthMapInfo = document.getElementById('depth-map-info');
+        const refreshStereoBtn = document.getElementById('refresh-stereo-btn');
+        const captureDepthBtn = document.getElementById('capture-depth-btn');
+        const closeStereoBtn = document.getElementById('close-stereo-btn');
+        
+        // Multi-camera controls
+        const startAllCamerasBtn = document.getElementById('start-all-cameras-btn');
+        const stopAllCamerasBtn = document.getElementById('stop-all-cameras-btn');
+        const refreshCamerasBtn = document.getElementById('refresh-cameras-btn');
+        
+        let currentCameraId = null;
+        let currentStereoPairId = null;
+        let snapshots = {};
+        let stereoPairs = [];
+        let depthUpdateInterval = null;
+        
+        // Load cameras and stereo pairs initially
+        loadCameras();
+        loadStereoPairs();
+        
+        // Periodically refresh camera list and stereo pairs
+        setInterval(() => {
+            loadCameras();
+            loadStereoPairs();
+        }, 10000);
+        
+        // Function to load cameras
+        async function loadCameras() {
+            try {
+                const apiResponse = await fetch('/api/camera');
+                const response = await apiResponse.json();
+                
+                if (response.status === 'success') {
+                    cameraList.innerHTML = '';
+                    
+                    // Process each available camera
+                    response.available_cameras.forEach(camera => {
+                        const isActive = response.active_camera_ids && 
+                                       response.active_camera_ids.includes(camera.id);
+                        
+                        const cameraItem = createCameraItem(camera, isActive);
+                        cameraList.appendChild(cameraItem);
+                    });
+                } else {
+                    console.error('Failed to load cameras:', response.message);
+                    cameraList.innerHTML = '<p style="text-align: center; color: #666;">Failed to load cameras. Please try again later.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading cameras:', error);
+                cameraList.innerHTML = '<p style="text-align: center; color: #666;">Error loading cameras. Please try again later.</p>';
+            }
+        }
+        
+        // Function to load stereo pairs
+        async function loadStereoPairs() {
+            try {
+                const response = await CameraControl.getStereoPairs();
+                
+                if (response && Array.isArray(response)) {
+                    stereoPairs = response;
+                    updateStereoPairList();
+                } else {
+                    // If getStereoPairs doesn't return the data directly, try fetching from API
+                    const apiResponse = await fetch('/api/camera/stereo-pairs');
+                    const data = await apiResponse.json();
+                    
+                    if (data.status === 'success') {
+                        stereoPairs = data.stereo_pairs || [];
+                        updateStereoPairList();
+                    } else {
+                        console.error('Failed to load stereo pairs:', data.message);
+                        stereoPairList.innerHTML = '<p style="text-align: center; color: #666;">Failed to load stereo pairs. Please try again later.</p>';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading stereo pairs:', error);
+                stereoPairList.innerHTML = '<p style="text-align: center; color: #666;">Error loading stereo pairs. Please try again later.</p>';
+            }
+        }
+        
+        // Function to update stereo pair list UI
+        function updateStereoPairList() {
+            stereoPairList.innerHTML = '';
+            
+            if (stereoPairs.length === 0) {
+                stereoPairList.innerHTML = '<p style="text-align: center; color: #666;">No stereo pairs configured.</p>';
+                return;
+            }
+            
+            // Get active stereo sessions
+            const activeSessions = CameraControl.getActiveStereoSessions() || {};
+            
+            // Process each stereo pair
+            stereoPairs.forEach(pair => {
+                const isActive = activeSessions.hasOwnProperty(pair.id);
+                
+                const pairItem = createStereoPairItem(pair, isActive);
+                stereoPairList.appendChild(pairItem);
+            });
+        }
+        
+        // Function to create a camera item element
+        function createCameraItem(camera, isActive) {
+            const item = document.createElement('div');
+            item.className = 'camera-item';
+            
+            // Create camera header
+            const header = document.createElement('div');
+            header.className = 'camera-header';
+            
+            const name = document.createElement('div');
+            name.className = 'camera-name';
+            name.textContent = `Camera ${camera.id}: ${camera.name}`;
+            
+            // Add position info if available
+            if (camera.position) {
+                name.textContent += ` (${camera.position})`;
+            }
+            
+            const status = document.createElement('div');
+            status.className = `camera-status ${isActive ? 'status-active' : 'status-inactive'}`;
+            status.textContent = isActive ? 'Active' : 'Inactive';
+            
+            header.appendChild(name);
+            header.appendChild(status);
+            item.appendChild(header);
+            
+            // Add camera info
+            const info = document.createElement('div');
+            info.className = 'camera-info';
+            
+            // Add buttons for controlling the camera
+            const controls = document.createElement('div');
+            controls.className = 'camera-controls';
+            
+            if (!isActive) {
+                const startBtn = document.createElement('button');
+                startBtn.className = 'btn btn-outline-dark btn-sm';
+                startBtn.textContent = 'Start';
+                startBtn.addEventListener('click', () => startCamera(camera.id));
+                controls.appendChild(startBtn);
+            } else {
+                const stopBtn = document.createElement('button');
+                stopBtn.className = 'btn btn-outline-dark btn-sm';
+                stopBtn.textContent = 'Stop';
+                stopBtn.addEventListener('click', () => stopCamera(camera.id));
+                controls.appendChild(stopBtn);
+                
+                const previewBtn = document.createElement('button');
+                previewBtn.className = 'btn btn-outline-dark btn-sm';
+                previewBtn.textContent = 'Preview';
+                previewBtn.addEventListener('click', () => showPreview(camera.id));
+                controls.appendChild(previewBtn);
+                
+                const settingsBtn = document.createElement('button');
+                settingsBtn.className = 'btn btn-outline-dark btn-sm';
+                settingsBtn.textContent = 'Settings';
+                settingsBtn.addEventListener('click', () => showSettings(camera.id));
+                controls.appendChild(settingsBtn);
+                
+                const snapshotsBtn = document.createElement('button');
+                snapshotsBtn.className = 'btn btn-outline-dark btn-sm';
+                snapshotsBtn.textContent = 'Snapshots';
+                snapshotsBtn.addEventListener('click', () => showSnapshots(camera.id));
+                controls.appendChild(snapshotsBtn);
+            }
+            
+            item.appendChild(controls);
+            
+            return item;
+        }
+        
+        // Function to create a stereo pair item element
+        function createStereoPairItem(pair, isActive) {
+            const item = document.createElement('div');
+            item.className = 'stereo-pair-item';
+            
+            // Create stereo pair header
+            const header = document.createElement('div');
+            header.className = 'stereo-pair-header';
+            
+            const name = document.createElement('div');
+            name.className = 'stereo-pair-name';
+            name.textContent = pair.name || `Stereo Pair ${pair.id}`;
+            
+            const status = document.createElement('div');
+            status.className = `stereo-pair-status ${isActive ? 'status-stereo-active' : 'status-stereo-inactive'}`;
+            status.textContent = isActive ? 'Active' : 'Inactive';
+            
+            header.appendChild(name);
+            header.appendChild(status);
+            item.appendChild(header);
+            
+            // Add camera info
+            const camerasInfo = document.createElement('div');
+            camerasInfo.className = 'stereo-pair-cameras';
+            camerasInfo.textContent = `Left: Camera ${pair.left_camera_id}, Right: Camera ${pair.right_camera_id}`;
+            item.appendChild(camerasInfo);
+            
+            // Add buttons for controlling the stereo pair
+            const controls = document.createElement('div');
+            controls.className = 'stereo-pair-controls';
+            
+            if (!isActive) {
+                const startBtn = document.createElement('button');
+                startBtn.className = 'btn btn-outline-dark btn-sm';
+                startBtn.textContent = 'Enable Stereo';
+                startBtn.addEventListener('click', () => enableStereoVision(pair.id));
+                controls.appendChild(startBtn);
+            } else {
+                const stopBtn = document.createElement('button');
+                stopBtn.className = 'btn btn-outline-dark btn-sm';
+                stopBtn.textContent = 'Disable Stereo';
+                stopBtn.addEventListener('click', () => disableStereoVision(pair.id));
+                controls.appendChild(stopBtn);
+                
+                const previewBtn = document.createElement('button');
+                previewBtn.className = 'btn btn-outline-dark btn-sm';
+                previewBtn.textContent = 'Stereo Preview';
+                previewBtn.addEventListener('click', () => showStereoPreview(pair.id));
+                controls.appendChild(previewBtn);
+            }
+            
+            item.appendChild(controls);
+            
+            return item;
+        }
+        
+        // Function to start a camera
+        async function startCamera(cameraId) {
+            try {
+                const response = await CameraControl.startCamera(cameraId);
+                
+                if (response.status === 'success') {
+                    showToast('Camera started successfully');
+                    loadCameras();
+                } else {
+                    showToast(`Failed to start camera: ${response.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error starting camera:', error);
+                showToast('Error starting camera. Please try again later.', 'error');
+            }
+        }
+        
+        // Function to stop a camera
+        async function stopCamera(cameraId) {
+            try {
+                const response = await CameraControl.stopCamera(cameraId);
+                
+                if (response.status === 'success') {
+                    showToast('Camera stopped successfully');
+                    loadCameras();
+                } else {
+                    showToast(`Failed to stop camera: ${response.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error stopping camera:', error);
+                showToast('Error stopping camera. Please try again later.', 'error');
+            }
+        }
+        
+        // Function to show camera preview
+        function showPreview(cameraId) {
+            currentCameraId = cameraId;
+            modalCameraId.textContent = `(${cameraId})`;
+            
+            // Update preview image
+            refreshPreviewImage(cameraId);
+            
+            // Show modal
+            previewModal.show();
+        }
+        
+        // Function to refresh preview image
+        function refreshPreviewImage(cameraId) {
+            // Add timestamp to prevent caching
+            const timestamp = new Date().getTime();
+            modalPreviewImage.src = `/api/camera/frame/${cameraId}?t=${timestamp}`;
+            
+            modalPreviewImage.onload = function() {
+                // Image loaded successfully
+            };
+            
+            modalPreviewImage.onerror = function() {
+                // If image loading fails, show a placeholder
+                modalPreviewImage.src = '/static/images/camera_placeholder.png';
+                showToast('Failed to load camera preview', 'error');
+            };
+        }
+        
+        // Function to take a snapshot
+        async function takeSnapshot() {
+            if (!currentCameraId) return;
+            
+            try {
+                const response = await CameraControl.takeCameraSnapshot(currentCameraId);
+                
+                if (response.status === 'success') {
+                    showToast('Snapshot taken successfully');
+                    refreshPreviewImage(currentCameraId);
+                } else {
+                    showToast(`Failed to take snapshot: ${response.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error taking snapshot:', error);
+                showToast('Error taking snapshot. Please try again later.', 'error');
+            }
+        }
+        
+        // Function to show camera settings
+        async function showSettings(cameraId) {
+            currentCameraId = cameraId;
+            settingsCameraId.textContent = `(${cameraId})`;
+            
+            try {
+                // Get current settings
+                const response = await CameraControl.getCameraSettings(cameraId);
+                
+                if (response.status === 'success') {
+                    // Create settings form
+                    createSettingsForm(response.settings);
+                    
+                    // Show modal
+                    settingsModal.show();
+                } else {
+                    showToast(`Failed to load camera settings: ${response.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error loading camera settings:', error);
+                showToast('Error loading camera settings. Please try again later.', 'error');
+            }
+        }
+        
+        // Function to create settings form
+        function createSettingsForm(settings) {
+            settingsForm.innerHTML = '';
+            
+            // Resolution setting
+            if (settings.resolution) {
+                const resolutionGroup = document.createElement('div');
+                resolutionGroup.className = 'mb-3';
+                
+                const resolutionLabel = document.createElement('label');
+                resolutionLabel.className = 'form-label';
+                resolutionLabel.textContent = 'Resolution';
+                resolutionLabel.setAttribute('for', 'resolution');
+                
+                const resolutionSelect = document.createElement('select');
+                resolutionSelect.className = 'form-select';
+                resolutionSelect.id = 'resolution';
+                
+                const resolutions = ['640x480', '800x600', '1280x720', '1920x1080'];
+                resolutions.forEach(res => {
+                    const option = document.createElement('option');
+                    option.value = res;
+                    option.textContent = res;
+                    if (res === settings.resolution) {
+                        option.selected = true;
+                    }
+                    resolutionSelect.appendChild(option);
+                });
+                
+                resolutionGroup.appendChild(resolutionLabel);
+                resolutionGroup.appendChild(resolutionSelect);
+                settingsForm.appendChild(resolutionGroup);
+            }
+            
+            // Framerate setting
+            if (settings.framerate) {
+                const framerateGroup = document.createElement('div');
+                framerateGroup.className = 'mb-3';
+                
+                const framerateLabel = document.createElement('label');
+                framerateLabel.className = 'form-label';
+                framerateLabel.textContent = 'Framerate';
+                framerateLabel.setAttribute('for', 'framerate');
+                
+                const framerateSelect = document.createElement('select');
+                framerateSelect.className = 'form-select';
+                framerateSelect.id = 'framerate';
+                
+                const framerates = ['15', '30', '60'];
+                framerates.forEach(fps => {
+                    const option = document.createElement('option');
+                    option.value = fps;
+                    option.textContent = `${fps} FPS`;
+                    if (fps === settings.framerate.toString()) {
+                        option.selected = true;
+                    }
+                    framerateSelect.appendChild(option);
+                });
+                
+                framerateGroup.appendChild(framerateLabel);
+                framerateGroup.appendChild(framerateSelect);
+                settingsForm.appendChild(framerateGroup);
+            }
+            
+            // Brightness setting
+            if (settings.brightness !== undefined) {
+                const brightnessGroup = document.createElement('div');
+                brightnessGroup.className = 'mb-3';
+                
+                const brightnessLabel = document.createElement('label');
+                brightnessLabel.className = 'form-label';
+                brightnessLabel.textContent = `Brightness: ${settings.brightness}`;
+                brightnessLabel.setAttribute('for', 'brightness');
+                
+                const brightnessInput = document.createElement('input');
+                brightnessInput.type = 'range';
+                brightnessInput.className = 'form-range';
+                brightnessInput.id = 'brightness';
+                brightnessInput.min = '0';
+                brightnessInput.max = '100';
+                brightnessInput.value = settings.brightness;
+                
+                brightnessInput.addEventListener('input', function() {
+                    brightnessLabel.textContent = `Brightness: ${this.value}`;
+                });
+                
+                brightnessGroup.appendChild(brightnessLabel);
+                brightnessGroup.appendChild(brightnessInput);
+                settingsForm.appendChild(brightnessGroup);
+            }
+            
+            // Contrast setting
+            if (settings.contrast !== undefined) {
+                const contrastGroup = document.createElement('div');
+                contrastGroup.className = 'mb-3';
+                
+                const contrastLabel = document.createElement('label');
+                contrastLabel.className = 'form-label';
+                contrastLabel.textContent = `Contrast: ${settings.contrast}`;
+                contrastLabel.setAttribute('for', 'contrast');
+                
+                const contrastInput = document.createElement('input');
+                contrastInput.type = 'range';
+                contrastInput.className = 'form-range';
+                contrastInput.id = 'contrast';
+                contrastInput.min = '0';
+                contrastInput.max = '100';
+                contrastInput.value = settings.contrast;
+                
+                contrastInput.addEventListener('input', function() {
+                    contrastLabel.textContent = `Contrast: ${this.value}`;
+                });
+                
+                contrastGroup.appendChild(contrastLabel);
+                contrastGroup.appendChild(contrastInput);
+                settingsForm.appendChild(contrastGroup);
+            }
+            
+            // Saturation setting
+            if (settings.saturation !== undefined) {
+                const saturationGroup = document.createElement('div');
+                saturationGroup.className = 'mb-3';
+                
+                const saturationLabel = document.createElement('label');
+                saturationLabel.className = 'form-label';
+                saturationLabel.textContent = `Saturation: ${settings.saturation}`;
+                saturationLabel.setAttribute('for', 'saturation');
+                
+                const saturationInput = document.createElement('input');
+                saturationInput.type = 'range';
+                saturationInput.className = 'form-range';
+                saturationInput.id = 'saturation';
+                saturationInput.min = '0';
+                saturationInput.max = '100';
+                saturationInput.value = settings.saturation;
+                
+                saturationInput.addEventListener('input', function() {
+                    saturationLabel.textContent = `Saturation: ${this.value}`;
+                });
+                
+                saturationGroup.appendChild(saturationLabel);
+                saturationGroup.appendChild(saturationInput);
+                settingsForm.appendChild(saturationGroup);
+            }
+            
+            // Exposure setting (new)
+            if (settings.exposure !== undefined) {
+                const exposureGroup = document.createElement('div');
+                exposureGroup.className = 'mb-3';
+                
+                const exposureLabel = document.createElement('label');
+                exposureLabel.className = 'form-label';
+                exposureLabel.textContent = `Exposure: ${settings.exposure}`;
+                exposureLabel.setAttribute('for', 'exposure');
+                
+                const exposureInput = document.createElement('input');
+                exposureInput.type = 'range';
+                exposureInput.className = 'form-range';
+                exposureInput.id = 'exposure';
+                exposureInput.min = '0';
+                exposureInput.max = '100';
+                exposureInput.value = settings.exposure;
+                
+                exposureInput.addEventListener('input', function() {
+                    exposureLabel.textContent = `Exposure: ${this.value}`;
+                });
+                
+                exposureGroup.appendChild(exposureLabel);
+                exposureGroup.appendChild(exposureInput);
+                settingsForm.appendChild(exposureGroup);
+            }
+            
+            // White Balance setting (new)
+            if (settings.white_balance !== undefined) {
+                const whiteBalanceGroup = document.createElement('div');
+                whiteBalanceGroup.className = 'mb-3';
+                
+                const whiteBalanceLabel = document.createElement('label');
+                whiteBalanceLabel.className = 'form-label';
+                whiteBalanceLabel.textContent = `White Balance: ${settings.white_balance}`;
+                whiteBalanceLabel.setAttribute('for', 'white_balance');
+                
+                const whiteBalanceInput = document.createElement('input');
+                whiteBalanceInput.type = 'range';
+                whiteBalanceInput.className = 'form-range';
+                whiteBalanceInput.id = 'white_balance';
+                whiteBalanceInput.min = '2000';
+                whiteBalanceInput.max = '6500';
+                whiteBalanceInput.step = '100';
+                whiteBalanceInput.value = settings.white_balance;
+                
+                whiteBalanceInput.addEventListener('input', function() {
+                    whiteBalanceLabel.textContent = `White Balance: ${this.value}K`;
+                });
+                
+                whiteBalanceGroup.appendChild(whiteBalanceLabel);
+                whiteBalanceGroup.appendChild(whiteBalanceInput);
+                settingsForm.appendChild(whiteBalanceGroup);
+            }
+        }
+        
+        // Function to save camera settings
+        async function saveSettings() {
+            if (!currentCameraId) return;
+            
+            const newSettings = {};
+            
+            const resolution = document.getElementById('resolution');
+            if (resolution) {
+                newSettings.resolution = resolution.value;
+            }
+            
+            const framerate = document.getElementById('framerate');
+            if (framerate) {
+                newSettings.framerate = parseInt(framerate.value);
+            }
+            
+            const brightness = document.getElementById('brightness');
+            if (brightness) {
+                newSettings.brightness = parseInt(brightness.value);
+            }
+            
+            const contrast = document.getElementById('contrast');
+            if (contrast) {
+                newSettings.contrast = parseInt(contrast.value);
+            }
+            
+            const saturation = document.getElementById('saturation');
+            if (saturation) {
+                newSettings.saturation = parseInt(saturation.value);
+            }
+            
+            // New settings
+            const exposure = document.getElementById('exposure');
+            if (exposure) {
+                newSettings.exposure = parseInt(exposure.value);
+            }
+            
+            const whiteBalance = document.getElementById('white_balance');
+            if (whiteBalance) {
+                newSettings.white_balance = parseInt(whiteBalance.value);
+            }
+            
+            try {
+                const response = await CameraControl.updateCameraSettings(currentCameraId, newSettings);
+                
+                if (response.status === 'success') {
+                    showToast('Camera settings saved successfully');
+                    settingsModal.hide();
+                } else {
+                    showToast(`Failed to save camera settings: ${response.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error saving camera settings:', error);
+                showToast('Error saving camera settings. Please try again later.', 'error');
+            }
+        }
+        
+        // Function to show camera snapshots
+        async function showSnapshots(cameraId) {
+            currentCameraId = cameraId;
+            snapshotsCameraId.textContent = `(${cameraId})`;
+            
+            try {
+                // Get snapshots (in a real implementation, this would be an API call)
+                // For now, we'll simulate some snapshots
+                const simulatedSnapshots = generateSimulatedSnapshots(cameraId);
+                
+                // Display snapshots
+                displaySnapshots(simulatedSnapshots);
+                
+                // Show modal
+                snapshotsModal.show();
+            } catch (error) {
+                console.error('Error loading snapshots:', error);
+                showToast('Error loading snapshots. Please try again later.', 'error');
+            }
+        }
+        
+        // Function to generate simulated snapshots (for demo purposes)
+        function generateSimulatedSnapshots(cameraId) {
+            if (!snapshots[cameraId]) {
+                snapshots[cameraId] = [];
+                
+                // Create 3 simulated snapshots
+                for (let i = 0; i < 3; i++) {
+                    snapshots[cameraId].push({
+                        id: i,
+                        timestamp: new Date(Date.now() - i * 3600000).toLocaleString(),
+                        imageUrl: `/api/camera/frame/${cameraId}?t=${Date.now() + i}`
+                    });
+                }
+            }
+            
+            return snapshots[cameraId];
+        }
+        
+        // Function to display snapshots
+        function displaySnapshots(snapshotList) {
+            snapshotsContainer.innerHTML = '';
+            
+            if (snapshotList.length === 0) {
+                snapshotsContainer.innerHTML = '<p style="text-align: center; color: #666;">No snapshots available.</p>';
+                return;
+            }
+            
+            const snapshotGrid = document.createElement('div');
+            snapshotGrid.className = 'snapshot-grid';
+            
+            snapshotList.forEach(snapshot => {
+                const snapshotItem = document.createElement('div');
+                snapshotItem.className = 'snapshot-item';
+                
+                const image = document.createElement('img');
+                image.className = 'snapshot-image';
+                image.src = snapshot.imageUrl;
+                image.alt = `Snapshot taken at ${snapshot.timestamp}`;
+                
+                const info = document.createElement('div');
+                info.className = 'snapshot-info';
+                info.textContent = snapshot.timestamp;
+                
+                snapshotItem.appendChild(image);
+                snapshotItem.appendChild(info);
+                snapshotGrid.appendChild(snapshotItem);
+            });
+            
+            snapshotsContainer.appendChild(snapshotGrid);
+        }
+        
+        // Function to show toast notification
+        function showToast(message, type = 'success') {
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-black bg-${type === 'success' ? 'light' : type === 'error' ? 'light' : 'light'} border border-gray-300`;
+            toast.role = 'alert';
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            
+            // Set border color based on type
+            if (type === 'error') {
+                toast.style.borderLeft = '4px solid #666';
+            } else if (type === 'success') {
+                toast.style.borderLeft = '4px solid #333';
+            } else {
+                toast.style.borderLeft = '4px solid #999';
+            }
+            
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            
+            // Add toast to container
+            const toastContainer = document.getElementById('toastContainer');
+            toastContainer.appendChild(toast);
+            
+            // Show toast
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            // Remove toast after it's hidden
+            toast.addEventListener('hidden.bs.toast', () => {
+                toast.remove();
+            });
+        }
+        
+        // Function to start all cameras
+        async function startAllCameras() {
+            try {
+                const response = await CameraControl.getActiveCameraInputs();
+                
+                if (response.status === 'success') {
+                    const inactiveCameras = response.available_cameras.filter(camera => 
+                        !response.active_camera_inputs.hasOwnProperty(camera.id)
+                    );
+                    
+                    if (inactiveCameras.length === 0) {
+                        showToast('All cameras are already active');
+                        return;
+                    }
+                    
+                    const cameraIds = inactiveCameras.map(camera => camera.id);
+                    await CameraControl.startMultipleCameras(cameraIds);
+                    
+                    showToast(`${cameraIds.length} cameras started successfully`);
+                    loadCameras();
+                }
+            } catch (error) {
+                console.error('Error starting all cameras:', error);
+                showToast('Error starting all cameras. Some cameras may not have started.', 'error');
+                loadCameras(); // Refresh list to see which cameras started
+            }
+        }
+        
+        // Function to stop all cameras
+        async function stopAllCameras() {
+            try {
+                const response = await CameraControl.stopAllCameras();
+                
+                if (response.status === 'success') {
+                    showToast('All cameras stopped successfully');
+                    loadCameras();
+                } else {
+                    showToast(`Failed to stop all cameras: ${response.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error stopping all cameras:', error);
+                showToast('Error stopping all cameras. Some cameras may still be active.', 'error');
+                loadCameras(); // Refresh list to see which cameras stopped
+            }
+        }
+        
+        // Function to enable stereo vision
+        async function enableStereoVision(pairId) {
+            try {
+                const response = await CameraControl.enableStereoVision(pairId);
+                
+                if (response.status === 'success') {
+                    showToast('Stereo vision enabled successfully');
+                    loadStereoPairs();
+                } else {
+                    showToast(`Failed to enable stereo vision: ${response.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error enabling stereo vision:', error);
+                showToast('Error enabling stereo vision. Please try again later.', 'error');
+            }
+        }
+        
+        // Function to disable stereo vision
+        async function disableStereoVision(pairId) {
+            try {
+                const response = await CameraControl.disableStereoVision(pairId);
+                
+                if (response.status === 'success') {
+                    showToast('Stereo vision disabled successfully');
+                    loadStereoPairs();
+                } else {
+                    showToast(`Failed to disable stereo vision: ${response.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error disabling stereo vision:', error);
+                showToast('Error disabling stereo vision. Please try again later.', 'error');
+            }
+        }
+        
+        // Function to show stereo vision preview
+        function showStereoPreview(pairId) {
+            currentStereoPairId = pairId;
+            stereoPairId.textContent = `(${pairId})`;
+            
+            // Find the stereo pair
+            const pair = stereoPairs.find(p => p.id === pairId);
+            if (!pair) {
+                showToast('Stereo pair not found', 'error');
+                return;
+            }
+            
+            // Update preview images
+            refreshStereoViews(pair);
+            
+            // Start depth map updates
+            startDepthMapUpdates(pairId);
+            
+            // Show modal
+            stereoVisionModal.show();
+        }
+        
+        // Function to refresh stereo views
+        function refreshStereoViews(pair) {
+            // Add timestamp to prevent caching
+            const timestamp = new Date().getTime();
+            
+            stereoLeftImage.src = `/api/camera/frame/${pair.left_camera_id}?t=${timestamp}`;
+            stereoRightImage.src = `/api/camera/frame/${pair.right_camera_id}?t=${timestamp}`;
+            
+            stereoLeftImage.onerror = function() {
+                this.src = '/static/images/camera_placeholder.png';
+                showToast('Failed to load left camera view', 'error');
+            };
+            
+            stereoRightImage.onerror = function() {
+                this.src = '/static/images/camera_placeholder.png';
+                showToast('Failed to load right camera view', 'error');
+            };
+        }
+        
+        // Function to start depth map updates
+        function startDepthMapUpdates(pairId) {
+            // Clear any existing interval
+            if (depthUpdateInterval) {
+                clearInterval(depthUpdateInterval);
+            }
+            
+            // Update depth map every 1 second
+            depthUpdateInterval = setInterval(() => {
+                updateDepthMap(pairId);
+            }, 1000);
+            
+            // Initial update
+            updateDepthMap(pairId);
+        }
+        
+        // Function to update depth map
+        async function updateDepthMap(pairId) {
+            try {
+                const response = await CameraControl.getDepthData(pairId);
+                
+                if (response.status === 'success' && response.depth_data) {
+                    // Display depth map
+                    const success = CameraControl.displayDepthMap(
+                        'depth-map-canvas',
+                        response.depth_data,
+                        depthMapCanvas.width,
+                        depthMapCanvas.height
+                    );
+                    
+                    if (success) {
+                        depthMapInfo.textContent = `Depth data updated at ${new Date().toLocaleTimeString()}`;
+                    } else {
+                        depthMapInfo.textContent = 'Failed to display depth map';
+                    }
+                } else {
+                    depthMapInfo.textContent = `Failed to get depth data: ${response.message || 'Unknown error'}`;
+                }
+            } catch (error) {
+                console.error('Error updating depth map:', error);
+                depthMapInfo.textContent = 'Error updating depth map';
+            }
+        }
+        
+        // Function to capture depth data
+        async function captureDepthData() {
+            if (!currentStereoPairId) return;
+            
+            try {
+                const response = await CameraControl.getDepthData(currentStereoPairId);
+                
+                if (response.status === 'success' && response.depth_data) {
+                    // In a real implementation, we might want to save this data
+                    showToast('Depth data captured successfully');
+                    
+                    // For demonstration, we can just refresh the view
+                    updateDepthMap(currentStereoPairId);
+                } else {
+                    showToast(`Failed to capture depth data: ${response.message || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error capturing depth data:', error);
+                showToast('Error capturing depth data. Please try again later.', 'error');
+            }
+        }
+        
+        // Event listeners
+        takeSnapshotBtn.addEventListener('click', takeSnapshot);
+        refreshPreviewBtn.addEventListener('click', () => refreshPreviewImage(currentCameraId));
+        saveSettingsBtn.addEventListener('click', saveSettings);
+        
+        // Stereo vision event listeners
+        refreshStereoBtn.addEventListener('click', () => {
+            const pair = stereoPairs.find(p => p.id === currentStereoPairId);
+            if (pair) {
+                refreshStereoViews(pair);
+            }
+        });
+        captureDepthBtn.addEventListener('click', captureDepthData);
+        
+        // Multi-camera event listeners
+        startAllCamerasBtn.addEventListener('click', startAllCameras);
+        stopAllCamerasBtn.addEventListener('click', stopAllCameras);
+        refreshCamerasBtn.addEventListener('click', loadCameras);
+        
+        // Cleanup on modal close
+        stereoVisionModal._element.addEventListener('hidden.bs.modal', () => {
+            if (depthUpdateInterval) {
+                clearInterval(depthUpdateInterval);
+                depthUpdateInterval = null;
+            }
+        });
+    });
+</script>
+{% endblock %}

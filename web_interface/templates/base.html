@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Self Brain AGI{% endblock %}</title>
+    
+    <!-- Global constants object -->
+    <script>
+        // Global constants object - direct English text
+        window.lang = {
+            data: {},
+            get: function(key, fallback) {
+                return fallback || key;
+            }
+        };
+        
+        // Current page identifier
+        window.currentPage = 'index'; // Default value, will be updated by JavaScript in page
+    </script>
+    
+    <!-- Bootstrap CSS -->
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="{{ url_for('static', filename='css/bootstrap-icons.css') }}" rel="stylesheet">
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='images/self_brain.ico') }}" type="image/x-icon">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/self_brain.ico') }}" type="image/x-icon">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/self_brain_180.png') }}">
+    
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/main.css', v='1.1') }}" rel="stylesheet">
+    <!-- Monochrome Theme CSS -->
+    <link href="{{ url_for('static', filename='css/monochrome.css', v='1.1') }}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light border-bottom">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
+                <img src="{{ url_for('static', filename='images/self_brain.svg') }}" alt="Self Brain" style="height: 30px; width: 30px; margin-right: 8px;">
+                Self Brain AGI
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'index' %}active fw-bold{% endif %}" href="/">
+                            <i class="bi bi-house-door"></i> Home
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'knowledge_manage' %}active fw-bold{% endif %}" href="/knowledge_manage">
+                            <i class="bi bi-database"></i> Knowledge
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'training' %}active fw-bold{% endif %}" href="/training">
+                            <i class="bi bi-cpu"></i> Training
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'system_settings' %}active fw-bold{% endif %}" href="/system_settings">
+                            <i class="bi bi-sliders"></i> Settings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'camera_management' %}active fw-bold{% endif %}" href="/camera_management">
+                            <i class="bi bi-camera"></i> Camera Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'device_communication_page' %}active fw-bold{% endif %}" href="/device_communication">
+                            <i class="bi bi-gear"></i> Device Communication
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'upload_page' %}active fw-bold{% endif %}" href="/upload">
+                            <i class="bi bi-cloud-upload"></i> Upload Data
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'help' %}active fw-bold{% endif %}" href="/help">
+                            <i class="bi bi-question-circle"></i> Help
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="d-flex align-items-center">
+                    <span id="systemStatus" class="text-success fw-bold" style="font-size: inherit;">
+                        <i class="bi bi-circle-fill" style="font-size: 12px;"></i> System Online
+                    </span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-0">
+        <div class="row g-0">
+            <!-- Main content area - full width -->
+            <main class="col-12 px-3" id="main-content">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast message container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"></div>
+
+    <!-- Bootstrap JS -->
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    
+    <!-- Socket.IO connection -->
+    <script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>
+    
+    <!-- Model API Configuration -->
+    <script src="{{ url_for('static', filename='js/model_api_config.js') }}"></script>
+    
+    <!-- Camera Control -->
+    <script src="{{ url_for('static', filename='js/camera_control.js') }}"></script>
+    
+    <!-- Device Communication -->
+    <script src="{{ url_for('static', filename='js/device_communication.js') }}"></script>
+    
+    <script>
+        // Global Socket.IO management
+        window.globalSocket = null;
+        
+        function initializeSocket() {
+            if (typeof io === 'undefined') {
+                return null;
+            }
+            
+            try {
+                if (!window.globalSocket) {
+                    window.globalSocket = io(window.location.origin, {
+                        transports: ['websocket', 'polling'],
+                        timeout: 15000,
+                        reconnection: true,
+                        reconnectionDelay: 3000,
+                        reconnectionAttempts: 2,
+                        reconnectionDelayMax: 10000,
+                        randomizationFactor: 0.5,
+                        forceNew: false
+                    });
+                }
+                return window.globalSocket;
+            } catch (error) {
+                return null;
+            }
+        }
+        
+        // Initialize global socket and attach to window object
+        window.socket = initializeSocket();
+        
+        // Global message function - enhanced
+        function showToast(message, type = 'info', duration = 5000) {
+            const toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) {
+                console.error('Toast container not found');
+                return;
+            }
+            
+            const toastId = 'toast-' + Date.now();
+            const lang = window.lang || { get: (key, fallback) => fallback || key };
+            
+            // Set icon based on type
+            let iconClass = 'bi-info-circle';
+            let bgClass = 'text-info';
+            
+            switch(type) {
+                case 'success':
+                    iconClass = 'bi-check-circle';
+                    bgClass = 'text-success';
+                    break;
+                case 'error':
+                    iconClass = 'bi-exclamation-circle';
+                    bgClass = 'text-danger';
+                    break;
+                case 'warning':
+                    iconClass = 'bi-exclamation-triangle';
+                    bgClass = 'text-warning';
+                    break;
+            }
+            
+            const toastHtml = `
+                <div class="toast" id="${toastId}" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header">
+                        <i class="bi ${iconClass} me-2 ${bgClass}"></i>
+                        <strong class="me-auto">System Notification</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">${message}</div>
+                </div>
+            `;
+            
+            try {
+                toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+                const toastElement = document.getElementById(toastId);
+                const toast = new bootstrap.Toast(toastElement, { delay: duration });
+                toast.show();
+                
+                toastElement.addEventListener('hidden.bs.toast', () => {
+                    if (toastElement.parentNode) {
+                        toastElement.remove();
+                    }
+                });
+                
+                setTimeout(() => {
+                    if (document.getElementById(toastId)) {
+                        document.getElementById(toastId).remove();
+                    }
+                }, duration + 1000);
+                
+            } catch (error) {
+                console.error('Failed to display toast message:', error);
+            }
+        }
+        
+        // Optimized auto-reconnect mechanism - reduce network noise
+        function setupSilentReconnect() {
+            if (window.socket) {
+                let reconnectAttempts = 0;
+                const maxReconnectAttempts = 3;
+                
+                window.socket.on('disconnect', () => {
+                    reconnectAttempts++;
+                    if (reconnectAttempts <= maxReconnectAttempts) {
+                        setTimeout(() => {
+                            if (!window.socket.connected) {
+                                try {
+                                    window.socket.connect();
+                                } catch (e) {
+                                    // Silent failure
+                                }
+                            }
+                        }, 5000);
+                    }
+                });
+                
+                window.socket.on('connect', () => {
+                    reconnectAttempts = 0; // Reset counter
+                });
+            }
+        }
+        
+        // Initialize silent reconnect
+        setupSilentReconnect();
+        
+        // Global utility functions
+        window.utils = {
+            formatBytes: function(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            },
+            
+            formatTime: function(seconds) {
+                if (seconds < 60) return seconds + 's';
+                if (seconds < 3600) return Math.floor(seconds / 60) + 'm';
+                return Math.floor(seconds / 3600) + 'h ' + Math.floor((seconds % 3600) / 60) + 'm';
+            }
+        };
+        
+        // Global fetch utility with retry mechanism
+        window.fetchWithRetry = async function(url, options = {}, maxRetries = 3) {
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.ok) {
+                        return response;
+                    }
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                } catch (error) {
+                    if (attempt === maxRetries) {
+                        throw error;
+                    }
+                    console.warn(`Fetch attempt ${attempt} failed for ${url}:`, error.message);
+                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                }
+            }
+        };
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

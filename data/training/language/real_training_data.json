@@ -1,0 +1,26 @@
+[
+  {
+    "text": "Hello, I am Self Brain AGI system. How can I assist you today?",
+    "intent": "greeting",
+    "language": "en",
+    "emotion": "neutral"
+  },
+  {
+    "text": "What is the current system status?",
+    "intent": "system_query",
+    "language": "en",
+    "emotion": "curious"
+  },
+  {
+    "text": "Start training all models from scratch",
+    "intent": "training_command",
+    "language": "en",
+    "emotion": "determined"
+  },
+  {
+    "text": "你好，我是Self Brain AGI系统。今天我能为您做什么？",
+    "intent": "greeting",
+    "language": "zh",
+    "emotion": "neutral"
+  }
+]

@@ -1,0 +1,120 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}Error - Self Brain AGI System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-container {
+        max-width: 600px;
+        margin: 0 auto;
+        text-align: center;
+    }
+    .error-icon {
+        font-size: 6rem;
+        color: #dc3545;
+        margin-bottom: 1rem;
+    }
+    .error-code {
+        font-size: 4rem;
+        font-weight: bold;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    .error-message {
+        font-size: 1.5rem;
+        color: #6c757d;
+        margin-bottom: 2rem;
+    }
+    .error-details {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        text-align: left;
+    }
+    .error-actions {
+        margin-top: 2rem;
+    }
+    .error-actions .btn {
+        margin: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="error-container">
+        <div class="error-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        
+        <div class="error-code">
+            {% if error_code %}{{ error_code }}{% else %}500{% endif %}
+        </div>
+        
+        <div class="error-message">
+            {% if error_message %}{{ error_message }}{% else %}An unexpected error occurred{% endif %}
+        </div>
+        
+        <div class="error-details">
+            <h5>Error Details</h5>
+            {% if error_description %}
+                <p>{{ error_description }}</p>
+            {% else %}
+                <p>The system encountered an unexpected issue. This could be due to:</p>
+                <ul>
+                    <li>A temporary network connectivity problem</li>
+                    <li>An internal server error</li>
+                    <li>Invalid request parameters</li>
+                    <li>System maintenance in progress</li>
+                </ul>
+            {% endif %}
+            
+            {% if request_id %}
+                <p><strong>Request ID:</strong> {{ request_id }}</p>
+            {% endif %}
+            
+            {% if timestamp %}
+                <p><strong>Timestamp:</strong> {{ timestamp }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="error-actions">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                <i class="fas fa-home"></i> Go to Home
+            </a>
+            <a href="javascript:history.back()" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Go Back
+            </a>
+            <button class="btn btn-info" onclick="location.reload()">
+                <i class="fas fa-redo"></i> Try Again
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <p class="text-muted">
+                If the problem persists, please contact support with the error details above.
+            </p>
+            <a href="mailto:silencecrowtom@qq.com" class="btn btn-outline-info">
+                <i class="fas fa-envelope"></i> Contact Support
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-retry mechanism for temporary errors
+    document.addEventListener('DOMContentLoaded', function() {
+        const errorCode = parseInt('{{ error_code or 500 }}') || 500;
+        
+        // For 5xx errors, suggest retry after delay
+        if (errorCode >= 500) {
+            setTimeout(() => {
+                if (confirm('Would you like to try reloading the page?')) {
+                    location.reload();
+                }
+            }, 3000);
+        }
+    });
+</script>
+{% endblock %}

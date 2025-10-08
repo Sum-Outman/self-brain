@@ -1,0 +1,34 @@
+{
+  "reinforcement_learning": {
+    "enabled": true,
+    "gamma": 0.99,
+    "epsilon": 1.0,
+    "epsilon_min": 0.01,
+    "epsilon_decay": 0.995,
+    "learning_rate": 0.001
+  },
+  "meta_learning": {
+    "enabled": true,
+    "meta_lr": 0.001,
+    "inner_lr": 0.01,
+    "k_shot": 5
+  },
+  "knowledge_distillation": {
+    "enabled": true,
+    "temperature": 1.0,
+    "alpha": 0.7,
+    "learning_rate": 0.001
+  },
+  "online_learning": {
+    "enabled": true,
+    "learning_rate": 0.0001,
+    "adaptation_threshold": 0.6,
+    "forgetting_protection": true
+  },
+  "transfer_learning": {
+    "enabled": true,
+    "freeze_base": true,
+    "learning_rate": 0.001,
+    "epochs": 5
+  }
+}

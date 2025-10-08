@@ -1,0 +1,96 @@
+# Self Brain AGI System - Training Manager Requirements
+# Copyright 2025 AGI System Team
+
+# Core dependencies
+python>=3.8.0,<3.11.0
+numpy>=1.21.0
+pandas>=1.3.0
+scikit-learn>=1.0.0
+matplotlib>=3.4.0
+seaborn>=0.11.0
+
+# Machine learning frameworks
+tensorflow>=2.8.0
+keras>=2.8.0
+torch>=1.10.0
+pytorch-lightning>=1.6.0
+
+# Data processing
+opencv-python>=4.5.0
+Pillow>=9.0.0
+soundfile>=0.10.0
+speech_recognition>=3.8.0
+
+# API and web services
+flask>=2.0.0
+flask-cors>=3.0.0
+requests>=2.27.0
+werkzeug>=2.0.0
+
+# Performance optimization
+numba>=0.55.0
+sentence-transformers>=2.2.0
+
+# Documentation
+sphinx>=4.5.0
+sphinx-rtd-theme>=1.0.0
+
+# Testing
+pytest>=7.0.0
+coverage>=6.3.0
+mypy>=0.940
+black>=22.3.0
+flake8>=4.0.0
+
+# Utils
+tqdm>=4.62.0
+python-dotenv>=0.20.0
+loguru>=0.6.0
+
+# Computer vision and NLP
+transformers>=4.18.0
+opencv-contrib-python>=4.5.0
+nltk>=3.7.0
+
+# Knowledge base and document processing
+openai>=0.8.0
+pinecone-client>=2.0.0
+pymilvus>=2.0.0
+faiss-cpu>=1.7.2
+
+# Audio processing
+sounddevice>=0.4.4
+audiodiff>=0.3.0
+librosa>=0.9.0
+
+# Video processing
+moviepy>=1.0.3
+
+# Hardware acceleration (optional)
+cuda-python>=11.6.0
+cudnn>=8.4.0
+
+# OS-specific dependencies
+# Windows
+soundfile>=0.10.0;sys_platform=='win32'
+
+# macOS
+# Use the system's OpenCV and other libraries
+# Linux
+# Use system packages where possible
+
+# Development dependencies (optional)
+watcher>=0.6.0
+hot-reload>=2022.1.1
+
+# Version pinning for stability
+six>=1.16.0
+packaging>=21.3
+pyyaml>=6.0
+certifi>=2022.5.18.1
+
+# Self Brain specific dependencies
+# Add any project-specific packages here
+
+# Note: This requirements file is for development and testing purposes.
+# For production deployment, consider creating a more streamlined requirements file.

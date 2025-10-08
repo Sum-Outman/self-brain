@@ -1,0 +1,928 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}Training Center - Self Brain AGI{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="background-color: #f8f9fa; min-height: 100vh;">
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="border-bottom pb-3 mb-4">
+                <!-- Title removed for cleaner design -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Training Status Dashboard -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-secondary">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Training Status Dashboard</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-3">
+                            <div class="border-bottom pb-2">
+                                <small class="text-muted">Current Status</small>
+                                <h4 class="mb-0" id="currentStatus">Idle</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="border-bottom pb-2">
+                                <small class="text-muted">Active Model</small>
+                                <h4 class="mb-0" id="activeModel">None</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="border-bottom pb-2">
+                                <small class="text-muted">Progress</small>
+                                <h4 class="mb-0" id="trainingProgress">0%</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="border-bottom pb-2">
+                                <small class="text-muted">Epoch</small>
+                                <h4 class="mb-0" id="currentEpoch">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-3">
+                            <small class="text-muted">Loss</small>
+                            <h5 class="mb-0" id="currentLoss">-</h5>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <small class="text-muted">Accuracy</small>
+                            <h5 class="mb-0" id="currentAccuracy">-</h5>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <small class="text-muted">Learning Rate</small>
+                            <h5 class="mb-0" id="learningRate">-</h5>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <small class="text-muted">Validation Loss</small>
+                            <h5 class="mb-0" id="validationLoss">-</h5>
+                        </div>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-dark" id="progressBar" role="progressbar" 
+                             style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-4">
+                    <h6 class="text-muted fw-normal mb-2">Active Sessions</h6>
+                    <h2 class="display-6 text-dark mb-0" id="activeSessions">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-4">
+                    <h6 class="text-muted fw-normal mb-2">Total Epochs</h6>
+                    <h2 class="display-6 text-dark mb-0" id="totalEpochs">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-4">
+                    <h6 class="text-muted fw-normal mb-2">Average Accuracy</h6>
+                    <h2 class="display-6 text-dark mb-0" id="avgAccuracy">0%</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-4">
+                    <h6 class="text-muted fw-normal mb-2">Training Time</h6>
+                    <h2 class="display-6 text-dark mb-0" id="trainingTime">0h</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Training Configuration -->
+        <div class="col-lg-8 mb-4">
+            <div class="card border-secondary">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Training Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Training Mode</label>
+                            <select class="form-select form-select-sm" id="trainingType" onchange="updateTrainingControls()">
+                                <option value="individual">Individual Training</option>
+                                <option value="joint">Joint Training</option>
+                                <option value="fine-tune">Fine-tuning</option>
+                                <option value="pretraining">Pretraining</option>
+                                <option value="transfer">Transfer Learning</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Task Name</label>
+                            <input type="text" class="form-control form-control-sm" id="trainingTaskName" placeholder="Enter training task name">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Training Device</label>
+                            <select class="form-select form-select-sm" id="trainingDevice">
+                                <option value="gpu">GPU</option>
+                                <option value="cpu">CPU</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label">Model Selection</label>
+                            <select class="form-select form-select-sm border-secondary" id="modelSelect">
+                                <option value="">Select Model...</option>
+                                <option value="A_management">Model A - Management</option>
+                                <option value="B_language">Model B - Language</option>
+                                <option value="C_audio">Model C - Audio</option>
+                                <option value="D_image">Model D - Image</option>
+                                <option value="E_video">Model E - Video</option>
+                                <option value="F_spatial">Model F - Spatial</option>
+                                <option value="G_sensor">Model G - Sensor</option>
+                                <option value="H_computer_control">Model H - Computer Control</option>
+                                <option value="I_knowledge">Model I - Knowledge</option>
+                                <option value="J_motion">Model J - Motion</option>
+                                <option value="K_programming">Model K - Programming</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-light border mb-3">
+                        <small class="text-muted">Mode: Individual Training</small><br>
+                        <small>Train a single model with focused optimization</small>
+                    </div>
+
+                    <!-- Joint Training Selection -->
+                    <div id="jointTrainingSection" style="display: none;">
+                        <div class="border p-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <small class="fw-bold">Model Selection</small>
+                                <small class="text-muted">
+                                    <span id="selectedCount">0</span> models selected
+                                </small>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-A" value="A_management">
+                                        <label class="form-check-label" for="model-A">Model A - Management</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-B" value="B_language">
+                                        <label class="form-check-label" for="model-B">Model B - Language</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-C" value="C_audio">
+                                        <label class="form-check-label" for="model-C">Model C - Audio</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-D" value="D_image">
+                                        <label class="form-check-label" for="model-D">Model D - Image</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-E" value="E_video">
+                                        <label class="form-check-label" for="model-E">Model E - Video</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-F" value="F_spatial">
+                                        <label class="form-check-label" for="model-F">Model F - Spatial</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-G" value="G_sensor">
+                                        <label class="form-check-label" for="model-G">Model G - Sensor</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-H" value="H_computer_control">
+                                        <label class="form-check-label" for="model-H">Model H - Computer Control</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-I" value="I_knowledge">
+                                        <label class="form-check-label" for="model-I">Model I - Knowledge</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-J" value="J_motion">
+                                        <label class="form-check-label" for="model-J">Model J - Motion</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="model-K" value="K_programming">
+                                        <label class="form-check-label" for="model-K">Model K - Programming</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-sm btn-outline-dark" onclick="selectAllModels()">Select All</button>
+                                <button type="button" class="btn btn-sm btn-outline-dark ms-1" onclick="clearAllModels()">Clear All</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-secondary">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Control Panel</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-dark" id="startTrainingBtn" onclick="startTraining()" disabled>
+                            Start Training
+                        </button>
+                        <button class="btn btn-outline-dark" id="pauseTrainingBtn" onclick="pauseTraining()" disabled>
+                            Pause Training
+                        </button>
+                        <button class="btn btn-outline-dark" id="stopTrainingBtn" onclick="stopTraining()" disabled>
+                            Stop Training
+                        </button>
+                        <button class="btn btn-outline-dark" id="resetTrainingBtn" onclick="resetTraining()" disabled>
+                            Reset Training
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Training Sessions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 text-dark">Training Sessions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="border-0">Model</th>
+                                    <th class="border-0">Status</th>
+                                    <th class="border-0">Progress</th>
+                                    <th class="border-0">Epoch</th>
+                                    <th class="border-0">Loss</th>
+                                    <th class="border-0">Accuracy</th>
+                                    <th class="border-0">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trainingSessions">
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-4">
+                                        No active training sessions
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log and Terminal Sections -->
+        <div class="row">
+            <!-- Training Log -->
+            <div class="col-lg-6 mb-4">
+                <div class="card border-secondary">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Training Log</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="trainingLog" class="bg-white border overflow-auto" style="height: 300px; padding: 10px; font-family: monospace; font-size: 12px;">
+                            <p class="text-muted">Training log will appear here...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Command Line Terminal -->
+                            <div class="col-lg-6 mb-4">
+                                <div class="card border-secondary">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Command Line Terminal</h5>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div id="commandLineTerminal" class="bg-black text-white border overflow-auto" style="height: 300px; padding: 10px; font-family: monospace; font-size: 12px;">
+                                            <div><span class="text-gray-400">system@selfbrain</span>:<span class="text-gray-500">~</span>$ <span>Initializing training environment...</span></div>
+                                        </div>
+                                        <div class="p-2 border-top">
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light text-dark border-secondary" id="terminalPrompt">></span>
+                                                <input type="text" id="terminalInput" class="form-control form-control-sm border-secondary" placeholder="Enter command..." onkeypress="handleTerminalInput(event)">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+        </div>
+</div>
+
+<script>
+let trainingData = [];
+let socket = null;
+
+// Initialize Socket.IO connection
+function initializeSocket() {
+    if (socket) {
+        socket.disconnect();
+    }
+    
+    // Try to connect to training WebSocket with proper configuration
+    try {
+        // Use configuration that matches the backend
+        socket = io({ 
+            transports: ['polling', 'websocket'], // Match backend transport order
+            timeout: 60000, // Increase timeout to match backend ping_timeout (60s)
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionAttempts: 20,
+            reconnectionDelayMax: 10000,
+            pingTimeout: 60000, // Match backend ping_timeout
+            pingInterval: 25000, // Match backend ping_interval
+            autoConnect: true,
+            // Add additional debug options
+            forceNew: true, // Force a new connection
+            multiplex: false // Disable multiplexing
+        });
+        
+        socket.on('connect', function() {
+            console.log('Connected to training WebSocket');
+            updateButtonStates();
+            addLogEntry('Connected to training WebSocket server');
+            addTerminalOutput('Connected to training controller');
+        });
+        
+        socket.on('disconnect', function() {
+            console.log('Disconnected from training WebSocket');
+            updateButtonStates();
+            addLogEntry('Disconnected from training WebSocket server');
+            addTerminalOutput('Connection lost to training controller');
+        });
+        
+        socket.on('training_start_ack', function(data) {
+            console.log('Training started:', data);
+            updateTrainingStatus({status: 'Running', model_name: data.task_name});
+            addLogEntry(data.message);
+            addTerminalOutput(data.message);
+        });
+        
+        socket.on('training_pause_ack', function(data) {
+            console.log('Training paused:', data);
+            updateTrainingStatus({status: 'Paused'});
+            addLogEntry(data.message);
+            addTerminalOutput(data.message);
+        });
+        
+        socket.on('training_resume_ack', function(data) {
+            console.log('Training resumed:', data);
+            updateTrainingStatus({status: 'Running'});
+            addLogEntry(data.message);
+            addTerminalOutput(data.message);
+        });
+        
+        socket.on('training_stop_ack', function(data) {
+            console.log('Training stopped:', data);
+            updateTrainingStatus({status: 'Idle'});
+            addLogEntry(data.message);
+            addTerminalOutput(data.message);
+        });
+        
+        socket.on('training_log_update', function(data) {
+            addLogEntry(data.message);
+            addTerminalOutput(data.message);
+        });
+        
+        socket.on('error', function(data) {
+            console.error('Training error:', data);
+            addLogEntry(`Error: ${data.message}`, true);
+            addTerminalOutput(`[ERROR] ${data.message}`, true);
+            alert('Training error: ' + data.message);
+            updateTrainingStatus({status: 'Idle'});
+        });
+        
+        socket.on('connect_error', function(error) {
+            console.error('Connection error:', error);
+            addLogEntry('Failed to connect to training WebSocket server');
+            addTerminalOutput('Connection error: Failed to connect to training controller');
+        });
+        
+        socket.on('connect_timeout', function() {
+            console.error('Connection timeout');
+            addLogEntry('Connection timeout to training WebSocket server');
+            addTerminalOutput('Connection timeout: Failed to connect to training controller');
+        });
+    } catch (error) {
+        console.error('Error initializing WebSocket:', error);
+        addLogEntry('Error initializing training WebSocket connection');
+        addTerminalOutput('Error: Failed to initialize training controller connection');
+    }
+}
+
+// Add log entry to the training log
+function addLogEntry(message, isError = false) {
+    const logElement = document.getElementById('trainingLog');
+    const timestamp = new Date().toLocaleTimeString();
+    const logEntry = document.createElement('p');
+    logEntry.className = isError ? 'text-danger mb-1' : 'text-dark mb-1';
+    logEntry.innerHTML = `<span class="text-muted">[${timestamp}]</span> ${message}`;
+    logElement.appendChild(logEntry);
+    logElement.scrollTop = logElement.scrollHeight;
+    
+    // Limit log size to 100 entries
+    if (logElement.children.length > 100) {
+        logElement.removeChild(logElement.firstChild);
+    }
+}
+
+// Add output to the command line terminal
+function addTerminalOutput(message, isError = false) {
+    const terminalElement = document.getElementById('commandLineTerminal');
+    const timestamp = new Date().toLocaleTimeString();
+    const outputLine = document.createElement('div');
+    outputLine.className = isError ? 'text-red-400' : 'text-white';
+    outputLine.innerHTML = `<span class="text-gray-400">[${timestamp}]</span> ${message}`;
+    terminalElement.appendChild(outputLine);
+    
+    // Add new prompt line
+    const promptLine = document.createElement('div');
+    promptLine.className = 'text-white';
+    promptLine.innerHTML = `<span class="text-gray-400">system@selfbrain</span>:<span class="text-gray-500">~</span>$ <span id="commandCursor">_</span>`;
+    terminalElement.appendChild(promptLine);
+    
+    terminalElement.scrollTop = terminalElement.scrollHeight;
+    
+    // Limit terminal size to 50 lines
+    const lines = terminalElement.children;
+    if (lines.length > 50) {
+        const linesToRemove = lines.length - 49; // Keep 49 lines plus new prompt
+        for (let i = 0; i < linesToRemove; i++) {
+            if (lines[i]) terminalElement.removeChild(lines[i]);
+        }
+    }
+    
+    // Blink cursor effect
+    animateCursor();
+}
+
+// Handle terminal input
+function handleTerminalInput(event) {
+    if (event.key === 'Enter') {
+        const inputElement = document.getElementById('terminalInput');
+        const command = inputElement.value.trim();
+        
+        if (command) {
+            // Add command to terminal
+            const terminalElement = document.getElementById('commandLineTerminal');
+            const commandLine = document.createElement('div');
+            commandLine.className = 'text-white';
+            commandLine.innerHTML = `<span class="text-gray-400">system@selfbrain</span>:<span class="text-gray-500">~</span>$ <span class="text-white">${command}</span>`;
+            
+            // Remove last prompt line
+            const lines = terminalElement.children;
+            if (lines.length > 0) {
+                terminalElement.removeChild(lines[lines.length - 1]);
+            }
+            
+            terminalElement.appendChild(commandLine);
+            
+            // Process command
+            processTerminalCommand(command);
+            
+            // Clear input
+            inputElement.value = '';
+        }
+    }
+}
+
+// Process terminal commands
+function processTerminalCommand(command) {
+    let response = '';
+    
+    switch (command.toLowerCase()) {
+        case 'help':
+            response = 'Available commands: status, metrics, models, clear, reset';
+            break;
+        case 'status':
+            response = `Current status: ${document.getElementById('currentStatus').textContent}, Active model: ${document.getElementById('activeModel').textContent}`;
+            break;
+        case 'metrics':
+            response = `Loss: ${document.getElementById('currentLoss').textContent}, Accuracy: ${document.getElementById('currentAccuracy').textContent}`;
+            break;
+        case 'models':
+            response = 'Available models: A_management, B_language, C_audio, D_image, E_video, F_spatial, G_sensor, H_computer, I_motion, J_knowledge, K_programming';
+            break;
+        case 'clear':
+            document.getElementById('commandLineTerminal').innerHTML = '';
+            addTerminalOutput('Terminal cleared');
+            return;
+        case 'reset':
+            if (confirm('Are you sure you want to reset the training?')) {
+                resetTraining();
+                response = 'Training reset requested';
+            }
+            break;
+        default:
+            response = `Unknown command: ${command}. Type 'help' to see available commands.`;
+    }
+    
+    addTerminalOutput(response);
+}
+
+// Animate terminal cursor
+function animateCursor() {
+    const cursor = document.getElementById('commandCursor');
+    if (cursor) {
+        cursor.style.opacity = cursor.style.opacity === '0' ? '1' : '0';
+        setTimeout(animateCursor, 500);
+    }
+}
+
+// Update training status
+function updateTrainingStatus(data) {
+    document.getElementById('currentStatus').textContent = data.status || 'Idle';
+    document.getElementById('activeModel').textContent = data.model_name || 'None';
+    document.getElementById('trainingProgress').textContent = (data.progress || 0) + '%';
+    document.getElementById('currentEpoch').textContent = data.current_epoch || 0;
+    
+    const progressBar = document.getElementById('progressBar');
+    if (progressBar) {
+        progressBar.style.width = (data.progress || 0) + '%';
+        progressBar.setAttribute('aria-valuenow', data.progress || 0);
+    }
+    
+    // Add log entry
+    addLogEntry(`Status updated: ${data.status || 'Idle'}, Model: ${data.model_name || 'None'}, Progress: ${(data.progress || 0)}%`);
+    
+    // Add terminal output
+    addTerminalOutput(`[STATUS] Current state: ${data.status || 'Idle'}, Epoch: ${data.current_epoch || 0}/${data.total_epochs || 0}`);
+    
+    updateButtonStates();
+}
+
+// Update realtime metrics
+function updateRealtimeMetrics(data) {
+    document.getElementById('currentLoss').textContent = data.loss ? data.loss.toFixed(4) : '-';
+    document.getElementById('currentAccuracy').textContent = data.accuracy ? (data.accuracy * 100).toFixed(1) + '%' : '-';
+    document.getElementById('learningRate').textContent = data.learning_rate ? data.learning_rate.toFixed(6) : '-';
+    document.getElementById('validationLoss').textContent = data.validation_loss ? data.validation_loss.toFixed(4) : '-';
+    
+    // Add log entry for metrics
+    if (data.loss !== undefined || data.accuracy !== undefined) {
+        addLogEntry(`Metrics update - Loss: ${data.loss ? data.loss.toFixed(4) : '-'}, Accuracy: ${data.accuracy ? (data.accuracy * 100).toFixed(1) + '%' : '-'}`);
+    }
+}
+
+// Update training data from API
+async function updateTrainingData() {
+    try {
+        console.log('Fetching training data from:', '/api/training/sessions');
+        const response = await fetch('/api/training/sessions');
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const text = await response.text();
+        console.log('Response text:', text);
+        
+        // Handle empty or invalid response
+        if (!text.trim()) {
+            console.log('Empty response, using default data');
+            const defaultData = {
+                sessions: [],
+                active_sessions: 0,
+                total_epochs: 0,
+                avg_accuracy: 0,
+                training_time: '0h'
+            };
+            updateStatistics(defaultData);
+            updateSessionsTable(defaultData);
+            return;
+        }
+        
+        const data = JSON.parse(text);
+        console.log('Parsed data:', data);
+        
+        // Directly update statistics and sessions table with the data
+        updateStatistics(data);
+        updateSessionsTable(data);
+    } catch (error) {
+        console.error('Error updating training data:', error);
+        // Use default data in case of error
+        const defaultData = {
+            sessions: [],
+            active_sessions: 0,
+            total_epochs: 0,
+            avg_accuracy: 0,
+            training_time: '0h'
+        };
+        updateStatistics(defaultData);
+        updateSessionsTable(defaultData);
+    }
+}
+
+function updateStatistics(data) {
+    const sessions = data.sessions || [];
+    const activeSessions = sessions.filter(s => s.status === 'running').length;
+    const totalEpochs = sessions.reduce((sum, s) => sum + (s.epoch || 0), 0);
+    const avgAccuracy = sessions.length > 0 ? 
+        (sessions.reduce((sum, s) => sum + (s.accuracy || 0), 0) / sessions.length).toFixed(1) : 0;
+    
+    document.getElementById('activeSessions').textContent = activeSessions;
+    document.getElementById('totalEpochs').textContent = totalEpochs;
+    document.getElementById('avgAccuracy').textContent = avgAccuracy + '%';
+    document.getElementById('trainingTime').textContent = '0h';
+}
+
+function updateSessionsTable(data) {
+    const tbody = document.getElementById('trainingSessions');
+    const sessions = data.sessions || [];
+    
+    if (sessions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No active training sessions</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = sessions.map(session => `
+        <tr>
+            <td>
+                <strong>${session.model_name || 'Unknown Model'}</strong>
+                <small class="text-muted d-block">ID: ${session.id || 'N/A'}</small>
+            </td>
+            <td>
+                <span class="badge bg-${session.status === 'running' ? 'dark' : 'secondary'}">
+                    ${session.status || 'unknown'}
+                </span>
+            </td>
+            <td>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-dark" role="progressbar" 
+                         style="width: ${session.progress || 0}%">
+                    </div>
+                </div>
+                <small class="text-muted">${session.progress || 0}%</small>
+            </td>
+            <td>${session.epoch || 0}/${session.total_epochs || 0}</td>
+            <td>${session.loss?.toFixed(4) || '0.0000'}</td>
+            <td>${session.accuracy ? (session.accuracy * 100).toFixed(1) + '%' : '0%'}</td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-dark btn-sm" onclick="viewModel('${session.id}')">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-outline-dark btn-sm" onclick="pauseModel('${session.id}')">
+                        <i class="bi bi-pause"></i>
+                    </button>
+                    <button class="btn btn-outline-dark btn-sm" onclick="stopModel('${session.id}')">
+                        <i class="bi bi-stop"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function updateButtonStates() {
+    const startBtn = document.getElementById('startTrainingBtn');
+    const pauseBtn = document.getElementById('pauseTrainingBtn');
+    const stopBtn = document.getElementById('stopTrainingBtn');
+    const resetBtn = document.getElementById('resetTrainingBtn');
+    
+    const status = document.getElementById('currentStatus').textContent;
+    const trainingType = document.getElementById('trainingType').value;
+    const modelSelect = document.getElementById('modelSelect');
+    
+    // Default button states based on connection status
+    if (!socket || !socket.connected) {
+        startBtn.disabled = true;
+        pauseBtn.disabled = true;
+        stopBtn.disabled = true;
+        resetBtn.disabled = false; // Allow reset even when disconnected
+        return;
+    }
+    
+    if (status === 'Idle') {
+        // Check if a model is selected or training type is joint
+        if (trainingType === 'joint') {
+            const selected = document.querySelectorAll('#jointTrainingSection input[type="checkbox"]:checked');
+            startBtn.disabled = selected.length === 0;
+        } else {
+            startBtn.disabled = !modelSelect.value;
+        }
+        pauseBtn.disabled = true;
+        stopBtn.disabled = true;
+        resetBtn.disabled = false;
+    } else if (status === 'Running') {
+        startBtn.disabled = true;
+        pauseBtn.disabled = false;
+        stopBtn.disabled = false;
+        resetBtn.disabled = true;
+    } else if (status === 'Paused') {
+        startBtn.disabled = false;
+        pauseBtn.disabled = true;
+        stopBtn.disabled = false;
+        resetBtn.disabled = false;
+    }
+}
+
+function updateTrainingControls() {
+    const trainingType = document.getElementById('trainingType').value;
+    const jointSection = document.getElementById('jointTrainingSection');
+    const modelSelect = document.getElementById('modelSelect');
+    
+    if (trainingType === 'joint') {
+        jointSection.style.display = 'block';
+        modelSelect.disabled = true;
+        document.getElementById('startTrainingBtn').disabled = false; // Enable start button when in joint mode
+    } else {
+        jointSection.style.display = 'none';
+        modelSelect.disabled = false;
+        // Only enable start button in individual mode if a model is selected
+        document.getElementById('startTrainingBtn').disabled = !modelSelect.value;
+    }
+}
+
+function selectAllModels() {
+    const checkboxes = document.querySelectorAll('#jointTrainingSection input[type="checkbox"]');
+    checkboxes.forEach(checkbox => checkbox.checked = true);
+    updateSelectedCount();
+}
+
+function clearAllModels() {
+    const checkboxes = document.querySelectorAll('#jointTrainingSection input[type="checkbox"]');
+    checkboxes.forEach(checkbox => checkbox.checked = false);
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const selected = document.querySelectorAll('#jointTrainingSection input[type="checkbox"]:checked');
+    document.getElementById('selectedCount').textContent = selected.length;
+}
+
+function startTraining() {
+    const trainingType = document.getElementById('trainingType').value;
+    const trainingTaskName = document.getElementById('trainingTaskName').value;
+    const trainingDevice = document.getElementById('trainingDevice').value;
+    let models = [];
+    
+    if (!trainingTaskName.trim()) {
+        alert('Please enter a training task name');
+        return;
+    }
+    
+    if (trainingType === 'joint') {
+        const selected = document.querySelectorAll('#jointTrainingSection input[type="checkbox"]:checked');
+        models = Array.from(selected).map(cb => cb.value);
+        if (models.length === 0) {
+            alert('Please select at least one model for joint training');
+            return;
+        }
+    } else {
+        const modelSelect = document.getElementById('modelSelect');
+        if (!modelSelect.value) {
+            alert('Please select a model');
+            return;
+        }
+        models = [modelSelect.value];
+    }
+    
+    addLogEntry(`Starting training: Task="${trainingTaskName}", Type="${trainingType}", Device="${trainingDevice}", Models=[${models.join(', ')}]`);
+    addTerminalOutput(`Starting training session: ${trainingTaskName}`);
+    addTerminalOutput(`Configuration: Type=${trainingType}, Device=${trainingDevice}, Models=[${models.join(', ')}]`);
+    
+    if (socket) {
+        // Send the correct parameters that the backend expects
+        socket.emit('start_training', {
+            task_name: trainingTaskName,
+            device: trainingDevice,
+            models: models,
+            training_type: trainingType
+        });
+    }
+}
+
+function pauseTraining() {
+    addLogEntry('Pause training requested');
+    addTerminalOutput('[COMMAND] Pausing training');
+    if (socket) {
+        socket.emit('pause_training');
+    }
+}
+
+function stopTraining() {
+    if (socket && confirm('Are you sure you want to stop the current training?')) {
+        addLogEntry('Stop training requested');
+        addTerminalOutput('[COMMAND] Stopping training');
+        socket.emit('stop_training');
+    }
+}
+
+function resetTraining() {
+    addLogEntry('Reset training requested');
+    addTerminalOutput('[COMMAND] Resetting training');
+    if (socket) {
+        // Use the correct event name that the backend uses
+        socket.emit('reset_training');
+        
+        // Listen for reset training acknowledgment
+        socket.once('training_reset_ack', function(data) {
+            console.log('Training reset:', data);
+            addLogEntry(data.message);
+            addTerminalOutput(data.message);
+            resetTrainingControls();
+        });
+    } else {
+        // If socket is not connected, still reset the UI controls
+        resetTrainingControls();
+    }
+}
+
+function resetTrainingControls() {
+    document.getElementById('currentStatus').textContent = 'Idle';
+    document.getElementById('activeModel').textContent = 'None';
+    document.getElementById('trainingProgress').textContent = '0%';
+    document.getElementById('currentEpoch').textContent = '0';
+    document.getElementById('currentLoss').textContent = '-';
+    document.getElementById('currentAccuracy').textContent = '-';
+    document.getElementById('learningRate').textContent = '-';
+    document.getElementById('validationLoss').textContent = '-';
+    
+    const progressBar = document.getElementById('progressBar');
+    if (progressBar) {
+        progressBar.style.width = '0%';
+        progressBar.setAttribute('aria-valuenow', 0);
+    }
+    
+    updateButtonStates();
+    
+    addLogEntry('Training controls reset');
+    addTerminalOutput('Training environment reset');
+}
+
+function viewModel(id) {
+    console.log('View model:', id);
+}
+
+function pauseModel(id) {
+    console.log('Pause model:', id);
+}
+
+function stopModel(id) {
+    console.log('Stop model:', id);
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSocket();
+    updateTrainingData();
+    
+    // Update data every 5 seconds
+    setInterval(updateTrainingData, 5000);
+    
+    // Add event listeners for model selection
+    const checkboxes = document.querySelectorAll('#jointTrainingSection input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectedCount();
+            // Update start button state based on selected models in joint mode
+            if (document.getElementById('trainingType').value === 'joint') {
+                const selected = document.querySelectorAll('#jointTrainingSection input[type="checkbox"]:checked');
+                document.getElementById('startTrainingBtn').disabled = selected.length === 0;
+            }
+        });
+    });
+    
+    // Add event listener for training type change
+    document.getElementById('trainingType').addEventListener('change', updateTrainingControls);
+    
+    // Add event listener for model selection change in individual mode
+    document.getElementById('modelSelect').addEventListener('change', updateTrainingControls);
+    
+    // Initialize button states
+    updateTrainingControls();
+    updateSelectedCount();
+});
+</script>
+{% endblock %}

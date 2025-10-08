@@ -1,0 +1,46 @@
+{
+  "data_storage": {
+    "enabled": true,
+    "db_path": "agi_brain.db",
+    "data_dir": "agi_data",
+    "backup_interval": 3600,
+    "max_history_entries": 10000,
+    "max_learning_data_entries": 5000
+  },
+  "optimization": {
+    "self_optimization": true,
+    "resource_threshold": 80,
+    "learning_rate": 0.01,
+    "batch_size": 32,
+    "epochs": 5,
+    "regular_optimization_interval": 100,
+    "adjustment_factor": 1.1
+  },
+  "performance_monitoring": {
+    "enabled": true,
+    "check_interval": 10,
+    "success_rate_threshold": 80,
+    "processing_time_threshold": 2.0,
+    "memory_usage_threshold": 85,
+    "cpu_usage_threshold": 85
+  },
+  "knowledge_extraction": {
+    "enabled": true,
+    "min_confidence": 0.7,
+    "keyword_extraction_enabled": true,
+    "max_keywords": 5
+  },
+  "model_optimization": {
+    "enabled": true,
+    "hyperparameter_tuning": true,
+    "architecture_optimization": true,
+    "memory_optimization": true,
+    "cpu_optimization": true
+  },
+  "logging": {
+    "level": "INFO",
+    "file_path": "agi_brain.log",
+    "max_file_size_mb": 10,
+    "backup_count": 5
+  }
+}

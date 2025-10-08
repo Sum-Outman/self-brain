@@ -1,0 +1,473 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}Model Details - Self Brain AGI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}" class="text-dark">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/system_settings#models" class="text-dark" onclick="setTimeout(() => document.getElementById('models-tab').click(), 100)">Model Management</a></li>
+                    <li class="breadcrumb-item active text-secondary">Model Details</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Model Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-dark text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 mb-1" id="modelName">Loading...</h1>
+                            <p class="mb-0 opacity-75" id="modelDescription">Model description</p>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-light text-dark" id="statusBadge">Status</span>
+                            <div class="mt-2">
+                                <button class="btn btn-outline-light btn-sm" onclick="startTraining()" id="trainBtn">
+                                    <i class="bi bi-play"></i> Start Training
+                                </button>
+                                <button class="btn btn-outline-light btn-sm" onclick="saveModel()">
+                                    <i class="bi bi-save"></i> Save Model
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Selection -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <label for="modelSelect" class="form-label">Select Model</label>
+            <select class="form-select" id="modelSelect" onchange="loadModelDetails(this.value)">
+                <option value="">Select a model...</option>
+                <option value="a_management">A Management Model</option>
+                <option value="b_language">B Language Model</option>
+                <option value="c_audio">C Audio Model</option>
+                <option value="d_image">D Image Model</option>
+                <option value="e_video">E Video Model</option>
+                <option value="f_spatial">F Spatial Model</option>
+                <option value="g_sensor">G Sensor Model</option>
+                <option value="h_computer">H Computer Model</option>
+                <option value="i_motion">I Motion Model</option>
+                <option value="j_knowledge">J Knowledge Model</option>
+                <option value="k_programming">K Programming Model</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label for="timeRange" class="form-label">Time Range</label>
+            <select class="form-select" id="timeRange" onchange="updateMetrics()">
+                <option value="24h">Last 24 hours</option>
+                <option value="7d">Last 7 days</option>
+                <option value="30d">Last 30 days</option>
+                <option value="all">All time</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Metrics Overview -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border">
+                <div class="card-body text-center">
+                    <h3 class="text-dark" id="accuracyMetric">0%</h3>
+                    <p class="text-secondary mb-0">Accuracy</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border">
+                <div class="card-body text-center">
+                    <h3 class="text-dark" id="lossMetric">0.00</h3>
+                    <p class="text-secondary mb-0">Loss</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border">
+                <div class="card-body text-center">
+                    <h3 class="text-dark" id="trainingTime">0h</h3>
+                    <p class="text-secondary mb-0">Training Time</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border">
+                <div class="card-body text-center">
+                    <h3 class="text-dark" id="epochCount">0</h3>
+                    <p class="text-secondary mb-0">Epochs</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Training Progress</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="trainingChart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Loss Over Time</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="lossChart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Parameters -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Model Parameters</h5>
+                </div>
+                <div class="card-body">
+                    <div id="parametersList">
+                        <div class="d-flex justify-content-between border-bottom py-2">
+                            <span>Learning Rate:</span>
+                            <span id="learningRate">0.001</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom py-2">
+                            <span>Batch Size:</span>
+                            <span id="batchSize">32</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom py-2">
+                            <span>Max Epochs:</span>
+                            <span id="maxEpochs">100</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom py-2">
+                            <span>Dropout Rate:</span>
+                            <span id="dropoutRate">0.1</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom py-2">
+                            <span>Hidden Layers:</span>
+                            <span id="hiddenLayers">2</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-2">
+                            <span>Hidden Units:</span>
+                            <span id="hiddenUnits">128</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Training History</h5>
+                </div>
+                <div class="card-body">
+                    <div id="trainingHistory">
+                        <div class="border-start border-dark ps-3 mb-3">
+                            <h6 class="mb-1">Training Session #1</h6>
+                            <p class="text-secondary mb-1">Started: 2024-01-15 10:30 AM</p>
+                            <p class="text-secondary mb-1">Duration: 2h 45m</p>
+                            <p class="text-secondary">Accuracy: 92.5% → 95.8%</p>
+                        </div>
+                        <div class="border-start border-secondary ps-3 mb-3">
+                            <h6 class="mb-1">Training Session #2</h6>
+                            <p class="text-secondary mb-1">Started: 2024-01-14 09:15 AM</p>
+                            <p class="text-secondary mb-1">Duration: 1h 30m</p>
+                            <p class="text-secondary">Accuracy: 89.2% → 92.5%</p>
+                        </div>
+                        <div class="border-start border-dark ps-3">
+                            <h6 class="mb-1">Training Session #3</h6>
+                            <p class="text-secondary mb-1">Started: 2024-01-13 02:00 PM</p>
+                            <p class="text-secondary mb-1">Duration: 3h 15m</p>
+                            <p class="text-secondary">Accuracy: 85.1% → 89.2%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Configuration -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Model Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label">Model Type</label>
+                            <select class="form-select" id="modelType">
+                                <option value="transformer">Transformer</option>
+                                <option value="cnn">CNN</option>
+                                <option value="rnn">RNN</option>
+                                <option value="gan">GAN</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Optimizer</label>
+                            <select class="form-select" id="optimizer">
+                                <option value="adam">Adam</option>
+                                <option value="sgd">SGD</option>
+                                <option value="rmsprop">RMSprop</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Loss Function</label>
+                            <select class="form-select" id="lossFunction">
+                                <option value="crossentropy">Cross Entropy</option>
+                                <option value="mse">MSE</option>
+                                <option value="mae">MAE</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Activation Function</label>
+                            <select class="form-select" id="activation">
+                                <option value="relu">ReLU</option>
+                                <option value="tanh">Tanh</option>
+                                <option value="sigmoid">Sigmoid</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Regularization</label>
+                            <select class="form-select" id="regularization">
+                                <option value="l1">L1</option>
+                                <option value="l2">L2</option>
+                                <option value="dropout">Dropout</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-outline-dark" onclick="updateConfiguration()">
+                        <i class="bi bi-save"></i> Update Configuration
+                    </button>
+                    <button class="btn btn-outline-dark" onclick="resetConfiguration()">
+                        <i class="bi bi-arrow-clockwise"></i> Reset to Default
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let trainingChart = null;
+let lossChart = null;
+
+// Initialize
+$(document).ready(function() {
+    loadModelSelect();
+    
+    // Load default model if available
+    const urlParams = new URLSearchParams(window.location.search);
+    const modelId = urlParams.get('model');
+    if (modelId) {
+        document.getElementById('modelSelect').value = modelId;
+        loadModelDetails(modelId);
+    }
+});
+
+function loadModelSelect() {
+    const models = [
+        'a_management', 'b_language', 'c_audio', 'd_image', 'e_video',
+        'f_spatial', 'g_sensor', 'h_computer', 'i_motion', 'j_knowledge', 'k_programming'
+    ];
+    
+    const modelNames = {
+        'a_management': 'A Management Model',
+        'b_language': 'B Language Model',
+        'c_audio': 'C Audio Model',
+        'd_image': 'D Image Model',
+        'e_video': 'E Video Model',
+        'f_spatial': 'F Spatial Model',
+        'g_sensor': 'G Sensor Model',
+        'h_computer': 'H Computer Model',
+        'i_motion': 'I Motion Model',
+        'j_knowledge': 'J Knowledge Model',
+        'k_programming': 'K Programming Model'
+    };
+    
+    const select = document.getElementById('modelSelect');
+    select.innerHTML = '<option value="">Select a model...</option>';
+    
+    models.forEach(model => {
+        const option = document.createElement('option');
+        option.value = model;
+        option.textContent = modelNames[model];
+        select.appendChild(option);
+    });
+}
+
+function loadModelDetails(modelId) {
+    if (!modelId) return;
+    
+    const modelNames = {
+        'a_management': 'A Management Model',
+        'b_language': 'B Language Model',
+        'c_audio': 'C Audio Model',
+        'd_image': 'D Image Model',
+        'e_video': 'E Video Model',
+        'f_spatial': 'F Spatial Model',
+        'g_sensor': 'G Sensor Model',
+        'h_computer': 'H Computer Model',
+        'i_motion': 'I Motion Model',
+        'j_knowledge': 'J Knowledge Model',
+        'k_programming': 'K Programming Model'
+    };
+    
+    const modelDescriptions = {
+        'a_management': 'Main management model with emotional intelligence and task coordination',
+        'b_language': 'Multi-language processing with emotional reasoning capabilities',
+        'c_audio': 'Advanced audio processing and synthesis model',
+        'd_image': 'Computer vision and image generation model',
+        'e_video': 'Video processing and analysis model',
+        'f_spatial': '3D spatial perception and modeling',
+        'g_sensor': 'Multi-sensor data processing and integration',
+        'h_computer': 'Computer control and automation',
+        'i_motion': 'Motion control and actuator management',
+        'j_knowledge': 'Comprehensive knowledge base and expert system',
+        'k_programming': 'Code generation and system optimization'
+    };
+    
+    // Update model info
+    document.getElementById('modelName').textContent = modelNames[modelId] || modelId;
+    document.getElementById('modelDescription').textContent = modelDescriptions[modelId] || 'Model description';
+    
+    // Simulate loading data
+    updateModelMetrics();
+    updateCharts();
+    updateTrainingHistory();
+}
+
+function updateModelMetrics() {
+    // Simulate metric updates
+    document.getElementById('accuracyMetric').textContent = (Math.random() * 30 + 70).toFixed(1) + '%';
+    document.getElementById('lossMetric').textContent = (Math.random() * 2).toFixed(2);
+    document.getElementById('trainingTime').textContent = (Math.random() * 10 + 1).toFixed(1) + 'h';
+    document.getElementById('epochCount').textContent = Math.floor(Math.random() * 100 + 10);
+}
+
+function updateCharts() {
+    const ctx1 = document.getElementById('trainingChart').getContext('2d');
+    const ctx2 = document.getElementById('lossChart').getContext('2d');
+    
+    // Destroy existing charts
+    if (trainingChart) trainingChart.destroy();
+    if (lossChart) lossChart.destroy();
+    
+    // Generate sample data
+    const labels = Array.from({length: 10}, (_, i) => `Epoch ${i+1}`);
+    const accuracyData = Array.from({length: 10}, () => Math.random() * 30 + 70);
+    const lossData = Array.from({length: 10}, () => Math.random() * 2 + 0.5);
+    
+    // Training progress chart
+    trainingChart = new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Accuracy',
+                data: accuracyData,
+                borderColor: '#000000',
+                backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+    
+    // Loss chart
+    lossChart = new Chart(ctx2, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Loss',
+                data: lossData,
+                borderColor: '#666666',
+                backgroundColor: 'rgba(102, 102, 102, 0.1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function updateTrainingHistory() {
+    // Training history is already populated with static data
+}
+
+function startTraining() {
+    const modelId = document.getElementById('modelSelect').value;
+    if (!modelId) {
+        alert('Please select a model first');
+        return;
+    }
+    
+    document.getElementById('trainBtn').innerHTML = '<i class="bi bi-hourglass-split"></i> Training...';
+    document.getElementById('trainBtn').disabled = true;
+    
+    // Simulate training
+    setTimeout(() => {
+        document.getElementById('trainBtn').innerHTML = '<i class="bi bi-play"></i> Start Training';
+        document.getElementById('trainBtn').disabled = false;
+        updateModelMetrics();
+        updateCharts();
+        alert('Training completed successfully!');
+    }, 3000);
+}
+
+function saveModel() {
+    alert('Model configuration saved successfully');
+}
+
+function updateConfiguration() {
+    alert('Configuration updated successfully');
+}
+
+function resetConfiguration() {
+    alert('Configuration reset to default values');
+}
+
+function updateMetrics() {
+    updateModelMetrics();
+    updateCharts();
+}
+</script>
+{% endblock %}

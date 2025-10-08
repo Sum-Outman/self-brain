@@ -1,0 +1,87 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}About - Self Brain AGI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">About Self Brain AGI</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>System Introduction</h5>
+            </div>
+            <div class="card-body">
+                <h6>Self Brain AGI is an advanced artificial intelligence management system</h6>
+                <p>
+                    This system integrates multimodal AI capabilities, including natural language processing, image recognition,
+                    audio processing, video analysis, and more. With a modular design, it supports flexible
+                    model training and knowledge management.
+                </p>
+                
+                <h6>Core Features</h6>
+                <ul>
+                    <li><strong>Multimodal AI Support:</strong> Text, Image, Audio, Video</li>
+                    <li><strong>Real-time Training Monitoring:</strong> GPU resource tracking in real-time</li>
+                    <li><strong>Knowledge Base Management:</strong> Intelligent document processing and retrieval</li>
+                    <li><strong>Distributed Architecture:</strong> Supports multi-node deployment</li>
+                    <li><strong>Visual Interface:</strong> Intuitive user experience</li>
+                </ul>
+
+                <h6>Tech Stack</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Backend:</strong>
+                        <ul>
+                            <li>Python Flask</li>
+                            <li>PyTorch/TensorFlow</li>
+                            <li>CUDA Acceleration</li>
+                            <li>Redis Caching</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Frontend:</strong>
+                        <ul>
+                            <li>Bootstrap 5</li>
+                            <li>Socket.IO</li>
+                            <li>Chart.js</li>
+                            <li>jQuery</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Version Information</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Version:</strong> v1.0.0</p>
+                <p><strong>Build:</strong> 2025.09.11</p>
+                <p><strong>License:</strong> MIT</p>
+                <p><strong>Author:</strong> Self Brain Team</p>
+                <p><strong>Contact:</strong> silencecrowtom@qq.com</p>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5>Contact Support</h5>
+            </div>
+            <div class="card-body">
+                <p>If you have any questions or suggestions, please contact us through the following methods:</p>
+                <ul>
+                    <li>📧 Email: support@selfbrain.ai</li>
+                    <li>💬 Forum: forum.selfbrain.ai</li>
+                    <li>📖 Documentation: docs.selfbrain.ai</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

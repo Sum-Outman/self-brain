@@ -1,0 +1,1266 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}System Settings - Self Brain{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .settings-nav {
+        border-bottom: 1px solid #e0e0e0;
+        margin-bottom: 2rem;
+    }
+    .settings-nav-item {
+        display: inline-block;
+        padding: 1rem 1.5rem;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+    }
+    .settings-nav-item.active {
+        border-bottom-color: #333333;
+        font-weight: bold;
+    }
+    .settings-section {
+        display: none;
+    }
+    .settings-section.active {
+        display: block;
+    }
+    .model-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        background-color: white;
+    }
+    .model-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .model-name {
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+    .model-status {
+        font-size: 0.875rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        text-align: center;
+    }
+    .status-online {
+        background-color: #e0e0e0;
+        color: #333333;
+    }
+    .status-offline {
+        background-color: #f0f0f0;
+        color: #666666;
+    }
+    .api-config-form {
+        background-color: #f9f9f9;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        margin-top: 1rem;
+    }
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+        font-size: 0.875rem;
+    }
+    .form-control {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 0.25rem;
+    }
+    .form-check {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    .form-check-input {
+        margin-right: 0.5rem;
+    }
+    .btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        font-size: 0.875rem;
+    }
+    .btn-primary {
+        background-color: #333333;
+        color: white;
+    }
+    .btn-primary:hover {
+        background-color: #555555;
+    }
+    .btn-secondary {
+        background-color: #666666;
+        color: white;
+    }
+    .btn-secondary:hover {
+        background-color: #888888;
+    }
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+    .btn-danger:hover {
+        background-color: #c82333;
+    }
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+    .btn-success:hover {
+        background-color: #218838;
+    }
+    .btn-group {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .card-title {
+        font-weight: bold;
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+    }
+    .config-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    .hardware-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        background-color: white;
+    }
+    .connection-status {
+        display: flex;
+        align-items: center;
+        font-size: 0.875rem;
+    }
+    .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+    }
+    .status-connected {
+        background-color: #28a745;
+    }
+    .status-disconnected {
+        background-color: #6c757d;
+    }
+    .status-error {
+        background-color: #dc3545;
+    }
+    .model-type-selector {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    .model-type-option {
+        padding: 0.5rem 1rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        text-align: center;
+        flex: 1;
+    }
+    .model-type-option.active {
+        border-color: #333333;
+        background-color: #f5f5f5;
+        font-weight: bold;
+    }
+    .test-result {
+        margin-top: 1rem;
+        padding: 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+    }
+    .test-result.success {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+    }
+    .test-result.error {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+    }
+    .system-param-group {
+        background-color: #f9f9f9;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .system-param-title {
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+    .spinner {
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #333333;
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-right: 0.5rem;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 24px;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    input:checked + .slider {
+        background-color: #333333;
+    }
+    input:checked + .slider:before {
+        transform: translateX(26px);
+    }
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .config-grid {
+            grid-template-columns: 1fr;
+        }
+        .settings-nav-item {
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid settings-container">
+    <h1 class="mb-4">System Settings</h1>
+    
+    <!-- Navigation Tabs -->
+    <div class="settings-nav">
+        <div class="settings-nav-item active" data-section="api-configuration">API Configuration</div>
+        <div class="settings-nav-item" data-section="model-management">Model Management</div>
+        <div class="settings-nav-item" data-section="hardware-configuration">Hardware Configuration</div>
+        <div class="settings-nav-item" data-section="system-parameters">System Parameters</div>
+        <div class="settings-nav-item" data-section="training-settings">Training Settings</div>
+    </div>
+    
+    <!-- API Configuration Section -->
+    <div class="settings-section active" id="api-configuration">
+        <h2 class="card-title mb-4">External API Configuration</h2>
+        
+        <div class="model-card">
+            <div class="api-config-form">
+                <h3 class="mb-3">API Connection Setup</h3>
+                <div class="form-group">
+                    <label class="form-label">API Type</label>
+                    <select class="form-control" id="api-type">
+                        <option value="">-- Select API Type --</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic</option>
+                        <option value="google">Google Gemini</option>
+                        <option value="groq">Groq</option>
+                        <option value="mistralai">Mistral AI</option>
+                        <option value="custom">Custom API</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">API URL</label>
+                    <input type="text" class="form-control" id="api-url" placeholder="Enter API URL">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">API Key</label>
+                    <input type="password" class="form-control" id="api-key" placeholder="Enter API Key">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Model Name</label>
+                    <input type="text" class="form-control" id="model-name" placeholder="Enter Model Name">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Model Type</label>
+                    <select class="form-control" id="model-type">
+                        <option value="">-- Select Model Type --</option>
+                        <option value="A">Manager Model</option>
+                        <option value="B">Language Model</option>
+                        <option value="C">Audio Model</option>
+                        <option value="D">Image Model</option>
+                        <option value="E">Video Model</option>
+                        <option value="F">Spatial Model</option>
+                        <option value="G">Sensor Model</option>
+                        <option value="H">Computer Control</option>
+                        <option value="I">Motion Control</option>
+                        <option value="J">Knowledge Base</option>
+                        <option value="K">Programming Model</option>
+                    </select>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-secondary" id="test-connection">Test Connection</button>
+                    <button class="btn btn-primary" id="save-configuration">Save Configuration</button>
+                </div>
+            </div>
+            
+            <div class="api-config-form" style="margin-top: 30px;">
+                <h3 class="mb-3">Active API Connections</h3>
+                <div id="active-connections-list" class="connections-list">
+                    <!-- Active connections will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Model Management Section -->
+    <div class="settings-section" id="model-management">
+        <h2 class="card-title mb-4">Model Management</h2>
+        
+        <div class="model-list">
+            <!-- Model A - Management Model -->
+            <div class="model-card" id="model-A">
+                <div class="model-header">
+                    <div class="model-name">A - Management Model</div>
+                    <span class="model-status status-online">Online</span>
+                </div>
+                <p class="text-sm text-gray mb-3">Main AGI manager, coordinates all other models and handles user interactions</p>
+                
+                <div class="model-type-selector">
+                    <div class="model-type-option active" data-model="A" data-type="local">Local Model</div>
+                    <div class="model-type-option" data-model="A" data-type="api">External API</div>
+                </div>
+                
+                <div id="model-A-local" class="api-config-form">
+                    <h4 class="mb-3">Local Model Settings</h4>
+                    <div class="form-group">
+                        <label class="form-label">Model Path</label>
+                        <input type="text" class="form-control" value="models/management/model.bin" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Model Version</label>
+                        <input type="text" class="form-control" value="1.0.0" disabled>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="model-A-autostart" checked>
+                        <label class="form-check-label" for="model-A-autostart">Auto-start on system boot</label>
+                    </div>
+                    <div class="btn-group mt-3">
+                        <button class="btn btn-primary" data-action="restart-model" data-model="A">Restart Model</button>
+                        <button class="btn btn-secondary" data-action="view-stats" data-model="A">View Statistics</button>
+                    </div>
+                </div>
+                
+                <div id="model-A-api" class="api-config-form" style="display: none;">
+                    <h4 class="mb-3">External API Settings</h4>
+                    <div class="form-group">
+                        <label class="form-label">API Provider</label>
+                        <select class="form-control" id="model-A-provider">
+                            <option value="openai">OpenAI</option>
+                            <option value="anthropic">Anthropic</option>
+                            <option value="google">Google Gemini</option>
+                            <option value="custom">Custom API</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">API Base URL</label>
+                        <input type="text" class="form-control" id="model-A-api-url" placeholder="https://api.example.com/v1/chat/completions">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">API Key</label>
+                        <input type="password" class="form-control" id="model-A-api-key" placeholder="Enter your API key">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Model Name</label>
+                        <input type="text" class="form-control" id="model-A-model-name" placeholder="gpt-4o, claude-3-opus, etc.">
+                    </div>
+                    <div class="btn-group mt-3">
+                        <button class="btn btn-primary" data-action="test-api" data-model="A">Test Connection</button>
+                        <button class="btn btn-secondary" data-action="save-api" data-model="A">Save Settings</button>
+                    </div>
+                    <div id="model-A-test-result" class="test-result" style="display: none;"></div>
+                </div>
+            </div>
+            
+            <!-- Additional Models B-K (condensed for space) -->
+            <div class="config-grid">
+                <!-- Model B - Language Model -->
+                <div class="model-card" id="model-B">
+                    <div class="model-header">
+                        <div class="model-name">B - Language Model</div>
+                        <span class="model-status status-online">Online</span>
+                    </div>
+                    <div class="model-type-selector">
+                        <div class="model-type-option active" data-model="B" data-type="local">Local</div>
+                        <div class="model-type-option" data-model="B" data-type="api">API</div>
+                    </div>
+                    <div class="btn-group mt-3">
+                        <button class="btn btn-primary btn-sm" data-action="configure-model" data-model="B">Configure</button>
+                    </div>
+                </div>
+                
+                <!-- Model C - Audio Model -->
+                <div class="model-card" id="model-C">
+                    <div class="model-header">
+                        <div class="model-name">C - Audio Model</div>
+                        <span class="model-status status-online">Online</span>
+                    </div>
+                    <div class="model-type-selector">
+                        <div class="model-type-option active" data-model="C" data-type="local">Local</div>
+                        <div class="model-type-option" data-model="C" data-type="api">API</div>
+                    </div>
+                    <div class="btn-group mt-3">
+                        <button class="btn btn-primary btn-sm" data-action="configure-model" data-model="C">Configure</button>
+                    </div>
+                </div>
+                
+                <!-- Model D - Vision Model -->
+                <div class="model-card" id="model-D">
+                    <div class="model-header">
+                        <div class="model-name">D - Vision Model</div>
+                        <span class="model-status status-online">Online</span>
+                    </div>
+                    <div class="model-type-selector">
+                        <div class="model-type-option active" data-model="D" data-type="local">Local</div>
+                        <div class="model-type-option" data-model="D" data-type="api">API</div>
+                    </div>
+                    <div class="btn-group mt-3">
+                        <button class="btn btn-primary btn-sm" data-action="configure-model" data-model="D">Configure</button>
+                    </div>
+                </div>
+                
+                <!-- Model E - Video Model -->
+                <div class="model-card" id="model-E">
+                    <div class="model-header">
+                        <div class="model-name">E - Video Model</div>
+                        <span class="model-status status-online">Online</span>
+                    </div>
+                    <div class="model-type-selector">
+                        <div class="model-type-option active" data-model="E" data-type="local">Local</div>
+                        <div class="model-type-option" data-model="E" data-type="api">API</div>
+                    </div>
+                    <div class="btn-group mt-3">
+                        <button class="btn btn-primary btn-sm" data-action="configure-model" data-model="E">Configure</button>
+                    </div>
+                </div>
+                
+                <!-- Model F - Spatial Model -->
+                <div class="model-card" id="model-F">
+                    <div class="model-header">
+                        <div class="model-name">F - Spatial Model</div>
+                        <span class="model-status status-online">Online</span>
+                    </div>
+                    <div class="model-type-selector">
+                        <div class="model-type-option active" data-model="F" data-type="local">Local</div>
+                        <div class="model-type-option" data-model="F" data-type="api">API</div>
+                    </div>
+                    <div class="btn-group mt-3">
+                        <button class="btn btn-primary btn-sm" data-action="configure-model" data-model="F">Configure</button>
+                    </div>
+                </div>
+                
+                <!-- Model G - Sensor Model -->
+                <div class="model-card" id="model-G">
+                    <div class="model-header">
+                        <div class="model-name">G - Sensor Model</div>
+                        <span class="model-status status-online">Online</span>
+                    </div>
+                    <div class="model-type-selector">
+                        <div class="model-type-option active" data-model="G" data-type="local">Local</div>
+                        <div class="model-type-option" data-model="G" data-type="api">API</div>
+                    </div>
+                    <div class="btn-group mt-3">
+                        <button class="btn btn-primary btn-sm" data-action="configure-model" data-model="G">Configure</button>
+                    </div>
+                </div>
+                
+                <!-- Model H - Computer Control -->
+                <div class="model-card" id="model-H">
+                    <div class="model-header">
+                        <div class="model-name">H - Computer Control</div>
+                        <span class="model-status status-online">Online</span>
+                    </div>
+                    <div class="model-type-selector">
+                        <div class="model-type-option active" data-model="H" data-type="local">Local</div>
+                        <div class="model-type-option" data-model="H" data-type="api">API</div>
+                    </div>
+                    <div class="btn-group mt-3">
+                        <button class="btn btn-primary btn-sm" data-action="configure-model" data-model="H">Configure</button>
+                    </div>
+                </div>
+                
+                <!-- Model I - Motion Control -->
+                <div class="model-card" id="model-I">
+                    <div class="model-header">
+                        <div class="model-name">I - Motion Control</div>
+                        <span class="model-status status-online">Online</span>
+                    </div>
+                    <div class="model-type-selector">
+                        <div class="model-type-option active" data-model="I" data-type="local">Local</div>
+                        <div class="model-type-option" data-model="I" data-type="api">API</div>
+                    </div>
+                    <div class="btn-group mt-3">
+                        <button class="btn btn-primary btn-sm" data-action="configure-model" data-model="I">Configure</button>
+                    </div>
+                </div>
+                
+                <!-- Model J - Knowledge Base -->
+                <div class="model-card" id="model-J">
+                    <div class="model-header">
+                        <div class="model-name">J - Knowledge Base</div>
+                        <span class="model-status status-online">Online</span>
+                    </div>
+                    <div class="model-type-selector">
+                        <div class="model-type-option active" data-model="J" data-type="local">Local</div>
+                        <div class="model-type-option" data-model="J" data-type="api">API</div>
+                    </div>
+                    <div class="btn-group mt-3">
+                        <button class="btn btn-primary btn-sm" data-action="configure-model" data-model="J">Configure</button>
+                    </div>
+                </div>
+                
+                <!-- Model K - Programming Model -->
+                <div class="model-card" id="model-K">
+                    <div class="model-header">
+                        <div class="model-name">K - Programming Model</div>
+                        <span class="model-status status-online">Online</span>
+                    </div>
+                    <div class="model-type-selector">
+                        <div class="model-type-option active" data-model="K" data-type="local">Local</div>
+                        <div class="model-type-option" data-model="K" data-type="api">API</div>
+                    </div>
+                    <div class="btn-group mt-3">
+                        <button class="btn btn-primary btn-sm" data-action="configure-model" data-model="K">Configure</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hardware Configuration Section -->
+    <div class="settings-section" id="hardware-configuration">
+        <h2 class="card-title mb-4">Hardware Configuration</h2>
+        
+        <div class="config-grid">
+            <!-- Camera Configuration -->
+            <div class="hardware-card">
+                <h3 class="mb-3">Camera Management</h3>
+                <div class="connection-status mb-3">
+                    <span class="status-indicator status-disconnected"></span>
+                    <span>No cameras connected</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Available Cameras</label>
+                    <select class="form-control" id="camera-list" disabled>
+                        <option value="">-- Select a camera --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Resolution</label>
+                    <select class="form-control" id="camera-resolution">
+                        <option value="640x480">640x480</option>
+                        <option value="1280x720">1280x720</option>
+                        <option value="1920x1080">1920x1080</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Frames Per Second</label>
+                    <input type="number" class="form-control" id="camera-fps" min="1" max="60" value="30">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Brightness</label>
+                    <input type="range" class="form-control" id="camera-brightness" min="0" max="100" value="50">
+                    <span id="brightness-value">50</span>
+                </div>
+                
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="enable-stereo-vision">
+                    <label class="form-check-label" for="enable-stereo-vision">Enable Stereo Vision</label>
+                </div>
+                
+                <div id="stereo-camera-config" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Second Camera</label>
+                        <select class="form-control" id="second-camera">
+                            <option value="">-- Select a second camera --</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="btn-group mt-3">
+                    <button class="btn btn-secondary" id="scan-cameras">Scan Cameras</button>
+                    <button class="btn btn-primary" id="start-camera" disabled>Start Camera</button>
+                    <button class="btn btn-danger" id="stop-camera" disabled>Stop Camera</button>
+                </div>
+            </div>
+            
+            <!-- Serial Port Configuration -->
+            <div class="hardware-card">
+                <h3 class="mb-3">Serial Port Configuration</h3>
+                <div class="connection-status mb-3">
+                    <span class="status-indicator status-disconnected"></span>
+                    <span>No serial ports connected</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Available Serial Ports</label>
+                    <select class="form-control" id="serial-port-list">
+                        <option value="">-- Select a serial port --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Baud Rate</label>
+                    <select class="form-control" id="baudrate">
+                        <option value="9600">9600</option>
+                        <option value="19200">19200</option>
+                        <option value="38400">38400</option>
+                        <option value="57600">57600</option>
+                        <option value="115200">115200</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Timeout (seconds)</label>
+                    <input type="number" class="form-control" id="timeout" step="0.1" min="0.1" value="1.0">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Device ID</label>
+                    <input type="text" class="form-control" id="device-id" placeholder="Enter device ID">
+                </div>
+                
+                <div class="btn-group mt-3">
+                    <button class="btn btn-secondary" id="scan-serial-ports">Scan Ports</button>
+                    <button class="btn btn-primary" id="connect-serial" disabled>Connect</button>
+                    <button class="btn btn-danger" id="disconnect-serial" disabled>Disconnect</button>
+                </div>
+            </div>
+            
+            <!-- Sensor Configuration -->
+            <div class="hardware-card">
+                <h3 class="mb-3">Sensor Configuration</h3>
+                <div class="connection-status mb-3">
+                    <span class="status-indicator status-disconnected"></span>
+                    <span>No sensors connected</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Connected Sensors</label>
+                    <select class="form-control" id="sensor-list">
+                        <option value="">-- Select a sensor --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Sampling Rate (Hz)</label>
+                    <input type="number" class="form-control" id="sampling-rate" min="1" max="100" value="10">
+                </div>
+                
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="enable-temperature-sensor">
+                    <label class="form-check-label" for="enable-temperature-sensor">Enable Temperature Sensor</label>
+                </div>
+                
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="enable-humidity-sensor">
+                    <label class="form-check-label" for="enable-humidity-sensor">Enable Humidity Sensor</label>
+                </div>
+                
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="enable-motion-sensor">
+                    <label class="form-check-label" for="enable-motion-sensor">Enable Motion Sensor</label>
+                </div>
+                
+                <div class="btn-group mt-3">
+                    <button class="btn btn-secondary" id="refresh-sensors">Refresh Sensors</button>
+                    <button class="btn btn-primary" id="save-sensor-config">Save Configuration</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Parameters Section -->
+    <div class="settings-section" id="system-parameters">
+        <h2 class="card-title mb-4">System Parameters</h2>
+        
+        <div class="system-param-group">
+            <h3 class="system-param-title">Performance Settings</h3>
+            <div class="config-grid">
+                <div class="form-group">
+                    <label class="form-label">System Language</label>
+                    <select class="form-control" id="system-language">
+                        <option value="en">English</option>
+                        <option value="zh">Chinese</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Default Learning Rate</label>
+                    <input type="number" class="form-control" id="default-learning-rate" step="0.0001" value="0.001">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Batch Size</label>
+                    <input type="number" class="form-control" id="batch-size" min="1" value="32">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Maximum Epochs</label>
+                    <input type="number" class="form-control" id="max-epochs" min="1" value="100">
+                </div>
+                
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="enable-gpu" checked>
+                    <label class="form-check-label" for="enable-gpu">Enable GPU Acceleration</label>
+                </div>
+                
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="enable-multithreading">
+                    <label class="form-check-label" for="enable-multithreading">Enable Multithreading</label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="system-param-group">
+            <h3 class="system-param-title">Network Settings</h3>
+            <div class="config-grid">
+                <div class="form-group">
+                    <label class="form-label">API Timeout (seconds)</label>
+                    <input type="number" class="form-control" id="api-timeout" min="5" max="120" value="30">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Retry Attempts</label>
+                    <input type="number" class="form-control" id="retry-attempts" min="0" max="5" value="3">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Proxy Server</label>
+                    <input type="text" class="form-control" id="proxy-server" placeholder="http://proxy.example.com:8080">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Offline Mode</label>
+                    <select class="form-control" id="offline-mode">
+                        <option value="disabled">Disabled</option>
+                        <option value="enabled">Enabled</option>
+                        <option value="auto">Auto</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4 text-center">
+            <button class="btn btn-primary" id="save-system-config">Save System Configuration</button>
+        </div>
+    </div>
+    
+    <!-- Training Settings Section -->
+    <div class="settings-section" id="training-settings">
+        <h2 class="card-title mb-4">Training Settings</h2>
+        
+        <div class="model-card">
+            <div class="model-header">
+                <div class="model-name">Global Training Parameters</div>
+            </div>
+            
+            <div class="config-grid">
+                <div class="form-group">
+                    <label class="form-label">Learning Rate</label>
+                    <input type="number" class="form-control" id="learning-rate" min="0.00001" max="1" step="0.00001" value="0.001">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Batch Size</label>
+                    <input type="number" class="form-control" id="batch-size" min="1" max="1024" value="32">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Epochs</label>
+                    <input type="number" class="form-control" id="epochs" min="1" max="1000" value="10">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Validation Split (%)</label>
+                    <input type="number" class="form-control" id="validation-split" min="5" max="50" value="20">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Early Stopping</label>
+                    <select class="form-control" id="early-stopping">
+                        <option value="disabled">Disabled</option>
+                        <option value="enabled">Enabled</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Checkpoint Interval</label>
+                    <input type="number" class="form-control" id="checkpoint-interval" min="1" max="100" value="5">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Data Augmentation</label>
+                    <select class="form-control" id="data-augmentation">
+                        <option value="disabled">Disabled</option>
+                        <option value="basic">Basic</option>
+                        <option value="advanced">Advanced</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Gradient Clipping</label>
+                    <input type="number" class="form-control" id="gradient-clipping" min="0" max="10" step="0.1" value="1.0">
+                </div>
+            </div>
+            
+            <div class="form-check mt-4">
+                <input type="checkbox" class="form-check-input" id="knowledge-learning-enabled">
+                <label class="form-check-label" for="knowledge-learning-enabled">Enable Autonomous Knowledge Learning</label>
+            </div>
+            
+            <div class="form-group mt-2">
+                <label class="form-label">Knowledge Learning Frequency (hours)</label>
+                <input type="number" class="form-control" id="knowledge-learning-frequency" min="1" max="24" value="6">
+            </div>
+            
+            <div class="btn-group mt-4">
+                <button class="btn btn-primary" id="save-training-settings">Save Training Settings</button>
+                <button class="btn btn-secondary" id="reset-training-settings">Reset to Default</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize navigation tabs
+        const navItems = document.querySelectorAll('.settings-nav-item');
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // Remove active class from all nav items
+                navItems.forEach(i => i.classList.remove('active'));
+                // Add active class to clicked item
+                this.classList.add('active');
+                
+                // Hide all sections
+                const sections = document.querySelectorAll('.settings-section');
+                sections.forEach(section => section.classList.remove('active'));
+                
+                // Show corresponding section
+                const sectionId = this.getAttribute('data-section');
+                document.getElementById(sectionId).classList.add('active');
+            });
+        });
+        
+        // Initialize model type selectors
+        const modelTypeOptions = document.querySelectorAll('.model-type-option');
+        modelTypeOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                const model = this.getAttribute('data-model');
+                const type = this.getAttribute('data-type');
+                
+                // Remove active class from all options for this model
+                const modelOptions = document.querySelectorAll(`.model-type-option[data-model="${model}"]`);
+                modelOptions.forEach(o => o.classList.remove('active'));
+                
+                // Add active class to clicked option
+                this.classList.add('active');
+                
+                // Hide all config forms for this model
+                const configForms = document.querySelectorAll(`[id^="model-${model}-"]`);
+                configForms.forEach(form => {
+                    if (form.id.includes('local') || form.id.includes('api')) {
+                        form.style.display = 'none';
+                    }
+                });
+                
+                // Show corresponding config form
+                const formId = `model-${model}-${type}`;
+                const formElement = document.getElementById(formId);
+                if (formElement) {
+                    formElement.style.display = 'block';
+                }
+            });
+        });
+        
+        // Initialize API test buttons
+        const testApiButtons = document.querySelectorAll('[data-action="test-api"]');
+        testApiButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const model = this.getAttribute('data-model');
+                testApiConnection(model);
+            });
+        });
+        
+        // Initialize API save buttons
+        const saveApiButtons = document.querySelectorAll('[data-action="save-api"]');
+        saveApiButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const model = this.getAttribute('data-model');
+                saveApiSettings(model);
+            });
+        });
+        
+        // Initialize model restart buttons
+        const restartModelButtons = document.querySelectorAll('[data-action="restart-model"]');
+        restartModelButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const model = this.getAttribute('data-model');
+                restartModel(model);
+            });
+        });
+        
+        // Initialize model configure buttons
+        const configureModelButtons = document.querySelectorAll('[data-action="configure-model"]');
+        configureModelButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const model = this.getAttribute('data-model');
+                showNotification(`Configuration for Model ${model} coming soon`, 'info');
+            });
+        });
+        
+        // Initialize memory limit slider
+        const memoryLimitSlider = document.getElementById('memory-limit');
+        const memoryLimitValue = document.getElementById('memory-limit-value');
+        if (memoryLimitSlider && memoryLimitValue) {
+            memoryLimitSlider.addEventListener('input', function() {
+                memoryLimitValue.textContent = this.value;
+            });
+        }
+        
+        // Initialize save system settings button
+        const saveSystemSettingsBtn = document.getElementById('save-system-config');
+        if (saveSystemSettingsBtn) {
+            saveSystemSettingsBtn.addEventListener('click', saveSystemSettings);
+        }
+        
+        // Initialize save training settings button
+        const saveTrainingSettingsBtn = document.getElementById('save-training-settings');
+        if (saveTrainingSettingsBtn) {
+            saveTrainingSettingsBtn.addEventListener('click', saveTrainingSettings);
+        }
+        
+        // Initialize reset training settings button
+        const resetTrainingSettingsBtn = document.getElementById('reset-training-settings');
+        if (resetTrainingSettingsBtn) {
+            resetTrainingSettingsBtn.addEventListener('click', resetTrainingSettings);
+        }
+        
+        // Initialize hardware management buttons
+        const refreshCamerasBtn = document.getElementById('refresh-cameras');
+        const refreshSensorsBtn = document.getElementById('refresh-sensors');
+        const scanDevicesBtn = document.getElementById('scan-devices');
+        
+        if (refreshCamerasBtn) {
+            refreshCamerasBtn.addEventListener('click', refreshCameras);
+        }
+        
+        if (refreshSensorsBtn) {
+            refreshSensorsBtn.addEventListener('click', refreshSensors);
+        }
+        
+        if (scanDevicesBtn) {
+            scanDevicesBtn.addEventListener('click', scanDevices);
+        }
+        
+        // Initialize Socket.IO connection
+        let socket = null;
+        try {
+            socket = io(window.location.origin, {
+                transports: ['websocket', 'polling'],
+                timeout: 15000,
+                reconnection: true
+            });
+            
+            socket.on('connect', function() {
+                console.log('Connected to server');
+                showNotification('Connected to system management service', 'success');
+            });
+            
+            socket.on('disconnect', function() {
+                console.log('Disconnected from server');
+                showNotification('Disconnected from system management service', 'error');
+            });
+            
+            socket.on('api_test_result', function(data) {
+                handleApiTestResult(data);
+            });
+            
+            socket.on('model_status_update', function(data) {
+                updateModelStatus(data);
+            });
+            
+            socket.on('hardware_status', function(data) {
+                updateHardwareStatus(data);
+            });
+            
+        } catch (error) {
+            console.error('Failed to initialize Socket.IO:', error);
+            showNotification('Failed to connect to system management service', 'error');
+        }
+        
+        // Function to test API connection
+        function testApiConnection(model) {
+            const resultElement = document.getElementById(`model-${model}-test-result`);
+            if (resultElement) {
+                resultElement.innerHTML = '<div class="spinner"></div> Testing connection...';
+                resultElement.className = 'test-result';
+                resultElement.style.display = 'block';
+            }
+            
+            // Simulate API test
+            setTimeout(() => {
+                // In a real implementation, this would send an API request to test the connection
+                const success = Math.random() > 0.3; // 70% success rate for simulation
+                
+                if (success) {
+                    if (resultElement) {
+                        resultElement.innerHTML = '<i class="bi bi-check-circle"></i> Connection successful!';
+                        resultElement.className = 'test-result success';
+                    }
+                    showNotification(`API connection test for Model ${model} successful`, 'success');
+                } else {
+                    if (resultElement) {
+                        resultElement.innerHTML = '<i class="bi bi-x-circle"></i> Connection failed. Please check your settings.';
+                        resultElement.className = 'test-result error';
+                    }
+                    showNotification(`API connection test for Model ${model} failed`, 'error');
+                }
+            }, 1500);
+        }
+        
+        // Function to save API settings
+        function saveApiSettings(model) {
+            // In a real implementation, this would save the settings to the server
+            showNotification(`API settings for Model ${model} saved`, 'success');
+        }
+        
+        // Function to restart model
+        function restartModel(model) {
+            showNotification(`Restarting Model ${model}...`, 'info');
+            
+            // Simulate model restart
+            setTimeout(() => {
+                showNotification(`Model ${model} restarted successfully`, 'success');
+            }, 2000);
+        }
+        
+        // Function to save system settings
+        function saveSystemSettings() {
+            showNotification('Saving system settings...', 'info');
+            
+            // Simulate saving settings
+            setTimeout(() => {
+                showNotification('System settings saved successfully', 'success');
+            }, 1000);
+        }
+        
+        // Function to save training settings
+        function saveTrainingSettings() {
+            showNotification('Saving training settings...', 'info');
+            
+            // Simulate saving settings
+            setTimeout(() => {
+                showNotification('Training settings saved successfully', 'success');
+            }, 1000);
+        }
+        
+        // Function to reset training settings
+        function resetTrainingSettings() {
+            // Reset form fields to default values
+            document.getElementById('learning-rate').value = '0.001';
+            document.getElementById('batch-size').value = '32';
+            document.getElementById('epochs').value = '10';
+            document.getElementById('validation-split').value = '20';
+            document.getElementById('early-stopping').value = 'disabled';
+            document.getElementById('checkpoint-interval').value = '5';
+            document.getElementById('data-augmentation').value = 'disabled';
+            document.getElementById('gradient-clipping').value = '1.0';
+            
+            showNotification('Training settings reset to default', 'info');
+        }
+        
+        // Function to refresh cameras
+        function refreshCameras() {
+            showNotification('Refreshing camera list...', 'info');
+            
+            // Simulate camera detection
+            setTimeout(() => {
+                showNotification('Camera list refreshed', 'success');
+            }, 1000);
+        }
+        
+        // Function to refresh sensors
+        function refreshSensors() {
+            showNotification('Refreshing sensor list...', 'info');
+            
+            // Simulate sensor detection
+            setTimeout(() => {
+                showNotification('Sensor list refreshed', 'success');
+            }, 1000);
+        }
+        
+        // Function to scan devices
+        function scanDevices() {
+            showNotification('Scanning for devices...', 'info');
+            
+            // Simulate device scanning
+            setTimeout(() => {
+                showNotification('Device scan completed', 'success');
+            }, 2000);
+        }
+        
+        // Function to handle API test result
+        function handleApiTestResult(data) {
+            const resultElement = document.getElementById(`model-${data.model}-test-result`);
+            if (resultElement) {
+                if (data.success) {
+                    resultElement.innerHTML = '<i class="bi bi-check-circle"></i> Connection successful!';
+                    resultElement.className = 'test-result success';
+                } else {
+                    resultElement.innerHTML = `<i class="bi bi-x-circle"></i> Connection failed: ${data.error || 'Unknown error'}`;
+                    resultElement.className = 'test-result error';
+                }
+                resultElement.style.display = 'block';
+            }
+        }
+        
+        // Function to update model status
+        function updateModelStatus(data) {
+            const statusElement = document.querySelector(`#model-${data.model} .model-status`);
+            if (statusElement) {
+                statusElement.textContent = data.status;
+                if (data.status === 'Online') {
+                    statusElement.className = 'model-status status-online';
+                } else {
+                    statusElement.className = 'model-status status-offline';
+                }
+            }
+        }
+        
+        // Function to update hardware status
+        function updateHardwareStatus(data) {
+            // Update camera status
+            if (data.cameras) {
+                const cameraStatus = document.querySelector('.hardware-card:nth-child(1) .connection-status');
+                const cameraList = document.getElementById('camera-list');
+                
+                if (cameraStatus && cameraList) {
+                    if (data.cameras.length > 0) {
+                        cameraStatus.innerHTML = '<span class="status-indicator status-connected"></span><span>Connected</span>';
+                        cameraList.innerHTML = '';
+                        data.cameras.forEach(camera => {
+                            const option = document.createElement('option');
+                            option.value = camera.id;
+                            option.textContent = camera.name;
+                            cameraList.appendChild(option);
+                        });
+                        cameraList.disabled = false;
+                    } else {
+                        cameraStatus.innerHTML = '<span class="status-indicator status-disconnected"></span><span>No cameras connected</span>';
+                        cameraList.innerHTML = '<option value="">No cameras available</option>';
+                        cameraList.disabled = true;
+                    }
+                }
+            }
+            
+            // Update sensor status
+            if (data.sensors) {
+                const sensorStatus = document.querySelector('.hardware-card:nth-child(2) .connection-status');
+                const sensorList = document.getElementById('sensor-list');
+                
+                if (sensorStatus && sensorList) {
+                    if (data.sensors.length > 0) {
+                        sensorStatus.innerHTML = '<span class="status-indicator status-connected"></span><span>Connected</span>';
+                        sensorList.innerHTML = '';
+                        data.sensors.forEach(sensor => {
+                            const option = document.createElement('option');
+                            option.value = sensor.id;
+                            option.textContent = sensor.name;
+                            sensorList.appendChild(option);
+                        });
+                        sensorList.disabled = false;
+                    } else {
+                        sensorStatus.innerHTML = '<span class="status-indicator status-disconnected"></span><span>No sensors connected</span>';
+                        sensorList.innerHTML = '<option value="">No sensors available</option>';
+                        sensorList.disabled = true;
+                    }
+                }
+            }
+            
+            // Update device communication status
+            if (data.devices) {
+                const deviceStatus = document.querySelector('.hardware-card:nth-child(3) .connection-status');
+                
+                if (deviceStatus) {
+                    if (data.devices.length > 0) {
+                        deviceStatus.innerHTML = '<span class="status-indicator status-connected"></span><span>Connected</span>';
+                    } else {
+                        deviceStatus.innerHTML = '<span class="status-indicator status-disconnected"></span><span>No devices connected</span>';
+                    }
+                }
+            }
+        }
+        
+        // Function to show notifications
+        function showNotification(message, type = 'info') {
+            // Use the global showToast function if available
+            if (window.showToast) {
+                window.showToast(message, type);
+            } else {
+                // Fallback notification
+                console.log(`${type.toUpperCase()}: ${message}`);
+            }
+        }
+        
+        // Initialize with a welcome notification
+        showNotification('System settings loaded successfully', 'success');
+    });
+</script>
+{% endblock %}

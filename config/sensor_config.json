@@ -1,0 +1,257 @@
+{
+  "model_type": "local",
+  "default_language": "zh",
+  "data_bus_host": "localhost",
+  "data_bus_port": 6379,
+  "data_bus_db": 0,
+  "realtime_interfaces": {
+    "camera": {
+      "enabled": true,
+      "device_index": 0,
+      "resolution": "640x480",
+      "fps": 30
+    },
+    "microphone": {
+      "enabled": true,
+      "device_index": 0,
+      "sample_rate": 44100,
+      "channels": 1
+    },
+    "network_streams": {
+      "enabled": true,
+      "supported_protocols": ["rtsp", "rtmp", "http", "https"]
+    },
+    "serial_ports": {
+      "enabled": true,
+      "default_baudrate": 9600,
+      "default_timeout": 1
+    }
+  },
+  "external_api": {
+    "enabled": false,
+    "apis": [
+      {
+        "name": "openai",
+        "type": "openai",
+        "api_key": "",
+        "endpoint": "https://api.openai.com/v1",
+        "enabled": false
+      },
+      {
+        "name": "azure",
+        "type": "azure",
+        "api_key": "",
+        "endpoint": "",
+        "enabled": false
+      },
+      {
+        "name": "google_cloud",
+        "type": "google_cloud",
+        "api_key": "",
+        "endpoint": "",
+        "enabled": false
+      },
+      {
+        "name": "aws",
+        "type": "aws",
+        "access_key": "",
+        "secret_key": "",
+        "region": "us-east-1",
+        "enabled": false
+      }
+    ]
+  },
+  "sensor_configuration": {
+    "temperature": {
+      "unit": "°C",
+      "range": [-40, 125],
+      "precision": 0.1,
+      "sampling_rate": 1,
+      "anomaly_threshold": 2.0
+    },
+    "humidity": {
+      "unit": "%",
+      "range": [0, 100],
+      "precision": 0.1,
+      "sampling_rate": 1,
+      "anomaly_threshold": 10.0
+    },
+    "acceleration": {
+      "unit": "m/s²",
+      "range": [-16, 16],
+      "precision": 0.01,
+      "sampling_rate": 10,
+      "anomaly_threshold": 5.0
+    },
+    "velocity": {
+      "unit": "m/s",
+      "range": [0, 100],
+      "precision": 0.1,
+      "sampling_rate": 5,
+      "anomaly_threshold": 3.0
+    },
+    "displacement": {
+      "unit": "m",
+      "range": [0, 100],
+      "precision": 0.001,
+      "sampling_rate": 2,
+      "anomaly_threshold": 2.0
+    },
+    "gyroscope": {
+      "unit": "rad/s",
+      "range": [-2000, 2000],
+      "precision": 0.1,
+      "sampling_rate": 10,
+      "anomaly_threshold": 100.0
+    },
+    "pressure": {
+      "unit": "hPa",
+      "range": [300, 1100],
+      "precision": 0.1,
+      "sampling_rate": 1,
+      "anomaly_threshold": 5.0
+    },
+    "barometric": {
+      "unit": "hPa",
+      "range": [300, 1100],
+      "precision": 0.1,
+      "sampling_rate": 1,
+      "anomaly_threshold": 3.0
+    },
+    "distance": {
+      "unit": "m",
+      "range": [0, 100],
+      "precision": 0.01,
+      "sampling_rate": 5,
+      "anomaly_threshold": 1.0
+    },
+    "infrared": {
+      "unit": "lux",
+      "range": [0, 10000],
+      "precision": 1,
+      "sampling_rate": 2,
+      "anomaly_threshold": 500.0
+    },
+    "gas": {
+      "unit": "ppm",
+      "range": [0, 5000],
+      "precision": 1,
+      "sampling_rate": 1,
+      "anomaly_threshold": 100.0
+    },
+    "smoke": {
+      "unit": "ppm",
+      "range": [0, 1000],
+      "precision": 0.1,
+      "sampling_rate": 1,
+      "anomaly_threshold": 50.0
+    },
+    "light": {
+      "unit": "lux",
+      "range": [0, 100000],
+      "precision": 1,
+      "sampling_rate": 2,
+      "anomaly_threshold": 1000.0
+    },
+    "taste": {
+      "unit": "intensity",
+      "range": [0, 10],
+      "precision": 0.1,
+      "sampling_rate": 1,
+      "anomaly_threshold": 1.0
+    }
+  },
+  "communication_protocols": {
+    "serial": {
+      "enabled": true,
+      "default_baudrate": 9600,
+      "supported_baudrates": [9600, 19200, 38400, 57600, 115200]
+    },
+    "tcp": {
+      "enabled": true,
+      "default_port": 8080,
+      "timeout": 5
+    },
+    "udp": {
+      "enabled": true,
+      "default_port": 8081,
+      "timeout": 5
+    },
+    "i2c": {
+      "enabled": true,
+      "default_address": 64
+    },
+    "spi": {
+      "enabled": true,
+      "max_speed": 1000000
+    },
+    "can": {
+      "enabled": true,
+      "bitrate": 500000
+    },
+    "modbus": {
+      "enabled": true,
+      "default_port": 502
+    },
+    "mqtt": {
+      "enabled": true,
+      "broker": "localhost",
+      "port": 1883
+    },
+    "websocket": {
+      "enabled": true,
+      "default_port": 8765
+    }
+  },
+  "training_config": {
+    "enabled": true,
+    "auto_retrain_interval": 3600,
+    "min_training_samples": 1000,
+    "max_training_samples": 10000,
+    "default_epochs": 50,
+    "default_learning_rate": 0.001,
+    "validation_split": 0.2,
+    "early_stopping_patience": 10,
+    "model_checkpoint": true,
+    "tensorboard_logging": true
+  },
+  "optimization_config": {
+    "enabled": true,
+    "memory_optimization": true,
+    "computation_optimization": true,
+    "auto_pruning": true,
+    "quantization": true,
+    "pruning_threshold": 0.01,
+    "quantization_bits": 8
+  },
+  "self_learning_config": {
+    "enabled": true,
+    "learning_rate_decay": 0.95,
+    "exploration_rate": 0.1,
+    "confidence_threshold": 0.8,
+    "max_self_iterations": 100,
+    "reward_function": "accuracy_improvement"
+  },
+  "version_management": {
+    "current_version": "1.0.0",
+    "auto_update": true,
+    "update_check_interval": 86400,
+    "backup_versions": 3,
+    "rollback_on_failure": true
+  },
+  "logging_config": {
+    "level": "INFO",
+    "file_path": "logs/sensor_model.log",
+    "max_file_size": 10485760,
+    "backup_count": 5,
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  },
+  "monitoring_config": {
+    "enabled": true,
+    "metrics_port": 9090,
+    "health_check_interval": 30,
+    "performance_metrics": true,
+    "resource_usage": true,
+    "anomaly_alerts": true
+  }
+}

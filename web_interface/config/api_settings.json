@@ -1,0 +1,118 @@
+{
+  "global_settings": {
+    "timeout": 30,
+    "retry_count": 3,
+    "proxy": ""
+  },
+  "models": {
+    "A_manager": {
+      "use_external": false,
+      "api_url": "",
+      "api_key": "",
+      "model_name": "",
+      "headers": {},
+      "timeout": 60,
+      "enabled": true
+    },
+    "B_language": {
+      "use_external": false,
+      "api_url": "https://api.openai.com/v1/chat/completions",
+      "api_key": "",
+      "model_name": "gpt-4",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {{api_key}}"
+      },
+      "timeout": 60,
+      "enabled": true
+    },
+    "C_audio": {
+      "use_external": false,
+      "api_url": "https://api.openai.com/v1/audio",
+      "api_key": "",
+      "model_name": "whisper-1",
+      "headers": {
+        "Authorization": "Bearer {{api_key}}"
+      },
+      "timeout": 40,
+      "enabled": true
+    },
+    "D_image": {
+      "use_external": false,
+      "api_url": "https://api.openai.com/v1/images",
+      "api_key": "",
+      "model_name": "dall-e-3",
+      "headers": {
+        "Authorization": "Bearer {{api_key}}"
+      },
+      "timeout": 50,
+      "enabled": true
+    },
+    "E_video": {
+      "use_external": false,
+      "api_url": "",
+      "api_key": "",
+      "model_name": "",
+      "headers": {},
+      "timeout": 120,
+      "enabled": true
+    },
+    "F_stereo_vision": {
+      "use_external": false,
+      "api_url": "",
+      "api_key": "",
+      "model_name": "",
+      "headers": {},
+      "timeout": 40,
+      "enabled": true
+    },
+    "G_sensor": {
+      "use_external": false,
+      "api_url": "",
+      "api_key": "",
+      "model_name": "",
+      "headers": {},
+      "timeout": 20,
+      "enabled": true
+    },
+    "H_computer": {
+      "use_external": false,
+      "api_url": "",
+      "api_key": "",
+      "model_name": "",
+      "headers": {},
+      "timeout": 30,
+      "enabled": true
+    },
+    "I_actuator": {
+      "use_external": false,
+      "api_url": "",
+      "api_key": "",
+      "model_name": "",
+      "headers": {},
+      "timeout": 30,
+      "enabled": true
+    },
+    "J_knowledge": {
+      "use_external": false,
+      "api_url": "",
+      "api_key": "",
+      "model_name": "",
+      "headers": {},
+      "timeout": 60,
+      "enabled": true
+    },
+    "K_programming": {
+      "use_external": false,
+      "api_url": "https://api.openai.com/v1/chat/completions",
+      "api_key": "",
+      "model_name": "gpt-4",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {{api_key}}"
+      },
+      "timeout": 60,
+      "enabled": true
+    }
+  }
+}

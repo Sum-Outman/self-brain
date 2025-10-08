@@ -1,0 +1,108 @@
+{
+  "global_settings": {
+    "timeout": 30,
+    "retry_count": 3,
+    "proxy": ""
+  },
+  "models": {
+    "A_management": {
+      "use_external": false,
+      "api_url": "",
+      "api_key": "",
+      "model_name": "",
+      "headers": {},
+      "timeout": 30,
+      "enabled": false
+    },
+    "B_language": {
+      "use_external": false,
+      "api_url": "",
+      "api_key": "",
+      "model_name": "",
+      "headers": {},
+      "timeout": 30,
+      "enabled": false
+    },
+    "C_audio": {
+      "use_external": false,
+      "api_url": "",
+      "api_key": "",
+      "model_name": "",
+      "headers": {},
+      "timeout": 30,
+      "enabled": false
+    },
+    "D_image": {
+      "use_external": false,
+      "api_url": "",
+      "api_key": "",
+      "model_name": "",
+      "headers": {},
+      "timeout": 30,
+      "enabled": false
+    },
+    "E_video": {
+      "use_external": false,
+      "api_url": "",
+      "api_key": "",
+      "model_name": "",
+      "headers": {},
+      "timeout": 30,
+      "enabled": false
+    },
+    "F_spatial": {
+      "use_external": false,
+      "api_url": "",
+      "api_key": "",
+      "model_name": "",
+      "headers": {},
+      "timeout": 30,
+      "enabled": false
+    },
+    "G_sensor": {
+      "use_external": false,
+      "api_url": "",
+      "api_key": "",
+      "model_name": "",
+      "headers": {},
+      "timeout": 30,
+      "enabled": false
+    },
+    "H_computer": {
+      "use_external": false,
+      "api_url": "",
+      "api_key": "",
+      "model_name": "",
+      "headers": {},
+      "timeout": 30,
+      "enabled": false
+    },
+    "I_motion": {
+      "use_external": false,
+      "api_url": "",
+      "api_key": "",
+      "model_name": "",
+      "headers": {},
+      "timeout": 30,
+      "enabled": false
+    },
+    "J_knowledge": {
+      "use_external": false,
+      "api_url": "",
+      "api_key": "",
+      "model_name": "",
+      "headers": {},
+      "timeout": 30,
+      "enabled": false
+    },
+    "K_programming": {
+      "use_external": false,
+      "api_url": "",
+      "api_key": "",
+      "model_name": "",
+      "headers": {},
+      "timeout": 30,
+      "enabled": false
+    }
+  }
+}

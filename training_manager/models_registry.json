@@ -1,0 +1,103 @@
+{
+  "models": [
+    {
+      "id": "A_management",
+      "name": "Management Model",
+      "type": "manager",
+      "port": 5000,
+      "training_data_path": "data/training/management",
+      "can_be_trained": true,
+      "train_from_scratch": true
+    },
+    {
+      "id": "B_language",
+      "name": "Language Model",
+      "type": "language",
+      "port": 5001,
+      "training_data_path": "data/training/language",
+      "can_be_trained": true,
+      "train_from_scratch": true
+    },
+    {
+      "id": "C_audio",
+      "name": "Audio Model",
+      "type": "audio",
+      "port": 5002,
+      "training_data_path": "data/training/audio",
+      "can_be_trained": true,
+      "train_from_scratch": true
+    },
+    {
+      "id": "D_image",
+      "name": "Image Model",
+      "type": "vision",
+      "port": 5003,
+      "training_data_path": "data/training/image",
+      "can_be_trained": true,
+      "train_from_scratch": true
+    },
+    {
+      "id": "E_video",
+      "name": "Video Model",
+      "type": "vision",
+      "port": 5004,
+      "training_data_path": "data/training/video",
+      "can_be_trained": true,
+      "train_from_scratch": true
+    },
+    {
+      "id": "F_spatial",
+      "name": "Spatial Model",
+      "type": "spatial",
+      "port": 5005,
+      "training_data_path": "data/training/spatial",
+      "can_be_trained": true,
+      "train_from_scratch": true
+    },
+    {
+      "id": "G_sensor",
+      "name": "Sensor Model",
+      "type": "sensor",
+      "port": 5006,
+      "training_data_path": "data/training/sensor",
+      "can_be_trained": true,
+      "train_from_scratch": true
+    },
+    {
+      "id": "H_computer_control",
+      "name": "Computer Control Model",
+      "type": "control",
+      "port": 5007,
+      "training_data_path": "data/training/computer_control",
+      "can_be_trained": true,
+      "train_from_scratch": true
+    },
+    {
+      "id": "I_knowledge",
+      "name": "Knowledge Model",
+      "type": "knowledge",
+      "port": 5008,
+      "training_data_path": "data/training/knowledge",
+      "can_be_trained": true,
+      "train_from_scratch": true
+    },
+    {
+      "id": "J_motion",
+      "name": "Motion Control Model",
+      "type": "control",
+      "port": 5009,
+      "training_data_path": "data/training/motion",
+      "can_be_trained": true,
+      "train_from_scratch": true
+    },
+    {
+      "id": "K_programming",
+      "name": "Programming Model",
+      "type": "programming",
+      "port": 5010,
+      "training_data_path": "data/training/programming",
+      "can_be_trained": true,
+      "train_from_scratch": true
+    }
+  ]
+}

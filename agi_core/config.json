@@ -1,0 +1,20 @@
+{
+  "agi_core": {
+    "version": "1.0.0",
+    "port": 5014,
+    "models": {
+      "enable_all": true,
+      "integration_mode": "seamless",
+      "knowledge_base_priority": "high"
+    },
+    "self_learning": {
+      "enabled": true,
+      "auto_scheduling": true,
+      "learning_rate": 0.001
+    },
+    "emotional_engine": {
+      "enabled": true,
+      "sensitivity": 0.7
+    }
+  }
+}

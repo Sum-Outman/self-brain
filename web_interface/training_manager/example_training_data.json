@@ -1,0 +1,205 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "created_at": "2025-01-15T10:30:00Z",
+    "description": "Example training data for Self Brain AGI system models",
+    "author": "Self Brain Team",
+    "total_items": 360
+  },
+  
+  "A_management_model": [
+    {
+      "id": "A-001",
+      "input": "User is feeling stressed and needs assistance with task prioritization.",
+      "output": "I sense you're feeling stressed. Let's tackle this together. First, I'll help you prioritize your tasks. Which ones have the closest deadlines?",
+      "emotion_label": "empathy",
+      "confidence": 0.95
+    },
+    {
+      "id": "A-002",
+      "input": "I need to solve a complex problem involving multiple models.",
+      "output": "Let's break this down. I'll engage our expert models. First, let's understand the requirements. Can you provide more details about the problem?",
+      "emotion_label": "focused",
+      "confidence": 0.92
+    }
+  ],
+  
+  "B_language_model": [
+    {
+      "id": "B-001",
+      "input": "Translate 'Artificial General Intelligence is the future of computing' to French.",
+      "output": "L'intelligence artificielle générale est l'avenir de l'informatique.",
+      "language": "french",
+      "confidence": 0.98
+    },
+    {
+      "id": "B-002",
+      "input": "Explain quantum computing in simple terms.",
+      "output": "Quantum computing uses quantum mechanics principles to process information. Unlike traditional computers that use bits (0s and 1s), quantum computers use quantum bits or qubits that can be 0, 1, or both at the same time. This allows them to solve certain complex problems much faster than traditional computers.",
+      "complexity": "simple",
+      "confidence": 0.94
+    }
+  ],
+  
+  "C_audio_model": [
+    {
+      "id": "C-001",
+      "audio_path": "sample_data/audio/voice_sample_1.wav",
+      "transcription": "Hello, this is a test of the audio recognition system.",
+      "language": "english",
+      "speaker_id": "speaker_001",
+      "confidence": 0.96
+    },
+    {
+      "id": "C-002",
+      "audio_path": "sample_data/audio/music_sample_1.wav",
+      "genre": "classical",
+      "instruments": ["piano", "violin"],
+      "tempo": 76,
+      "confidence": 0.91
+    }
+  ],
+  
+  "D_image_model": [
+    {
+      "id": "D-001",
+      "image_path": "sample_data/images/cat_001.jpg",
+      "description": "A fluffy orange cat sitting on a windowsill, looking outside.",
+      "objects": ["cat", "windowsill", "window"],
+      "emotion": "calm",
+      "confidence": 0.97
+    },
+    {
+      "id": "D-002",
+      "image_path": "sample_data/images/city_001.jpg",
+      "description": "A bustling city skyline at night with bright lights and tall buildings.",
+      "objects": ["buildings", "lights", "skyline"],
+      "scene_type": "urban",
+      "confidence": 0.93
+    }
+  ],
+  
+  "E_video_model": [
+    {
+      "id": "E-001",
+      "video_path": "sample_data/videos/people_walking.mp4",
+      "description": "People walking on a busy street during daytime.",
+      "actions": ["walking", "talking", "carrying"],
+      "duration": 15.5,
+      "confidence": 0.94
+    },
+    {
+      "id": "E-002",
+      "video_path": "sample_data/videos/coffee_making.mp4",
+      "description": "A person making coffee step by step.",
+      "actions": ["grinding", "brewing", "pouring"],
+      "duration": 45.2,
+      "confidence": 0.96
+    }
+  ],
+  
+  "F_spatial_model": [
+    {
+      "id": "F-001",
+      "depth_map_path": "sample_data/depth/room_001.png",
+      "description": "A living room with sofa, coffee table, and TV.",
+      "dimensions": {"width": 5.2, "length": 6.8, "height": 2.8},
+      "objects": [
+        {"name": "sofa", "position": {"x": 1.5, "y": 0, "z": 2.0}, "dimensions": {"w": 2.2, "d": 0.9, "h": 0.8}},
+        {"name": "coffee_table", "position": {"x": 0, "y": 0, "z": 0}, "dimensions": {"w": 1.0, "d": 1.0, "h": 0.4}}
+      ],
+      "confidence": 0.89
+    }
+  ],
+  
+  "G_sensor_model": [
+    {
+      "id": "G-001",
+      "timestamp": "2025-01-15T10:31:00Z",
+      "sensor_data": {
+        "temperature": 22.5,
+        "humidity": 48.2,
+        "pressure": 1013.2,
+        "light_level": 320,
+        "motion": false,
+        "accelerometer": {"x": 0.1, "y": 0.05, "z": 9.81}
+      },
+      "location": "room_101"
+    }
+  ],
+  
+  "H_computer_model": [
+    {
+      "id": "H-001",
+      "command": "Create a new directory called 'project_files' and create a text file inside it with the content 'Hello, World!'",
+      "system_type": "windows",
+      "execution_steps": [
+        "mkdir project_files",
+        "echo Hello, World! > project_files\\hello.txt"
+      ],
+      "expected_output": "Directory created: project_files\\nFile created: project_files\\hello.txt"
+    }
+  ],
+  
+  "I_motion_model": [
+    {
+      "id": "I-001",
+      "target_position": {"x": 10.5, "y": 5.2, "z": 2.0},
+      "current_position": {"x": 0, "y": 0, "z": 0},
+      "movement_path": [
+        {"x": 2.0, "y": 1.0, "z": 0, "time": 1.0},
+        {"x": 5.0, "y": 2.6, "z": 0, "time": 2.5},
+        {"x": 8.0, "y": 3.9, "z": 1.0, "time": 4.0},
+        {"x": 10.5, "y": 5.2, "z": 2.0, "time": 5.5}
+      ],
+      "speed_profile": "smooth"
+    }
+  ],
+  
+  "J_knowledge_model": [
+    {
+      "id": "J-001",
+      "question": "What is the chemical formula for water?",
+      "answer": "The chemical formula for water is H2O, which means it consists of two hydrogen atoms and one oxygen atom.",
+      "domain": "chemistry",
+      "confidence": 1.0
+    },
+    {
+      "id": "J-002",
+      "question": "Explain Newton's second law of motion.",
+      "answer": "Newton's second law of motion states that the acceleration of an object is directly proportional to the net force acting on it and inversely proportional to its mass. This is commonly expressed as F = ma, where F is force, m is mass, and a is acceleration.",
+      "domain": "physics",
+      "confidence": 0.99
+    }
+  ],
+  
+  "K_programming_model": [
+    {
+      "id": "K-001",
+      "task": "Write a Python function to calculate the factorial of a number using recursion.",
+      "code": "def factorial(n):\\n    if n <= 1:  # Base case\\n        return 1\\n    else:  # Recursive case\\n        return n * factorial(n-1)",
+      "language": "python",
+      "explanation": "This function uses recursion to calculate the factorial. The base case returns 1 when n is 0 or 1, and the recursive case multiplies n by the factorial of n-1.",
+      "confidence": 0.98
+    },
+    {
+      "id": "K-002",
+      "task": "Write a SQL query to select all users from the 'users' table who are older than 30.",
+      "code": "SELECT * FROM users WHERE age > 30;",
+      "language": "sql",
+      "explanation": "This SQL query selects all columns (*) from the 'users' table where the 'age' column value is greater than 30.",
+      "confidence": 0.99
+    }
+  ],
+  
+  "multimodal_data": [
+    {
+      "id": "M-001",
+      "text": "The cat is sitting on the windowsill.",
+      "image_path": "sample_data/images/cat_001.jpg",
+      "audio_path": "sample_data/audio/cat_meow.wav",
+      "description": "A multimodal example combining text, image, and audio of a cat.",
+      "relevance_score": 0.97
+    }
+  ]
+}

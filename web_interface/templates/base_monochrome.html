@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Self Brain AGI System{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="{{ url_for('static', filename='css/bootstrap-icons.css') }}" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='images/self_brain.ico') }}" type="image/x-icon">
+    
+    <!-- Monochrome Theme CSS -->
+    <link rel="stylesheet" href="/static/css/monochrome_style.css">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light border-bottom">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
+                <img src="{{ url_for('static', filename='images/self_brain.svg') }}" alt="Self Brain" style="height: 30px; width: 30px; margin-right: 8px;">
+                Self Brain AGI
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'index' %}active fw-bold{% endif %}" href="/">
+                            <i class="bi bi-house-door"></i> Home
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'knowledge_page' %}active fw-bold{% endif %}" href="/knowledge">
+                            <i class="bi bi-database"></i> Knowledge
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'training_page' %}active fw-bold{% endif %}" href="/training">
+                            <i class="bi bi-cpu"></i> Training
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'system_settings' %}active fw-bold{% endif %}" href="/system_settings">
+                            <i class="bi bi-sliders"></i> Settings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'camera_management' %}active fw-bold{% endif %}" href="/camera_management">
+                            <i class="bi bi-camera"></i> Camera Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'device_communication_page' %}active fw-bold{% endif %}" href="/device_communication">
+                            <i class="bi bi-gear"></i> Device Communication
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'upload_page' %}active fw-bold{% endif %}" href="/upload">
+                            <i class="bi bi-cloud-upload"></i> Upload Data
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'help_page' %}active fw-bold{% endif %}" href="/help">
+                            <i class="bi bi-question-circle"></i> Help
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="d-flex align-items-center">
+                    <span id="systemStatus" class="text-success fw-bold" style="font-size: inherit;">
+                        <i class="bi bi-circle-fill" style="font-size: 12px;"></i> System Online
+                    </span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-0">
+        <div class="row g-0">
+            <!-- Main content area -->
+            <main class="col-12 px-3 py-4" id="main-content">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast message container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"></div>
+
+    <!-- Bootstrap JS -->
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    
+    <!-- Socket.IO connection -->
+    <script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>
+    
+    <!-- Camera Control Module -->
+    <script src="{{ url_for('static', filename='js/camera_control.js') }}"></script>
+    
+    <script>
+        // Global utility functions with enhanced error handling
+        window.utils = {
+            formatBytes: function(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            },
+
+            formatDuration: function(seconds) {
+                if (seconds < 60) return Math.round(seconds) + 's';
+                if (seconds < 3600) return Math.round(seconds / 60) + 'm';
+                return Math.round(seconds / 3600) + 'h';
+            },
+
+            formatDate: function(date) {
+                return new Date(date).toLocaleString('en-US');
+            },
+
+            fetchWithTimeout: function(url, options = {}, timeout = 8000) {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), timeout);
+                
+                return fetch(url, {
+                    ...options,
+                    signal: controller.signal,
+                    mode: 'cors',
+                    credentials: 'include'
+                }).finally(() => clearTimeout(timeoutId));
+            },
+
+            fetchWithRetry: async function(url, options = {}, maxRetries = 3) {
+                for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                    try {
+                        const response = await this.fetchWithTimeout(url, options, 8000);
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response;
+                    } catch (error) {
+                        if (error.name === 'AbortError' || error.message?.includes('net::ERR_ABORTED')) {
+                            if (attempt === maxRetries) {
+                                throw new Error(`Request aborted after ${maxRetries} attempts`);
+                            }
+                        } else {
+                            if (attempt === maxRetries) {
+                                throw error;
+                            }
+                        }
+                        // Exponential backoff
+                        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
+                    }
+                }
+            },
+
+            handleApiError: function(error, context) {
+                // Don't show toast for aborted requests during development
+                if (!error.message?.includes('net::ERR_ABORTED') && !error.message?.includes('Request aborted')) {
+                    showToast(`Error: ${error.message || 'Connection failed'}`, 'error', 5000);
+                }
+            }
+        };
+
+        // Global toast notification system
+        function showToast(message, type = 'info', duration = 5000) {
+            const toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) return;
+            
+            const toastId = 'toast-' + Date.now();
+            
+            let iconClass = 'bi-info-circle';
+            let bgClass = 'text-secondary';
+            
+            switch(type) {
+                case 'success':
+                    iconClass = 'bi-check-circle';
+                    bgClass = 'text-success';
+                    break;
+                case 'error':
+                    iconClass = 'bi-exclamation-circle';
+                    bgClass = 'text-danger';
+                    break;
+                case 'warning':
+                    iconClass = 'bi-exclamation-triangle';
+                    bgClass = 'text-warning';
+                    break;
+                case 'info':
+                    iconClass = 'bi-info-circle';
+                    bgClass = 'text-info';
+                    break;
+            }
+            
+            const toastHtml = `
+                <div class="toast" id="${toastId}" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header border-bottom">
+                        <i class="bi ${iconClass} me-2 ${bgClass}"></i>
+                        <strong class="me-auto">System Notification</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">${message}</div>
+                </div>
+            `;
+            
+            try {
+                toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+                const toastElement = document.getElementById(toastId);
+                const toast = new bootstrap.Toast(toastElement, { delay: duration });
+                toast.show();
+                
+                toastElement.addEventListener('hidden.bs.toast', () => {
+                    if (toastElement.parentNode) {
+                        toastElement.remove();
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Failed to display toast:', error);
+            }
+        }
+
+        // System status management
+        function updateSystemStatus(connected) {
+            const statusElement = document.getElementById('systemStatus');
+            if (!statusElement) return;
+            
+            if (connected) {
+                statusElement.className = 'text-success fw-bold';
+                statusElement.innerHTML = '<i class="bi bi-circle-fill" style="font-size: 12px;"></i> System Online';
+            } else {
+                statusElement.className = 'text-danger fw-bold';
+                statusElement.innerHTML = '<i class="bi bi-circle-fill" style="font-size: 12px;"></i> System Offline';
+            }
+        }
+
+
+
+        // Initialize Socket.IO with enhanced error handling
+        function initializeSocket() {
+            if (typeof io === 'undefined') {
+                updateSystemStatus(false);
+                return null;
+            }
+            
+            try {
+                const socket = io(window.location.origin, {
+                    transports: ['polling', 'websocket'],
+                    timeout: 10000,
+                    reconnection: true,
+                    reconnectionDelay: 1000,
+                    reconnectionAttempts: 10,
+                    reconnectionDelayMax: 5000,
+                    randomizationFactor: 0.5,
+                    forceNew: false,
+                    rememberUpgrade: true,
+                    secure: false,
+                    rejectUnauthorized: false
+                });
+                
+                socket.on('connect', () => {
+                    updateSystemStatus(true);
+                });
+                
+                socket.on('disconnect', (reason) => {
+                    updateSystemStatus(false);
+                    if (reason === 'io server disconnect') {
+                        socket.connect();
+                    }
+                });
+                
+                socket.on('connect_error', (error) => {
+                    updateSystemStatus(false);
+                });
+                
+                socket.on('connect_timeout', () => {
+                    updateSystemStatus(false);
+                });
+                
+                socket.on('reconnect', (attemptNumber) => {
+                    updateSystemStatus(true);
+                });
+                
+                socket.on('reconnect_failed', () => {
+                    updateSystemStatus(false);
+                });
+                
+                return socket;
+            } catch (error) {
+                updateSystemStatus(false);
+                return null;
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            window.socket = initializeSocket();
+            // Remove HTTP connection monitoring to reduce network noise
+            // Status is now managed by Socket.IO events only
+            updateSystemStatus(window.socket && window.socket.connected);
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

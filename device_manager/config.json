@@ -1,0 +1,40 @@
+{
+  "device_manager": {
+    "version": "1.0.0",
+    "port": 5013,
+    "cameras": {
+      "enable_multiple_cameras": true,
+      "max_cameras": 4,
+      "default_camera_id": 0
+    },
+    "sensors": {
+      "serial_ports": {
+        "enabled": true,
+        "ports": [],
+        "default_baudrate": 9600
+      },
+      "usb_devices": {
+        "enabled": true
+      },
+      "supported_sensors": [
+        "temperature",
+        "humidity",
+        "accelerometer",
+        "gyroscope",
+        "pressure",
+        "light",
+        "distance",
+        "infrared",
+        "smoke"
+      ]
+    },
+    "external_devices": {
+      "enabled": true,
+      "communication_protocols": [
+        "serial",
+        "usb",
+        "bluetooth"
+      ]
+    }
+  }
+}

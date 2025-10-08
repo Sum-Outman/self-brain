@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self Brain - AGI Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
+        .navbar {
+            background-color: #343a40 !important;
+        }
+        .sidebar {
+            background-color: #ffffff;
+            border-right: 1px solid #dee2e6;
+            height: calc(100vh - 56px);
+            overflow-y: auto;
+        }
+        .sidebar-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .sidebar-item:hover {
+            background-color: #f8f9fa;
+        }
+        .sidebar-item.active {
+            background-color: #e9ecef;
+            border-left-color: #343a40;
+            font-weight: 500;
+        }
+        .main-content {
+            height: calc(100vh - 56px);
+            overflow-y: auto;
+        }
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .message {
+            margin-bottom: 15px;
+            max-width: 80%;
+        }
+        .user-message {
+            margin-left: auto;
+            text-align: right;
+        }
+        .system-message {
+            margin-right: auto;
+        }
+        .message-content {
+            padding: 10px 15px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+        .user-message .message-content {
+            background-color: #e9ecef;
+        }
+        .system-message .message-content {
+            background-color: #343a40;
+            color: white;
+        }
+        .chat-input {
+            padding: 20px;
+            border-top: 1px solid #dee2e6;
+            background-color: white;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-online {
+            background-color: #28a745;
+        }
+        .status-offline {
+            background-color: #dc3545;
+        }
+        .status-training {
+            background-color: #ffc107;
+        }
+        .card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .model-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .model-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .camera-feed {
+            width: 100%;
+            height: 240px;
+            background-color: #343a40;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        .camera-feed video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .camera-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #6c757d;
+            text-align: center;
+        }
+        .btn-dark {
+            background-color: #343a40;
+            border-color: #343a40;
+        }
+        .btn-dark:hover {
+            background-color: #23272b;
+            border-color: #1d2124;
+        }
+        .btn-outline-dark {
+            color: #343a40;
+            border-color: #343a40;
+        }
+        .btn-outline-dark:hover {
+            background-color: #343a40;
+            color: white;
+        }
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #e9ecef;
+        }
+        .progress-bar {
+            background-color: #343a40;
+        }
+        .nav-tabs .nav-link {
+            color: #6c757d;
+            border: none;
+            border-bottom: 3px solid transparent;
+            border-radius: 0;
+        }
+        .nav-tabs .nav-link.active {
+            color: #343a40;
+            border-bottom-color: #343a40;
+        }
+        .form-control:focus {
+            border-color: #343a40;
+            box-shadow: 0 0 0 0.2rem rgba(52, 58, 64, 0.25);
+        }
+        .model-api-form {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-brain me-2"></i>
+                Self Brain
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <span class="nav-link">
+                            <span class="status-indicator status-online"></span>
+                            System Online
+                        </span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/api">
+                            <i class="bi bi-code-slash me-1"></i>
+                            API
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid pt-5 mt-4">
+        <div class="row">
+            <div class="col-md-3 col-lg-2 sidebar">
+                <div class="sidebar-item active" onclick="switchView('chat')">
+                    <i class="bi bi-chat-left me-2"></i>
+                    Chat
+                </div>
+                <div class="sidebar-item" onclick="switchView('models')">
+                    <i class="bi bi-cpu me-2"></i>
+                    Model Management
+                </div>
+                <div class="sidebar-item" onclick="switchView('training')">
+                    <i class="bi bi-graph-up me-2"></i>
+                    Training
+                </div>
+                <div class="sidebar-item" onclick="switchView('knowledge')">
+                    <i class="bi bi-book me-2"></i>
+                    Knowledge Base
+                </div>
+                <div class="sidebar-item" onclick="switchView('vision')">
+                    <i class="bi bi-camera me-2"></i>
+                    Vision System
+                </div>
+                <div class="sidebar-item" onclick="switchView('settings')">
+                    <i class="bi bi-gear me-2"></i>
+                    Settings
+                </div>
+            </div>
+
+            <div class="col-md-9 col-lg-10 main-content">
+                <!-- Chat View -->
+                <div id="chat-view" class="view active">
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chat-messages">
+                            <div class="message system-message">
+                                <div class="message-content">
+                                    Welcome to Self Brain. I'm your AGI management system. How can I assist you today?
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-input">
+                            <div class="input-group">
+                                <textarea id="user-input" class="form-control" rows="3" placeholder="Type your message here..."></textarea>
+                                <button id="send-button" class="btn btn-dark ms-2" onclick="sendMessage()">
+                                    <i class="bi bi-send"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model Management View -->
+                <div id="models-view" class="view d-none">
+                    <div class="container py-4">
+                        <h2 class="mb-4">
+                            <i class="bi bi-cpu me-2"></i>
+                            Model Management
+                        </h2>
+                        <div class="mb-4">
+                            <h3>Model Overview</h3>
+                            <div id="model-status-summary" class="card p-4 mb-4">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="text-center">
+                                            <div class="h5" id="active-models">0</div>
+                                            <div class="text-muted small">Active Models</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="text-center">
+                                            <div class="h5" id="total-models">11</div>
+                                            <div class="text-muted small">Total Models</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="text-center">
+                                            <div class="h5" id="training-models">0</div>
+                                            <div class="text-muted small">Training Models</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="text-center">
+                                            <div class="h5" id="api-models">0</div>
+                                            <div class="text-muted small">API Models</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="model-card card">
+                                    <div class="card-header bg-dark text-white">
+                                        <div class="row">
+                                            <div class="col-8">A: Management Model</div>
+                                            <div class="col-4 text-end"><span class="status-indicator status-online"></span>Online</div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-2">Main management model with emotional capabilities</p>
+                                        <button class="btn btn-outline-dark btn-sm w-100 mb-1" onclick="openModelSettings('A')">Settings</button>
+                                        <button class="btn btn-outline-dark btn-sm w-100" onclick="startTraining('A')">Train</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="model-card card">
+                                    <div class="card-header bg-dark text-white">
+                                        <div class="row">
+                                            <div class="col-8">B: Language Model</div>
+                                            <div class="col-4 text-end"><span class="status-indicator status-online"></span>Online</div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-2">Multilingual interaction and emotional reasoning</p>
+                                        <button class="btn btn-outline-dark btn-sm w-100 mb-1" onclick="openModelSettings('B')">Settings</button>
+                                        <button class="btn btn-outline-dark btn-sm w-100" onclick="startTraining('B')">Train</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="model-card card">
+                                    <div class="card-header bg-dark text-white">
+                                        <div class="row">
+                                            <div class="col-8">C: Audio Model</div>
+                                            <div class="col-4 text-end"><span class="status-indicator status-online"></span>Online</div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-2">Speech recognition and audio processing</p>
+                                        <button class="btn btn-outline-dark btn-sm w-100 mb-1" onclick="openModelSettings('C')">Settings</button>
+                                        <button class="btn btn-outline-dark btn-sm w-100" onclick="startTraining('C')">Train</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="model-card card">
+                                    <div class="card-header bg-dark text-white">
+                                        <div class="row">
+                                            <div class="col-8">D: Image Model</div>
+                                            <div class="col-4 text-end"><span class="status-indicator status-online"></span>Online</div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-2">Image recognition and generation</p>
+                                        <button class="btn btn-outline-dark btn-sm w-100 mb-1" onclick="openModelSettings('D')">Settings</button>
+                                        <button class="btn btn-outline-dark btn-sm w-100" onclick="startTraining('D')">Train</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="model-card card">
+                                    <div class="card-header bg-dark text-white">
+                                        <div class="row">
+                                            <div class="col-8">E: Video Model</div>
+                                            <div class="col-4 text-end"><span class="status-indicator status-online"></span>Online</div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-2">Video content analysis and processing</p>
+                                        <button class="btn btn-outline-dark btn-sm w-100 mb-1" onclick="openModelSettings('E')">Settings</button>
+                                        <button class="btn btn-outline-dark btn-sm w-100" onclick="startTraining('E')">Train</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="model-card card">
+                                    <div class="card-header bg-dark text-white">
+                                        <div class="row">
+                                            <div class="col-8">F: Spatial Model</div>
+                                            <div class="col-4 text-end"><span class="status-indicator status-online"></span>Online</div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-2">3D spatial perception and modeling</p>
+                                        <button class="btn btn-outline-dark btn-sm w-100 mb-1" onclick="openModelSettings('F')">Settings</button>
+                                        <button class="btn btn-outline-dark btn-sm w-100" onclick="startTraining('F')">Train</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="model-card card">
+                                    <div class="card-header bg-dark text-white">
+                                        <div class="row">
+                                            <div class="col-8">G: Sensor Model</div>
+                                            <div class="col-4 text-end"><span class="status-indicator status-online"></span>Online</div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-2">Sensor data acquisition and processing</p>
+                                        <button class="btn btn-outline-dark btn-sm w-100 mb-1" onclick="openModelSettings('G')">Settings</button>
+                                        <button class="btn btn-outline-dark btn-sm w-100" onclick="startTraining('G')">Train</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="model-card card">
+                                    <div class="card-header bg-dark text-white">
+                                        <div class="row">
+                                            <div class="col-8">H: Computer Control</div>
+                                            <div class="col-4 text-end"><span class="status-indicator status-online"></span>Online</div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-2">System control and automation</p>
+                                        <button class="btn btn-outline-dark btn-sm w-100 mb-1" onclick="openModelSettings('H')">Settings</button>
+                                        <button class="btn btn-outline-dark btn-sm w-100" onclick="startTraining('H')">Train</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="model-card card">
+                                    <div class="card-header bg-dark text-white">
+                                        <div class="row">
+                                            <div class="col-8">I: Motion Control</div>
+                                            <div class="col-4 text-end"><span class="status-indicator status-online"></span>Online</div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-2">Actuator control and movement systems</p>
+                                        <button class="btn btn-outline-dark btn-sm w-100 mb-1" onclick="openModelSettings('I')">Settings</button>
+                                        <button class="btn btn-outline-dark btn-sm w-100" onclick="startTraining('I')">Train</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="model-card card">
+                                    <div class="card-header bg-dark text-white">
+                                        <div class="row">
+                                            <div class="col-8">J: Knowledge Base</div>
+                                            <div class="col-4 text-end"><span class="status-indicator status-online"></span>Online</div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-2">Expert knowledge system and learning</p>
+                                        <button class="btn btn-outline-dark btn-sm w-100 mb-1" onclick="openModelSettings('J')">Settings</button>
+                                        <button class="btn btn-outline-dark btn-sm w-100" onclick="startTraining('J')">Train</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="model-card card">
+                                    <div class="card-header bg-dark text-white">
+                                        <div class="row">
+                                            <div class="col-8">K: Programming</div>
+                                            <div class="col-4 text-end"><span class="status-indicator status-online"></span>Online</div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-2">Code generation and system improvement</p>
+                                        <button class="btn btn-outline-dark btn-sm w-100 mb-1" onclick="openModelSettings('K')">Settings</button>
+                                        <button class="btn btn-outline-dark btn-sm w-100" onclick="startTraining('K')">Train</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Training View -->
+                <div id="training-view" class="view d-none">
+                    <div class="container py-4">
+                        <h2 class="mb-4">
+                            <i class="bi bi-graph-up me-2"></i>
+                            Model Training
+                        </h2>
+                        
+                        <div class="mb-4">
+                            <h3>Training Status</h3>
+                            <div class="card p-4">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <select id="training-model-select" class="form-select">
+                                            <option value="A">A: Management Model</option>
+                                            <option value="B">B: Language Model</option>
+                                            <option value="C">C: Audio Model</option>
+                                            <option value="D">D: Image Model</option>
+                                            <option value="E">E: Video Model</option>
+                                            <option value="F">F: Spatial Model</option>
+                                            <option value="G">G: Sensor Model</option>
+                                            <option value="H">H: Computer Control</option>
+                                            <option value="I">I: Motion Control</option>
+                                            <option value="J">J: Knowledge Base</option>
+                                            <option value="K">K: Programming</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 text-end">
+                                        <button id="start-training-btn" class="btn btn-dark" onclick="startTraining()">
+                                            <i class="bi bi-play-fill me-1"></i>
+                                            Start Training
+                                        </button>
+                                        <button id="stop-training-btn" class="btn btn-outline-dark ms-2" onclick="stopTraining()" disabled>
+                                            <i class="bi bi-stop-fill me-1"></i>
+                                            Stop Training
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="row">
+                                        <div class="col-md-2">Progress:</div>
+                                        <div class="col-md-10">
+                                            <div class="progress">
+                                                <div id="training-progress-bar" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-end mt-1">
+                                        <span id="training-percentage">0%</span>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="text-center">
+                                            <div class="h5" id="training-epochs">0</div>
+                                            <div class="text-muted small">Epochs Completed</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center">
+                                            <div class="h5" id="training-loss">0.00</div>
+                                            <div class="text-muted small">Loss</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center">
+                                            <div class="h5" id="training-accuracy">0.00%</div>
+                                            <div class="text-muted small">Accuracy</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h3>Training Metrics</h3>
+                            <div class="card">
+                                <div class="card-body">
+                                    <canvas id="training-chart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3>Training Data Upload</h3>
+                            <div class="card p-4">
+                                <div class="mb-3">
+                                    <label for="data-type-select" class="form-label">Data Type:</label>
+                                    <select id="data-type-select" class="form-select">
+                                        <option value="text">Text Data</option>
+                                        <option value="image">Image Data</option>
+                                        <option value="audio">Audio Data</option>
+                                        <option value="video">Video Data</option>
+                                        <option value="sensor">Sensor Data</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="dataset-upload" class="form-label">Upload Dataset:</label>
+                                    <input type="file" id="dataset-upload" class="form-control" multiple>
+                                </div>
+                                <button class="btn btn-dark" onclick="uploadTrainingData()">
+                                    <i class="bi bi-upload me-1"></i>
+                                    Upload Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Knowledge Base View -->
+                <div id="knowledge-view" class="view d-none">
+                    <div class="container py-4">
+                        <h2 class="mb-4">
+                            <i class="bi bi-book me-2"></i>
+                            Knowledge Base
+                        </h2>
+                        
+                        <div class="mb-4">
+                            <div class="card p-4">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <select id="knowledge-model-select" class="form-select">
+                                            <option value="all">All Models</option>
+                                            <option value="A">A: Management Model</option>
+                                            <option value="B">B: Language Model</option>
+                                            <option value="C">C: Audio Model</option>
+                                            <option value="D">D: Image Model</option>
+                                            <option value="E">E: Video Model</option>
+                                            <option value="F">F: Spatial Model</option>
+                                            <option value="G">G: Sensor Model</option>
+                                            <option value="H">H: Computer Control</option>
+                                            <option value="I">I: Motion Control</option>
+                                            <option value="J">J: Knowledge Base</option>
+                                            <option value="K">K: Programming</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 text-end">
+                                        <button id="start-knowledge-learning" class="btn btn-dark" onclick="startKnowledgeLearning()">
+                                            <i class="bi bi-lightbulb me-1"></i>
+                                            Start Autonomous Learning
+                                        </button>
+                                        <button id="stop-knowledge-learning" class="btn btn-outline-dark ms-2" onclick="stopKnowledgeLearning()" disabled>
+                                            <i class="bi bi-lightbulb-off me-1"></i>
+                                            Stop Learning
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="row">
+                                        <div class="col-md-2">Learning Progress:</div>
+                                        <div class="col-md-10">
+                                            <div class="progress">
+                                                <div id="knowledge-progress-bar" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-end mt-1">
+                                        <span id="knowledge-percentage">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h3>Knowledge Categories</h3>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Natural Sciences</h5>
+                                            <p class="card-text text-muted small">Physics, Chemistry, Biology, Earth Science</p>
+                                            <button class="btn btn-outline-dark btn-sm" onclick="viewKnowledgeCategory('natural-sciences')">View</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Engineering & Technology</h5>
+                                            <p class="card-text text-muted small">Mechanical, Electrical, Computer Science</p>
+                                            <button class="btn btn-outline-dark btn-sm" onclick="viewKnowledgeCategory('engineering')">View</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Medical & Health</h5>
+                                            <p class="card-text text-muted small">Medicine, Anatomy, Pharmacology</p>
+                                            <button class="btn btn-outline-dark btn-sm" onclick="viewKnowledgeCategory('medical')">View</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Social Sciences</h5>
+                                            <p class="card-text text-muted small">Psychology, Sociology, Economics</p>
+                                            <button class="btn btn-outline-dark btn-sm" onclick="viewKnowledgeCategory('social')">View</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Humanities</h5>
+                                            <p class="card-text text-muted small">History, Literature, Philosophy</p>
+                                            <button class="btn btn-outline-dark btn-sm" onclick="viewKnowledgeCategory('humanities')">View</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Law & Business</h5>
+                                            <p class="card-text text-muted small">Law, Management, Finance</p>
+                                            <button class="btn btn-outline-dark btn-sm" onclick="viewKnowledgeCategory('law-business')">View</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3>Upload Knowledge Documents</h3>
+                            <div class="card p-4">
+                                <div class="mb-3">
+                                    <label for="knowledge-category-upload" class="form-label">Knowledge Category:</label>
+                                    <select id="knowledge-category-upload" class="form-select">
+                                        <option value="natural-sciences">Natural Sciences</option>
+                                        <option value="engineering">Engineering & Technology</option>
+                                        <option value="medical">Medical & Health</option>
+                                        <option value="social">Social Sciences</option>
+                                        <option value="humanities">Humanities</option>
+                                        <option value="law-business">Law & Business</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="knowledge-upload" class="form-label">Upload Documents (PDF, DOCX, TXT):</label>
+                                    <input type="file" id="knowledge-upload" class="form-control" multiple>
+                                </div>
+                                <button class="btn btn-dark" onclick="uploadKnowledge()">
+                                    <i class="bi bi-upload me-1"></i>
+                                    Upload Documents
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vision System View -->
+                <div id="vision-view" class="view d-none">
+                    <div class="container py-4">
+                        <h2 class="mb-4">
+                            <i class="bi bi-camera me-2"></i>
+                            Vision System
+                        </h2>
+                        
+                        <div class="mb-4">
+                            <h3>Camera Feeds</h3>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="camera-feed" id="camera-feed-1">
+                                        <div class="camera-placeholder">
+                                            <i class="bi bi-camera-slash h1 block mb-2"></i>
+                                            <div>Camera 1 Feed</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-center">
+                                        <button class="btn btn-dark btn-sm" onclick="toggleCamera(1)">Start Camera</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="camera-feed" id="camera-feed-2">
+                                        <div class="camera-placeholder">
+                                            <i class="bi bi-camera-slash h1 block mb-2"></i>
+                                            <div>Camera 2 Feed</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-center">
+                                        <button class="btn btn-dark btn-sm" onclick="toggleCamera(2)">Start Camera</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h3>Visual Analysis</h3>
+                            <div class="card p-4">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <select id="vision-task-select" class="form-select">
+                                            <option value="object-detection">Object Detection</option>
+                                            <option value="face-recognition">Face Recognition</option>
+                                            <option value="scene-analysis">Scene Analysis</option>
+                                            <option value="optical-character">OCR</option>
+                                            <option value="spatial-mapping">Spatial Mapping</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 text-end">
+                                        <button class="btn btn-dark" onclick="startVisualAnalysis()">
+                                            <i class="bi bi-search me-1"></i>
+                                            Analyze
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="analysis-results" class="mt-3">
+                                    <p class="text-muted">Analysis results will appear here...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3>3D Spatial Map</h3>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="h-72 bg-light rounded d-flex items-center justify-center">
+                                        <div class="text-center text-muted">
+                                            <i class="bi bi-cube h1 block mb-2"></i>
+                                            <div>3D Spatial Map Visualization</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings View -->
+                <div id="settings-view" class="view d-none">
+                    <div class="container py-4">
+                        <h2 class="mb-4">
+                            <i class="bi bi-gear me-2"></i>
+                            Settings
+                        </h2>
+                        
+                        <ul class="nav nav-tabs mb-4">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-bs-toggle="tab" href="#model-apis">Model APIs</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#hardware">Hardware</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#system">System</a>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <div id="model-apis" class="tab-pane active">
+                                <div class="mb-4">
+                                    <h3>Model API Configuration</h3>
+                                    <div class="card p-4">
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <select id="api-model-select" class="form-select">
+                                                    <option value="A">A: Management Model</option>
+                                                    <option value="B">B: Language Model</option>
+                                                    <option value="C">C: Audio Model</option>
+                                                    <option value="D">D: Image Model</option>
+                                                    <option value="E">E: Video Model</option>
+                                                    <option value="F">F: Spatial Model</option>
+                                                    <option value="G">G: Sensor Model</option>
+                                                    <option value="H">H: Computer Control</option>
+                                                    <option value="I">I: Motion Control</option>
+                                                    <option value="J">J: Knowledge Base</option>
+                                                    <option value="K">K: Programming</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <select id="api-type-select" class="form-select">
+                                                    <option value="local">Local Model</option>
+                                                    <option value="openai">OpenAI API</option>
+                                                    <option value="anthropic">Anthropic API</option>
+                                                    <option value="google">Google Gemini API</option>
+                                                    <option value="custom">Custom API</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="model-api-form">
+                                            <h5 class="mb-3">API Settings</h5>
+                                            <div class="mb-3">
+                                                <label for="api-url" class="form-label">API URL:</label>
+                                                <input type="text" id="api-url" class="form-control" placeholder="https://api.example.com/v1">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="api-key" class="form-label">API Key:</label>
+                                                <input type="password" id="api-key" class="form-control" placeholder="Enter API Key">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="api-model-name" class="form-label">Model Name:</label>
+                                                <input type="text" id="api-model-name" class="form-control" placeholder="e.g., gpt-4">
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <button class="btn btn-dark w-100" onclick="saveApiSettings()">Save Settings</button>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <button class="btn btn-outline-dark w-100" onclick="testApiConnection()">Test Connection</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="hardware" class="tab-pane">
+                                <div class="mb-4">
+                                    <h3>Hardware Configuration</h3>
+                                    <div class="card p-4 mb-4">
+                                        <h4 class="mb-3">Camera Configuration</h4>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="camera-1-select" class="form-label">Camera 1 (Left Eye):</label>
+                                                    <select id="camera-1-select" class="form-select">
+                                                        <option value="0">Default Camera</option>
+                                                        <option value="1">Camera 1</option>
+                                                        <option value="2">Camera 2</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="camera-2-select" class="form-label">Camera 2 (Right Eye):</label>
+                                                    <select id="camera-2-select" class="form-select">
+                                                        <option value="0">Default Camera</option>
+                                                        <option value="1">Camera 1</option>
+                                                        <option value="2">Camera 2</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-dark" onclick="saveCameraSettings()">Save Camera Settings</button>
+                                    </div>
+
+                                    <div class="card p-4">
+                                        <h4 class="mb-3">Sensor Configuration</h4>
+                                        <div class="mb-3">
+                                            <label for="sensor-port" class="form-label">Sensor Port:</label>
+                                            <select id="sensor-port" class="form-select">
+                                                <option value="COM1">COM1</option>
+                                                <option value="COM2">COM2</option>
+                                                <option value="COM3">COM3</option>
+                                                <option value="COM4">COM4</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="sensor-baudrate" class="form-label">Baud Rate:</label>
+                                            <select id="sensor-baudrate" class="form-select">
+                                                <option value="9600">9600</option>
+                                                <option value="19200">19200</option>
+                                                <option value="38400">38400</option>
+                                                <option value="57600">57600</option>
+                                                <option value="115200">115200</option>
+                                            </select>
+                                        </div>
+                                        <button class="btn btn-dark" onclick="saveSensorSettings()">Save Sensor Settings</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="system" class="tab-pane">
+                                <div class="mb-4">
+                                    <h3>System Settings</h3>
+                                    <div class="card p-4">
+                                        <div class="mb-3">
+                                            <label for="system-language" class="form-label">System Language:</label>
+                                            <select id="system-language" class="form-select">
+                                                <option value="en">English</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="max-threads" class="form-label">Maximum Threads:</label>
+                                            <input type="number" id="max-threads" class="form-control" value="4" min="1">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="memory-limit" class="form-label">Memory Limit (MB):</label>
+                                            <input type="number" id="memory-limit" class="form-control" value="4096" min="1024">
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="auto-save">
+                                            <label class="form-check-label" for="auto-save">Enable Auto-save</label>
+                                        </div>
+                                        <button class="btn btn-dark" onclick="saveSystemSettings()">Save System Settings</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Base URL for API calls
+        const baseUrl = 'http://localhost:5000';
+        
+        // Initialize training chart
+        let trainingChart;
+        
+        // Active cameras
+        let activeCameras = {};
+        
+        // Current view
+        let currentView = 'chat';
+        
+        // Initialize the application
+        function init() {
+            // Load model status
+            loadModelStatus();
+            
+            // Initialize training chart
+            initTrainingChart();
+            
+            // Set up event listeners
+            setupEventListeners();
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            // Send message on Enter key
+            document.getElementById('user-input').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // Handle tab changes in settings
+            document.querySelectorAll('.nav-tabs a').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.nav-tabs a').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+                    this.classList.add('active');
+                    document.querySelector(this.getAttribute('href')).classList.add('active');
+                });
+            });
+        }
+        
+        // Switch between views
+        function switchView(view) {
+            if (view === currentView) return;
+            
+            // Hide current view
+            document.getElementById(`${currentView}-view`).classList.add('d-none');
+            document.querySelector(`.sidebar-item.active`).classList.remove('active');
+            
+            // Show new view
+            currentView = view;
+            document.getElementById(`${currentView}-view`).classList.remove('d-none');
+            
+            // Update active sidebar item
+            const sidebarItems = document.querySelectorAll('.sidebar-item');
+            sidebarItems.forEach(item => {
+                if (item.textContent.includes(view.charAt(0).toUpperCase() + view.slice(1))) {
+                    item.classList.add('active');
+                }
+            });
+        }
+        
+        // Send message to the system
+        function sendMessage() {
+            const userInput = document.getElementById('user-input');
+            const message = userInput.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message to chat
+            addMessageToChat('user', message);
+            
+            // Clear input
+            userInput.value = '';
+            
+            // Send message to API
+            fetch(`${baseUrl}/process_message`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Add system response to chat
+                addMessageToChat('system', data.response || 'I couldn\'t process your message at this time.');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                addMessageToChat('system', 'Sorry, I\'m having trouble connecting to the system.');
+            });
+        }
+        
+        // Add message to chat interface
+        function addMessageToChat(sender, message) {
+            const chatMessages = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = message;
+            
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Load model status
+        function loadModelStatus() {
+            fetch(`${baseUrl}/api/models/status`)
+            .then(response => response.json())
+            .then(data => {
+                // Update model status summary
+                const activeModels = Object.values(data).filter(model => model.status === 'online').length;
+                const totalModels = Object.keys(data).length;
+                const trainingModels = Object.values(data).filter(model => model.status === 'training').length;
+                const apiModels = Object.values(data).filter(model => model.type === 'api').length;
+                
+                document.getElementById('active-models').textContent = activeModels;
+                document.getElementById('total-models').textContent = totalModels;
+                document.getElementById('training-models').textContent = trainingModels;
+                document.getElementById('api-models').textContent = apiModels;
+                
+                // Update individual model cards
+                Object.entries(data).forEach(([modelId, modelData]) => {
+                    const modelCard = document.querySelector(`.model-card:has(.card-header:contains('${modelId}'))`);
+                    if (modelCard) {
+                        const statusElement = modelCard.querySelector('.status-indicator');
+                        if (statusElement) {
+                            // Remove all status classes
+                            statusElement.classList.remove('status-online', 'status-offline', 'status-training');
+                            
+                            // Add appropriate status class
+                            if (modelData.status === 'online') {
+                                statusElement.classList.add('status-online');
+                                statusElement.nextSibling.textContent = 'Online';
+                            } else if (modelData.status === 'training') {
+                                statusElement.classList.add('status-training');
+                                statusElement.nextSibling.textContent = 'Training';
+                            } else {
+                                statusElement.classList.add('status-offline');
+                                statusElement.nextSibling.textContent = 'Offline';
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error loading model status:', error);
+            });
+        }
+        
+        // Initialize training chart
+        function initTrainingChart() {
+            const ctx = document.getElementById('training-chart').getContext('2d');
+            
+            trainingChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Loss',
+                            data: [],
+                            borderColor: '#343a40',
+                            backgroundColor: 'rgba(52, 58, 64, 0.1)',
+                            fill: true,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Accuracy',
+                            data: [],
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                            fill: true,
+                            tension: 0.1,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    stacked: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Loss'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Accuracy (%)'
+                            },
+                            min: 0,
+                            max: 100,
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Epoch'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Start model training
+        function startTraining(modelId) {
+            // If no modelId provided, use the selected model in the training view
+            if (!modelId) {
+                modelId = document.getElementById('training-model-select').value;
+            }
+            
+            // Update UI
+            document.getElementById('start-training-btn').disabled = true;
+            document.getElementById('stop-training-btn').disabled = false;
+            
+            // Switch to training view if not already there
+            if (currentView !== 'training') {
+                switchView('training');
+                document.getElementById('training-model-select').value = modelId;
+            }
+            
+            // Start training via API
+            fetch(`${baseUrl}/api/training/start`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ model_id: modelId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Training started:', data);
+                // Start polling for training progress
+                startTrainingProgressPolling();
+            })
+            .catch(error => {
+                console.error('Error starting training:', error);
+                // Reset UI
+                document.getElementById('start-training-btn').disabled = false;
+                document.getElementById('stop-training-btn').disabled = true;
+            });
+        }
+        
+        // Stop model training
+        function stopTraining() {
+            fetch(`${baseUrl}/api/training/stop`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Training stopped:', data);
+                // Reset UI
+                document.getElementById('start-training-btn').disabled = false;
+                document.getElementById('stop-training-btn').disabled = true;
+                // Stop polling
+                stopTrainingProgressPolling();
+            })
+            .catch(error => {
+                console.error('Error stopping training:', error);
+            });
+        }
+        
+        // Training progress polling
+        let trainingProgressInterval;
+        
+        function startTrainingProgressPolling() {
+            // Clear any existing interval
+            stopTrainingProgressPolling();
+            
+            // Start polling every 2 seconds
+            trainingProgressInterval = setInterval(() => {
+                fetch(`${baseUrl}/api/training/progress`)
+                .then(response => response.json())
+                .then(data => {
+                    // Update UI with progress
+                    const progressBar = document.getElementById('training-progress-bar');
+                    const percentage = document.getElementById('training-percentage');
+                    const epochs = document.getElementById('training-epochs');
+                    const loss = document.getElementById('training-loss');
+                    const accuracy = document.getElementById('training-accuracy');
+                    
+                    if (data.progress !== undefined) {
+                        progressBar.style.width = `${data.progress}%`;
+                        percentage.textContent = `${data.progress}%`;
+                    }
+                    
+                    if (data.epochs !== undefined) {
+                        epochs.textContent = data.epochs;
+                    }
+                    
+                    if (data.loss !== undefined) {
+                        loss.textContent = data.loss.toFixed(4);
+                    }
+                    
+                    if (data.accuracy !== undefined) {
+                        accuracy.textContent = `${(data.accuracy * 100).toFixed(2)}%`;
+                    }
+                    
+                    // Update chart if we have new data points
+                    if (data.epochs !== undefined && data.loss !== undefined && data.accuracy !== undefined) {
+                        // Check if we already have this epoch
+                        if (!trainingChart.data.labels.includes(data.epochs)) {
+                            trainingChart.data.labels.push(data.epochs);
+                            trainingChart.data.datasets[0].data.push(data.loss);
+                            trainingChart.data.datasets[1].data.push(data.accuracy * 100);
+                            trainingChart.update();
+                        }
+                    }
+                    
+                    // Check if training is complete
+                    if (data.status === 'completed') {
+                        document.getElementById('start-training-btn').disabled = false;
+                        document.getElementById('stop-training-btn').disabled = true;
+                        stopTrainingProgressPolling();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching training progress:', error);
+                });
+            }, 2000);
+        }
+        
+        function stopTrainingProgressPolling() {
+            if (trainingProgressInterval) {
+                clearInterval(trainingProgressInterval);
+                trainingProgressInterval = null;
+            }
+        }
+        
+        // Upload training data
+        function uploadTrainingData() {
+            const dataType = document.getElementById('data-type-select').value;
+            const fileInput = document.getElementById('dataset-upload');
+            const files = fileInput.files;
+            
+            if (files.length === 0) {
+                alert('Please select files to upload.');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('data_type', dataType);
+            
+            for (let i = 0; i < files.length; i++) {
+                formData.append('files', files[i]);
+            }
+            
+            fetch(`${baseUrl}/api/training/upload`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Data uploaded successfully!');
+                fileInput.value = '';
+            })
+            .catch(error => {
+                console.error('Error uploading training data:', error);
+                alert('Failed to upload data. Please try again.');
+            });
+        }
+        
+        // Start knowledge learning
+        function startKnowledgeLearning() {
+            const modelId = document.getElementById('knowledge-model-select').value;
+            
+            // Update UI
+            document.getElementById('start-knowledge-learning').disabled = true;
+            document.getElementById('stop-knowledge-learning').disabled = false;
+            
+            fetch(`${baseUrl}/api/knowledge/learning/start`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ model_id: modelId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Knowledge learning started:', data);
+                // Start polling for progress
+                startKnowledgeProgressPolling();
+            })
+            .catch(error => {
+                console.error('Error starting knowledge learning:', error);
+                // Reset UI
+                document.getElementById('start-knowledge-learning').disabled = false;
+                document.getElementById('stop-knowledge-learning').disabled = true;
+            });
+        }
+        
+        // Stop knowledge learning
+        function stopKnowledgeLearning() {
+            fetch(`${baseUrl}/api/knowledge/learning/stop`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Knowledge learning stopped:', data);
+                // Reset UI
+                document.getElementById('start-knowledge-learning').disabled = false;
+                document.getElementById('stop-knowledge-learning').disabled = true;
+                // Stop polling
+                stopKnowledgeProgressPolling();
+            })
+            .catch(error => {
+                console.error('Error stopping knowledge learning:', error);
+            });
+        }
+        
+        // Knowledge progress polling
+        let knowledgeProgressInterval;
+        
+        function startKnowledgeProgressPolling() {
+            // Clear any existing interval
+            stopKnowledgeProgressPolling();
+            
+            // Start polling every 3 seconds
+            knowledgeProgressInterval = setInterval(() => {
+                fetch(`${baseUrl}/api/knowledge/learning/progress`)
+                .then(response => response.json())
+                .then(data => {
+                    // Update UI with progress
+                    const progressBar = document.getElementById('knowledge-progress-bar');
+                    const percentage = document.getElementById('knowledge-percentage');
+                    
+                    if (data.progress !== undefined) {
+                        progressBar.style.width = `${data.progress}%`;
+                        percentage.textContent = `${data.progress}%`;
+                    }
+                    
+                    // Check if learning is complete
+                    if (data.status === 'completed') {
+                        document.getElementById('start-knowledge-learning').disabled = false;
+                        document.getElementById('stop-knowledge-learning').disabled = true;
+                        stopKnowledgeProgressPolling();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching knowledge learning progress:', error);
+                });
+            }, 3000);
+        }
+        
+        function stopKnowledgeProgressPolling() {
+            if (knowledgeProgressInterval) {
+                clearInterval(knowledgeProgressInterval);
+                knowledgeProgressInterval = null;
+            }
+        }
+        
+        // Upload knowledge documents
+        function uploadKnowledge() {
+            const category = document.getElementById('knowledge-category-upload').value;
+            const fileInput = document.getElementById('knowledge-upload');
+            const files = fileInput.files;
+            
+            if (files.length === 0) {
+                alert('Please select documents to upload.');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('category', category);
+            
+            for (let i = 0; i < files.length; i++) {
+                formData.append('documents', files[i]);
+            }
+            
+            fetch(`${baseUrl}/api/knowledge/upload`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Documents uploaded and processed successfully!');
+                fileInput.value = '';
+            })
+            .catch(error => {
+                console.error('Error uploading knowledge documents:', error);
+                alert('Failed to upload documents. Please try again.');
+            });
+        }
+        
+        // Toggle camera feed
+        function toggleCamera(cameraId) {
+            const feedElement = document.getElementById(`camera-feed-${cameraId}`);
+            const placeholder = feedElement.querySelector('.camera-placeholder');
+            const button = feedElement.nextElementSibling.querySelector('button');
+            
+            // Check if camera is active
+            if (activeCameras[cameraId]) {
+                // Stop camera
+                activeCameras[cameraId].stop();
+                delete activeCameras[cameraId];
+                
+                // Show placeholder
+                if (placeholder) placeholder.style.display = 'block';
+                
+                // Update button text
+                button.textContent = 'Start Camera';
+            } else {
+                // Start camera
+                startCamera(cameraId, feedElement, placeholder, button);
+            }
+        }
+        
+        // Start camera feed
+        function startCamera(cameraId, feedElement, placeholder, button) {
+            // Create video element if it doesn't exist
+            let video = feedElement.querySelector('video');
+            
+            if (!video) {
+                video = document.createElement('video');
+                video.autoplay = true;
+                video.playsInline = true;
+                feedElement.appendChild(video);
+            }
+            
+            // Get camera stream
+            navigator.mediaDevices.getUserMedia({
+                video: {
+                    deviceId: cameraId === 1 ? undefined : { exact: `camera-${cameraId}` }
+                }
+            })
+            .then(stream => {
+                // Store stream reference
+                activeCameras[cameraId] = stream;
+                
+                // Set video source
+                video.srcObject = stream;
+                
+                // Hide placeholder
+                if (placeholder) placeholder.style.display = 'none';
+                
+                // Update button text
+                button.textContent = 'Stop Camera';
+            })
+            .catch(error => {
+                console.error('Error accessing camera:', error);
+                alert(`Failed to access Camera ${cameraId}. Please check your camera permissions.`);
+            });
+        }
+        
+        // Start visual analysis
+        function startVisualAnalysis() {
+            const taskType = document.getElementById('vision-task-select').value;
+            const resultsElement = document.getElementById('analysis-results');
+            
+            // Show loading state
+            resultsElement.innerHTML = '<div class="text-center py-3"><i class="bi bi-spinner bi-spin h3"></i></div>';
+            
+            // Send analysis request to API
+            fetch(`${baseUrl}/api/vision/analyze`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ task_type: taskType })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display results
+                displayAnalysisResults(data, resultsElement);
+            })
+            .catch(error => {
+                console.error('Error performing visual analysis:', error);
+                resultsElement.innerHTML = '<p class="text-danger">Failed to perform analysis. Please try again.</p>';
+            });
+        }
+        
+        // Display analysis results
+        function displayAnalysisResults(data, resultsElement) {
+            if (!data || !data.results || data.results.length === 0) {
+                resultsElement.innerHTML = '<p class="text-muted">No results found.</p>';
+                return;
+            }
+            
+            let html = '<div class="analysis-result-list">';
+            
+            data.results.forEach(result => {
+                html += `
+                    <div class="analysis-result-item mb-3 p-3 bg-light rounded">
+                        <div class="font-weight-bold">${result.label || 'Result'}</div>
+                        ${result.confidence ? `<div class="text-sm text-muted">Confidence: ${(result.confidence * 100).toFixed(2)}%</div>` : ''}
+                        ${result.description ? `<div class="mt-1">${result.description}</div>` : ''}
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            resultsElement.innerHTML = html;
+        }
+        
+        // Open model settings
+        function openModelSettings(modelId) {
+            // Switch to settings view
+            switchView('settings');
+            
+            // Switch to model APIs tab
+            document.querySelectorAll('.nav-tabs a').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+            document.querySelector('a[href="#model-apis"]').classList.add('active');
+            document.getElementById('model-apis').classList.add('active');
+            
+            // Select the model in the dropdown
+            document.getElementById('api-model-select').value = modelId;
+            
+            // Load existing settings for this model
+            loadModelApiSettings(modelId);
+        }
+        
+        // Load model API settings
+        function loadModelApiSettings(modelId) {
+            fetch(`${baseUrl}/api/models/${modelId}/api-settings`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.api_type) {
+                    document.getElementById('api-type-select').value = data.api_type;
+                }
+                
+                if (data.api_url) {
+                    document.getElementById('api-url').value = data.api_url;
+                }
+                
+                if (data.api_key) {
+                    document.getElementById('api-key').value = data.api_key;
+                }
+                
+                if (data.api_model_name) {
+                    document.getElementById('api-model-name').value = data.api_model_name;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading model API settings:', error);
+            });
+        }
+        
+        // Save API settings
+        function saveApiSettings() {
+            const modelId = document.getElementById('api-model-select').value;
+            const apiType = document.getElementById('api-type-select').value;
+            const apiUrl = document.getElementById('api-url').value;
+            const apiKey = document.getElementById('api-key').value;
+            const apiModelName = document.getElementById('api-model-name').value;
+            
+            fetch(`${baseUrl}/api/models/${modelId}/api-settings`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    api_type: apiType,
+                    api_url: apiUrl,
+                    api_key: apiKey,
+                    api_model_name: apiModelName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('API settings saved successfully!');
+                } else {
+                    alert('Failed to save API settings: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error saving API settings:', error);
+                alert('Failed to save API settings. Please try again.');
+            });
+        }
+        
+        // Test API connection
+        function testApiConnection() {
+            const modelId = document.getElementById('api-model-select').value;
+            
+            // Show loading state
+            const originalButtonText = document.querySelector('button[onclick="testApiConnection()"]').textContent;
+            const testButton = document.querySelector('button[onclick="testApiConnection()"]');
+            testButton.disabled = true;
+            testButton.innerHTML = '<i class="bi bi-spinner bi-spin"></i> Testing...';
+            
+            fetch(`${baseUrl}/api/models/${modelId}/test-connection`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Reset button
+                testButton.disabled = false;
+                testButton.innerHTML = originalButtonText;
+                
+                if (data.success) {
+                    alert('Connection test successful!');
+                } else {
+                    alert('Connection test failed: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error testing API connection:', error);
+                // Reset button
+                testButton.disabled = false;
+                testButton.innerHTML = originalButtonText;
+                
+                alert('Failed to test connection. Please try again.');
+            });
+        }
+        
+        // Save camera settings
+        function saveCameraSettings() {
+            const camera1 = document.getElementById('camera-1-select').value;
+            const camera2 = document.getElementById('camera-2-select').value;
+            
+            fetch(`${baseUrl}/api/hardware/camera-settings`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    camera_1: camera1,
+                    camera_2: camera2
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Camera settings saved successfully!');
+                } else {
+                    alert('Failed to save camera settings: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error saving camera settings:', error);
+                alert('Failed to save camera settings. Please try again.');
+            });
+        }
+        
+        // Save sensor settings
+        function saveSensorSettings() {
+            const port = document.getElementById('sensor-port').value;
+            const baudrate = document.getElementById('sensor-baudrate').value;
+            
+            fetch(`${baseUrl}/api/hardware/sensor-settings`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    port: port,
+                    baudrate: baudrate
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Sensor settings saved successfully!');
+                } else {
+                    alert('Failed to save sensor settings: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error saving sensor settings:', error);
+                alert('Failed to save sensor settings. Please try again.');
+            });
+        }
+        
+        // Save system settings
+        function saveSystemSettings() {
+            const language = document.getElementById('system-language').value;
+            const maxThreads = document.getElementById('max-threads').value;
+            const memoryLimit = document.getElementById('memory-limit').value;
+            const autoSave = document.getElementById('auto-save').checked;
+            
+            fetch(`${baseUrl}/api/system/settings`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    language: language,
+                    max_threads: maxThreads,
+                    memory_limit: memoryLimit,
+                    auto_save: autoSave
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('System settings saved successfully!');
+                } else {
+                    alert('Failed to save system settings: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error saving system settings:', error);
+                alert('Failed to save system settings. Please try again.');
+            });
+        }
+        
+        // View knowledge category
+        function viewKnowledgeCategory(category) {
+            alert(`Viewing knowledge category: ${category}`);
+            // In a real implementation, this would load and display knowledge items for the selected category
+        }
+        
+        // Initialize the application when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

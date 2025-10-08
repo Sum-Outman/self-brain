@@ -1,0 +1,796 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}Self Brain - Advanced AGI System{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Custom styles for index page */
+    .model-status-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+    
+    .camera-container {
+        transition: all 0.3s ease;
+    }
+    
+    .camera-status-indicator {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+    
+    .status-active {
+        background-color: var(--success-color);
+    }
+    
+    .status-inactive {
+        background-color: var(--secondary-color);
+    }
+    
+    .status-error {
+        background-color: var(--error-color);
+    }
+    
+    .status-connecting {
+        background-color: var(--warning-color);
+    }
+    
+    .chat-messages-container {
+        height: 400px;
+        overflow-y: auto;
+    }
+    
+    .progress-bar-custom {
+        height: 0.625rem;
+        background-color: var(--gray-100);
+        border-radius: 0.25rem;
+        overflow: hidden;
+    }
+    
+    .progress-bar-fill {
+        height: 100%;
+        background-color: var(--primary-color);
+        border-radius: 0.25rem;
+        transition: width 0.5s ease-out;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Left Column - System Overview -->
+        <div class="col-12 col-md-4">
+            <!-- System Status Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">System Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="text-muted">System Status</span>
+                            <span class="badge bg-success" id="systemStatusText">Operational</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Hardware Status</span>
+                            <span class="badge bg-success" id="hardwareStatus">Optimal</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Response Time</span>
+                            <span class="text-dark" id="responseTime">< 200ms</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Models Online</span>
+                            <span class="text-dark" id="modelsOnline">0/11</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI Chat Interface -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">AI Assistant</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="clearChat()">
+                            <i class="bi bi-eraser"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="exportChat()">
+                            <i class="bi bi-download"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Chat Messages Container -->
+                <div id="messagesContainer" class="chat-messages-container p-3">
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-chat-dots display-6 mb-3"></i>
+                        <p class="small">Start a conversation with the AI system</p>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="card-footer">
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="quickAction('summarize')">
+                            <i class="bi bi-list-ul me-1"></i>Summarize
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="quickAction('translate')">
+                            <i class="bi bi-translate me-1"></i>Translate
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="quickAction('code')">
+                            <i class="bi bi-code me-1"></i>Generate Code
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="quickAction('analyze')">
+                            <i class="bi bi-bar-chart me-1"></i>Analyze
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="quickAction('brainstorm')">
+                            <i class="bi bi-lightbulb me-1"></i>Brainstorm
+                        </button>
+                    </div>
+                    
+                    <!-- Message Input Area -->
+                    <div class="input-group">
+                        <textarea id="messageInput" class="form-control" rows="1" placeholder="Type your message here..." onkeydown="handleKeyDown(event)" oninput="adjustTextareaHeight(this)"></textarea>
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggleVoice()">
+                                <i class="bi bi-mic"></i>
+                            </button>
+                            <label class="btn btn-outline-secondary" for="fileUpload">
+                                <i class="bi bi-paperclip"></i>
+                                <input type="file" id="fileUpload" multiple style="display: none;" onchange="handleFileUpload(this.files)">
+                            </label>
+                            <button class="btn btn-dark" type="button" onclick="sendMessage()">
+                                <i class="bi bi-send"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Middle Column - Main Content -->
+        <div class="col-12 col-md-4">
+            <!-- Training Control -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Training Control</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6 col-md-4">
+                            <button class="btn btn-outline-dark w-100" onclick="startTraining()">
+                                <i class="bi bi-play-circle me-1"></i>Start Training
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <button class="btn btn-outline-dark w-100" onclick="stopTraining()">
+                                <i class="bi bi-stop-circle me-1"></i>Stop Training
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <button class="btn btn-outline-dark w-100" onclick="window.location.href='/knowledge_import'">
+                                <i class="bi bi-book me-1"></i>Import Knowledge
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <button class="btn btn-outline-dark w-100" onclick="window.location.href='/upload'">
+                                <i class="bi bi-upload me-1"></i>Upload Data
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <button class="btn btn-outline-dark w-100" onclick="exportTrainingData()">
+                                <i class="bi bi-download me-1"></i>Export Data
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <button class="btn btn-outline-dark w-100" onclick="runSystemCheck()">
+                                <i class="bi bi-stethoscope me-1"></i>System Check
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Model Architecture -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">AI System Architecture</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="bg-dark text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
+                            <span class="h5 mb-0">A</span>
+                        </div>
+                    </div>
+                    
+                    <div class="model-status-grid" id="modelStatusGrid">
+                        <!-- Model status will be populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column - System Status and Controls -->
+        <div class="col-12 col-md-4">
+            <!-- Training Progress -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Training Progress</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted small">Training Progress</span>
+                            <span class="text-dark fw-bold" id="trainingProgressText">0%</span>
+                        </div>
+                        <div class="progress-bar-custom">
+                            <div class="progress-bar-fill" id="trainingProgressBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center p-2">
+                                    <div class="small text-muted">CPU</div>
+                                    <div class="h6 mb-0 text-dark" id="cpuUsage">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center p-2">
+                                    <div class="small text-muted">Memory</div>
+                                    <div class="h6 mb-0 text-dark" id="memoryUsage">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center p-2">
+                                    <div class="small text-muted">GPU</div>
+                                    <div class="h6 mb-0 text-dark" id="gpuUsage">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Enhanced Multi-Camera System with Stereo Vision -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Multi-Camera System</h5>
+                    <p class="text-muted small mb-0">Real-time camera management with stereo vision capabilities</p>
+                </div>
+                <div class="card-body">
+                    <!-- Camera Selection -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-12 col-sm-6">
+                            <label for="camera1Selector" class="form-label small">Left Camera</label>
+                            <select id="camera1Selector" class="form-select form-select-sm">
+                                <option value="default">Select Camera</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label for="camera2Selector" class="form-label small">Right Camera</label>
+                            <select id="camera2Selector" class="form-select form-select-sm">
+                                <option value="default">Select Camera</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label for="camera3Selector" class="form-label small">Top Camera</label>
+                            <select id="camera3Selector" class="form-select form-select-sm">
+                                <option value="default">Select Camera (Optional)</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label for="cameraResolution" class="form-label small">Resolution</label>
+                            <select id="cameraResolution" class="form-select form-select-sm">
+                                <option value="640x480">640x480</option>
+                                <option value="1280x720" selected>1280x720</option>
+                                <option value="1920x1080">1920x1080</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Camera Preview -->
+                    <div class="row g-2">
+                        <div class="col-12 col-sm-6">
+                            <div class="camera-container">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">Left Camera</h6>
+                                    <span id="camera1Status" class="camera-status-indicator status-inactive"></span>
+                                </div>
+                                <div class="bg-light rounded border position-relative" style="height: 144px;">
+                                    <div class="position-absolute top-50 start-50 translate-middle">
+                                        <i class="bi bi-camera-video text-muted display-6"></i>
+                                    </div>
+                                    <video id="camera1Video" class="w-100 h-100 object-fit-cover rounded" autoplay muted playsinline></video>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <div class="camera-container">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">Right Camera</h6>
+                                    <span id="camera2Status" class="camera-status-indicator status-inactive"></span>
+                                </div>
+                                <div class="bg-light rounded border position-relative" style="height: 144px;">
+                                    <div class="position-absolute top-50 start-50 translate-middle">
+                                        <i class="bi bi-camera-video text-muted display-6"></i>
+                                    </div>
+                                    <video id="camera2Video" class="w-100 h-100 object-fit-cover rounded" autoplay muted playsinline></video>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="camera-container">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">Depth Map</h6>
+                                    <span id="depthMapStatus" class="camera-status-indicator status-inactive"></span>
+                                </div>
+                                <div class="bg-light rounded border position-relative" style="height: 160px;">
+                                    <div class="position-absolute top-50 start-50 translate-middle">
+                                        <i class="bi bi-graph-up text-muted display-6"></i>
+                                    </div>
+                                    <canvas id="depthMapCanvas" class="w-100 h-100 object-fit-cover rounded"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+                        <button class="btn btn-sm btn-outline-dark" id="refreshCameras">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh Camera List
+                        </button>
+                        <button class="btn btn-sm btn-outline-dark" id="startStereoVision">
+                            <i class="bi bi-eye me-1"></i>Start Stereo Vision
+                        </button>
+                        <button class="btn btn-sm btn-outline-dark" id="takeSnapshots">
+                            <i class="bi bi-camera me-1"></i>Take Snapshots
+                        </button>
+                        <button class="btn btn-sm btn-outline-dark" id="stopAllCamerasBtn">
+                            <i class="bi bi-stop me-1"></i>Stop All
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize system status
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeSystemStatus();
+        initializeModelStatus();
+        startRealTimeMonitoring();
+    });
+
+    // System status functions
+    function initializeSystemStatus() {
+        // Real system status check
+        fetch('/api/system/status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'Active') {
+                    document.getElementById('systemStatusText').textContent = 'Operational';
+                    document.getElementById('hardwareStatus').textContent = 'Optimal';
+                    document.getElementById('responseTime').textContent = data.response_time || '< 200ms';
+                } else {
+                    document.getElementById('systemStatusText').textContent = 'Check System';
+                    document.getElementById('hardwareStatus').textContent = 'Needs Attention';
+                    document.getElementById('responseTime').textContent = 'Unknown';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching system status:', error);
+                document.getElementById('systemStatusText').textContent = 'Offline';
+                document.getElementById('hardwareStatus').textContent = 'Unknown';
+                document.getElementById('responseTime').textContent = 'N/A';
+            });
+    }
+
+    function initializeModelStatus() {
+        // Fetch real model status from backend API
+        fetch('/api/models/status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success' && data.models) {
+                    updateModelStatusUI(data.models);
+                } else {
+                    console.error('Failed to fetch model status:', data.message);
+                    // Show error status instead of simulated data
+                    const errorStatus = {
+                        'A_Management': { status: 'error', progress: 0 },
+                        'B_Language': { status: 'error', progress: 0 },
+                        'C_Audio': { status: 'error', progress: 0 },
+                        'D_Visual': { status: 'error', progress: 0 },
+                        'E_Video': { status: 'error', progress: 0 },
+                        'F_Spatial': { status: 'error', progress: 0 },
+                        'G_Sensor': { status: 'error', progress: 0 },
+                        'H_Computer': { status: 'error', progress: 0 },
+                        'I_Motion': { status: 'error', progress: 0 },
+                        'J_Knowledge': { status: 'error', progress: 0 },
+                        'K_Programming': { status: 'error', progress: 0 }
+                    };
+                    updateModelStatusUI(errorStatus);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching model status:', error);
+                // Show error status instead of simulated data
+                const errorStatus = {
+                    'A_Management': { status: 'error', progress: 0 },
+                    'B_Language': { status: 'error', progress: 0 },
+                    'C_Audio': { status: 'error', progress: 0 },
+                    'D_Visual': { status: 'error', progress: 0 },
+                    'E_Video': { status: 'error', progress: 0 },
+                    'F_Spatial': { status: 'error', progress: 0 },
+                    'G_Sensor': { status: 'error', progress: 0 },
+                    'H_Computer': { status: 'error', progress: 0 },
+                    'I_Motion': { status: 'error', progress: 0 },
+                    'J_Knowledge': { status: 'error', progress: 0 },
+                    'K_Programming': { status: 'error', progress: 0 }
+                };
+                updateModelStatusUI(errorStatus);
+            });
+    }
+
+    function updateModelStatusUI(models) {
+        const grid = document.getElementById('modelStatusGrid');
+        grid.innerHTML = ''; // Clear existing content
+        
+        const modelConfig = {
+            'A_Management': { id: 'A', name: 'Management Model' },
+            'B_Language': { id: 'B', name: 'Language Model' },
+            'C_Audio': { id: 'C', name: 'Audio Model' },
+            'D_Visual': { id: 'D', name: 'Vision Model' },
+            'E_Video': { id: 'E', name: 'Video Model' },
+            'F_Spatial': { id: 'F', name: 'Spatial Model' },
+            'G_Sensor': { id: 'G', name: 'Sensor Model' },
+            'H_Computer': { id: 'H', name: 'Computer Control' },
+            'I_Motion': { id: 'I', name: 'Actuator Model' },
+            'J_Knowledge': { id: 'J', name: 'Knowledge Model' },
+            'K_Programming': { id: 'K', name: 'Programming Model' }
+        };
+
+        let onlineCount = 0;
+        Object.keys(modelConfig).forEach(modelKey => {
+            const model = models[modelKey] || { status: 'offline', progress: 0 };
+            const config = modelConfig[modelKey];
+            
+            const element = document.createElement('div');
+            element.className = 'card bg-light p-2 text-center';
+            
+            let statusClass = 'text-muted';
+            if (model.status === 'online') {
+                statusClass = 'text-success';
+                onlineCount++;
+            } else if (model.status === 'training') {
+                statusClass = 'text-warning';
+            } else if (model.status === 'error') {
+                statusClass = 'text-danger';
+            }
+            
+            element.innerHTML = `
+                <div class="fw-bold small">${config.id}</div>
+                <div class="small text-muted">${config.name}</div>
+                <div class="small ${statusClass}">${model.status}</div>
+                ${model.progress > 0 ? `<div class="small text-muted mt-1">${model.progress}%</div>` : ''}
+            `;
+            grid.appendChild(element);
+        });
+
+        // Update models online count
+        document.getElementById('modelsOnline').textContent = `${onlineCount}/${Object.keys(modelConfig).length}`;
+    }
+
+    function updateMetrics() {
+        // Directly use system status API which provides the required metrics
+        fetch('/api/system/status')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Only update if elements exist
+                if (document.getElementById('cpuUsage')) {
+                    document.getElementById('cpuUsage').textContent = data.cpu || '0%';
+                }
+                if (document.getElementById('memoryUsage')) {
+                    document.getElementById('memoryUsage').textContent = data.memory || '0%';
+                }
+                if (document.getElementById('gpuUsage')) {
+                    document.getElementById('gpuUsage').textContent = data.gpu_usage || '0%';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching system metrics:', error);
+                // Set default values in case of error
+                if (document.getElementById('cpuUsage')) {
+                    document.getElementById('cpuUsage').textContent = '0%';
+                }
+                if (document.getElementById('memoryUsage')) {
+                    document.getElementById('memoryUsage').textContent = '0%';
+                }
+                if (document.getElementById('gpuUsage')) {
+                    document.getElementById('gpuUsage').textContent = '0%';
+                }
+            });
+    }
+
+    function startRealTimeMonitoring() {
+        // Update immediately and set interval
+        updateMetrics();
+        setInterval(updateMetrics, 3000);
+    }
+
+    // Chat functions
+    function handleKeyDown(event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            sendMessage();
+        }
+    }
+
+    function adjustTextareaHeight(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('messageInput');
+        const message = input.value.trim();
+        
+        if (message) {
+            addMessage('user', message);
+            input.value = '';
+            adjustTextareaHeight(input);
+            
+            // Show typing indicator
+            const container = document.getElementById('messagesContainer');
+            const typingIndicator = document.createElement('div');
+            typingIndicator.id = 'typingIndicator';
+            typingIndicator.className = 'card bg-light p-3 mb-3';
+            typingIndicator.innerHTML = `
+                <div class="small text-muted mb-1">Self Brain AI</div>
+                <div class="d-flex gap-1">
+                    <div class="bg-secondary rounded-circle" style="width: 8px; height: 8px; animation: bounce 1s infinite"></div>
+                    <div class="bg-secondary rounded-circle" style="width: 8px; height: 8px; animation: bounce 1s infinite 0.1s"></div>
+                    <div class="bg-secondary rounded-circle" style="width: 8px; height: 8px; animation: bounce 1s infinite 0.2s"></div>
+                </div>
+            `;
+            container.appendChild(typingIndicator);
+            container.scrollTop = container.scrollHeight;
+            
+            // Call actual API to get AI response
+            fetch('/api/chat/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    conversation_id: 'main_conversation',
+                    message: message,
+                    knowledge_base: 'all',
+                    attachments: []
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Remove typing indicator
+                document.getElementById('typingIndicator').remove();
+                
+                if (data.status === 'success' && data.response) {
+                    addMessage('ai', data.response);
+                } else {
+                    addMessage('ai', 'I apologize, but I\'m having trouble processing your request. Please try again later.');
+                }
+            })
+            .catch(error => {
+                console.error('Error sending message:', error);
+                // Remove typing indicator
+                const typingElement = document.getElementById('typingIndicator');
+                if (typingElement) typingElement.remove();
+                addMessage('ai', 'I apologize, but there was an error connecting to the AI system. Please check your connection and try again.');
+            });
+        }
+    }
+
+    function addMessage(sender, content) {
+        const container = document.getElementById('messagesContainer');
+        const messageElement = document.createElement('div');
+        messageElement.className = `card mb-3 ${sender === 'user' ? 'ms-auto bg-dark text-white' : 'bg-light'}`;
+        messageElement.style.maxWidth = '80%';
+        messageElement.innerHTML = `
+            <div class="card-body p-3">
+                <div class="small opacity-75 mb-1">${sender === 'user' ? 'You' : 'Self Brain AI'}</div>
+                <div>${content}</div>
+            </div>
+        `;
+        container.appendChild(messageElement);
+        container.scrollTop = container.scrollHeight;
+        
+        // Remove initial placeholder if present
+        const placeholder = container.querySelector('.text-center');
+        if (placeholder) {
+            placeholder.remove();
+        }
+    }
+
+    function clearChat() {
+        const container = document.getElementById('messagesContainer');
+        container.innerHTML = '<div class="text-center text-muted py-5"><i class="bi bi-chat-dots display-6 mb-3"></i><p class="small">Start a conversation with the AI system</p></div>';
+    }
+
+    function exportChat() {
+        const container = document.getElementById('messagesContainer');
+        const messages = container.innerHTML;
+        const blob = new Blob([messages], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `self-brain-chat-${new Date().toISOString().slice(0, 10)}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showToast('Chat exported successfully', 'success');
+    }
+
+    function quickAction(action) {
+        const prompts = {
+            summarize: 'Please summarize our conversation so far.',
+            translate: 'Please translate the following text to English: ',
+            code: 'Write a Python function that ',
+            analyze: 'Analyze the following data and provide insights: ',
+            brainstorm: 'Let\'s brainstorm ideas for '
+        };
+        
+        const input = document.getElementById('messageInput');
+        input.value = prompts[action] || '';
+        input.focus();
+        adjustTextareaHeight(input);
+    }
+
+    function toggleVoice() {
+        showToast('Voice input functionality is being implemented', 'info');
+    }
+
+    function handleFileUpload(files) {
+        if (files.length > 0) {
+            Array.from(files).forEach(file => {
+                addMessage('user', `Uploaded file: ${file.name} (${formatFileSize(file.size)})`);
+            });
+        }
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+        else return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    // Training functions
+    function startTraining() {
+        showToast('Starting comprehensive model training...', 'info');
+        
+        // Call real training API
+        fetch('/api/training/start', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                training_type: 'comprehensive',
+                models: 'all',
+                epochs: 100,
+                batch_size: 32
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast('Training started successfully', 'success');
+                // Start monitoring training progress
+                monitorTrainingProgress();
+            } else {
+                showToast('Failed to start training: ' + (data.message || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error starting training:', error);
+            showToast('Error starting training: ' + error.message, 'error');
+        });
+    }
+
+    function monitorTrainingProgress() {
+        const progressInterval = setInterval(() => {
+            fetch('/api/training/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const progress = data.progress || 0;
+                        document.getElementById('trainingProgressBar').style.width = progress + '%';
+                        document.getElementById('trainingProgressText').textContent = Math.round(progress) + '%';
+                        
+                        if (progress >= 100) {
+                            clearInterval(progressInterval);
+                            showToast('Training completed successfully', 'success');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching training progress:', error);
+                    clearInterval(progressInterval);
+                });
+        }, 2000);
+    }
+
+    function stopTraining() {
+        fetch('/api/training/stop', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast('Training stopped successfully', 'success');
+                document.getElementById('trainingProgressBar').style.width = '0%';
+                document.getElementById('trainingProgressText').textContent = '0%';
+            } else {
+                showToast('Failed to stop training: ' + (data.message || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error stopping training:', error);
+            showToast('Error stopping training: ' + error.message, 'error');
+        });
+    }
+
+    function exportTrainingData() {
+        showToast('Exporting training data...', 'info');
+        // Implementation for exporting training data
+    }
+
+    function runSystemCheck() {
+        showToast('Running comprehensive system diagnostics...', 'info');
+        // Implementation for system check
+    }
+
+    // Camera system functions
+    document.getElementById('takeSnapshots').addEventListener('click', function() {
+        // Use the global function from camera_control.js
+        if (typeof takeAllCameraSnapshots === 'function') {
+            takeAllCameraSnapshots();
+        } else {
+            showToast('Camera control module not loaded', 'error');
+        }
+    });
+
+    // Add bounce animation for typing indicator
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1.2); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+</script>
+{% endblock %}

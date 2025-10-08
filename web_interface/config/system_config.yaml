@@ -1,0 +1,168 @@
+# System configuration for Self Brain
+
+# Language settings
+language: "en"
+
+# Training configuration
+training:
+  learning_rate: 0.001
+  batch_size: 32
+  enable_gpu: true
+  auto_update: false
+  max_epochs: 100
+  validation_split: 0.2
+  checkpoint_frequency: 5
+  early_stopping_patience: 10
+
+# Model configuration
+models:
+  # Model A - Management Model
+  A:
+    enabled: true
+    training_enabled: true
+    input_shape: [256]
+    output_shape: [128]
+    parameters:
+      hidden_size: 512
+      num_layers: 4
+      dropout_rate: 0.1
+  # Model B - Language Model
+  B:
+    enabled: true
+    training_enabled: true
+    input_shape: [512]
+    output_shape: [256]
+    parameters:
+      hidden_size: 1024
+      num_layers: 6
+      dropout_rate: 0.2
+  # Model C - Audio Processing Model
+  C:
+    enabled: true
+    training_enabled: true
+    input_shape: [128]
+    output_shape: [64]
+    parameters:
+      hidden_size: 512
+      num_layers: 4
+      dropout_rate: 0.15
+  # Model D - Image Processing Model
+  D:
+    enabled: true
+    training_enabled: true
+    input_shape: [224, 224, 3]
+    output_shape: [1000]
+    parameters:
+      hidden_size: 2048
+      num_layers: 8
+      dropout_rate: 0.25
+  # Model E - Video Processing Model
+  E:
+    enabled: true
+    training_enabled: true
+    input_shape: [16, 224, 224, 3]
+    output_shape: [1000]
+    parameters:
+      hidden_size: 4096
+      num_layers: 12
+      dropout_rate: 0.3
+  # Model F - Spatial Perception Model
+  F:
+    enabled: true
+    training_enabled: true
+    input_shape: [64, 64, 3]
+    output_shape: [256]
+    parameters:
+      hidden_size: 1024
+      num_layers: 6
+      dropout_rate: 0.2
+  # Model G - Sensor Perception Model
+  G:
+    enabled: true
+    training_enabled: true
+    input_shape: [32]
+    output_shape: [16]
+    parameters:
+      hidden_size: 256
+      num_layers: 3
+      dropout_rate: 0.1
+  # Model H - Computer Control Model
+  H:
+    enabled: true
+    training_enabled: true
+    input_shape: [128]
+    output_shape: [64]
+    parameters:
+      hidden_size: 512
+      num_layers: 4
+      dropout_rate: 0.15
+  # Model I - Motion Control Model
+  I:
+    enabled: true
+    training_enabled: true
+    input_shape: [64]
+    output_shape: [32]
+    parameters:
+      hidden_size: 256
+      num_layers: 3
+      dropout_rate: 0.1
+  # Model J - Knowledge Expert Model
+  J:
+    enabled: true
+    training_enabled: true
+    input_shape: [1024]
+    output_shape: [512]
+    parameters:
+      hidden_size: 2048
+      num_layers: 8
+      dropout_rate: 0.25
+  # Model K - Programming Model
+  K:
+    enabled: true
+    training_enabled: true
+    input_shape: [768]
+    output_shape: [384]
+    parameters:
+      hidden_size: 1536
+      num_layers: 7
+      dropout_rate: 0.2
+
+# Hardware settings
+hardware:
+  # Camera settings
+  cameras:
+    enabled: true
+    default_resolution: "1280x720"
+    default_fps: 30
+    max_cameras: 4
+  # Device communication settings
+  devices:
+    serial:
+      enabled: true
+      default_baudrate: 9600
+      timeout: 0.1
+  # GPU settings
+  gpu:
+    enabled: true
+    memory_allocation: "8GB"
+
+# API settings
+api:
+  enabled: true
+  port: 5000
+  cors_enabled: true
+  max_request_size: "100MB"
+
+# Knowledge base settings
+knowledge:
+  path: "../knowledge_base"
+  auto_index: true
+  self_learning_enabled: true
+
+# System monitoring
+system_monitoring:
+  enabled: true
+  log_level: "INFO"
+  log_rotation: true
+  performance_tracking: true
+  metrics_collection: true
