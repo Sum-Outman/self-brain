@@ -1,0 +1,92 @@
+{
+  "total": 14,
+  "passed": 10,
+  "failed": 4,
+  "success_rate": 71.42857142857143,
+  "details": [
+    {
+      "test": "Page /knowledge_base",
+      "success": true,
+      "message": "Status: 200",
+      "timestamp": "2025-09-11T16:33:36.311638"
+    },
+    {
+      "test": "Page /training_center",
+      "success": true,
+      "message": "Status: 200",
+      "timestamp": "2025-09-11T16:33:40.378377"
+    },
+    {
+      "test": "Page /about",
+      "success": true,
+      "message": "Status: 200",
+      "timestamp": "2025-09-11T16:33:42.407536"
+    },
+    {
+      "test": "Page /system_status",
+      "success": true,
+      "message": "Status: 200",
+      "timestamp": "2025-09-11T16:33:44.444123"
+    },
+    {
+      "test": "WebSocket Connection",
+      "success": false,
+      "message": "One or more namespaces failed to connect",
+      "timestamp": "2025-09-11T16:33:48.526274"
+    },
+    {
+      "test": "Invalid Data - Empty data",
+      "success": false,
+      "message": "Expected 400, got 200",
+      "timestamp": "2025-09-11T16:33:52.583002"
+    },
+    {
+      "test": "Invalid Data - Missing value field",
+      "success": false,
+      "message": "Expected 400, got 200",
+      "timestamp": "2025-09-11T16:33:56.666750"
+    },
+    {
+      "test": "Invalid Data - Invalid name and negative value",
+      "success": false,
+      "message": "Expected 400, got 200",
+      "timestamp": "2025-09-11T16:34:00.738746"
+    },
+    {
+      "test": "Invalid Data - Valid data",
+      "success": true,
+      "message": "Status: 200",
+      "timestamp": "2025-09-11T16:34:04.796281"
+    },
+    {
+      "test": "API /api/system/status",
+      "success": true,
+      "message": "Status: 200",
+      "timestamp": "2025-09-11T16:34:06.840931"
+    },
+    {
+      "test": "API /api/models",
+      "success": true,
+      "message": "Status: 200",
+      "timestamp": "2025-09-11T16:34:08.903612"
+    },
+    {
+      "test": "API /api/knowledge/list",
+      "success": true,
+      "message": "Status: 200",
+      "timestamp": "2025-09-11T16:34:10.927466"
+    },
+    {
+      "test": "API /api/training/status",
+      "success": true,
+      "message": "Status: 200",
+      "timestamp": "2025-09-11T16:34:13.969173"
+    },
+    {
+      "test": "API /api/dashboard/data",
+      "success": true,
+      "message": "Status: 200",
+      "timestamp": "2025-09-11T16:34:18.390836"
+    }
+  ]
+}

@@ -1,0 +1,1015 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}Settings - Self Brain{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>System Settings</h1>
+    
+    <!-- Tabs Navigation -->
+    <div class="tabs">
+        <div class="tab active" data-tab="api-configuration">API Configuration</div>
+        <div class="tab" data-tab="model-management">Model Management</div>
+        <div class="tab" data-tab="self-learning">Self Learning</div>
+        <div class="tab" data-tab="system-parameters">System Parameters</div>
+        <div class="tab" data-tab="hardware-configuration">Hardware Configuration</div>
+    </div>
+    
+    <!-- Tab Contents -->
+    <div class="tab-contents">
+        <!-- API Configuration Tab Content -->
+        <div id="api-configuration" class="tab-content" style="display: block;">
+            <div class="settings-section">
+                <h3>External API Connection</h3>
+                <div class="form-group">
+                    <label for="api-type">API Type</label>
+                    <select id="api-type" class="form-control">
+                        <option value="">-- Select API Type --</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic</option>
+                        <option value="google">Google Gemini</option>
+                        <option value="groq">Groq</option>
+                        <option value="mistralai">Mistral AI</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="api-url">API URL</label>
+                    <input type="text" id="api-url" class="form-control" placeholder="Enter API URL">
+                </div>
+                
+                <div class="form-group">
+                    <label for="api-key">API Key</label>
+                    <input type="password" id="api-key" class="form-control" placeholder="Enter API Key">
+                </div>
+                
+                <div class="form-group">
+                    <label for="model-name">Model Name</label>
+                    <input type="text" id="model-name" class="form-control" placeholder="Enter Model Name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="model-type">Model Type</label>
+                    <select id="model-type" class="form-control">
+                        <option value="">-- Select Model Type --</option>
+                        <option value="A">Manager Model</option>
+                        <option value="B">Language Model</option>
+                        <option value="C">Audio Model</option>
+                        <option value="D">Image Model</option>
+                        <option value="E">Video Model</option>
+                        <option value="F">Spatial Model</option>
+                        <option value="G">Sensor Model</option>
+                        <option value="H">Computer Control</option>
+                        <option value="I">Motion Control</option>
+                        <option value="J">Knowledge Base</option>
+                        <option value="K">Programming Model</option>
+                    </select>
+                </div>
+                
+                <button id="test-connection" class="btn btn-secondary">Test Connection</button>
+                <button id="save-configuration" class="btn btn-primary">Save Configuration</button>
+            </div>
+            
+            <div class="settings-section" style="margin-top: 30px;">
+                <h3>Active API Connections</h3>
+                <div id="active-connections-list" class="connections-list">
+                    <!-- Active connections will be displayed here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Model Management Tab Content -->
+        <div id="model-management" class="tab-content">
+            <div class="settings-section">
+                <h3>Model Registry</h3>
+                <div class="model-list">
+                    <div class="model-item">
+                        <div class="model-info">
+                            <span class="model-id">A</span>
+                            <span class="model-name">Manager Model</span>
+                            <span class="model-status">Running</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="model-toggle" data-model="A" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <button class="btn btn-sm btn-secondary view-model-details">Details</button>
+                    </div>
+                    
+                    <div class="model-item">
+                        <div class="model-info">
+                            <span class="model-id">B</span>
+                            <span class="model-name">Language Model</span>
+                            <span class="model-status">Running</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="model-toggle" data-model="B" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <button class="btn btn-sm btn-secondary view-model-details">Details</button>
+                    </div>
+                    
+                    <div class="model-item">
+                        <div class="model-info">
+                            <span class="model-id">C</span>
+                            <span class="model-name">Audio Model</span>
+                            <span class="model-status">Running</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="model-toggle" data-model="C" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <button class="btn btn-sm btn-secondary view-model-details">Details</button>
+                    </div>
+                    
+                    <div class="model-item">
+                        <div class="model-info">
+                            <span class="model-id">D</span>
+                            <span class="model-name">Image Model</span>
+                            <span class="model-status">Running</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="model-toggle" data-model="D" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <button class="btn btn-sm btn-secondary view-model-details">Details</button>
+                    </div>
+                    
+                    <div class="model-item">
+                        <div class="model-info">
+                            <span class="model-id">E</span>
+                            <span class="model-name">Video Model</span>
+                            <span class="model-status">Running</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="model-toggle" data-model="E" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <button class="btn btn-sm btn-secondary view-model-details">Details</button>
+                    </div>
+                    
+                    <div class="model-item">
+                        <div class="model-info">
+                            <span class="model-id">F</span>
+                            <span class="model-name">Spatial Model</span>
+                            <span class="model-status">Running</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="model-toggle" data-model="F" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <button class="btn btn-sm btn-secondary view-model-details">Details</button>
+                    </div>
+                    
+                    <div class="model-item">
+                        <div class="model-info">
+                            <span class="model-id">G</span>
+                            <span class="model-name">Sensor Model</span>
+                            <span class="model-status">Running</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="model-toggle" data-model="G" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <button class="btn btn-sm btn-secondary view-model-details">Details</button>
+                    </div>
+                    
+                    <div class="model-item">
+                        <div class="model-info">
+                            <span class="model-id">H</span>
+                            <span class="model-name">Computer Control</span>
+                            <span class="model-status">Running</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="model-toggle" data-model="H" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <button class="btn btn-sm btn-secondary view-model-details">Details</button>
+                    </div>
+                    
+                    <div class="model-item">
+                        <div class="model-info">
+                            <span class="model-id">I</span>
+                            <span class="model-name">Motion Control</span>
+                            <span class="model-status">Running</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="model-toggle" data-model="I" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <button class="btn btn-sm btn-secondary view-model-details">Details</button>
+                    </div>
+                    
+                    <div class="model-item">
+                        <div class="model-info">
+                            <span class="model-id">J</span>
+                            <span class="model-name">Knowledge Base</span>
+                            <span class="model-status">Running</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="model-toggle" data-model="J" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <button class="btn btn-sm btn-secondary view-model-details">Details</button>
+                    </div>
+                    
+                    <div class="model-item">
+                        <div class="model-info">
+                            <span class="model-id">K</span>
+                            <span class="model-name">Programming Model</span>
+                            <span class="model-status">Running</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="model-toggle" data-model="K" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <button class="btn btn-sm btn-secondary view-model-details">Details</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Self Learning Tab Content -->
+        <div id="self-learning" class="tab-content">
+            <div class="settings-section">
+                <h3>Self Learning Parameters</h3>
+                <div class="form-group">
+                    <label for="learning-rate">Learning Rate</label>
+                    <input type="number" id="learning-rate" class="form-control" step="0.0001" value="0.001">
+                </div>
+                
+                <div class="form-group">
+                    <label for="confidence-threshold">Confidence Threshold</label>
+                    <input type="number" id="confidence-threshold" class="form-control" step="0.01" min="0" max="1" value="0.75">
+                </div>
+                
+                <div class="form-group">
+                    <label for="exploration-factor">Exploration Factor</label>
+                    <input type="number" id="exploration-factor" class="form-control" step="0.01" min="0" max="1" value="0.2">
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="enable-reinforcement-learning">
+                        Enable Reinforcement Learning
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="enable-knowledge-integration">
+                        Enable Knowledge Integration
+                    </label>
+                </div>
+                
+                <button id="load-default-params" class="btn btn-secondary">Load Default Values</button>
+                <button id="save-learning-params" class="btn btn-primary">Save Configuration</button>
+            </div>
+        </div>
+        
+        <!-- System Parameters Tab Content -->
+        <div id="system-parameters" class="tab-content">
+            <div class="settings-section">
+                <h3>System Configuration</h3>
+                <div class="form-group">
+                    <label for="system-language">System Language</label>
+                    <select id="system-language" class="form-control">
+                        <option value="en">English</option>
+                        <option value="zh">Chinese</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="default-learning-rate">Default Learning Rate</label>
+                    <input type="number" id="default-learning-rate" class="form-control" step="0.0001" value="0.001">
+                </div>
+                
+                <div class="form-group">
+                    <label for="batch-size">Batch Size</label>
+                    <input type="number" id="batch-size" class="form-control" min="1" value="32">
+                </div>
+                
+                <div class="form-group">
+                    <label for="max-epochs">Maximum Epochs</label>
+                    <input type="number" id="max-epochs" class="form-control" min="1" value="100">
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="enable-gpu" checked>
+                        Enable GPU Acceleration
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="enable-multithreading">
+                        Enable Multithreading
+                    </label>
+                </div>
+                
+                <button id="save-system-config" class="btn btn-primary">Save Configuration</button>
+            </div>
+        </div>
+        
+        <!-- Hardware Configuration Tab Content -->
+        <div id="hardware-configuration" class="tab-content">
+            <!-- Camera Configuration -->
+            <div class="settings-section">
+                <h3>Camera Configuration</h3>
+                <div class="form-group">
+                    <label for="camera-list">Available Cameras</label>
+                    <select id="camera-list" class="form-control">
+                        <option value="">-- Select a camera --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="camera-resolution">Resolution</label>
+                    <select id="camera-resolution" class="form-control">
+                        <option value="640x480">640x480</option>
+                        <option value="1280x720">1280x720</option>
+                        <option value="1920x1080">1920x1080</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="camera-fps">Frames Per Second</label>
+                    <input type="number" id="camera-fps" class="form-control" min="1" max="60" value="30">
+                </div>
+                
+                <div class="form-group">
+                    <label for="camera-brightness">Brightness</label>
+                    <input type="range" id="camera-brightness" min="0" max="100" value="50">
+                    <span id="brightness-value">50</span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="enable-stereo-vision">
+                        Enable Stereo Vision
+                    </label>
+                </div>
+                
+                <div id="stereo-camera-config" style="display: none;">
+                    <div class="form-group">
+                        <label for="second-camera">Second Camera</label>
+                        <select id="second-camera" class="form-control">
+                            <option value="">-- Select a second camera --</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button id="scan-cameras" class="btn btn-secondary">Scan Cameras</button>
+                <button id="start-camera" class="btn btn-primary" disabled>Start Camera</button>
+                <button id="stop-camera" class="btn btn-danger" disabled>Stop Camera</button>
+                
+                <div id="camera-preview" style="margin-top: 20px; display: none;">
+                    <h4>Camera Preview</h4>
+                    <div class="preview-container">
+                        <img id="camera-stream" src="" alt="Camera Preview">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Serial Port Configuration -->
+            <div class="settings-section">
+                <h3>Serial Port Configuration</h3>
+                <div class="form-group">
+                    <label for="serial-port-list">Available Serial Ports</label>
+                    <select id="serial-port-list" class="form-control">
+                        <option value="">-- Select a serial port --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="baudrate">Baud Rate</label>
+                    <select id="baudrate" class="form-control">
+                        <option value="9600">9600</option>
+                        <option value="19200">19200</option>
+                        <option value="38400">38400</option>
+                        <option value="57600">57600</option>
+                        <option value="115200">115200</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="timeout">Timeout (seconds)</label>
+                    <input type="number" id="timeout" class="form-control" step="0.1" min="0.1" value="1.0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="device-id">Device ID</label>
+                    <input type="text" id="device-id" class="form-control" placeholder="Enter device ID">
+                </div>
+                
+                <button id="scan-serial-ports" class="btn btn-secondary">Scan Ports</button>
+                <button id="connect-serial" class="btn btn-primary" disabled>Connect</button>
+                <button id="disconnect-serial" class="btn btn-danger" disabled>Disconnect</button>
+                <button id="test-serial" class="btn btn-info" disabled>Test Connection</button>
+                
+                <div id="serial-status" style="margin-top: 15px; padding: 10px; background-color: #f1f1f1; border-radius: 4px;">
+                    Status: Disconnected
+                </div>
+                
+                <div id="serial-console" style="margin-top: 20px; display: none;">
+                    <h4>Serial Console</h4>
+                    <div class="console-output" id="console-output" style="height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background-color: #f8f8f8;"></div>
+                    <div class="console-input" style="margin-top: 10px;">
+                        <input type="text" id="console-input" class="form-control" placeholder="Enter command">
+                        <button id="send-command" class="btn btn-primary" style="margin-top: 5px;">Send</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sensor Configuration -->
+            <div class="settings-section">
+                <h3>Sensor Configuration</h3>
+                <div class="form-group">
+                    <label for="sensor-list">Connected Sensors</label>
+                    <select id="sensor-list" class="form-control">
+                        <option value="">-- Select a sensor --</option>
+                    </select>
+                </div>
+                
+                <div id="sensor-info" style="margin-top: 15px; padding: 10px; background-color: #f1f1f1; border-radius: 4px; display: none;">
+                    <h4>Sensor Information</h4>
+                    <p><strong>Type:</strong> <span id="sensor-type">N/A</span></p>
+                    <p><strong>Status:</strong> <span id="sensor-status">N/A</span></p>
+                    <p><strong>Last Reading:</strong> <span id="sensor-reading">N/A</span></p>
+                    <p><strong>Timestamp:</strong> <span id="sensor-timestamp">N/A</span></p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="sampling-rate">Sampling Rate (Hz)</label>
+                    <input type="number" id="sampling-rate" class="form-control" min="1" max="100" value="10">
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="enable-temperature-sensor">
+                        Enable Temperature Sensor
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="enable-humidity-sensor">
+                        Enable Humidity Sensor
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="enable-motion-sensor">
+                        Enable Motion Sensor
+                    </label>
+                </div>
+                
+                <button id="refresh-sensors" class="btn btn-secondary">Refresh Sensors</button>
+                <button id="save-sensor-config" class="btn btn-primary">Save Configuration</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tab Navigation
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Hide all tab contents
+                tabContents.forEach(content => {
+                    content.style.display = 'none';
+                });
+                
+                // Remove active class from all tabs
+                tabs.forEach(t => {
+                    t.classList.remove('active');
+                });
+                
+                // Show selected tab content
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(tabId).style.display = 'block';
+                
+                // Add active class to selected tab
+                tab.classList.add('active');
+            });
+        });
+        
+        // API Configuration Form Handling
+        const apiTypeSelect = document.getElementById('api-type');
+        const apiKeyInput = document.getElementById('api-key');
+        const apiUrlInput = document.getElementById('api-url');
+        
+        // Set default values based on API type
+        apiTypeSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            
+            // Reset form
+            apiKeyInput.value = '';
+            apiUrlInput.value = '';
+            
+            // Set default values for selected API type
+            if (selectedType === 'openai') {
+                apiUrlInput.value = 'https://api.openai.com/v1/chat/completions';
+            } else if (selectedType === 'anthropic') {
+                apiUrlInput.value = 'https://api.anthropic.com/v1/messages';
+            } else if (selectedType === 'google') {
+                apiUrlInput.value = 'https://generativelanguage.googleapis.com/v1/models';
+            } else if (selectedType === 'groq') {
+                apiUrlInput.value = 'https://api.groq.com/openai/v1/chat/completions';
+            } else if (selectedType === 'mistralai') {
+                apiUrlInput.value = 'https://api.mistral.ai/v1/chat/completions';
+            }
+        });
+        
+        // Test Connection Button
+        const testConnectionBtn = document.getElementById('test-connection');
+        
+        testConnectionBtn.addEventListener('click', function() {
+            const apiType = apiTypeSelect.value;
+            const apiKey = apiKeyInput.value;
+            const apiUrl = apiUrlInput.value;
+            const modelName = document.getElementById('model-name').value;
+            const modelType = document.getElementById('model-type').value;
+            
+            if (!apiType || !apiUrl) {
+                alert('Please select API type and enter API URL');
+                return;
+            }
+            
+            // Show loading state
+            testConnectionBtn.disabled = true;
+            testConnectionBtn.textContent = 'Testing...';
+            
+            // Simulate API call
+            setTimeout(() => {
+                // Success response simulation
+                alert('Connection successful!');
+                
+                // Reset button state
+                testConnectionBtn.disabled = false;
+                testConnectionBtn.textContent = 'Test Connection';
+            }, 1500);
+        });
+        
+        // Save Configuration Button
+        const saveConfigBtn = document.getElementById('save-configuration');
+        
+        saveConfigBtn.addEventListener('click', function() {
+            const apiType = apiTypeSelect.value;
+            const apiKey = apiKeyInput.value;
+            const apiUrl = apiUrlInput.value;
+            const modelName = document.getElementById('model-name').value;
+            const modelType = document.getElementById('model-type').value;
+            
+            if (!apiType || !apiUrl || !modelName || !modelType) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            // Show loading state
+            saveConfigBtn.disabled = true;
+            saveConfigBtn.textContent = 'Saving...';
+            
+            // Simulate saving configuration
+            setTimeout(() => {
+                // Success response simulation
+                alert('Configuration saved successfully!');
+                
+                // Reset button state
+                saveConfigBtn.disabled = false;
+                saveConfigBtn.textContent = 'Save Configuration';
+                
+                // Add to active connections list
+                addToActiveConnections(apiType, apiUrl, modelName, modelType);
+            }, 1500);
+        });
+        
+        // Add to Active Connections List
+        function addToActiveConnections(apiType, apiUrl, modelName, modelType) {
+            const activeConnectionsList = document.getElementById('active-connections-list');
+            
+            // Create new connection item
+            const connectionItem = document.createElement('div');
+            connectionItem.className = 'connection-item';
+            
+            connectionItem.innerHTML = `
+                <div class="connection-info">
+                    <div class="connection-header">
+                        <span class="model-name">${modelName}</span>
+                        <span class="model-type">${modelType}</span>
+                    </div>
+                    <div class="connection-details">
+                        <span class="api-type">${apiType}</span>
+                        <span class="api-url">${apiUrl}</span>
+                    </div>
+                    <div class="connection-status">Active</div>
+                </div>
+                <div class="connection-actions">
+                    <button class="btn btn-sm btn-secondary edit-connection">Edit</button>
+                    <button class="btn btn-sm btn-danger disconnect-connection">Disconnect</button>
+                </div>
+            `;
+            
+            // Add event listeners to buttons
+            connectionItem.querySelector('.edit-connection').addEventListener('click', function() {
+                // Populate form with existing values
+                apiTypeSelect.value = apiType;
+                apiKeyInput.value = ''; // Don't populate API key for security
+                apiUrlInput.value = apiUrl;
+                document.getElementById('model-name').value = modelName;
+                document.getElementById('model-type').value = modelType;
+            });
+            
+            connectionItem.querySelector('.disconnect-connection').addEventListener('click', function() {
+                if (confirm('Are you sure you want to disconnect this API?')) {
+                    activeConnectionsList.removeChild(connectionItem);
+                }
+            });
+            
+            // Add to list
+            activeConnectionsList.appendChild(connectionItem);
+        }
+        
+        // Model Toggle Switches
+        const modelToggles = document.querySelectorAll('.model-toggle');
+        
+        modelToggles.forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                const modelId = this.getAttribute('data-model');
+                const isEnabled = this.checked;
+                
+                // Simulate enabling/disabling model
+                console.log(`Model ${modelId} ${isEnabled ? 'enabled' : 'disabled'}`);
+            });
+        });
+        
+        // System Configuration Save
+        const saveSystemConfigBtn = document.getElementById('save-system-config');
+        
+        saveSystemConfigBtn.addEventListener('click', function() {
+            const systemLanguage = document.getElementById('system-language').value;
+            const learningRate = document.getElementById('default-learning-rate').value;
+            const batchSize = document.getElementById('batch-size').value;
+            const maxEpochs = document.getElementById('max-epochs').value;
+            const enableGpu = document.getElementById('enable-gpu').checked;
+            const enableMultithreading = document.getElementById('enable-multithreading').checked;
+            
+            // Show loading state
+            saveSystemConfigBtn.disabled = true;
+            saveSystemConfigBtn.textContent = 'Saving...';
+            
+            // Simulate saving configuration
+            setTimeout(() => {
+                // Success response simulation
+                alert('System configuration saved successfully!');
+                
+                // Reset button state
+                saveSystemConfigBtn.disabled = false;
+                saveSystemConfigBtn.textContent = 'Save Configuration';
+            }, 1500);
+        });
+        
+        // Camera Configuration Functions
+        const scanCamerasBtn = document.getElementById('scan-cameras');
+        const cameraList = document.getElementById('camera-list');
+        const startCameraBtn = document.getElementById('start-camera');
+        const stopCameraBtn = document.getElementById('stop-camera');
+        const cameraPreview = document.getElementById('camera-preview');
+        const cameraStream = document.getElementById('camera-stream');
+        const enableStereoVision = document.getElementById('enable-stereo-vision');
+        const stereoCameraConfig = document.getElementById('stereo-camera-config');
+        const secondCamera = document.getElementById('second-camera');
+        
+        // Brightness slider
+        const brightnessSlider = document.getElementById('camera-brightness');
+        const brightnessValue = document.getElementById('brightness-value');
+        
+        brightnessSlider.addEventListener('input', function() {
+            brightnessValue.textContent = this.value;
+        });
+        
+        // Enable stereo vision checkbox
+        enableStereoVision.addEventListener('change', function() {
+            stereoCameraConfig.style.display = this.checked ? 'block' : 'none';
+        });
+        
+        // Scan cameras button
+        scanCamerasBtn.addEventListener('click', function() {
+            // Show loading state
+            scanCamerasBtn.disabled = true;
+            scanCamerasBtn.textContent = 'Scanning...';
+            
+            // Clear existing options
+            cameraList.innerHTML = '<option value="">-- Select a camera --</option>';
+            secondCamera.innerHTML = '<option value="">-- Select a second camera --</option>';
+            
+            // Simulate API call to get cameras
+            setTimeout(() => {
+                // Sample camera data (in real implementation, this would come from an API)
+                const cameras = [
+                    { id: '0', name: 'Camera 0 (Default Webcam)' },
+                    { id: '1', name: 'Camera 1 (External USB Camera)' },
+                    { id: '2', name: 'Camera 2 (Virtual Camera)' }
+                ];
+                
+                // Add cameras to dropdowns
+                cameras.forEach(camera => {
+                    const option1 = document.createElement('option');
+                    option1.value = camera.id;
+                    option1.textContent = camera.name;
+                    cameraList.appendChild(option1);
+                    
+                    const option2 = document.createElement('option');
+                    option2.value = camera.id;
+                    option2.textContent = camera.name;
+                    secondCamera.appendChild(option2);
+                });
+                
+                // Reset button state
+                scanCamerasBtn.disabled = false;
+                scanCamerasBtn.textContent = 'Scan Cameras';
+            }, 1500);
+        });
+        
+        // Camera selection change
+        cameraList.addEventListener('change', function() {
+            startCameraBtn.disabled = !this.value;
+        });
+        
+        // Start camera button
+        startCameraBtn.addEventListener('click', function() {
+            const cameraId = cameraList.value;
+            const resolution = document.getElementById('camera-resolution').value;
+            const fps = document.getElementById('camera-fps').value;
+            const brightness = document.getElementById('camera-brightness').value;
+            
+            // Show loading state
+            startCameraBtn.disabled = true;
+            startCameraBtn.textContent = 'Starting...';
+            
+            // Simulate starting camera
+            setTimeout(() => {
+                // Show preview and update button states
+                cameraPreview.style.display = 'block';
+                startCameraBtn.disabled = true;
+                startCameraBtn.textContent = 'Camera Started';
+                stopCameraBtn.disabled = false;
+                
+                // In a real implementation, this would be a stream from the camera
+                // For demonstration, we'll use a placeholder image
+                cameraStream.src = 'https://via.placeholder.com/640x480?text=Camera+Preview';
+                cameraStream.alt = 'Camera Preview';
+            }, 1500);
+        });
+        
+        // Stop camera button
+        stopCameraBtn.addEventListener('click', function() {
+            // Hide preview and update button states
+            cameraPreview.style.display = 'none';
+            startCameraBtn.disabled = false;
+            startCameraBtn.textContent = 'Start Camera';
+            stopCameraBtn.disabled = true;
+            
+            // Clear preview image
+            cameraStream.src = '';
+        });
+        
+        // Serial Port Configuration Functions
+        const scanSerialPortsBtn = document.getElementById('scan-serial-ports');
+        const serialPortList = document.getElementById('serial-port-list');
+        const connectSerialBtn = document.getElementById('connect-serial');
+        const disconnectSerialBtn = document.getElementById('disconnect-serial');
+        const testSerialBtn = document.getElementById('test-serial');
+        const serialStatus = document.getElementById('serial-status');
+        const serialConsole = document.getElementById('serial-console');
+        const consoleOutput = document.getElementById('console-output');
+        const consoleInput = document.getElementById('console-input');
+        const sendCommandBtn = document.getElementById('send-command');
+        
+        // Scan serial ports button
+        scanSerialPortsBtn.addEventListener('click', function() {
+            // Show loading state
+            scanSerialPortsBtn.disabled = true;
+            scanSerialPortsBtn.textContent = 'Scanning...';
+            
+            // Clear existing options
+            serialPortList.innerHTML = '<option value="">-- Select a serial port --</option>';
+            
+            // Simulate API call to get serial ports
+            setTimeout(() => {
+                // Sample serial port data (in real implementation, this would come from an API)
+                const ports = [
+                    { port: 'COM1', name: 'COM1 - Communications Port' },
+                    { port: 'COM3', name: 'COM3 - Arduino Uno' },
+                    { port: 'COM5', name: 'COM5 - USB Serial Port' }
+                ];
+                
+                // Add ports to dropdown
+                ports.forEach(port => {
+                    const option = document.createElement('option');
+                    option.value = port.port;
+                    option.textContent = port.name;
+                    serialPortList.appendChild(option);
+                });
+                
+                // Reset button state
+                scanSerialPortsBtn.disabled = false;
+                scanSerialPortsBtn.textContent = 'Scan Ports';
+            }, 1500);
+        });
+        
+        // Serial port selection change
+        serialPortList.addEventListener('change', function() {
+            const deviceId = document.getElementById('device-id').value;
+            connectSerialBtn.disabled = !this.value || !deviceId;
+        });
+        
+        // Device ID input change
+        document.getElementById('device-id').addEventListener('input', function() {
+            const port = serialPortList.value;
+            connectSerialBtn.disabled = !port || !this.value;
+        });
+        
+        // Connect serial button
+        connectSerialBtn.addEventListener('click', function() {
+            const port = serialPortList.value;
+            const baudrate = document.getElementById('baudrate').value;
+            const timeout = document.getElementById('timeout').value;
+            const deviceId = document.getElementById('device-id').value;
+            
+            // Show loading state
+            connectSerialBtn.disabled = true;
+            connectSerialBtn.textContent = 'Connecting...';
+            
+            // Simulate connecting to serial port
+            setTimeout(() => {
+                // Update status and button states
+                serialStatus.textContent = `Status: Connected to ${port} at ${baudrate} baud`;
+                serialStatus.style.backgroundColor = '#d4edda'; // Success green background
+                connectSerialBtn.disabled = true;
+                connectSerialBtn.textContent = 'Connected';
+                disconnectSerialBtn.disabled = false;
+                testSerialBtn.disabled = false;
+                serialConsole.style.display = 'block';
+            }, 1500);
+        });
+        
+        // Disconnect serial button
+        disconnectSerialBtn.addEventListener('click', function() {
+            // Update status and button states
+            serialStatus.textContent = 'Status: Disconnected';
+            serialStatus.style.backgroundColor = '#f1f1f1'; // Default background
+            connectSerialBtn.disabled = false;
+            connectSerialBtn.textContent = 'Connect';
+            disconnectSerialBtn.disabled = true;
+            testSerialBtn.disabled = true;
+            serialConsole.style.display = 'none';
+            
+            // Clear console output
+            consoleOutput.innerHTML = '';
+        });
+        
+        // Test serial connection button
+        testSerialBtn.addEventListener('click', function() {
+            // Show loading state
+            testSerialBtn.disabled = true;
+            testSerialBtn.textContent = 'Testing...';
+            
+            // Simulate testing connection
+            setTimeout(() => {
+                // Add test message to console
+                consoleOutput.innerHTML += '<p class="test-message">Connection test successful! Device is responding.</p>';
+                consoleOutput.scrollTop = consoleOutput.scrollHeight;
+                
+                // Reset button state
+                testSerialBtn.disabled = false;
+                testSerialBtn.textContent = 'Test Connection';
+            }, 1000);
+        });
+        
+        // Send command button
+        sendCommandBtn.addEventListener('click', function() {
+            const command = consoleInput.value.trim();
+            
+            if (command) {
+                // Add command to console
+                consoleOutput.innerHTML += `<p class="command">&gt; ${command}</p>`;
+                
+                // Simulate response
+                setTimeout(() => {
+                    consoleOutput.innerHTML += `<p class="response">Response: Command executed successfully</p>`;
+                    consoleOutput.scrollTop = consoleOutput.scrollHeight;
+                }, 500);
+                
+                // Clear input
+                consoleInput.value = '';
+            }
+        });
+        
+        // Allow sending commands with Enter key
+        consoleInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendCommandBtn.click();
+            }
+        });
+        
+        // Sensor Configuration Functions
+        const refreshSensorsBtn = document.getElementById('refresh-sensors');
+        const sensorList = document.getElementById('sensor-list');
+        const sensorInfo = document.getElementById('sensor-info');
+        const saveSensorConfigBtn = document.getElementById('save-sensor-config');
+        
+        // Refresh sensors button
+        refreshSensorsBtn.addEventListener('click', function() {
+            // Show loading state
+            refreshSensorsBtn.disabled = true;
+            refreshSensorsBtn.textContent = 'Refreshing...';
+            
+            // Clear existing options
+            sensorList.innerHTML = '<option value="">-- Select a sensor --</option>';
+            
+            // Simulate API call to get sensors
+            setTimeout(() => {
+                // Sample sensor data (in real implementation, this would come from an API)
+                const sensors = [
+                    { id: 'temp1', name: 'Temperature Sensor (TMP36)', type: 'temperature', value: '25.5 °C', timestamp: new Date().toLocaleString() },
+                    { id: 'hum1', name: 'Humidity Sensor (DHT22)', type: 'humidity', value: '48.2 %', timestamp: new Date().toLocaleString() },
+                    { id: 'motion1', name: 'Motion Sensor (PIR)', type: 'motion', value: 'No motion', timestamp: new Date().toLocaleString() },
+                    { id: 'light1', name: 'Light Sensor (LDR)', type: 'light', value: '320 lux', timestamp: new Date().toLocaleString() }
+                ];
+                
+                // Add sensors to dropdown
+                sensors.forEach(sensor => {
+                    const option = document.createElement('option');
+                    option.value = sensor.id;
+                    option.textContent = sensor.name;
+                    option.dataset.type = sensor.type;
+                    option.dataset.value = sensor.value;
+                    option.dataset.timestamp = sensor.timestamp;
+                    sensorList.appendChild(option);
+                });
+                
+                // Reset button state
+                refreshSensorsBtn.disabled = false;
+                refreshSensorsBtn.textContent = 'Refresh Sensors';
+            }, 1500);
+        });
+        
+        // Sensor selection change
+        sensorList.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            
+            if (selectedOption.value) {
+                // Show sensor info and populate with data
+                sensorInfo.style.display = 'block';
+                document.getElementById('sensor-type').textContent = selectedOption.dataset.type;
+                document.getElementById('sensor-status').textContent = 'Active';
+                document.getElementById('sensor-reading').textContent = selectedOption.dataset.value;
+                document.getElementById('sensor-timestamp').textContent = selectedOption.dataset.timestamp;
+            } else {
+                // Hide sensor info
+                sensorInfo.style.display = 'none';
+            }
+        });
+        
+        // Save sensor configuration button
+        saveSensorConfigBtn.addEventListener('click', function() {
+            const samplingRate = document.getElementById('sampling-rate').value;
+            const enableTemperature = document.getElementById('enable-temperature-sensor').checked;
+            const enableHumidity = document.getElementById('enable-humidity-sensor').checked;
+            const enableMotion = document.getElementById('enable-motion-sensor').checked;
+            
+            // Show loading state
+            saveSensorConfigBtn.disabled = true;
+            saveSensorConfigBtn.textContent = 'Saving...';
+            
+            // Simulate saving configuration
+            setTimeout(() => {
+                // Success response simulation
+                alert('Sensor configuration saved successfully!');
+                
+                // Reset button state
+                saveSensorConfigBtn.disabled = false;
+                saveSensorConfigBtn.textContent = 'Save Configuration';
+            }, 1500);
+        });
+        
+        // Add basic styling for the console
+        const style = document.createElement('style');
+        style.textContent = `
+            .console-output .command { color: #0066cc; margin: 2px 0; }
+            .console-output .response { color: #009933; margin: 2px 0; }
+            .console-output .test-message { color: #cc6600; margin: 2px 0; font-weight: bold; }
+            .preview-container { border: 1px solid #ccc; padding: 10px; background-color: #f8f8f8; }
+            .preview-container img { max-width: 100%; height: auto; }
+        `;
+        document.head.appendChild(style);
+    });
+</script>
+{% endblock %}

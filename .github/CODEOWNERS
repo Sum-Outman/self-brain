@@ -1,0 +1,7 @@
+# Global code owners - 只有你能修改任何文件
+* @Sum-Outman
+
+# 配置文件也需要你审核
+/config/ @Sum-Outman
+/.github/ @Sum-Outman
+/requirements*.txt @Sum-Outman

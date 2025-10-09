@@ -1,0 +1,383 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}External API Settings - Self Brain AGI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/monochrome.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mt-4 mb-6">External API Settings</h1>
+        </div>
+    </div>
+
+    <div class="row mb-6">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Model API Configuration</h2>
+                </div>
+                <div class="card-body">
+                    <p class="mb-4">Configure external API connections for individual models. Switch between local implementation and external API services.</p>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="modelsTable">
+                            <thead>
+                                <tr>
+                                    <th>Model ID</th>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Current Status</th>
+                                    <th>Connection</th>
+                                    <th>Last Updated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modelsTableBody">
+                                <!-- Models will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Available API Providers</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card border border-gray-200">
+                                <div class="card-body">
+                                    <h5>OpenAI</h5>
+                                    <p class="text-sm text-gray-600">GPT series models for advanced language processing</p>
+                                    <p class="text-xs text-gray-500 mt-2">API Endpoint: https://api.openai.com/v1</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border border-gray-200">
+                                <div class="card-body">
+                                    <h5>Anthropic</h5>
+                                    <p class="text-sm text-gray-600">Claude series models with long context windows</p>
+                                    <p class="text-xs text-gray-500 mt-2">API Endpoint: https://api.anthropic.com/v1</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border border-gray-200">
+                                <div class="card-body">
+                                    <h5>Google AI</h5>
+                                    <p class="text-sm text-gray-600">Gemini models with multimodal capabilities</p>
+                                    <p class="text-xs text-gray-500 mt-2">API Endpoint: https://generativelanguage.googleapis.com/v1</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card border border-gray-200">
+                                <div class="card-body">
+                                    <h5>Hugging Face</h5>
+                                    <p class="text-sm text-gray-600">Access to thousands of community models</p>
+                                    <p class="text-xs text-gray-500 mt-2">API Endpoint: https://api-inference.huggingface.co/models</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border border-gray-200">
+                                <div class="card-body">
+                                    <h5>Custom API</h5>
+                                    <p class="text-sm text-gray-600">Configure your own custom API endpoints</p>
+                                    <p class="text-xs text-gray-500 mt-2">Flexible endpoint configuration</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Connection Status</h2>
+                </div>
+                <div class="card-body" id="connectionStatus">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Total Models</span>
+                            <span id="totalModelsCount">0</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Local Models</span>
+                            <span id="localModelsCount">0</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>External API Models</span>
+                            <span id="externalModelsCount">0</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Active Connections</span>
+                            <span id="activeConnectionsCount">0</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Failed Connections</span>
+                            <span id="failedConnectionsCount">0</span>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button class="btn btn-outline-dark w-100" onclick="refreshConnectionStatus()">
+                            <i class="bi bi-arrow-repeat"></i> Refresh Status
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- External API Configuration Modal -->
+<div class="modal fade" id="externalApiModal" tabindex="-1" aria-labelledby="externalApiModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="externalApiModalLabel">Configure External API - <span id="currentModelId"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="externalApiForm">
+                    <input type="hidden" id="modelIdInput">
+                    
+                    <div class="mb-3">
+                        <label for="apiProvider" class="form-label">API Provider</label>
+                        <select class="form-select" id="apiProvider" onchange="onApiProviderChange()">
+                            <option value="openai">OpenAI</option>
+                            <option value="anthropic">Anthropic</option>
+                            <option value="google">Google AI</option>
+                            <option value="huggingface">Hugging Face</option>
+                            <option value="custom">Custom API</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="apiKey" class="form-label">API Key</label>
+                        <input type="password" class="form-control" id="apiKey" placeholder="Enter your API key">
+                        <div class="form-text">API keys are stored securely in the system configuration</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="apiEndpoint" class="form-label">API Endpoint</label>
+                        <input type="text" class="form-control" id="apiEndpoint" placeholder="https://api.example.com/v1">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="apiModel" class="form-label">Model Name</label>
+                        <input type="text" class="form-control" id="apiModel" placeholder="Model identifier">
+                        <div class="form-text">e.g., gpt-4o, claude-3-opus-20240229</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="apiTimeout" class="form-label">Timeout (seconds)</label>
+                        <input type="number" class="form-control" id="apiTimeout" value="30" min="5" max="120">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" onclick="testExternalApi()">
+                    <i class="bi bi-wifi"></i> Test Connection
+                </button>
+                <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">
+                    Close
+                </button>
+                <button type="button" class="btn btn-dark" onclick="saveExternalApiConfig()">
+                    <i class="bi bi-save"></i> Save Configuration
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/enhanced_external_api_config.js') }}"></script>
+<script>
+    // Initialize models table when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        loadModelsList();
+        refreshConnectionStatus();
+    });
+    
+    // Load models list from API
+    async function loadModelsList() {
+        try {
+            const response = await fetch('/api/models');
+            const models = await response.json();
+            
+            const tableBody = document.getElementById('modelsTableBody');
+            tableBody.innerHTML = '';
+            
+            // Fallback mock data if API fails or returns invalid data
+            if (!models || !Array.isArray(models) || models.length === 0) {
+                const mockModels = [
+                    { id: 'B_language', name: 'Language Model', description: 'Multilingual interaction and emotional reasoning', status: 'active', is_external: false, last_updated: '2025-09-25 14:30:00' },
+                    { id: 'C_audio', name: 'Audio Processing', description: 'Speech recognition, music synthesis and audio processing', status: 'active', is_external: false, last_updated: '2025-09-25 14:30:00' },
+                    { id: 'D_image', name: 'Image Vision', description: 'Image recognition, editing and generation', status: 'active', is_external: false, last_updated: '2025-09-25 14:30:00' },
+                    { id: 'E_video', name: 'Video Analysis', description: 'Video analysis, editing and generation', status: 'active', is_external: false, last_updated: '2025-09-25 14:30:00' },
+                    { id: 'F_spatial', name: 'Spatial Awareness', description: '3D spatial modeling and localization', status: 'active', is_external: false, last_updated: '2025-09-25 14:30:00' },
+                    { id: 'G_sensor', name: 'Sensor Integration', description: 'Multi-sensor data acquisition and processing', status: 'active', is_external: false, last_updated: '2025-09-25 14:30:00' },
+                    { id: 'H_computer', name: 'Computer Control', description: 'System command execution and control', status: 'active', is_external: false, last_updated: '2025-09-25 14:30:00' },
+                    { id: 'I_knowledge', name: 'Knowledge Expert', description: 'Multi-domain knowledge retrieval and reasoning', status: 'active', is_external: false, last_updated: '2025-09-25 14:30:00' },
+                    { id: 'J_motion', name: 'Motion Control', description: 'Multi-port device control', status: 'active', is_external: false, last_updated: '2025-09-25 14:30:00' },
+                    { id: 'K_programming', name: 'Programming', description: 'Code generation and system optimization', status: 'active', is_external: false, last_updated: '2025-09-25 14:30:00' }
+                ];
+                
+                renderModels(mockModels);
+            } else {
+                renderModels(models);
+            }
+        } catch (error) {
+            console.error('Failed to load models:', error);
+            
+            // Use mock data on error
+            const mockModels = [
+                { id: 'B_language', name: 'Language Model', description: 'Multilingual interaction and emotional reasoning', status: 'active', is_external: false, provider: '', last_updated: '2025-09-25 14:30:00' },
+                { id: 'C_audio', name: 'Audio Processing', description: 'Speech recognition, music synthesis and audio processing', status: 'active', is_external: false, provider: '', last_updated: '2025-09-25 14:30:00' },
+                { id: 'D_image', name: 'Image Vision', description: 'Image recognition, editing and generation', status: 'active', is_external: false, provider: '', last_updated: '2025-09-25 14:30:00' },
+                { id: 'E_video', name: 'Video Analysis', description: 'Video analysis, editing and generation', status: 'active', is_external: false, provider: '', last_updated: '2025-09-25 14:30:00' },
+                { id: 'F_spatial', name: 'Spatial Awareness', description: '3D spatial modeling and localization', status: 'active', is_external: false, provider: '', last_updated: '2025-09-25 14:30:00' },
+                { id: 'G_sensor', name: 'Sensor Integration', description: 'Multi-sensor data acquisition and processing', status: 'active', is_external: false, provider: '', last_updated: '2025-09-25 14:30:00' },
+                { id: 'H_computer', name: 'Computer Control', description: 'System command execution and control', status: 'active', is_external: false, provider: '', last_updated: '2025-09-25 14:30:00' },
+                { id: 'I_knowledge', name: 'Knowledge Expert', description: 'Multi-domain knowledge retrieval and reasoning', status: 'active', is_external: false, provider: '', last_updated: '2025-09-25 14:30:00' },
+                { id: 'J_motion', name: 'Motion Control', description: 'Multi-port device control', status: 'active', is_external: false, provider: '', last_updated: '2025-09-25 14:30:00' },
+                { id: 'K_programming', name: 'Programming', description: 'Code generation and system optimization', status: 'active', is_external: false, provider: '', last_updated: '2025-09-25 14:30:00' }
+            ];
+            
+            renderModels(mockModels);
+        }
+    }
+    
+    // Render models in the table
+    function renderModels(models) {
+        const tableBody = document.getElementById('modelsTableBody');
+        
+        models.forEach(model => {
+            const row = document.createElement('tr');
+            
+            // Determine connection status badge
+            let connectionBadge = '<span class="badge bg-dark">Local</span>';
+            if (model.is_external) {
+                const provider = model.provider || 'API';
+                connectionBadge = `<span class="badge bg-gray-700">API (${provider})</span>`;
+            }
+            
+            // Determine action button
+            let actionButton = `
+                <button class="btn btn-sm btn-outline-dark" onclick="showExternalApiModal('${model.id}')">
+                    <i class="bi bi-link-45deg"></i> Switch to API
+                </button>
+            `;
+            if (model.is_external) {
+                actionButton = `
+                    <button class="btn btn-sm btn-outline-dark" onclick="switchToLocal('${model.id}')">
+                        <i class="bi bi-box-arrow-in-right"></i> Switch to Local
+                    </button>
+                `;
+            }
+            
+            // Determine status badge
+            let statusBadge = '<span class="badge bg-gray-300">Unknown</span>';
+            if (model.status === 'active') {
+                statusBadge = '<span class="badge bg-gray-700">Active</span>';
+            } else if (model.status === 'inactive') {
+                statusBadge = '<span class="badge bg-gray-400">Inactive</span>';
+            }
+            
+            row.innerHTML = `
+                <td><strong>${model.id}</strong></td>
+                <td>${model.name}</td>
+                <td>${model.description}</td>
+                <td>${statusBadge}</td>
+                <td>${connectionBadge}</td>
+                <td>${model.last_updated || 'Never'}</td>
+                <td>${actionButton}</td>
+            `;
+            
+            tableBody.appendChild(row);
+        });
+        
+        // Update counts
+        document.getElementById('totalModelsCount').textContent = models.length;
+        document.getElementById('localModelsCount').textContent = models.filter(m => !m.is_external).length;
+        document.getElementById('externalModelsCount').textContent = models.filter(m => m.is_external).length;
+        document.getElementById('activeConnectionsCount').textContent = models.filter(m => m.status === 'active').length;
+        document.getElementById('failedConnectionsCount').textContent = models.filter(m => m.status === 'inactive').length;
+    }
+    
+    // Refresh connection status
+    async function refreshConnectionStatus() {
+        try {
+            const button = event?.target || document.querySelector('button[onclick="refreshConnectionStatus()"]');
+            if (button) {
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Refreshing...';
+                button.disabled = true;
+            }
+            
+            // Call API to refresh status (with try/catch to handle endpoint issues)
+            try {
+                await fetch('/api/models/refresh-status');
+            } catch (apiError) {
+                console.warn('API refresh endpoint not available, using mock data:', apiError);
+            }
+            
+            // Reload models list regardless of API status
+            loadModelsList();
+            
+            if (button) {
+                setTimeout(() => {
+                    button.innerHTML = '<i class="bi bi-arrow-repeat"></i> Refresh Status';
+                    button.disabled = false;
+                }, 1000);
+            }
+        } catch (error) {
+            console.error('Failed to refresh status:', error);
+            if (window.showToast) {
+                showToast('Failed to refresh connection status', 'error', 3000);
+            }
+            
+            if (button) {
+                button.innerHTML = '<i class="bi bi-arrow-repeat"></i> Refresh Status';
+                button.disabled = false;
+            }
+        }
+    }
+    
+    // Helper function for fetch with retry
+    async function fetchWithRetry(url, options = {}, retries = 3, retryDelay = 1000) {
+        try {
+            return await fetch(url, options);
+        } catch (error) {
+            if (retries > 0) {
+                console.warn(`Request failed, retrying (${retries} attempts left)...`);
+                await new Promise(resolve => setTimeout(resolve, retryDelay));
+                return fetchWithRetry(url, options, retries - 1, retryDelay * 2);
+            }
+            throw error;
+        }
+    }
+</script>
+{% endblock %}

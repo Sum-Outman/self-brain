@@ -1,0 +1,309 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}Knowledge Details - Self Brain AGI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/knowledge_manage">Knowledge Management</a></li>
+                    <li class="breadcrumb-item active">Knowledge Details</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0" id="knowledgeTitle">Machine Learning Fundamentals</h4>
+                        <div class="btn-group">
+                            <a href="/knowledge_edit/1" class="btn btn-outline-dark btn-sm">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+                            <button class="btn btn-outline-dark btn-sm" onclick="window.print()">
+                                <i class="bi bi-printer"></i> Print
+                            </button>
+                            <a href="/knowledge_manage" class="btn btn-outline-dark btn-sm">
+                                <i class="bi bi-arrow-left"></i> Back
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Knowledge Meta -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <small class="text-muted">Category</small>
+                            <p class="mb-0" id="knowledgeCategory">Technology</p>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">Created</small>
+                            <p class="mb-0" id="knowledgeDate">2024-01-01</p>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">Author</small>
+                            <p class="mb-0">Self Brain AGI</p>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">Views</small>
+                            <p class="mb-0" id="knowledgeViews">1,234</p>
+                        </div>
+                    </div>
+
+                    <!-- Table of Contents -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="bi bi-list"></i> Table of Contents
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled mb-0">
+                                <li><a href="#introduction" class="text-dark">1. Introduction</a></li>
+                                <li><a href="#basic-concepts" class="text-dark">2. Basic Concepts</a></li>
+                                <li><a href="#algorithms" class="text-dark">3. Common Algorithms</a></li>
+                                <li><a href="#applications" class="text-dark">4. Applications</a></li>
+                                <li><a href="#conclusion" class="text-dark">5. Conclusion</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Knowledge Content -->
+                    <div class="knowledge-content">
+                        <section id="introduction" class="mb-4">
+                            <h3>1. Introduction</h3>
+                            <p>
+                                Machine learning is a branch of artificial intelligence that focuses on developing algorithms and statistical models that can learn from data. These algorithms enable computer systems to improve their performance on specific tasks without being explicitly programmed.
+                            </p>
+                            <p>
+                                The core idea of machine learning is to enable computers to automatically learn patterns from experience (data) and use these patterns to make predictions or decisions. This approach differs from traditional programming methods where programmers need to write explicit rules for every possible situation.
+                            </p>
+                        </section>
+
+                        <section id="basic-concepts" class="mb-4">
+                            <h3>2. Basic Concepts</h3>
+                            <h4 class="h5">2.1 Supervised Learning</h4>
+                            <p>
+                                Supervised learning is the most common type of machine learning, where algorithms learn from labeled training data. Each training sample contains input features and the corresponding correct output (label).
+                            </p>
+                            <ul>
+                                <li><strong>Classification:</strong> Predicting discrete category labels</li>
+                                <li><strong>Regression:</strong> Predicting continuous numerical values</li>
+                            </ul>
+
+                            <h4 class="h5">2.2 Unsupervised Learning</h4>
+                            <p>
+                                Unsupervised learning deals with unlabeled data, where algorithms need to discover hidden patterns or structures within the data.
+                            </p>
+                            <ul>
+                                <li><strong>Clustering:</strong> Grouping similar data points together</li>
+                                <li><strong>Dimensionality Reduction:</strong> Reducing data dimensions while preserving important information</li>
+                            </ul>
+
+                            <h4 class="h5">2.3 Reinforcement Learning</h4>
+                            <p>
+                                Reinforcement learning learns optimal behavioral strategies through interaction with the environment and receiving reward or punishment signals.
+                            </p>
+                        </section>
+
+                        <section id="algorithms" class="mb-4">
+                            <h3>3. Common Algorithms</h3>
+                            <h4 class="h5">3.1 Linear Regression</h4>
+                            <p>
+                                Linear regression is a statistical method used to establish a linear relationship between a dependent variable and one or more independent variables. It assumes a linear relationship between input features and output.
+                            </p>
+
+                            <h4 class="h5">3.2 Decision Tree</h4>
+                            <p>
+                                Decision tree is a tree-structured classifier that splits data into different categories through a series of questions. Each internal node represents a feature test, and each branch represents the outcome of the test.
+                            </p>
+
+                            <h4 class="h5">3.3 Neural Network</h4>
+                            <p>
+                                Neural networks are computational models inspired by biological nervous systems, consisting of interconnected nodes (neurons). Deep learning uses multi-layer neural networks to learn complex patterns.
+                            </p>
+
+                            <h4 class="h5">3.4 Support Vector Machine (SVM)</h4>
+                            <p>
+                                Support Vector Machine (SVM) is a powerful classification algorithm that separates data points of different classes by finding the optimal hyperplane.
+                            </p>
+                        </section>
+
+                        <section id="applications" class="mb-4">
+                            <h3>4. Applications</h3>
+                            <h4 class="h5">4.1 Computer Vision</h4>
+                            <ul>
+                                <li>Image Classification</li>
+                                <li>Object Detection</li>
+                                <li>Face Recognition</li>
+                                <li>Autonomous Driving</li>
+                            </ul>
+
+                            <h4 class="h5">4.2 Natural Language Processing</h4>
+                            <ul>
+                                <li>Machine Translation</li>
+                                <li>Sentiment Analysis</li>
+                                <li>Text Generation</li>
+                                <li>Speech Recognition</li>
+                            </ul>
+
+                            <h4 class="h5">4.3 Recommendation Systems</h4>
+                            <ul>
+                                <li>Content-based Filtering</li>
+                                <li>Collaborative Filtering</li>
+                                <li>Hybrid Systems</li>
+                            </ul>
+                        </section>
+
+                        <section id="conclusion" class="mb-4">
+                            <h3>5. Conclusion</h3>
+                            <p>
+                                Machine learning has revolutionized how we approach complex problems across various domains. From healthcare to finance, from entertainment to transportation, machine learning applications are transforming industries and creating new possibilities.
+                            </p>
+                            <p>
+                                As we continue to advance in this field, the integration of machine learning with other emerging technologies like quantum computing, edge computing, and 5G networks will open up even more exciting opportunities for innovation and discovery.
+                            </p>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Related Knowledge -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-link-45deg"></i> Related Knowledge
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Deep Learning Basics</strong>
+                        <br>
+                        <small class="text-muted">Foundational concepts for neural networks</small>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Neural Network Architecture</strong>
+                        <br>
+                        <small class="text-muted">Design patterns for neural networks</small>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Data Preprocessing Techniques</strong>
+                        <br>
+                        <small class="text-muted">Preparing data for ML models</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Associations -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-diagram-3"></i> Model Associations
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <strong>Model J - Knowledge Expert</strong>
+                        <br>
+                        <small class="text-muted">Primary model for knowledge processing</small>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Model B - Language Processing</strong>
+                        <br>
+                        <small class="text-muted">Text analysis and understanding</small>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Model A - Management</strong>
+                        <br>
+                        <small class="text-muted">Overall system coordination</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-gear"></i> Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-dark btn-sm" onclick="copyToClipboard()">
+                            <i class="bi bi-clipboard"></i> Copy Content
+                        </button>
+                        <button class="btn btn-outline-dark btn-sm" onclick="exportPDF()">
+                            <i class="bi bi-download"></i> Export PDF
+                        </button>
+                        <button class="btn btn-outline-dark btn-sm" onclick="shareKnowledge()">
+                            <i class="bi bi-share"></i> Share
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load knowledge detail from API
+document.addEventListener('DOMContentLoaded', function() {
+    const knowledgeId = '{{ knowledge_id }}';
+    loadKnowledgeDetail(knowledgeId);
+});
+
+function loadKnowledgeDetail(knowledgeId) {
+    fetch(`/api/knowledge/detail/${knowledgeId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const knowledge = data.knowledge;
+                document.getElementById('knowledgeTitle').textContent = knowledge.title;
+                document.getElementById('knowledgeCategory').textContent = knowledge.category;
+                document.getElementById('knowledgeDate').textContent = knowledge.updated_at ? new Date(knowledge.updated_at).toLocaleDateString() : 'N/A';
+                document.getElementById('knowledgeViews').textContent = knowledge.views || 0;
+                
+                // Update content sections
+                const contentSection = document.querySelector('.knowledge-content');
+                contentSection.innerHTML = `
+                    <section class="mb-4">
+                        <h3>Content</h3>
+                        <div class="content-body">${knowledge.content || 'No content available'}</div>
+                    </section>
+                `;
+            } else {
+                alert('Error loading knowledge: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading knowledge:', error);
+            alert('Failed to load knowledge detail');
+        });
+}
+
+function copyToClipboard() {
+    const content = document.querySelector('.knowledge-content').textContent;
+    navigator.clipboard.writeText(content).then(() => {
+        alert('Content copied to clipboard');
+    });
+}
+
+function exportPDF() {
+    window.print();
+}
+
+function shareKnowledge() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+        alert('Link copied to clipboard');
+    });
+}
+</script>
+{% endblock %}

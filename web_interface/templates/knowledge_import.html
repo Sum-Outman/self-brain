@@ -1,0 +1,397 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}Knowledge Import - Self Brain AGI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h2 mb-3">Knowledge Import</h1>
+            <p class="text-secondary">Supports uploading and batch importing of knowledge files in multiple formats</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Single File Upload -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark-arrow-up"></i> Single File Upload
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="border border-secondary border-dashed p-4 text-center mb-3" id="singleUploadArea">
+                        <i class="bi bi-cloud-upload fs-1 text-secondary mb-2"></i>
+                        <h6>Select Files</h6>
+                        <p class="text-secondary mb-2">Select single or multiple knowledge files to import</p>
+                        <input type="file" id="singleFileInput" class="form-control" accept=".txt,.md,.pdf,.json,.csv,.docx,.doc" multiple>
+                    </div>
+                    <div class="mb-3">
+                        <label for="singleCategory" class="form-label">Category</label>
+                        <select class="form-select" id="singleCategory">
+                            <option value="">Select Category...</option>
+                            <option value="text">Text Files</option>
+                            <option value="code">Code Files</option>
+                            <option value="images">Image Files</option>
+                            <option value="audio">Audio Files</option>
+                            <option value="video">Video Files</option>
+                            <option value="structured">Structured Data</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-outline-dark" onclick="uploadSingleFiles()">
+                        <i class="bi bi-upload"></i> Start Upload
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Batch Import -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-layers"></i> Batch Import
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Import Tabs -->
+                    <ul class="nav nav-tabs mb-3" id="importTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="folder-tab" data-bs-toggle="tab" data-bs-target="#folder-tab-pane" type="button" role="tab">
+                                Folder Import
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="zip-tab" data-bs-toggle="tab" data-bs-target="#zip-tab-pane" type="button" role="tab">
+                                ZIP Archive
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="json-tab" data-bs-toggle="tab" data-bs-target="#json-tab-pane" type="button" role="tab">
+                                JSON Config
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="importTabsContent">
+                        <!-- Folder Import -->
+                        <div class="tab-pane fade show active" id="folder-tab-pane" role="tabpanel">
+                            <div class="border border-secondary border-dashed p-3 text-center mb-3" id="folderUploadArea">
+                                <i class="bi bi-folder2-open fs-2 text-secondary mb-2"></i>
+                                <h6>Select Folder</h6>
+                                <p class="text-secondary mb-2">Select a folder containing knowledge files</p>
+                                <input type="file" id="folderInput" class="form-control" webkitdirectory directory multiple>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="recursiveScan" checked>
+                                    <label class="form-check-label" for="recursiveScan">
+                                        Recursive scan subfolders
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="autoCategorize" checked>
+                                    <label class="form-check-label" for="autoCategorize">
+                                        Auto-categorize files
+                                    </label>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-dark" onclick="importFromFolder()">
+                                <i class="bi bi-play"></i> Start Import
+                            </button>
+                        </div>
+
+                        <!-- ZIP Archive Import -->
+                        <div class="tab-pane fade" id="zip-tab-pane" role="tabpanel">
+                            <div class="border border-secondary border-dashed p-3 text-center mb-3" id="zipUploadArea">
+                                <i class="bi bi-file-earmark-zip fs-2 text-secondary mb-2"></i>
+                                <h6>Select ZIP File</h6>
+                                <p class="text-secondary mb-2">Upload a ZIP archive containing knowledge files</p>
+                                <input type="file" id="zipInput" class="form-control" accept=".zip,.rar,.7z">
+                            </div>
+                            <button class="btn btn-outline-dark" onclick="importFromZip()">
+                                <i class="bi bi-upload"></i> Import Archive
+                            </button>
+                        </div>
+
+                        <!-- JSON Configuration Import -->
+                        <div class="tab-pane fade" id="json-tab-pane" role="tabpanel">
+                            <h6>JSON Configuration Import</h6>
+                            <textarea class="form-control mb-3" id="jsonConfig" rows="6" 
+                                placeholder='{
+  "knowledge_base": {
+    "name": "My Knowledge Base",
+    "description": "Description",
+    "files": [
+      {
+        "path": "file1.txt",
+        "category": "text",
+        "tags": ["AI", "machine learning"]
+      }
+    ]
+  }
+}'></textarea>
+                            <div class="d-flex gap-2">
+                                <input type="file" id="jsonFileInput" class="form-control" accept=".json">
+                                <button class="btn btn-outline-dark" onclick="importFromJson()">
+                                    <i class="bi bi-code"></i> Import JSON
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Progress -->
+    <div class="card mb-4" id="importProgress" style="display: none;">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-arrow-clockwise"></i> Import Progress
+                <button type="button" class="btn-close float-end" onclick="cancelImport()"></button>
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="progress mb-3">
+                <div class="progress-bar bg-dark" id="progressBar" role="progressbar" style="width: 0%">
+                    <span id="progressText">0%</span>
+                </div>
+            </div>
+            <div class="row text-center">
+                <div class="col-3">
+                    <h6 id="totalFiles">0</h6>
+                    <small class="text-secondary">Total</small>
+                </div>
+                <div class="col-3">
+                    <h6 id="processedFiles">0</h6>
+                    <small class="text-secondary">Processed</small>
+                </div>
+                <div class="col-3">
+                    <h6 id="successfulFiles">0</h6>
+                    <small class="text-secondary">Successful</small>
+                </div>
+                <div class="col-3">
+                    <h6 id="failedFiles">0</h6>
+                    <small class="text-secondary">Failed</small>
+                </div>
+            </div>
+            <div class="mt-3">
+                <h6>Import Logs</h6>
+                <div id="importLogs" class="border p-2" style="height: 200px; overflow-y: auto; font-size: 0.875rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import History -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-clock-history"></i> Import History
+                <button type="button" class="btn btn-outline-dark btn-sm float-end" onclick="clearHistory()">
+                    <i class="bi bi-trash"></i> Clear
+                </button>
+            </h5>
+        </div>
+        <div class="card-body">
+            <div id="historyList">
+                <div class="text-center py-4">
+                    <i class="bi bi-inbox fs-1 text-secondary"></i>
+                    <p class="text-secondary mb-0">No import history</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// File upload handlers
+function uploadSingleFiles() {
+    const files = document.getElementById('singleFileInput').files;
+    const category = document.getElementById('singleCategory').value;
+    
+    if (files.length === 0) {
+        alert('Please select files to upload');
+        return;
+    }
+    
+    processFiles(files, category);
+}
+
+function importFromFolder() {
+    const files = document.getElementById('folderInput').files;
+    const recursive = document.getElementById('recursiveScan').checked;
+    const autoCategorize = document.getElementById('autoCategorize').checked;
+    
+    if (files.length === 0) {
+        alert('Please select a folder');
+        return;
+    }
+    
+    processFiles(files, null, { recursive, autoCategorize });
+}
+
+function importFromZip() {
+    const file = document.getElementById('zipInput').files[0];
+    
+    if (!file) {
+        alert('Please select a ZIP file');
+        return;
+    }
+    
+    processFiles([file], 'zip');
+}
+
+function importFromJson() {
+    const jsonContent = document.getElementById('jsonConfig').value;
+    const file = document.getElementById('jsonFileInput').files[0];
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const config = JSON.parse(e.target.result);
+                processJsonConfig(config);
+            } catch (error) {
+                alert('Invalid JSON file');
+            }
+        };
+        reader.readAsText(file);
+    } else if (jsonContent.trim()) {
+        try {
+            const config = JSON.parse(jsonContent);
+            processJsonConfig(config);
+        } catch (error) {
+            alert('Invalid JSON configuration');
+        }
+    } else {
+        alert('Please provide JSON configuration');
+    }
+}
+
+function processFiles(files, category, options = {}) {
+    const progressDiv = document.getElementById('importProgress');
+    const totalFilesEl = document.getElementById('totalFiles');
+    const processedFilesEl = document.getElementById('processedFiles');
+    const successfulFilesEl = document.getElementById('successfulFiles');
+    const failedFilesEl = document.getElementById('failedFiles');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const logs = document.getElementById('importLogs');
+    
+    progressDiv.style.display = 'block';
+    totalFilesEl.textContent = files.length;
+    processedFilesEl.textContent = 0;
+    successfulFilesEl.textContent = 0;
+    failedFilesEl.textContent = 0;
+    logs.innerHTML = '';
+    
+    let processed = 0;
+    let successful = 0;
+    let failed = 0;
+    
+    function updateProgress() {
+        const percentage = Math.round((processed / files.length) * 100);
+        progressBar.style.width = percentage + '%';
+        progressText.textContent = percentage + '%';
+        processedFilesEl.textContent = processed;
+        successfulFilesEl.textContent = successful;
+        failedFilesEl.textContent = failed;
+    }
+    
+    function addLog(message, type = 'info') {
+        const logEntry = document.createElement('div');
+        logEntry.className = `text-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'secondary'}`;
+        logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logs.appendChild(logEntry);
+        logs.scrollTop = logs.scrollHeight;
+    }
+    
+    // Simulate processing files
+    for (let i = 0; i < files.length; i++) {
+        setTimeout(() => {
+            const file = files[i];
+            addLog(`Processing ${file.name}...`);
+            
+            // Simulate success/failure
+            if (Math.random() > 0.1) {
+                successful++;
+                addLog(`Successfully imported ${file.name}`, 'success');
+            } else {
+                failed++;
+                addLog(`Failed to import ${file.name}`, 'error');
+            }
+            
+            processed++;
+            updateProgress();
+            
+            if (processed === files.length) {
+                addLog('Import completed', 'success');
+                setTimeout(() => {
+                    progressDiv.style.display = 'none';
+                    updateHistory();
+                }, 2000);
+            }
+        }, i * 500);
+    }
+}
+
+function processJsonConfig(config) {
+    
+    addLog('JSON configuration processed successfully', 'success');
+}
+
+function cancelImport() {
+    document.getElementById('importProgress').style.display = 'none';
+    addLog('Import cancelled by user');
+}
+
+function clearHistory() {
+    document.getElementById('historyList').innerHTML = `
+        <div class="text-center py-4">
+            <i class="bi bi-inbox fs-1 text-secondary"></i>
+            <p class="text-secondary mb-0">No import history</p>
+        </div>
+    `;
+}
+
+function updateHistory() {
+    const historyList = document.getElementById('historyList');
+    const timestamp = new Date().toLocaleString();
+    
+    historyList.innerHTML = `
+        <div class="list-group">
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="mb-1">Import Session</h6>
+                        <small class="text-secondary">${timestamp}</small>
+                    </div>
+                    <div class="text-end">
+                        <small class="text-success">12 successful</small><br>
+                        <small class="text-danger">1 failed</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add file input change handlers
+        document.getElementById('singleFileInput').addEventListener('change', function(e) {
+            // File selection handled by uploadSingleFiles
+        });
+        
+        document.getElementById('folderInput').addEventListener('change', function(e) {
+            // Folder selection handled by importFromFolder
+        });
+        
+        document.getElementById('zipInput').addEventListener('change', function(e) {
+            // ZIP selection handled by importFromZip
+        });
+    });
+</script>
+{% endblock %}

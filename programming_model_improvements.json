@@ -1,0 +1,70 @@
+{
+    "model_id": "K",
+    "improvements": [
+        {
+            "reason": "重构复杂函数 _collect_dependencies_from_file (复杂度: 335)",
+            "modification": {
+                "find": "def _collect_dependencies_from_file(",
+                "replace": "# TODO: 重构_collect_dependencies_from_file函数，降低复杂度\ndef _collect_dependencies_from_file("
+            },
+            "test_result": {
+                "success": false,
+                "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.6.3, pytest-3.2.1, py-1.4.34, pluggy-0.4.0 -- C:\\ProgramData\\Anaconda3\\python.exe\ncachedir: .cache\nrootdir: D:\\shiyan, inifile:\nplugins: anyio-3.6.2\ncollecting ... collected 0 items / 1 errors\n\n=================================== ERRORS ====================================\n______________ ERROR collecting sub_models/K_programming/app.py _______________\nC:\\ProgramData\\Anaconda3\\lib\\site-packages\\_pytest\\python.py:395: in _importtestmodule\n    mod = self.fspath.pyimport(ensuresyspath=importmode)\nC:\\ProgramData\\Anaconda3\\lib\\site-packages\\py\\_path\\local.py:662: in pyimport\n    __import__(modname)\nE     File \"D:\\shiyan\\sub_models\\K_programming\\app.py\", line 312\nE       def _improve_file(self, model_id, file_path, requirements, file_type):\nE                                                                            ^\nE   IndentationError: unindent does not match any outer indentation level\n!!!!!!!!!!!!!!!!!!! Interrupted: 1 errors during collection !!!!!!!!!!!!!!!!!!!\n=========================== 1 error in 0.16 seconds ===========================\n",
+                "stderr": "",
+                "returncode": 2
+            }
+        },
+        {
+            "reason": "重构复杂函数 _generate_requirement_improvements (复杂度: 178)",
+            "modification": {
+                "find": "def _generate_requirement_improvements(",
+                "replace": "# TODO: 重构_generate_requirement_improvements函数，降低复杂度\ndef _generate_requirement_improvements("
+            },
+            "test_result": {
+                "success": false,
+                "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.6.3, pytest-3.2.1, py-1.4.34, pluggy-0.4.0 -- C:\\ProgramData\\Anaconda3\\python.exe\ncachedir: .cache\nrootdir: D:\\shiyan, inifile:\nplugins: anyio-3.6.2\ncollecting ... collected 0 items / 1 errors\n\n=================================== ERRORS ====================================\n______________ ERROR collecting sub_models/K_programming/app.py _______________\nC:\\ProgramData\\Anaconda3\\lib\\site-packages\\_pytest\\python.py:395: in _importtestmodule\n    mod = self.fspath.pyimport(ensuresyspath=importmode)\nC:\\ProgramData\\Anaconda3\\lib\\site-packages\\py\\_path\\local.py:662: in pyimport\n    __import__(modname)\nE     File \"D:\\shiyan\\sub_models\\K_programming\\app.py\", line 312\nE       def _improve_file(self, model_id, file_path, requirements, file_type):\nE                                                                            ^\nE   IndentationError: unindent does not match any outer indentation level\n!!!!!!!!!!!!!!!!!!! Interrupted: 1 errors during collection !!!!!!!!!!!!!!!!!!!\n=========================== 1 error in 0.13 seconds ===========================\n",
+                "stderr": "",
+                "returncode": 2
+            }
+        },
+        {
+            "reason": "重构复杂函数 _generate_python_code (复杂度: 176)",
+            "modification": {
+                "find": "def _generate_python_code(",
+                "replace": "# TODO: 重构_generate_python_code函数，降低复杂度\ndef _generate_python_code("
+            },
+            "test_result": {
+                "success": false,
+                "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.6.3, pytest-3.2.1, py-1.4.34, pluggy-0.4.0 -- C:\\ProgramData\\Anaconda3\\python.exe\ncachedir: .cache\nrootdir: D:\\shiyan, inifile:\nplugins: anyio-3.6.2\ncollecting ... collected 0 items / 1 errors\n\n=================================== ERRORS ====================================\n______________ ERROR collecting sub_models/K_programming/app.py _______________\nC:\\ProgramData\\Anaconda3\\lib\\site-packages\\_pytest\\python.py:395: in _importtestmodule\n    mod = self.fspath.pyimport(ensuresyspath=importmode)\nC:\\ProgramData\\Anaconda3\\lib\\site-packages\\py\\_path\\local.py:662: in pyimport\n    __import__(modname)\nE     File \"D:\\shiyan\\sub_models\\K_programming\\app.py\", line 312\nE       def _improve_file(self, model_id, file_path, requirements, file_type):\nE                                                                            ^\nE   IndentationError: unindent does not match any outer indentation level\n!!!!!!!!!!!!!!!!!!! Interrupted: 1 errors during collection !!!!!!!!!!!!!!!!!!!\n=========================== 1 error in 0.12 seconds ===========================\n",
+                "stderr": "",
+                "returncode": 2
+            }
+        },
+        {
+            "reason": "性能优化",
+            "modification": {
+                "insert_after": "import ",
+                "code": "# 性能优化: 添加缓存机制或算法优化\n"
+            },
+            "test_result": {
+                "success": false,
+                "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.6.3, pytest-3.2.1, py-1.4.34, pluggy-0.4.0 -- C:\\ProgramData\\Anaconda3\\python.exe\ncachedir: .cache\nrootdir: D:\\shiyan, inifile:\nplugins: anyio-3.6.2\ncollecting ... collected 0 items / 1 errors\n\n=================================== ERRORS ====================================\n______________ ERROR collecting sub_models/K_programming/app.py _______________\nC:\\ProgramData\\Anaconda3\\lib\\site-packages\\_pytest\\python.py:395: in _importtestmodule\n    mod = self.fspath.pyimport(ensuresyspath=importmode)\nC:\\ProgramData\\Anaconda3\\lib\\site-packages\\py\\_path\\local.py:662: in pyimport\n    __import__(modname)\nE     File \"D:\\shiyan\\sub_models\\K_programming\\app.py\", line 6\nE       import\nE             ^\nE   SyntaxError: invalid syntax\n!!!!!!!!!!!!!!!!!!! Interrupted: 1 errors during collection !!!!!!!!!!!!!!!!!!!\n=========================== 1 error in 0.12 seconds ===========================\n",
+                "stderr": "",
+                "returncode": 2
+            }
+        },
+        {
+            "reason": "功能增强",
+            "modification": {
+                "insert_after": "def __init__",
+                "code": "        # 新增功能实现\n"
+            },
+            "test_result": {
+                "success": false,
+                "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.6.3, pytest-3.2.1, py-1.4.34, pluggy-0.4.0 -- C:\\ProgramData\\Anaconda3\\python.exe\ncachedir: .cache\nrootdir: D:\\shiyan, inifile:\nplugins: anyio-3.6.2\ncollecting ... collected 0 items / 1 errors\n\n=================================== ERRORS ====================================\n______________ ERROR collecting sub_models/K_programming/app.py _______________\nC:\\ProgramData\\Anaconda3\\lib\\site-packages\\_pytest\\python.py:395: in _importtestmodule\n    mod = self.fspath.pyimport(ensuresyspath=importmode)\nC:\\ProgramData\\Anaconda3\\lib\\site-packages\\py\\_path\\local.py:662: in pyimport\n    __import__(modname)\nE     File \"D:\\shiyan\\sub_models\\K_programming\\app.py\", line 6\nE       import\nE             ^\nE   SyntaxError: invalid syntax\n!!!!!!!!!!!!!!!!!!! Interrupted: 1 errors during collection !!!!!!!!!!!!!!!!!!!\n=========================== 1 error in 0.13 seconds ===========================\n",
+                "stderr": "",
+                "returncode": 2
+            }
+        }
+    ]
+}

@@ -1,0 +1,14 @@
+{
+  "description": "Binocular Vision Model - Spatial recognition, modeling, positioning, distance perception and motion prediction",
+  "model_source": "local",
+  "local_model_path": "models/F_bimocular/model",
+  "training_data_path": "data/F_bimocular/training",
+  "hyperparameters": {
+    "learning_rate": 0.0005,
+    "batch_size": 16,
+    "epochs": 25
+  },
+  "status": "ready",
+  "last_trained": "",
+  "last_updated": "2025-09-18T11:42:21.188480"
+}

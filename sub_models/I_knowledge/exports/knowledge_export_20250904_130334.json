@@ -1,0 +1,35 @@
+{
+  "knowledge": {
+    "c29dcda9ae9dba37b9e9da9f862d45a1": {
+      "id": "c29dcda9ae9dba37b9e9da9f862d45a1",
+      "content": "人工智能基础知识\n\n人工智能（Artificial Intelligence，AI）是研究、开发用于模拟、延伸和扩展人的智能的理论、方法、技术及应用系统的一门新的技术科学。\n\n人工智能的主要研究领域包括：\n1. 机器学习：让计算机从数据中学习\n2. 深度学习：使用神经网络进行学习\n3. 自然语言处理：理解和生成人类语言\n4. 计算机视觉：让计算机\"看见\"和理解图像\n5. 机器人学：设计和制造智能机器人\n\n人工智能的应用场景：\n- 智能助手（如Siri、Alexa）\n- 自动驾驶汽车\n- 医疗诊断系统\n- 推荐系统\n- 语音识别\n- 图像识别\n\n人工智能的发展历程：\n- 1950年代：AI概念提出\n- 1980年代：专家系统兴起\n- 2000年代：机器学习发展\n- 2010年代：深度学习突破\n- 2020年代：大模型时代",
+      "category": "人工智能",
+      "type": "text",
+      "filename": "1756961356.748751_test_knowledge.txt",
+      "size": 364,
+      "created_at": "2025-09-04T12:49:16.749755",
+      "metadata": {
+        "word_count": 38,
+        "char_count": 364
+      }
+    }
+  },
+  "metadata": {},
+  "exported_at": "2025-09-04T13:03:34.279175",
+  "statistics": {
+    "last_updated": "2025-09-04 13:02:09",
+    "knowledge_entries": 0,
+    "queries_processed": 0,
+    "sessions_active": 3,
+    "files_uploaded": 1,
+    "total_storage": 854,
+    "supported_formats": [
+      "text",
+      "document",
+      "image",
+      "audio",
+      "video"
+    ],
+    "current_version": "2.0.0"
+  }
+}

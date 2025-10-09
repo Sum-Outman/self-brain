@@ -1,0 +1,813 @@
+{% extends "base.html" %}
+
+{% block title %}Model API Configuration - Self Brain AGI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/monochrome.css') }}">
+<style>
+    /* Enhanced monochrome style */
+    .config-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1.5rem;
+    }
+    .header-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    .model-card {
+        border-radius: 0.5rem;
+        border: 1px solid #e0e0e0;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        transition: transform 0.2s ease-in-out;
+    }
+    .model-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .model-card-header {
+        padding: 1rem 1.25rem;
+        background-color: #f9f9f9;
+        border-bottom: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .model-card-body {
+        padding: 1.25rem;
+    }
+    .model-status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 2rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    .status-local {
+        background-color: #f0f0f0;
+        color: #555555;
+    }
+    .status-external {
+        background-color: #f0f0f0;
+        color: #333333;
+    }
+    .status-error {
+        background-color: #f0f0f0;
+        color: #666666;
+    }
+    .connection-status-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+    .status-connected {
+        background-color: #333333;
+    }
+    .status-disconnected {
+        background-color: #cccccc;
+    }
+    .config-section {
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e0e0e0;
+    }
+    .provider-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .provider-card:hover {
+        background-color: #f9f9f9;
+        border-color: #bbbbbb;
+    }
+    .provider-card.selected {
+        background-color: #f0f0f0;
+        border-color: #777777;
+    }
+    .form-control {
+        margin-bottom: 1rem;
+    }
+    .btn-primary {
+        background-color: #333333;
+        border-color: #333333;
+        color: white;
+        transition: all 0.2s ease;
+    }
+    .btn-primary:hover {
+        background-color: #555555;
+        border-color: #555555;
+    }
+    .btn-secondary {
+        background-color: #ffffff;
+        border-color: #333333;
+        color: #333333;
+        transition: all 0.2s ease;
+    }
+    .btn-secondary:hover {
+        background-color: #f0f0f0;
+    }
+    .btn-danger {
+        background-color: #666666;
+        border-color: #666666;
+        color: white;
+    }
+    .btn-danger:hover {
+        background-color: #888888;
+        border-color: #888888;
+    }
+    .test-result {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+    }
+    .test-result.success {
+        background-color: #f0f0f0;
+        border-left: 4px solid #333333;
+    }
+    .test-result.error {
+        background-color: #f0f0f0;
+        border-left: 4px solid #666666;
+    }
+    .form-check-input:checked {
+        background-color: #333333;
+        border-color: #333333;
+    }
+    .advanced-options {
+        margin-top: 1rem;
+        padding: 1rem;
+        background-color: #f9f9f9;
+        border-radius: 0.375rem;
+    }
+    .tooltip-inner {
+        background-color: #333333;
+        color: white;
+        border-radius: 0.25rem;
+    }
+    .tooltip-arrow {
+        border-top-color: #333333 !important;
+        border-bottom-color: #333333 !important;
+        border-left-color: #333333 !important;
+        border-right-color: #333333 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="config-container">
+    <div class="header-section">
+        <h1>Model API Configuration</h1>
+        <p class="text-muted">Configure external API connections for individual models. Switch between local implementation and external API services.</p>
+    </div>
+
+    <!-- Models List Section -->
+    <div class="mb-6">
+        <div class="d-flex justify-content-between items-center mb-4">
+            <h2 class="h4">Available Models</h2>
+            <button class="btn btn-outline-dark" onclick="refreshModelsList()">
+                <i class="bi bi-arrow-repeat"></i> Refresh
+            </button>
+        </div>
+        
+        <div class="models-grid" id="modelsContainer">
+            <!-- Models will be populated by JavaScript -->
+            <div class="text-center py-6 text-muted">Loading models...</div>
+        </div>
+    </div>
+
+    <!-- API Configuration Panel -->
+    <div class="card" id="configPanel" style="display: none;">
+        <div class="card-header">
+            <h2 class="h4" id="configPanelTitle">API Configuration</h2>
+        </div>
+        <div class="card-body">
+            <form id="apiConfigForm">
+                <input type="hidden" id="currentModelId">
+                
+                <!-- API Source Selection -->
+                <div class="mb-4">
+                    <label class="form-label">API Source</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="apiSource" id="useLocalModel" value="local" checked>
+                        <label class="form-check-label" for="useLocalModel">
+                            Use local model implementation
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="apiSource" id="useExternalApi" value="external">
+                        <label class="form-check-label" for="useExternalApi">
+                            Connect to external API
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- External API Configuration Section -->
+                <div id="externalApiSection" style="display: none;">
+                    <!-- API Provider Selection -->
+                    <div class="mb-4">
+                        <label class="form-label">Select API Provider</label>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="provider-card" data-provider="openai" onclick="selectProvider('openai')">
+                                    <h5 class="h6 mb-1">OpenAI</h5>
+                                    <p class="text-sm text-muted">GPT-4o, GPT-4, GPT-3.5</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="provider-card" data-provider="anthropic" onclick="selectProvider('anthropic')">
+                                    <h5 class="h6 mb-1">Anthropic</h5>
+                                    <p class="text-sm text-muted">Claude 3, Claude 2</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="provider-card" data-provider="google" onclick="selectProvider('google')">
+                                    <h5 class="h6 mb-1">Google AI</h5>
+                                    <p class="text-sm text-muted">Gemini, Palm</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="provider-card" data-provider="siliconflow" onclick="selectProvider('siliconflow')">
+                                    <h5 class="h6 mb-1">SiliconFlow</h5>
+                                    <p class="text-sm text-muted">Various Models</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="provider-card" data-provider="openrouter" onclick="selectProvider('openrouter')">
+                                    <h5 class="h6 mb-1">OpenRouter</h5>
+                                    <p class="text-sm text-muted">Access to 100+ Models</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="provider-card" data-provider="custom" onclick="selectProvider('custom')">
+                                    <h5 class="h6 mb-1">Custom API</h5>
+                                    <p class="text-sm text-muted">Other OpenAI-compatible</p>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="apiProvider" value="openai">
+                    </div>
+                    
+                    <!-- API Configuration Form Fields -->
+                    <div class="form-group">
+                        <label for="apiKey" class="form-label">API Key</label>
+                        <input type="password" class="form-control" id="apiKey" placeholder="Enter your API key">
+                        <div class="form-text">API keys are stored securely in the system configuration</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="apiEndpoint" class="form-label">API Endpoint</label>
+                        <input type="text" class="form-control" id="apiEndpoint" placeholder="https://api.example.com/v1">
+                        <div class="form-text">Base URL for the API service</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="apiModel" class="form-label">Model Name</label>
+                        <input type="text" class="form-control" id="apiModel" placeholder="Model identifier">
+                        <div class="form-text">e.g., gpt-4o, claude-3-opus-20240229, gemini-pro</div>
+                    </div>
+                    
+                    <!-- Advanced Options -->
+                    <div class="advanced-options">
+                        <div class="d-flex justify-content-between items-center mb-2">
+                            <h5 class="h6 mb-0">Advanced Options</h5>
+                            <button type="button" class="btn btn-link btn-sm text-muted p-0" id="toggleAdvancedOptions">
+                                <i class="bi bi-chevron-down"></i>
+                            </button>
+                        </div>
+                        <div id="advancedOptionsContent">
+                            <div class="form-group">
+                                <label for="apiTimeout" class="form-label">Timeout (seconds)</label>
+                                <input type="number" class="form-control" id="apiTimeout" value="30" min="5" max="120">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="customHeaders" class="form-label">Custom Headers (JSON format)</label>
+                                <textarea class="form-control" id="customHeaders" rows="3" placeholder="{\"header-name\": \"header-value\"}"></textarea>
+                                <div class="form-text">Additional headers for API requests (optional)</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Connection Test -->
+                    <div class="mt-4">
+                        <button type="button" class="btn btn-secondary" id="testConnectionBtn">
+                            <i class="bi bi-plug"></i> Test Connection
+                        </button>
+                        <div id="testConnectionResult" class="test-result" style="display: none;"></div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="mt-6 d-flex justify-content-end gap-3">
+                    <button type="button" class="btn btn-secondary" id="cancelConfigBtn">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="saveConfigBtn">
+                        Save Configuration
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Connection Status Summary -->
+    <div class="card mt-6">
+        <div class="card-header">
+            <h2 class="h4">Connection Status Summary</h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="p-3 bg-light rounded">
+                        <div class="text-muted text-sm mb-1">Total Models</div>
+                        <div class="h5" id="totalModelsCount">0</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 bg-light rounded">
+                        <div class="text-muted text-sm mb-1">Local Models</div>
+                        <div class="h5" id="localModelsCount">0</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 bg-light rounded">
+                        <div class="text-muted text-sm mb-1">External API Models</div>
+                        <div class="h5" id="externalModelsCount">0</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 bg-light rounded">
+                        <div class="text-muted text-sm mb-1">Active Connections</div>
+                        <div class="h5" id="activeConnectionsCount">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // API provider endpoints mapping
+    const providerEndpoints = {
+        'openai': 'https://api.openai.com/v1',
+        'anthropic': 'https://api.anthropic.com/v1',
+        'google': 'https://generativelanguage.googleapis.com/v1',
+        'siliconflow': 'https://api.siliconflow.cn/v1',
+        'openrouter': 'https://openrouter.ai/api/v1'
+    };
+    
+    // API provider model examples
+    const providerModels = {
+        'openai': ['gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+        'anthropic': ['claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-2.1'],
+        'google': ['gemini-pro', 'gemini-1.5-pro-latest'],
+        'siliconflow': ['meta-llama/Meta-Llama-3.1-70B-Instruct', 'Qwen/Qwen2.5-72B-Instruct', 'deepseek-ai/DeepSeek-R1'],
+        'openrouter': ['anthropic/claude-3-opus', 'openai/gpt-4-turbo', 'meta-llama/llama-3-70b-instruct']
+    };
+    
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load models list
+        loadModelsList();
+        
+        // Setup event listeners
+        setupEventListeners();
+    });
+    
+    // Setup event listeners
+    function setupEventListeners() {
+        // API source radio buttons
+        document.getElementById('useLocalModel').addEventListener('change', function() {
+            document.getElementById('externalApiSection').style.display = 'none';
+        });
+        
+        document.getElementById('useExternalApi').addEventListener('change', function() {
+            document.getElementById('externalApiSection').style.display = 'block';
+        });
+        
+        // Advanced options toggle
+        document.getElementById('toggleAdvancedOptions').addEventListener('click', function() {
+            const content = document.getElementById('advancedOptionsContent');
+            const icon = this.querySelector('i');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.classList.remove('bi-chevron-down');
+                icon.classList.add('bi-chevron-up');
+            } else {
+                content.style.display = 'none';
+                icon.classList.remove('bi-chevron-up');
+                icon.classList.add('bi-chevron-down');
+            }
+        });
+        
+        // Test connection button
+        document.getElementById('testConnectionBtn').addEventListener('click', testConnection);
+        
+        // Cancel button
+        document.getElementById('cancelConfigBtn').addEventListener('click', function() {
+            document.getElementById('configPanel').style.display = 'none';
+        });
+        
+        // Form submission
+        document.getElementById('apiConfigForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveModelConfiguration();
+        });
+    }
+    
+    // Load models list
+    function loadModelsList() {
+        console.log('Loading models list...');
+        fetch('/api/model-api-config/get-models')
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Raw data from API:', data);
+                console.log('Data type:', typeof data);
+                console.log('Is array:', Array.isArray(data));
+                
+                const container = document.getElementById('modelsContainer');
+                container.innerHTML = '';
+                
+                // Check if data is in expected format
+                let models = [];
+                try {
+                    if (Array.isArray(data)) {
+                        models = data;
+                    } else if (data && Array.isArray(data.models)) {
+                        models = data.models;
+                    } else if (data && Array.isArray(data.data)) {
+                        models = data.data;
+                    } else {
+                        throw new Error('Invalid data format');
+                    }
+                    
+                    console.log('Processed models array:', models);
+                } catch (error) {
+                    console.error('Error processing models data:', error, data);
+                    container.innerHTML = '<div class="text-center py-6 text-muted">Failed to load models. Invalid data format.</div>';
+                    return;
+                }
+                
+                if (!models || models.length === 0) {
+                    container.innerHTML = '<div class="text-center py-6 text-muted">No models available</div>';
+                    return;
+                }
+                
+                // Calculate statistics
+                let totalModels = models.length;
+                let localModels = 0;
+                let externalModels = 0;
+                let activeConnections = 0;
+                
+                // Create model cards
+                models.forEach(model => {
+                    const card = document.createElement('div');
+                    card.className = 'model-card';
+                    
+                    // Determine status
+                    let statusClass = 'status-local';
+                    let statusText = 'Local';
+                    let connectionStatusClass = 'status-disconnected';
+                    let connectionStatusText = 'Not connected';
+                    
+                    if (model.model_source === 'external') {
+                        statusClass = 'status-external';
+                        statusText = 'External API';
+                        externalModels++;
+                        
+                        // Check if connection is active
+                        if (model.external_api && model.external_api.connection_status === 'connected') {
+                            connectionStatusClass = 'status-connected';
+                            connectionStatusText = 'Connected';
+                            activeConnections++;
+                        }
+                    } else {
+                        localModels++;
+                    }
+                    
+                    // Populate card content
+                    card.innerHTML = `
+                        <div class="model-card-header">
+                            <div>
+                                <h3 class="h5 mb-0">${model.name || model.model_id}</h3>
+                                <p class="text-sm text-muted mb-0">${model.model_id}</p>
+                            </div>
+                            <div class="d-flex items-center gap-3">
+                                <span class="model-status-badge ${statusClass}">${statusText}</span>
+                                <button class="btn btn-outline-dark btn-sm" onclick="configureModel('${model.model_id}')">
+                                    Configure
+                                </button>
+                            </div>
+                        </div>
+                        <div class="model-card-body">
+                            <div class="mb-2">
+                                <span class="text-sm">Description:</span> ${model.description || 'No description available'}
+                            </div>
+                            <div class="mb-2">
+                                <span class="text-sm">Type:</span> ${model.model_type || 'Unknown'}
+                            </div>
+                            <div class="mb-2">
+                                <span class="text-sm">Connection Status:</span>
+                                <span class="connection-status-dot ${connectionStatusClass}"></span>
+                                ${connectionStatusText}
+                            </div>
+                            ${model.external_api ? `
+                                <div class="config-section">
+                                    <div class="text-sm mb-1"><strong>External API Configuration:</strong></div>
+                                    <div class="text-sm text-muted">
+                                        <div>Provider: ${model.external_api.provider || 'Not specified'}</div>
+                                        <div>Endpoint: ${model.external_api.api_endpoint ? model.external_api.api_endpoint.replace(/^(https?:\/\/)(.*)$/, '$1***$2'.substring(0, 20)) : 'Not specified'}</div>
+                                        <div>Model: ${model.external_api.api_model || 'Not specified'}</div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                    
+                    container.appendChild(card);
+                });
+                
+                // Update statistics
+                document.getElementById('totalModelsCount').textContent = totalModels;
+                document.getElementById('localModelsCount').textContent = localModels;
+                document.getElementById('externalModelsCount').textContent = externalModels;
+                document.getElementById('activeConnectionsCount').textContent = activeConnections;
+            })
+            .catch(error => {
+                console.error('Failed to load models:', error);
+                document.getElementById('modelsContainer').innerHTML = '<div class="text-center py-6 text-muted">Failed to load models. Please try again later.</div>';
+            });
+    }
+    
+    // Refresh models list
+    function refreshModelsList() {
+        loadModelsList();
+    }
+    
+    // Configure model
+    function configureModel(modelId) {
+        // Show configuration panel
+        document.getElementById('configPanel').style.display = 'block';
+        document.getElementById('currentModelId').value = modelId;
+        document.getElementById('configPanelTitle').textContent = `API Configuration - ${modelId}`;
+        
+        // Load current model configuration
+        fetch(`/api/models/${modelId}`)
+            .then(response => response.json())
+            .then(model => {
+                // Reset form
+                document.getElementById('apiKey').value = '';
+                document.getElementById('apiEndpoint').value = '';
+                document.getElementById('apiModel').value = '';
+                document.getElementById('apiTimeout').value = '30';
+                document.getElementById('customHeaders').value = '';
+                document.getElementById('testConnectionResult').style.display = 'none';
+                
+                // Clear selected provider cards
+                document.querySelectorAll('.provider-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                
+                // Set API source
+                if (model.model_source === 'external' && model.external_api) {
+                    document.getElementById('useExternalApi').checked = true;
+                    document.getElementById('externalApiSection').style.display = 'block';
+                    
+                    // Populate API configuration
+                    const apiConfig = model.external_api;
+                    document.getElementById('apiProvider').value = apiConfig.provider || 'openai';
+                    
+                    // Select provider card
+                    if (apiConfig.provider) {
+                        const providerCard = document.querySelector(`.provider-card[data-provider="${apiConfig.provider}"]`);
+                        if (providerCard) {
+                            providerCard.classList.add('selected');
+                        }
+                    }
+                    
+                    // Fill form fields
+                    document.getElementById('apiKey').value = apiConfig.api_key || '';
+                    document.getElementById('apiEndpoint').value = apiConfig.api_endpoint || '';
+                    document.getElementById('apiModel').value = apiConfig.api_model || '';
+                    document.getElementById('apiTimeout').value = apiConfig.timeout || '30';
+                    document.getElementById('customHeaders').value = apiConfig.custom_headers ? JSON.stringify(apiConfig.custom_headers, null, 2) : '';
+                } else {
+                    document.getElementById('useLocalModel').checked = true;
+                    document.getElementById('externalApiSection').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Failed to load model configuration:', error);
+                alert('Failed to load model configuration. Please try again.');
+            });
+    }
+    
+    // Select API provider
+    function selectProvider(provider) {
+        // Clear previous selection
+        document.querySelectorAll('.provider-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        // Select new provider
+        const selectedCard = document.querySelector(`.provider-card[data-provider="${provider}"]`);
+        if (selectedCard) {
+            selectedCard.classList.add('selected');
+        }
+        
+        // Update hidden input
+        document.getElementById('apiProvider').value = provider;
+        
+        // Pre-fill endpoint for known providers
+        if (providerEndpoints[provider]) {
+            document.getElementById('apiEndpoint').value = providerEndpoints[provider];
+        }
+    }
+    
+    // Test API connection
+    function testConnection() {
+        const modelId = document.getElementById('currentModelId').value;
+        const apiProvider = document.getElementById('apiProvider').value;
+        const apiEndpoint = document.getElementById('apiEndpoint').value;
+        const apiKey = document.getElementById('apiKey').value;
+        const apiModel = document.getElementById('apiModel').value;
+        const apiTimeout = document.getElementById('apiTimeout').value;
+        
+        // Validate inputs
+        if (!apiEndpoint || !apiKey || !apiModel) {
+            showTestResult('error', 'Missing required parameters. Please fill in API Endpoint, API Key, and Model Name.');
+            return;
+        }
+        
+        // Show loading state
+        const testBtn = document.getElementById('testConnectionBtn');
+        const originalText = testBtn.innerHTML;
+        testBtn.disabled = true;
+        testBtn.innerHTML = '<i class="bi bi-spinner bi-spin"></i> Testing...';
+        
+        // Prepare test data
+        const testData = {
+            api_provider: apiProvider,
+            api_endpoint: apiEndpoint,
+            api_key: apiKey,
+            api_model: apiModel,
+            timeout: parseInt(apiTimeout)
+        };
+        
+        // Make API request
+        fetch(`/api/model-api-config/${modelId}/test`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(testData)
+        })
+        .then(response => response.json())
+        .then(result => {
+            // Reset button
+            testBtn.disabled = false;
+            testBtn.innerHTML = originalText;
+            
+            // Show test result
+            if (result.status === 'success') {
+                showTestResult('success', `Connection successful! Response: ${result.response.substring(0, 100)}...`);
+            } else {
+                showTestResult('error', `Connection failed: ${result.message || 'Unknown error'}`);
+            }
+        })
+        .catch(error => {
+            // Reset button
+            testBtn.disabled = false;
+            testBtn.innerHTML = originalText;
+            
+            // Show error
+            showTestResult('error', `Connection failed: ${error.message || 'Network error'}`);
+        });
+    }
+    
+    // Show test result
+    function showTestResult(type, message) {
+        const resultElement = document.getElementById('testConnectionResult');
+        resultElement.className = `test-result ${type}`;
+        resultElement.textContent = message;
+        resultElement.style.display = 'block';
+    }
+    
+    // Save model configuration
+    function saveModelConfiguration() {
+        const modelId = document.getElementById('currentModelId').value;
+        const useExternalApi = document.getElementById('useExternalApi').checked;
+        
+        // Show saving state
+        const saveBtn = document.getElementById('saveConfigBtn');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="bi bi-spinner bi-spin"></i> Saving...';
+        
+        if (useExternalApi) {
+            // Prepare API configuration
+            const apiProvider = document.getElementById('apiProvider').value;
+            const apiEndpoint = document.getElementById('apiEndpoint').value;
+            const apiKey = document.getElementById('apiKey').value;
+            const apiModel = document.getElementById('apiModel').value;
+            const apiTimeout = document.getElementById('apiTimeout').value;
+            let customHeaders = {};
+            
+            // Parse custom headers
+            try {
+                const headersText = document.getElementById('customHeaders').value.trim();
+                if (headersText) {
+                    customHeaders = JSON.parse(headersText);
+                }
+            } catch (e) {
+                alert('Invalid custom headers format. Please use valid JSON.');
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+                return;
+            }
+            
+            // Validate inputs
+            if (!apiEndpoint || !apiKey || !apiModel) {
+                alert('Missing required API configuration parameters.');
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+                return;
+            }
+            
+            // Prepare API config data
+            const apiConfig = {
+                provider: apiProvider,
+                api_endpoint: apiEndpoint,
+                api_key: apiKey,
+                api_model: apiModel,
+                timeout: parseInt(apiTimeout),
+                custom_headers: customHeaders
+            };
+            
+            // Switch to external API
+            fetch(`/api/model-api-config/${modelId}/switch-external`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ api_config: apiConfig })
+            })
+            .then(response => response.json())
+            .then(result => {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+                
+                if (result.status === 'success') {
+                    alert('Model successfully configured to use external API!');
+                    loadModelsList();
+                    document.getElementById('configPanel').style.display = 'none';
+                } else {
+                    alert(`Failed to configure external API: ${result.message || 'Unknown error'}`);
+                }
+            })
+            .catch(error => {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+                alert(`Failed to save configuration: ${error.message || 'Network error'}`);
+            });
+        } else {
+            // Switch to local model
+            fetch(`/api/model-api-config/${modelId}/switch-local`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(result => {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+                
+                if (result.status === 'success') {
+                    alert('Model successfully switched back to local implementation!');
+                    loadModelsList();
+                    document.getElementById('configPanel').style.display = 'none';
+                } else {
+                    alert(`Failed to switch to local implementation: ${result.message || 'Unknown error'}`);
+                }
+            })
+            .catch(error => {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+                alert(`Failed to save configuration: ${error.message || 'Network error'}`);
+            });
+        }
+    }
+</script>
+{% endblock %}

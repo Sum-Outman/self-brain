@@ -1,0 +1,89 @@
+name: 🐛 Bug Report
+about: 创建报告以帮助我们改进
+title: '[BUG] '
+labels: bug
+assignees: ''
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢您花时间报告bug！请填写以下信息：
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 清晰简洁地描述您遇到的问题
+      placeholder: 描述发生了什么...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 复现步骤
+      description: 请提供详细的复现步骤
+      placeholder: |
+        1. 启动系统...
+        2. 点击...
+        3. 看到错误...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期行为
+      description: 描述您期望发生的事情
+      placeholder: 应该显示...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+      description: 描述实际发生的事情
+      placeholder: 实际上显示了...
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 截图
+      description: 如果适用，添加截图以帮助解释您的问题
+      placeholder: 拖拽图片到这里...
+    validations:
+      required: false
+
+  - type: input
+    id: environment
+    attributes:
+      label: 环境信息
+      description: 请提供您的环境信息
+      placeholder: Windows 10, Python 3.8, Chrome 90
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 错误日志
+      description: 请粘贴任何相关的错误日志
+      placeholder: 粘贴错误日志...
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 检查清单
+      options:
+        - label: 我已经搜索了现有的问题
+          required: true
+        - label: 我已经提供了足够的信息来复现问题
+          required: true
+        - label: 我已经测试了最新的代码版本
+          required: true

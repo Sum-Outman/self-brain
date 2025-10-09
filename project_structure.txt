@@ -1,0 +1,53 @@
+集成化智能管理系统/
+├── manager_model/          # 管理模型核心
+│   ├── task_scheduler.py   # 动态任务分配
+│   ├── model_monitor.py    # 模型状态监控
+│   ├── data_broker.py      # 跨模型数据协调
+│   └── api_gateway.py      # 外部接口
+├── sub_models/             # 下属模型
+│   ├── B_language/         # 大语言模型
+│   ├── C_audio/            # 音频处理
+│   ├── D_image/            # 图片处理
+│   ├── E_video/            # 视频流处理
+│   ├── F_spatial/          # 空间定位
+│   ├── G_sensor/           # 传感器融合
+│   ├── G_computer/         # 计算机控制
+│   ├── I_motion/           # 运动控制
+│   └── J_knowledge/        # 知识库
+├── web_interface/          # 网页交互端
+│   ├── frontend/           # 用户界面
+│   └── backend/            # 服务接口
+├── data_platform/          # 数据中台
+│   ├── realtime_broker/    # 实时数据流
+│   └── storage/            # 持久化存储
+└── config/
+    ├── system_config.yaml  # 系统级配置
+    └── model_registry.json # 模型注册信息
+
+
+
+    超级智能系统/
+├── manager_model/          # 管理模型核心
+│   ├── task_scheduler.py   # 动态任务分配
+│   ├── model_monitor.py    # 模型状态监控
+│   ├── data_broker.py      # 跨模型数据协调
+│   └── api_gateway.py      # 外部接口
+├── sub_models/             # 下属模型
+│   ├── B_language/         # 大语言模型
+│   ├── C_audio/            # 音频处理
+│   ├── D_image/            # 图片处理
+│   ├── E_video/            # 视频流处理
+│   ├── F_spatial/          # 空间定位
+│   ├── G_sensor/           # 传感器融合
+│   ├── G_computer/         # 计算机控制
+│   ├── I_motion/           # 运动控制
+│   └── J_knowledge/        # 知识库
+├── web_interface/          # 网页交互端
+│   ├── frontend/           # 用户界面
+│   └── backend/            # 服务接口
+├── data_platform/          # 数据中台
+│   ├── realtime_broker/    # 实时数据流
+│   └── storage/            # 持久化存储
+└── config/
+    ├── system_config.yaml  # 系统级配置
+    └── model_registry.json # 模型注册信息

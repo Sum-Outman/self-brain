@@ -1,0 +1,688 @@
+{% extends "base_monochrome.html" %}
+
+{% block title %}A Management Model Interface - Self Brain AGI System{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Management Model - Self Brain AGI System</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+to=" crossorigin="anonymous"></script>
+    
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                            primary: '#374151',
+                            secondary: '#6B7280',
+                            tertiary: '#9CA3AF',
+                            background: '#F9FAFB',
+                            card: '#FFFFFF',
+                            border: '#E5E7EB',
+                            success: '#4B5563',
+                            error: '#4B5563',
+                            warning: '#4B5563',
+                            info: '#4B5563',
+                            gray: {
+                                100: '#F3F4F6',
+                                500: '#6B7280'
+                            }
+                        },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+                        'dropdown': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                    }
+                },
+            }
+        }
+    </script>
+    
+    <!-- Custom Styles -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .typing-animation span {
+                display: inline-block;
+                width: 4px;
+                height: 4px;
+                border-radius: 50%;
+                background-color: #6B7280;
+                margin: 0 1px;
+                animation: typing 1.4s infinite ease-in-out both;
+            }
+            .typing-animation span:nth-child(1) {
+                animation-delay: -0.32s;
+            }
+            .typing-animation span:nth-child(2) {
+                animation-delay: -0.16s;
+            }
+            @keyframes typing {
+                0%, 80%, 100% {
+                    transform: scale(0);
+                }
+                40% {
+                    transform: scale(1);
+                }
+            }
+            .fade-in {
+                animation: fadeIn 0.3s ease-in-out;
+            }
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .attachment-preview {
+                max-width: 80%;
+                max-height: 300px;
+                object-fit: contain;
+            }
+            .notification-enter {
+                animation: notificationIn 0.3s ease-out;
+            }
+            .notification-leave {
+                animation: notificationOut 0.3s ease-in;
+            }
+            @keyframes notificationIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes notificationOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        }
+    </style>
+</head>
+<body class="bg-background font-inter text-gray-800 min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-white border-b border-border py-3 px-4 md:px-6 fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <!-- Logo and Title -->
+            <div class="flex items-center space-x-2">
+                <div class="h-9 w-9 rounded-full bg-primary flex items-center justify-center text-white">
+                    <i class="bi bi-cpu text-lg"></i>
+                </div>
+                <div class="flex flex-col">
+                    <h1 class="text-lg font-semibold text-primary">Self Brain AGI System</h1>
+                    <p class="text-xs text-secondary">A Management Model Interface</p>
+                </div>
+            </div>
+            
+            <!-- Status and Navigation -->
+            <div class="flex items-center space-x-4">
+                <!-- Connection Status -->
+                <div class="hidden md:flex items-center space-x-1">
+                    <span id="connectionIndicator" class="w-2 h-2 rounded-full bg-success"></span>
+                    <span id="connectionStatus" class="text-sm text-secondary">Connected</span>
+                </div>
+                
+                <!-- Navigation Menu -->
+                <nav class="hidden md:flex items-center space-x-6">
+                    <a href="/" class="text-sm text-secondary hover:text-primary transition-colors">Dashboard</a>
+                    <a href="/training" class="text-sm text-secondary hover:text-primary transition-colors">Training</a>
+                    <a href="/knowledge_manage" class="text-sm text-secondary hover:text-primary transition-colors">Knowledge</a>
+                    <a href="/system_settings" class="text-sm text-secondary hover:text-primary transition-colors">Settings</a>
+                    <a href="/help" class="text-sm text-secondary hover:text-primary transition-colors">Help</a>
+                </nav>
+                
+                <!-- Mobile Menu Button -->
+                <button id="mobileMenuBtn" class="md:hidden text-secondary hover:text-primary">
+                    <i class="bi bi-list text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden md:hidden mt-2 py-2 border-t border-border">
+            <a href="/" class="block px-2 py-1.5 text-sm text-secondary hover:bg-gray-100 rounded">Dashboard</a>
+            <a href="/training" class="block px-2 py-1.5 text-sm text-secondary hover:bg-gray-100 rounded">Training</a>
+            <a href="/knowledge_manage" class="block px-2 py-1.5 text-sm text-secondary hover:bg-gray-100 rounded">Knowledge</a>
+            <a href="/system_settings" class="block px-2 py-1.5 text-sm text-secondary hover:bg-gray-100 rounded">Settings</a>
+            <a href="/help" class="block px-2 py-1.5 text-sm text-secondary hover:bg-gray-100 rounded">Help</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 pt-24 pb-6 px-4 md:px-6 max-w-7xl mx-auto w-full">
+        <!-- Current Conversation Header -->
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <h2 id="currentConversationTitle" class="text-xl font-semibold text-primary">A Management Model</h2>
+                <div class="flex items-center mt-1 space-x-2">
+                    <span class="text-xs text-success">Active</span>
+                    <span class="text-xs text-secondary">Last updated: Just now</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="modelInfoBtn" class="p-2 rounded-full hover:bg-gray-100 text-secondary">
+                    <i class="bi bi-info-circle"></i>
+                </button>
+                <button id="newConversationBtn" class="p-2 rounded-full hover:bg-gray-100 text-secondary">
+                    <i class="bi bi-plus-lg"></i>
+                </button>
+                <button id="clearChatBtn" class="p-2 rounded-full hover:bg-gray-100 text-secondary">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Chat Container -->
+        <div class="flex flex-col md:flex-row gap-4">
+            <!-- Conversation Sidebar -->
+            <div class="w-full md:w-64 lg:w-80 flex-shrink-0">
+                <!-- Sidebar Card -->
+                <div class="bg-white border border-border rounded-lg shadow-card overflow-hidden h-[calc(100vh-12rem)] flex flex-col">
+                    <!-- Search -->
+                    <div class="p-3 border-b border-border">
+                        <div class="relative">
+                            <input type="text" id="conversationSearch" placeholder="Search conversations..." 
+                                class="w-full px-3 py-2 pr-10 text-sm rounded-md border border-border focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+                            <i class="bi bi-search absolute right-3 top-1/2 -translate-y-1/2 text-secondary"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Conversation List -->
+                    <div id="conversationsList" class="flex-1 overflow-y-auto scrollbar-hide">
+                        <!-- This will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat Area -->
+            <div class="flex-1">
+                <!-- Chat Card -->
+                <div class="bg-white border border-border rounded-lg shadow-card overflow-hidden h-[calc(100vh-12rem)] flex flex-col">
+                    <!-- Chat Header -->
+                    <div class="p-3 border-b border-border flex justify-between items-center">
+                        <div class="flex items-center space-x-2">
+                            <div id="modelAvatar" class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                <i class="bi bi-cpu text-primary"></i>
+                            </div>
+                            <div>
+                                <p id="modelName" class="font-medium text-sm">A Management Model</p>
+                                <div class="flex items-center space-x-1">
+                                    <span id="modelStatus" class="w-1.5 h-1.5 rounded-full bg-success"></span>
+                                    <span class="text-xs text-secondary">Ready</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button id="toggleVoiceBtn" class="p-1.5 rounded-full hover:bg-gray-100 text-secondary">
+                                <i class="bi bi-mic"></i>
+                            </button>
+                            <button id="exportChatBtn" class="p-1.5 rounded-full hover:bg-gray-100 text-secondary">
+                                <i class="bi bi-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Messages Area -->
+                    <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
+                        <!-- Welcome Message -->
+                        <div class="message ai-message fade-in">
+                            <div class="flex items-start space-x-2">
+                                <div class="message-avatar ai-avatar h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                    <i class="bi bi-cpu text-primary"></i>
+                                </div>
+                                <div class="message-content">
+                                    <p class="mb-2">👋 Hello! I'm the A Management Model, the central coordinator of the Self Brain AGI System.</p>
+                                    <p class="mb-2">I can help you with:</p>
+                                    <ul class="list-disc pl-5 mb-2 space-y-1">
+                                        <li>Coordinating multiple AI models for complex tasks</li>
+                                        <li>Processing text, images, videos, and documents</li>
+                                        <li>Managing knowledge bases and training data</li>
+                                        <li>Controlling system settings and configurations</li>
+                                    </ul>
+                                    <p class="text-sm text-secondary">How can I assist you today?</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- More messages will be added here by JavaScript -->
+                    </div>
+                    
+                    <!-- File Upload Area -->
+                    <div id="uploadArea" class="border-t border-border p-2">
+                        <div class="bg-background/50 rounded-md p-4 text-center cursor-pointer hover:bg-background transition-colors">
+                            <input type="file" id="fileInput" class="hidden" multiple accept="image/*,video/*,.pdf,.doc,.docx,.txt">
+                            <i class="bi bi-cloud-arrow-up text-2xl text-secondary mb-1"></i>
+                            <p class="text-sm text-secondary">Drag & drop files or click to upload</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Message Input -->
+                    <div class="border-t border-border p-3 bg-white">
+                        <div class="relative">
+                            <textarea id="messageInput" rows="1" placeholder="Type your message..." 
+                                class="w-full px-4 py-2 pr-12 text-sm rounded-md border border-border focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary resize-none transition-all"></textarea>
+                            <button id="sendBtn" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-white bg-primary hover:bg-primary/90 transition-colors">
+                                <i class="bi bi-send"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Settings and Stats Panel -->
+            <div class="w-full md:w-72 flex-shrink-0 hidden lg:block">
+                <!-- Emotion Card -->
+                <div class="bg-white border border-border rounded-lg shadow-card p-4 mb-4">
+                    <h3 class="font-medium text-sm text-primary mb-3">Current Emotional State</h3>
+                    <div class="flex flex-col items-center justify-center">
+                        <div id="emotionIndicator" class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                            <i id="emotionIcon" class="bi bi-emoji-neutral text-2xl text-gray-500"></i>
+                        </div>
+                        <h4 id="emotionLabel" class="font-medium text-sm text-primary mb-1">Neutral</h4>
+                        <p id="emotionDescription" class="text-xs text-secondary text-center mb-4">Feeling calm and ready to assist</p>
+                        <div class="grid grid-cols-2 gap-2 mt-3">
+                            <div class="text-center">
+                                <p class="text-xs text-secondary">Text Processing</p>
+                                <p id="valenceValue" class="text-xs font-medium">50%</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs text-secondary">Image Processing</p>
+                                <p id="arousalValue" class="text-xs font-medium">50%</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs text-secondary">Audio Processing</p>
+                                <p id="dominanceValue" class="text-xs font-medium">50%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stats Card -->
+                <div class="bg-white border border-border rounded-lg shadow-card p-4 mb-4">
+                    <h3 class="font-medium text-sm text-primary mb-3">Performance Metrics</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs text-secondary">Response Time</span>
+                                <span id="responseTime" class="text-xs font-medium">--</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-gray-500 h-1.5 rounded-full" style="width: 0%"></div>
+                                </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs text-secondary">Models Used</span>
+                                <span id="modelsUsed" class="text-xs font-medium">0</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-gray-500 h-1.5 rounded-full" style="width: 0%"></div>
+                                </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs text-secondary">Context Length</span>
+                                <span id="contextLength" class="text-xs font-medium">0</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-gray-500 h-1.5 rounded-full" style="width: 0%"></div>
+                                </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Settings Card -->
+                <div class="bg-white border border-border rounded-lg shadow-card p-4 mb-4">
+                    <h3 class="font-medium text-sm text-primary mb-3">Model Settings</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs text-secondary mb-1">Model</label>
+                            <select id="modelSelector" class="w-full px-2 py-1.5 text-sm rounded-md border border-border focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+                                <option value="a_management" selected>A Management Model</option>
+                                <option value="b_language">B Language Model</option>
+                                <option value="c_audio">C Audio Model</option>
+                                <option value="d_image">D Image Model</option>
+                                <option value="e_video">E Video Model</option>
+                                <option value="f_spatial">F Spatial Model</option>
+                                <option value="g_sensor">G Sensor Model</option>
+                                <option value="h_computer">H Computer Model</option>
+                                <option value="i_motion">I Motion Model</option>
+                                <option value="j_knowledge">J Knowledge Model</option>
+                                <option value="k_programming">K Programming Model</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-secondary mb-1">Knowledge Base</label>
+                            <select id="knowledgeSelect" class="w-full px-2 py-1.5 text-sm rounded-md border border-border focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+                                <option value="all" selected>All Knowledge Bases</option>
+                                <option value="general">General Knowledge</option>
+                                <option value="technical">Technical Documentation</option>
+                                <option value="training">Training Data</option>
+                                <option value="user">User Knowledge</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Response Settings -->
+                <div class="bg-white border border-border rounded-lg shadow-card p-4">
+                    <h3 class="font-medium text-sm text-primary mb-3">Response Settings</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs text-secondary mb-1">Response Style</label>
+                            <select id="responseStyle" class="w-full px-2 py-1.5 text-sm rounded-md border border-border focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+                                <option value="detailed" selected>Detailed</option>
+                                <option value="concise">Concise</option>
+                                <option value="technical">Technical</option>
+                                <option value="simple">Simple</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-secondary mb-1">Temperature</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="range" id="temperature" min="0.1" max="1.0" step="0.1" value="0.7" 
+                                    class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                <span id="tempValue" class="text-xs font-medium">0.7</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-secondary mb-1">Max Tokens</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="range" id="maxTokens" min="100" max="2000" step="100" value="1000" 
+                                    class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                <span id="tokensValue" class="text-xs font-medium">1000</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="checkbox" id="autoSpeak" class="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary" checked>
+                            <label for="autoSpeak" class="text-xs text-secondary">Auto-speak responses</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-white border-t border-border py-3 px-4 md:px-6">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div class="text-xs text-secondary mb-2 md:mb-0">
+                Self Brain AGI System • Version 1.0.0
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="/api/docs" class="text-xs text-secondary hover:text-primary transition-colors">API Docs</a>
+                <a href="/privacy" class="text-xs text-secondary hover:text-primary transition-colors">Privacy</a>
+                <a href="/terms" class="text-xs text-secondary hover:text-primary transition-colors">Terms</a>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Model Info Modal -->
+    <div id="modelInfoModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-dropdown max-w-md w-full mx-4 overflow-hidden">
+            <div class="flex justify-between items-center p-4 border-b border-border">
+                <h3 class="font-medium text-primary">A Management Model Information</h3>
+                <button id="closeModelInfoBtn" class="text-secondary hover:text-primary">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <div class="p-4">
+                <div class="mb-3">
+                    <p class="text-sm text-secondary mb-1">Description</p>
+                    <p class="text-sm">The central coordinator of the Self Brain AGI System. Manages and coordinates other specialized AI models to provide comprehensive responses.</p>
+                </div>
+                <div class="mb-3">
+                    <p class="text-sm text-secondary mb-1">Key Features</p>
+                    <ul class="text-sm list-disc pl-5 space-y-1">
+                        <li>Model coordination and integration</li>
+                        <li>Multi-modal data processing</li>
+                        <li>System resource management</li>
+                        <li>Self-learning capabilities</li>
+                    </ul>
+                </div>
+                <div class="mb-3">
+                    <p class="text-sm text-secondary mb-1">Supported Models</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">B Language</span>
+                        <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">C Audio</span>
+                        <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">D Image</span>
+                        <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">E Video</span>
+                        <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">F Spatial</span>
+                        <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">G Sensor</span>
+                        <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">H Computer</span>
+                        <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">I Motion</span>
+                        <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">J Knowledge</span>
+                        <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">K Programming</span>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-sm text-secondary mb-1">API Endpoint</p>
+                    <p class="text-sm font-mono">http://localhost:5001/api/chat</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notifications Container -->
+    <div id="notificationsContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- JavaScript -->
+    <script src="/static/js/chat_enhanced.js"></script>
+    
+    <!-- Custom Initialization -->
+    <script>
+        // Emotional state management
+        class EmotionManager {
+            constructor() {
+                this.updateInterval = null;
+                this.emotionMapping = {
+                                    'happiness': { icon: 'bi-emoji-smile', color: 'bg-gray-100 text-gray-500', label: 'Happiness', description: 'Feeling positive and joyful' },
+                                    'sadness': { icon: 'bi-emoji-frown', color: 'bg-gray-100 text-gray-500', label: 'Sadness', description: 'Feeling down or sorrowful' },
+                                    'anger': { icon: 'bi-emoji-angry', color: 'bg-gray-100 text-gray-500', label: 'Anger', description: 'Feeling irritated or frustrated' },
+                                    'fear': { icon: 'bi-emoji-expressionless', color: 'bg-gray-100 text-gray-500', label: 'Fear', description: 'Feeling anxious or scared' },
+                                    'surprise': { icon: 'bi-emoji-surprise', color: 'bg-gray-100 text-gray-500', label: 'Surprise', description: 'Feeling amazed or shocked' },
+                                    'disgust': { icon: 'bi-emoji-nauseated', color: 'bg-gray-100 text-gray-500', label: 'Disgust', description: 'Feeling repulsed or averse' },
+                                    'trust': { icon: 'bi-emoji-heart-eyes', color: 'bg-gray-100 text-gray-500', label: 'Trust', description: 'Feeling confident or secure' },
+                                    'anticipation': { icon: 'bi-emoji-wink', color: 'bg-gray-100 text-gray-500', label: 'Anticipation', description: 'Feeling expectant or eager' },
+                                    'neutral': { icon: 'bi-emoji-neutral', color: 'bg-gray-100 text-gray-500', label: 'Neutral', description: 'Feeling calm and ready to assist' }
+                                };
+            }
+            
+            startUpdating() {
+                // Initial update
+                this.updateEmotionalState();
+                
+                // Set up periodic updates every 5 seconds
+                this.updateInterval = setInterval(() => {
+                    this.updateEmotionalState();
+                }, 5000);
+            }
+            
+            stopUpdating() {
+                if (this.updateInterval) {
+                    clearInterval(this.updateInterval);
+                    this.updateInterval = null;
+                }
+            }
+            
+            async updateEmotionalState() {
+                try {
+                    const response = await fetch('/api/emotion/current');
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.status === 'success' && data.emotion) {
+                            this.renderEmotion(data.emotion);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to update emotional state:', error);
+                    // Fallback to neutral if there's an error
+                    this.renderDefaultEmotion();
+                }
+            }
+            
+            renderEmotion(emotionData) {
+                // Get UI elements
+                const emotionIndicator = document.getElementById('emotionIndicator');
+                const emotionIcon = document.getElementById('emotionIcon');
+                const emotionLabel = document.getElementById('emotionLabel');
+                const emotionDescription = document.getElementById('emotionDescription');
+                const valenceValue = document.getElementById('valenceValue');
+                const arousalValue = document.getElementById('arousalValue');
+                const dominanceValue = document.getElementById('dominanceValue');
+                
+                if (!emotionIndicator || !emotionIcon || !emotionLabel) {
+                    return;
+                }
+                
+                // Determine primary emotion
+                let primaryEmotion = 'neutral';
+                let maxScore = 0;
+                
+                if (emotionData.emotions) {
+                    for (const [emotion, score] of Object.entries(emotionData.emotions)) {
+                        if (score > maxScore) {
+                            maxScore = score;
+                            primaryEmotion = emotion;
+                        }
+                    }
+                }
+                
+                // Get emotion details
+                const emotionDetails = this.emotionMapping[primaryEmotion] || this.emotionMapping.neutral;
+                
+                // Update UI elements
+                emotionIndicator.className = `w-16 h-16 rounded-full ${emotionDetails.color.split(' ')[0]} flex items-center justify-center mb-3 transition-colors duration-300`;
+                emotionIcon.className = `bi ${emotionDetails.icon} text-2xl ${emotionDetails.color.split(' ')[1]} transition-colors duration-300`;
+                emotionLabel.textContent = emotionDetails.label;
+                emotionDescription.textContent = emotionDetails.description;
+                
+                // Update VAD values if available
+                if (emotionData.valence !== undefined && valenceValue) {
+                    valenceValue.textContent = Math.round(emotionData.valence * 100) + '%';
+                }
+                if (emotionData.arousal !== undefined && arousalValue) {
+                    arousalValue.textContent = Math.round(emotionData.arousal * 100) + '%';
+                }
+                if (emotionData.dominance !== undefined && dominanceValue) {
+                    dominanceValue.textContent = Math.round(emotionData.dominance * 100) + '%';
+                }
+            }
+            
+            renderDefaultEmotion() {
+                const emotionDetails = this.emotionMapping.neutral;
+                
+                const emotionIndicator = document.getElementById('emotionIndicator');
+                const emotionIcon = document.getElementById('emotionIcon');
+                const emotionLabel = document.getElementById('emotionLabel');
+                const emotionDescription = document.getElementById('emotionDescription');
+                
+                if (emotionIndicator && emotionIcon && emotionLabel) {
+                    emotionIndicator.className = `w-16 h-16 rounded-full ${emotionDetails.color.split(' ')[0]} flex items-center justify-center mb-3`;
+                    emotionIcon.className = `bi ${emotionDetails.icon} text-2xl ${emotionDetails.color.split(' ')[1]}`;
+                    emotionLabel.textContent = emotionDetails.label;
+                    emotionDescription.textContent = emotionDetails.description;
+                }
+            }
+        }
+        
+        // Initialize emotion manager
+        let emotionManager;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Create emotion manager instance
+            emotionManager = new EmotionManager();
+            
+            // Start updating emotional state
+            if (emotionManager) {
+                emotionManager.startUpdating();
+            }
+            
+            // Clean up on page unload
+            window.addEventListener('unload', () => {
+                if (emotionManager) {
+                    emotionManager.stopUpdating();
+                }
+            });
+        });
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        if (mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+        
+        // Model info modal
+        const modelInfoBtn = document.getElementById('modelInfoBtn');
+        const modelInfoModal = document.getElementById('modelInfoModal');
+        const closeModelInfoBtn = document.getElementById('closeModelInfoBtn');
+        
+        if (modelInfoBtn && modelInfoModal && closeModelInfoBtn) {
+            modelInfoBtn.addEventListener('click', () => {
+                modelInfoModal.classList.remove('hidden');
+            });
+            
+            closeModelInfoBtn.addEventListener('click', () => {
+                modelInfoModal.classList.add('hidden');
+            });
+            
+            // Close modal when clicking outside
+            modelInfoModal.addEventListener('click', (e) => {
+                if (e.target === modelInfoModal) {
+                    modelInfoModal.classList.add('hidden');
+                }
+            });
+        }
+        
+        // Initialize model selector with a_management
+        document.addEventListener('DOMContentLoaded', () => {
+            const modelSelector = document.getElementById('modelSelector');
+            if (modelSelector && window.chatManager) {
+                modelSelector.value = 'a_management';
+                window.chatManager.currentModel = 'a_management';
+                
+                const modelNameElement = document.getElementById('modelName');
+                if (modelNameElement) {
+                    modelNameElement.textContent = window.chatManager.getModelDisplayName('a_management');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+{% endblock %}

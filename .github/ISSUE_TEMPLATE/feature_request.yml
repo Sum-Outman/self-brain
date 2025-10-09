@@ -1,0 +1,71 @@
+name: 💡 Feature Request
+about: 建议新功能或改进
+title: '[FEATURE] '
+labels: enhancement
+assignees: ''
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢您提出新功能建议！请填写以下信息：
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 相关问题
+      description: 这个功能请求是否解决了某个问题？请描述
+      placeholder: 我总是遇到...
+    validations:
+      required: false
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 期望的解决方案
+      description: 描述您希望看到的功能
+      placeholder: 我希望能够...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 替代方案
+      description: 描述您考虑过的任何替代解决方案或功能
+      placeholder: 我考虑过...
+    validations:
+      required: false
+
+  - type: textarea
+    id: usecase
+    attributes:
+      label: 使用场景
+      description: 描述这个功能的使用场景
+      placeholder: 当用户需要...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 优先级
+      description: 您认为这个功能有多重要？
+      options:
+        - 低 - 有的话很好
+        - 中 - 会很有帮助
+        - 高 - 迫切需要
+        - 关键 - 系统必需
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 检查清单
+      options:
+        - label: 我已经搜索了现有的功能请求
+          required: true
+        - label: 这个功能对项目有价值
+          required: true
+        - label: 我愿意协助实现这个功能
+          required: false

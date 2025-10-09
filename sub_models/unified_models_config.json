@@ -1,0 +1,103 @@
+{
+  "language": {
+    "mode": "enhanced",
+    "config": {
+      "max_response_length": 1000,
+      "temperature": 0.7,
+      "language": "zh-CN",
+      "enable_emotion_analysis": true,
+      "enable_context_memory": true
+    }
+  },
+  "audio": {
+    "mode": "enhanced",
+    "config": {
+      "sample_rate": 16000,
+      "chunk_size": 1024,
+      "channels": 1,
+      "enable_real_time_processing": true,
+      "enable_noise_reduction": true,
+      "enable_emotion_detection": true
+    }
+  },
+  "image": {
+    "mode": "enhanced",
+    "config": {
+      "image_size": [224, 224],
+      "confidence_threshold": 0.5,
+      "enable_object_detection": true,
+      "enable_face_recognition": true,
+      "enable_scene_analysis": true
+    }
+  },
+  "video": {
+    "mode": "enhanced",
+    "config": {
+      "frame_rate": 30,
+      "resolution": [1920, 1080],
+      "enable_real_time_analysis": true,
+      "enable_motion_detection": true,
+      "enable_behavior_analysis": true
+    }
+  },
+  "spatial": {
+    "mode": "enhanced",
+    "config": {
+      "coordinate_system": "cartesian",
+      "enable_3d_mapping": true,
+      "enable_path_planning": true,
+      "precision": "high",
+      "update_frequency": 10
+    }
+  },
+  "sensor": {
+    "mode": "enhanced",
+    "config": {
+      "sampling_rate": 100,
+      "enable_multi_sensor_fusion": true,
+      "enable_anomaly_detection": true,
+      "data_buffer_size": 1000,
+      "alert_threshold": 0.8
+    }
+  },
+  "computer_control": {
+    "mode": "enhanced",
+    "config": {
+      "enable_system_monitoring": true,
+      "enable_process_management": true,
+      "enable_file_operations": true,
+      "enable_network_control": true,
+      "security_level": "high"
+    }
+  },
+  "knowledge": {
+    "mode": "enhanced",
+    "config": {
+      "max_knowledge_items": 10000,
+      "enable_semantic_search": true,
+      "enable_knowledge_graph": true,
+      "auto_update": true,
+      "backup_frequency": "daily"
+    }
+  },
+  "motion": {
+    "mode": "enhanced",
+    "config": {
+      "enable_trajectory_planning": true,
+      "enable_collision_detection": true,
+      "enable_real_time_feedback": true,
+      "max_velocity": 100,
+      "precision": "high"
+    }
+  },
+  "programming": {
+    "mode": "enhanced",
+    "config": {
+      "execution_timeout": 30,
+      "max_code_length": 10000,
+      "enable_code_optimization": true,
+      "enable_syntax_validation": true,
+      "cache_size": 100
+    }
+  }
+}

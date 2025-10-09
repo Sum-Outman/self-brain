@@ -1,0 +1,146 @@
+{
+  "models": [
+    {
+      "id": "A_management",
+      "name": "Management Model",
+      "type": "manager",
+      "port": 5000,
+      "from_scratch": true,
+      "capabilities": [
+        "system_management",
+        "emotion_analysis",
+        "multi_model_coordination"
+      ]
+    },
+    {
+      "id": "B_language",
+      "name": "Language Model",
+      "type": "language",
+      "port": 5001,
+      "from_scratch": true,
+      "capabilities": [
+        "multilingual_support",
+        "sentiment_analysis",
+        "entity_recognition",
+        "intent_detection"
+      ]
+    },
+    {
+      "id": "C_audio",
+      "name": "Audio Model",
+      "type": "audio",
+      "port": 5002,
+      "from_scratch": true,
+      "capabilities": [
+        "speech_recognition",
+        "audio_synthesis",
+        "music_processing",
+        "noise_analysis"
+      ]
+    },
+    {
+      "id": "D_image",
+      "name": "Image Model",
+      "type": "vision",
+      "port": 5003,
+      "from_scratch": true,
+      "capabilities": [
+        "image_recognition",
+        "image_generation",
+        "image_editing",
+        "clarity_enhancement"
+      ]
+    },
+    {
+      "id": "E_video",
+      "name": "Video Model",
+      "type": "vision",
+      "port": 5004,
+      "from_scratch": true,
+      "capabilities": [
+        "video_analysis",
+        "video_editing",
+        "video_generation",
+        "motion_tracking"
+      ]
+    },
+    {
+      "id": "F_spatial",
+      "name": "Spatial Model",
+      "type": "spatial",
+      "port": 5005,
+      "from_scratch": true,
+      "capabilities": [
+        "spatial_mapping",
+        "distance_measurement",
+        "object_tracking",
+        "motion_prediction"
+      ]
+    },
+    {
+      "id": "G_sensor",
+      "name": "Sensor Model",
+      "type": "sensor",
+      "port": 5006,
+      "from_scratch": true,
+      "capabilities": [
+        "multi_sensor_integration",
+        "environment_analysis",
+        "data_fusion",
+        "anomaly_detection"
+      ]
+    },
+    {
+      "id": "H_computer_control",
+      "name": "Computer Control Model",
+      "type": "control",
+      "port": 5007,
+      "from_scratch": true,
+      "capabilities": [
+        "system_control",
+        "process_management",
+        "multi_platform_support",
+        "automation"
+      ]
+    },
+    {
+      "id": "I_knowledge",
+      "name": "Knowledge Model",
+      "type": "knowledge",
+      "port": 5008,
+      "from_scratch": true,
+      "capabilities": [
+        "knowledge_retrieval",
+        "expert_systems",
+        "learning_assistance",
+        "cross_domain_integration"
+      ]
+    },
+    {
+      "id": "J_motion",
+      "name": "Motion Control Model",
+      "type": "control",
+      "port": 5009,
+      "from_scratch": true,
+      "capabilities": [
+        "motion_planning",
+        "execution_control",
+        "multi_axis_coordination",
+        "safety_monitoring"
+      ]
+    },
+    {
+      "id": "K_programming",
+      "name": "Programming Model",
+      "type": "programming",
+      "port": 5010,
+      "from_scratch": true,
+      "capabilities": [
+        "code_generation",
+        "system_improvement",
+        "bug_fixing",
+        "optimization"
+      ]
+    }
+  ]
+}
