@@ -1,0 +1,402 @@
+[
+  {
+    "text": "What is the weather like?",
+    "intent": "weather_query"
+  },
+  {
+    "text": "Hello, how can I help you today?",
+    "intent": "greeting"
+  },
+  {
+    "text": "Tell me a joke",
+    "intent": "request_joke"
+  },
+  {
+    "text": "Hello, how can I help you today?",
+    "intent": "greeting"
+  },
+  {
+    "text": "What is the weather like?",
+    "intent": "weather_query"
+  },
+  {
+    "text": "Hello, how can I help you today?",
+    "intent": "greeting"
+  },
+  {
+    "text": "Goodbye?",
+    "intent": "farewell"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Hello, how can I help you today?",
+    "intent": "greeting"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Goodbye",
+    "intent": "farewell"
+  },
+  {
+    "text": "Explain quantum computing?",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Tell me a joke?",
+    "intent": "request_joke"
+  },
+  {
+    "text": "Goodbye",
+    "intent": "farewell"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Goodbye",
+    "intent": "farewell"
+  },
+  {
+    "text": "Goodbye",
+    "intent": "farewell"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Goodbye?",
+    "intent": "farewell"
+  },
+  {
+    "text": "Explain quantum computing?",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Tell me a joke",
+    "intent": "request_joke"
+  },
+  {
+    "text": "Goodbye",
+    "intent": "farewell"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Goodbye",
+    "intent": "farewell"
+  },
+  {
+    "text": "Goodbye?",
+    "intent": "farewell"
+  },
+  {
+    "text": "Hello, how can I help you today?",
+    "intent": "greeting"
+  },
+  {
+    "text": "Tell me a joke?",
+    "intent": "request_joke"
+  },
+  {
+    "text": "Goodbye",
+    "intent": "farewell"
+  },
+  {
+    "text": "Goodbye",
+    "intent": "farewell"
+  },
+  {
+    "text": "Explain quantum computing?",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "What is the weather like?",
+    "intent": "weather_query"
+  },
+  {
+    "text": "Goodbye",
+    "intent": "farewell"
+  },
+  {
+    "text": "Explain quantum computing?",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "What is the weather like?",
+    "intent": "weather_query"
+  },
+  {
+    "text": "What is the weather like?",
+    "intent": "weather_query"
+  },
+  {
+    "text": "Goodbye",
+    "intent": "farewell"
+  },
+  {
+    "text": "Goodbye?",
+    "intent": "farewell"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Tell me a joke?",
+    "intent": "request_joke"
+  },
+  {
+    "text": "Goodbye",
+    "intent": "farewell"
+  },
+  {
+    "text": "Tell me a joke",
+    "intent": "request_joke"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Goodbye?",
+    "intent": "farewell"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Hello, how can I help you today",
+    "intent": "greeting"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Goodbye",
+    "intent": "farewell"
+  },
+  {
+    "text": "Tell me a joke",
+    "intent": "request_joke"
+  },
+  {
+    "text": "What is the weather like?",
+    "intent": "weather_query"
+  },
+  {
+    "text": "Hello, how can I help you today?",
+    "intent": "greeting"
+  },
+  {
+    "text": "What is the weather like?",
+    "intent": "weather_query"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Goodbye?",
+    "intent": "farewell"
+  },
+  {
+    "text": "What is the weather like?",
+    "intent": "weather_query"
+  },
+  {
+    "text": "Explain quantum computing?",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Explain quantum computing?",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Hello, how can I help you today?",
+    "intent": "greeting"
+  },
+  {
+    "text": "Explain quantum computing?",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Hello, how can I help you today?",
+    "intent": "greeting"
+  },
+  {
+    "text": "Hello, how can I help you today",
+    "intent": "greeting"
+  },
+  {
+    "text": "Goodbye",
+    "intent": "farewell"
+  },
+  {
+    "text": "What is the weather like?",
+    "intent": "weather_query"
+  },
+  {
+    "text": "Tell me a joke",
+    "intent": "request_joke"
+  },
+  {
+    "text": "What is the weather like?",
+    "intent": "weather_query"
+  },
+  {
+    "text": "What is the weather like",
+    "intent": "weather_query"
+  },
+  {
+    "text": "What is the weather like?",
+    "intent": "weather_query"
+  },
+  {
+    "text": "Explain quantum computing?",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Tell me a joke?",
+    "intent": "request_joke"
+  },
+  {
+    "text": "Hello, how can I help you today",
+    "intent": "greeting"
+  },
+  {
+    "text": "Tell me a joke",
+    "intent": "request_joke"
+  },
+  {
+    "text": "Hello, how can I help you today?",
+    "intent": "greeting"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Goodbye?",
+    "intent": "farewell"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Tell me a joke",
+    "intent": "request_joke"
+  },
+  {
+    "text": "Goodbye?",
+    "intent": "farewell"
+  },
+  {
+    "text": "What is the weather like",
+    "intent": "weather_query"
+  },
+  {
+    "text": "What is the weather like",
+    "intent": "weather_query"
+  },
+  {
+    "text": "Hello, how can I help you today",
+    "intent": "greeting"
+  },
+  {
+    "text": "Tell me a joke",
+    "intent": "request_joke"
+  },
+  {
+    "text": "Explain quantum computing?",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Hello, how can I help you today",
+    "intent": "greeting"
+  },
+  {
+    "text": "Hello, how can I help you today?",
+    "intent": "greeting"
+  },
+  {
+    "text": "Hello, how can I help you today?",
+    "intent": "greeting"
+  },
+  {
+    "text": "Tell me a joke",
+    "intent": "request_joke"
+  },
+  {
+    "text": "Tell me a joke",
+    "intent": "request_joke"
+  },
+  {
+    "text": "Tell me a joke?",
+    "intent": "request_joke"
+  },
+  {
+    "text": "Hello, how can I help you today?",
+    "intent": "greeting"
+  },
+  {
+    "text": "Hello, how can I help you today?",
+    "intent": "greeting"
+  },
+  {
+    "text": "Hello, how can I help you today?",
+    "intent": "greeting"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "Explain quantum computing",
+    "intent": "request_explanation"
+  },
+  {
+    "text": "What is the weather like?",
+    "intent": "weather_query"
+  },
+  {
+    "text": "Tell me a joke?",
+    "intent": "request_joke"
+  }
+]

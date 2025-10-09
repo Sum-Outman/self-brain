@@ -62,34 +62,7 @@
 {% block content %}
 <div class="container-fluid">
     <div class="row">
-        <!-- Left Column - System Overview -->
-        <div class="col-12 col-md-4">
-            <!-- System Status Card -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">System Overview</h5>
-                </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <span class="text-muted">System Status</span>
-                            <span class="badge bg-success" id="systemStatusText">Operational</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <span class="text-muted">Hardware Status</span>
-                            <span class="badge bg-success" id="hardwareStatus">Optimal</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <span class="text-muted">Response Time</span>
-                            <span class="text-dark" id="responseTime">< 200ms</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <span class="text-muted">Models Online</span>
-                            <span class="text-dark" id="modelsOnline">0/11</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
             
             <!-- AI Chat Interface -->
             <div class="card">
@@ -137,13 +110,6 @@
                     <div class="input-group">
                         <textarea id="messageInput" class="form-control" rows="1" placeholder="Type your message here..." onkeydown="handleKeyDown(event)" oninput="adjustTextareaHeight(this)"></textarea>
                         <div class="input-group-append">
-                            <button class="btn btn-outline-secondary" type="button" onclick="toggleVoice()">
-                                <i class="bi bi-mic"></i>
-                            </button>
-                            <label class="btn btn-outline-secondary" for="fileUpload">
-                                <i class="bi bi-paperclip"></i>
-                                <input type="file" id="fileUpload" multiple style="display: none;" onchange="handleFileUpload(this.files)">
-                            </label>
                             <button class="btn btn-dark" type="button" onclick="sendMessage()">
                                 <i class="bi bi-send"></i>
                             </button>
@@ -155,46 +121,7 @@
         
         <!-- Middle Column - Main Content -->
         <div class="col-12 col-md-4">
-            <!-- Training Control -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Training Control</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-2">
-                        <div class="col-6 col-md-4">
-                            <button class="btn btn-outline-dark w-100" onclick="startTraining()">
-                                <i class="bi bi-play-circle me-1"></i>Start Training
-                            </button>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <button class="btn btn-outline-dark w-100" onclick="stopTraining()">
-                                <i class="bi bi-stop-circle me-1"></i>Stop Training
-                            </button>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <button class="btn btn-outline-dark w-100" onclick="window.location.href='/knowledge_import'">
-                                <i class="bi bi-book me-1"></i>Import Knowledge
-                            </button>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <button class="btn btn-outline-dark w-100" onclick="window.location.href='/upload'">
-                                <i class="bi bi-upload me-1"></i>Upload Data
-                            </button>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <button class="btn btn-outline-dark w-100" onclick="exportTrainingData()">
-                                <i class="bi bi-download me-1"></i>Export Data
-                            </button>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <button class="btn btn-outline-dark w-100" onclick="runSystemCheck()">
-                                <i class="bi bi-stethoscope me-1"></i>System Check
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
             
             <!-- Model Architecture -->
             <div class="card">
@@ -206,6 +133,7 @@
                         <div class="bg-dark text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
                             <span class="h5 mb-0">A</span>
                         </div>
+                        <div class="mt-2 small text-muted" id="modelsOnline">Models: 0/11</div>
                     </div>
                     
                     <div class="model-status-grid" id="modelStatusGrid">
@@ -215,52 +143,8 @@
             </div>
         </div>
         
-        <!-- Right Column - System Status and Controls -->
-        <div class="col-12 col-md-4">
-            <!-- Training Progress -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Training Progress</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="text-muted small">Training Progress</span>
-                            <span class="text-dark fw-bold" id="trainingProgressText">0%</span>
-                        </div>
-                        <div class="progress-bar-custom">
-                            <div class="progress-bar-fill" id="trainingProgressBar" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="row g-2">
-                        <div class="col-4">
-                            <div class="card bg-light">
-                                <div class="card-body text-center p-2">
-                                    <div class="small text-muted">CPU</div>
-                                    <div class="h6 mb-0 text-dark" id="cpuUsage">0%</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="card bg-light">
-                                <div class="card-body text-center p-2">
-                                    <div class="small text-muted">Memory</div>
-                                    <div class="h6 mb-0 text-dark" id="memoryUsage">0%</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="card bg-light">
-                                <div class="card-body text-center p-2">
-                                    <div class="small text-muted">GPU</div>
-                                    <div class="h6 mb-0 text-dark" id="gpuUsage">0%</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <!-- Right Column - Multi-Camera System -->
+        <div class="col-12 col-md-6">
             
             <!-- Enhanced Multi-Camera System with Stereo Vision -->
             <div class="card">
@@ -369,36 +253,13 @@
 
 {% block extra_js %}
 <script>
-    // Initialize system status
+    // Initialize the system
     document.addEventListener('DOMContentLoaded', function() {
-        initializeSystemStatus();
         initializeModelStatus();
-        startRealTimeMonitoring();
+        // Remove initializeSystemStatus and startRealTimeMonitoring as they are related to deleted sections
     });
 
-    // System status functions
-    function initializeSystemStatus() {
-        // Real system status check
-        fetch('/api/system/status')
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'Active') {
-                    document.getElementById('systemStatusText').textContent = 'Operational';
-                    document.getElementById('hardwareStatus').textContent = 'Optimal';
-                    document.getElementById('responseTime').textContent = data.response_time || '< 200ms';
-                } else {
-                    document.getElementById('systemStatusText').textContent = 'Check System';
-                    document.getElementById('hardwareStatus').textContent = 'Needs Attention';
-                    document.getElementById('responseTime').textContent = 'Unknown';
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching system status:', error);
-                document.getElementById('systemStatusText').textContent = 'Offline';
-                document.getElementById('hardwareStatus').textContent = 'Unknown';
-                document.getElementById('responseTime').textContent = 'N/A';
-            });
-    }
+    // Remove system status functions as they are related to deleted sections
 
     function initializeModelStatus() {
         // Fetch real model status from backend API
@@ -495,48 +356,6 @@
         document.getElementById('modelsOnline').textContent = `${onlineCount}/${Object.keys(modelConfig).length}`;
     }
 
-    function updateMetrics() {
-        // Directly use system status API which provides the required metrics
-        fetch('/api/system/status')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Only update if elements exist
-                if (document.getElementById('cpuUsage')) {
-                    document.getElementById('cpuUsage').textContent = data.cpu || '0%';
-                }
-                if (document.getElementById('memoryUsage')) {
-                    document.getElementById('memoryUsage').textContent = data.memory || '0%';
-                }
-                if (document.getElementById('gpuUsage')) {
-                    document.getElementById('gpuUsage').textContent = data.gpu_usage || '0%';
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching system metrics:', error);
-                // Set default values in case of error
-                if (document.getElementById('cpuUsage')) {
-                    document.getElementById('cpuUsage').textContent = '0%';
-                }
-                if (document.getElementById('memoryUsage')) {
-                    document.getElementById('memoryUsage').textContent = '0%';
-                }
-                if (document.getElementById('gpuUsage')) {
-                    document.getElementById('gpuUsage').textContent = '0%';
-                }
-            });
-    }
-
-    function startRealTimeMonitoring() {
-        // Update immediately and set interval
-        updateMetrics();
-        setInterval(updateMetrics, 3000);
-    }
-
     // Chat functions
     function handleKeyDown(event) {
         if (event.key === 'Enter' && !event.shiftKey) {
@@ -588,15 +407,26 @@
                     attachments: []
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 // Remove typing indicator
-                document.getElementById('typingIndicator').remove();
+                const typingElement = document.getElementById('typingIndicator');
+                if (typingElement) typingElement.remove();
                 
                 if (data.status === 'success' && data.response) {
                     addMessage('ai', data.response);
                 } else {
-                    addMessage('ai', 'I apologize, but I\'m having trouble processing your request. Please try again later.');
+                    // Handle specific error cases if needed
+                    let errorMessage = 'I apologize, but I\'m having trouble processing your request. Please try again later.';
+                    if (data.error) {
+                        errorMessage = data.error;
+                    }
+                    addMessage('ai', errorMessage);
                 }
             })
             .catch(error => {
@@ -604,7 +434,22 @@
                 // Remove typing indicator
                 const typingElement = document.getElementById('typingIndicator');
                 if (typingElement) typingElement.remove();
-                addMessage('ai', 'I apologize, but there was an error connecting to the AI system. Please check your connection and try again.');
+                
+                // Show more specific error messages based on error type
+                let errorMessage = 'I apologize, but there was an error connecting to the AI system. Please check your connection and try again.';
+                
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    errorMessage = 'Connection error: Cannot reach the AI system. Please check your network connection.';
+                } else if (error.message.includes('401')) {
+                    errorMessage = 'Authentication error: Please log in again to continue.';
+                } else if (error.message.includes('429')) {
+                    errorMessage = 'Rate limit exceeded: Please wait a moment before sending another message.';
+                } else if (error.message.includes('503')) {
+                    errorMessage = 'Service unavailable: The AI system is currently busy. Please try again later.';
+                }
+                
+                addMessage('ai', errorMessage);
+                showToast(errorMessage, 'error');
             });
         }
     }
@@ -659,118 +504,45 @@
             analyze: 'Analyze the following data and provide insights: ',
             brainstorm: 'Let\'s brainstorm ideas for '
         };
-        
-        const input = document.getElementById('messageInput');
-        input.value = prompts[action] || '';
-        input.focus();
-        adjustTextareaHeight(input);
-    }
 
-    function toggleVoice() {
-        showToast('Voice input functionality is being implemented', 'info');
-    }
-
-    function handleFileUpload(files) {
-        if (files.length > 0) {
-            Array.from(files).forEach(file => {
-                addMessage('user', `Uploaded file: ${file.name} (${formatFileSize(file.size)})`);
-            });
+        if (prompts[action]) {
+            const input = document.getElementById('messageInput');
+            input.value = prompts[action];
+            adjustTextareaHeight(input);
+            input.focus();
         }
     }
 
-    function formatFileSize(bytes) {
-        if (bytes < 1024) return bytes + ' B';
-        else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-        else return (bytes / 1048576).toFixed(1) + ' MB';
-    }
-
-    // Training functions
-    function startTraining() {
-        showToast('Starting comprehensive model training...', 'info');
+    function showToast(message, type = 'info') {
+        const toastContainer = document.getElementById('toastContainer');
         
-        // Call real training API
-        fetch('/api/training/start', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                training_type: 'comprehensive',
-                models: 'all',
-                epochs: 100,
-                batch_size: 32
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                showToast('Training started successfully', 'success');
-                // Start monitoring training progress
-                monitorTrainingProgress();
-            } else {
-                showToast('Failed to start training: ' + (data.message || 'Unknown error'), 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error starting training:', error);
-            showToast('Error starting training: ' + error.message, 'error');
-        });
-    }
+        if (!toastContainer) {
+            // Create toast container if not exists
+            const container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.className = 'position-fixed bottom-3 right-3 z-50';
+            document.body.appendChild(container);
+        }
 
-    function monitorTrainingProgress() {
-        const progressInterval = setInterval(() => {
-            fetch('/api/training/status')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        const progress = data.progress || 0;
-                        document.getElementById('trainingProgressBar').style.width = progress + '%';
-                        document.getElementById('trainingProgressText').textContent = Math.round(progress) + '%';
-                        
-                        if (progress >= 100) {
-                            clearInterval(progressInterval);
-                            showToast('Training completed successfully', 'success');
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching training progress:', error);
-                    clearInterval(progressInterval);
-                });
-        }, 2000);
-    }
+        const toast = document.createElement('div');
+        toast.className = `toast show mb-2 ${type === 'error' ? 'bg-danger text-white' : type === 'success' ? 'bg-success text-white' : 'bg-secondary text-white'}`;
+        toast.role = 'alert';
+        toast.ariaLive = 'assertive';
+        toast.ariaAtomic = 'true';
+        toast.style.minWidth = '300px';
+        toast.innerHTML = `
+            <div class="toast-body">
+                ${message}
+            </div>
+        `;
+        
+        document.getElementById('toastContainer').appendChild(toast);
 
-    function stopTraining() {
-        fetch('/api/training/stop', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                showToast('Training stopped successfully', 'success');
-                document.getElementById('trainingProgressBar').style.width = '0%';
-                document.getElementById('trainingProgressText').textContent = '0%';
-            } else {
-                showToast('Failed to stop training: ' + (data.message || 'Unknown error'), 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error stopping training:', error);
-            showToast('Error stopping training: ' + error.message, 'error');
-        });
-    }
-
-    function exportTrainingData() {
-        showToast('Exporting training data...', 'info');
-        // Implementation for exporting training data
-    }
-
-    function runSystemCheck() {
-        showToast('Running comprehensive system diagnostics...', 'info');
-        // Implementation for system check
+        // Remove toast after 3 seconds
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 500);
+        }, 3000);
     }
 
     // Camera system functions
@@ -781,6 +553,91 @@
         } else {
             showToast('Camera control module not loaded', 'error');
         }
+    });
+
+    // Add event listeners for other camera control buttons
+    document.getElementById('refreshCameras').addEventListener('click', function() {
+        // Function to refresh camera list
+        function refreshCameraList() {
+            // This will be replaced by actual API call in production
+            // For now, simulate fetching camera list
+            const cameras = ['Default Camera', 'USB Camera 1', 'Webcam', 'External Camera'];
+            
+            // Clear existing options
+            const camera1Selector = document.getElementById('camera1Selector');
+            const camera2Selector = document.getElementById('camera2Selector');
+            const camera3Selector = document.getElementById('camera3Selector');
+            
+            camera1Selector.innerHTML = '<option value="default">Select Camera</option>';
+            camera2Selector.innerHTML = '<option value="default">Select Camera</option>';
+            camera3Selector.innerHTML = '<option value="default">Select Camera (Optional)</option>';
+            
+            // Add new options
+            cameras.forEach(camera => {
+                const option1 = document.createElement('option');
+                option1.value = camera.toLowerCase().replace(/\s+/g, '_');
+                option1.textContent = camera;
+                camera1Selector.appendChild(option1);
+                
+                const option2 = option1.cloneNode(true);
+                camera2Selector.appendChild(option2);
+                
+                const option3 = option1.cloneNode(true);
+                camera3Selector.appendChild(option3);
+            });
+            
+            showToast('Camera list refreshed', 'success');
+        }
+        
+        // Call the function to refresh camera list
+        refreshCameraList();
+    });
+
+    document.getElementById('startStereoVision').addEventListener('click', function() {
+        // Function to start stereo vision
+        function startStereoVision() {
+            // Get selected cameras
+            const camera1 = document.getElementById('camera1Selector').value;
+            const camera2 = document.getElementById('camera2Selector').value;
+            
+            if (camera1 === 'default' || camera2 === 'default') {
+                showToast('Please select both left and right cameras', 'error');
+                return;
+            }
+            
+            // Update camera status indicators
+            document.getElementById('camera1Status').className = 'camera-status-indicator status-connecting';
+            document.getElementById('camera2Status').className = 'camera-status-indicator status-connecting';
+            document.getElementById('depthMapStatus').className = 'camera-status-indicator status-connecting';
+            
+            // This will be replaced by actual API call in production
+            // For now, simulate starting stereo vision
+            setTimeout(() => {
+                document.getElementById('camera1Status').className = 'camera-status-indicator status-active';
+                document.getElementById('camera2Status').className = 'camera-status-indicator status-active';
+                document.getElementById('depthMapStatus').className = 'camera-status-indicator status-active';
+                
+                showToast('Stereo vision started successfully', 'success');
+            }, 1500);
+        }
+        
+        // Call the function to start stereo vision
+        startStereoVision();
+    });
+
+    document.getElementById('stopAllCamerasBtn').addEventListener('click', function() {
+        // Function to stop all cameras
+        function stopAllCameras() {
+            // Update camera status indicators
+            document.getElementById('camera1Status').className = 'camera-status-indicator status-inactive';
+            document.getElementById('camera2Status').className = 'camera-status-indicator status-inactive';
+            document.getElementById('depthMapStatus').className = 'camera-status-indicator status-inactive';
+            
+            showToast('All cameras stopped', 'success');
+        }
+        
+        // Call the function to stop all cameras
+        stopAllCameras();
     });
 
     // Add bounce animation for typing indicator

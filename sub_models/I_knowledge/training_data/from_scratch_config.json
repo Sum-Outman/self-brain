@@ -1,0 +1,10 @@
+{
+  "model_id": "I_knowledge",
+  "from_scratch": true,
+  "training_params": {
+    "epochs": 100,
+    "batch_size": 32,
+    "learning_rate": 0.001
+  },
+  "created_at": "2025-10-09T10:58:04.337212"
+}

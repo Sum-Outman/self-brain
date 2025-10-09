@@ -1,0 +1,2 @@
+Video training data will be stored here.
+This includes video files and corresponding annotations.

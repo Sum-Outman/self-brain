@@ -1,0 +1,22 @@
+[
+  {
+    "domain": "physics",
+    "content": "Newton's laws of motion describe the relationship between a physical object and the forces acting upon it."
+  },
+  {
+    "domain": "mathematics",
+    "content": "The Pythagorean theorem states that in a right triangle, the square of the hypotenuse equals the sum of the squares of the other two sides."
+  },
+  {
+    "domain": "chemistry",
+    "content": "Water is composed of two hydrogen atoms and one oxygen atom, with the chemical formula H2O."
+  },
+  {
+    "domain": "biology",
+    "content": "DNA is a molecule that carries genetic instructions for the development, functioning, growth and reproduction of all known organisms."
+  },
+  {
+    "domain": "computer science",
+    "content": "Machine learning is a method of data analysis that automates analytical model building."
+  }
+]

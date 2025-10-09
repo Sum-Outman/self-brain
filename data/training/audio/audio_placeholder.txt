@@ -1,0 +1,2 @@
+Audio training data will be stored here.
+This includes WAV files and corresponding transcriptions.

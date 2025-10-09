@@ -1,0 +1,2 @@
+Image training data will be stored here.
+This includes image files and corresponding labels.

@@ -20,6 +20,15 @@ import psutil
 import platform
 from pathlib import Path
 
+# Import Camera Manager
+try:
+    from camera_manager import get_camera_manager
+    camera_manager = get_camera_manager()
+    logger.info("Camera manager initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize camera manager: {str(e)}")
+    camera_manager = None
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("DeviceCommunication")
@@ -37,15 +46,13 @@ class DeviceManager:
         """Initialize the device manager"""
         self.devices = {}
         self.connected_devices = {}
-        self.camera_manager = None
+        # Use the module-level camera_manager
         self.serial_ports = {}
         self.is_running = False
         self.monitor_thread = None
         self.device_status = {}
-        
-    def set_camera_manager(self, camera_manager):
-        """Set the camera manager instance"""
-        self.camera_manager = camera_manager
+        self.stereo_pairs = {}
+        self.mock_cameras_enabled = False
         
     def start(self):
         """Start the device manager"""
@@ -122,26 +129,47 @@ class DeviceManager:
             logger.error(f"Error updating serial ports: {str(e)}")
     
     def _update_device_status(self):
-        """Update the status of all connected devices"""
-        try:
-            # Update camera status
-            if self.camera_manager:
-                camera_status = self.camera_manager.get_camera_status()
+        """Update the status of all devices"""
+        global camera_manager
+        # Update camera status
+        if camera_manager:
+            try:
+                camera_status = camera_manager.get_camera_status()
                 self.device_status['cameras'] = camera_status
-                
-            # Update serial device status
+            except Exception as e:
+                logger.error(f"Error updating camera status: {str(e)}")
+                self.device_status['cameras'] = {'status': 'error', 'message': str(e)}
+        else:
+            self.device_status['cameras'] = {'status': 'not_initialized'}
+        
+        # Update serial port status
+        try:
             serial_status = {}
-            for device_id, device in self.connected_devices.items():
-                if isinstance(device, serial.Serial):
-                    serial_status[device_id] = {
-                        'connected': device.is_open,
-                        'port': device.port,
-                        'baudrate': device.baudrate
-                    }
-            self.device_status['serial'] = serial_status
-            
+            for port_name, port_info in self.serial_ports.items():
+                serial_status[port_name] = {
+                    'connected': port_name in self.connected_devices,
+                    'baudrate': port_info.get('baudrate', None),
+                    'status': self.connected_devices.get(port_name, {}).get('status', 'disconnected')
+                }
+            self.device_status['serial_ports'] = serial_status
         except Exception as e:
-            logger.error(f"Error updating device status: {str(e)}")
+            logger.error(f"Error updating serial port status: {str(e)}")
+            self.device_status['serial_ports'] = {'status': 'error', 'message': str(e)}
+        
+        # Update stereo vision status
+        if camera_manager:
+            try:
+                stereo_pairs = camera_manager.list_stereo_pairs()
+                self.device_status['stereo_vision'] = {
+                    'status': 'active',
+                    'stereo_pairs': stereo_pairs,
+                    'mock_cameras_enabled': getattr(camera_manager, 'mock_cameras_enabled', False)
+                }
+            except Exception as e:
+                logger.error(f"Error updating stereo vision status: {str(e)}")
+                self.device_status['stereo_vision'] = {'status': 'error', 'message': str(e)}
+        else:
+            self.device_status['stereo_vision'] = {'status': 'not_initialized'}
     
     def connect_device(self, device_id, device_type, **kwargs):
         """Connect to a device"""
@@ -239,6 +267,207 @@ class DeviceManager:
             logger.error(f"Error sending command to device {device_id}: {str(e)}")
             return {'status': 'error', 'message': str(e)}
     
+    def list_available_devices(self):
+        """List all available devices"""
+        global camera_manager
+        devices = {
+            'serial_ports': list(self.serial_ports.values())
+        }
+        
+        # Add camera information if camera manager is available
+        if camera_manager:
+            try:
+                cameras = camera_manager.get_camera_list()
+                devices['cameras'] = cameras
+            except Exception as e:
+                logger.error(f"Error getting camera list: {str(e)}")
+                devices['cameras'] = {'status': 'error', 'message': str(e)}
+        else:
+            devices['cameras'] = {'status': 'not_initialized'}
+            
+        return devices
+        
+    def get_camera_list(self):
+        """Get list of all available cameras"""
+        global camera_manager
+        if camera_manager:
+            try:
+                return camera_manager.get_camera_list()
+            except Exception as e:
+                logger.error(f"Error getting camera list: {str(e)}")
+                return {'status': 'error', 'message': str(e)}
+        else:
+            return {'status': 'not_initialized'}
+            
+    def start_camera(self, camera_id):
+        """Start a specific camera"""
+        global camera_manager
+        if camera_manager:
+            try:
+                result = camera_manager.start_camera(camera_id)
+                return result
+            except Exception as e:
+                logger.error(f"Error starting camera {camera_id}: {str(e)}")
+                return {'status': 'error', 'message': str(e)}
+        else:
+            return {'status': 'error', 'message': 'Camera manager not initialized'}
+            
+    def stop_camera(self, camera_id):
+        """Stop a specific camera"""
+        global camera_manager
+        if camera_manager:
+            try:
+                result = camera_manager.stop_camera(camera_id)
+                return result
+            except Exception as e:
+                logger.error(f"Error stopping camera {camera_id}: {str(e)}")
+                return {'status': 'error', 'message': str(e)}
+        else:
+            return {'status': 'error', 'message': 'Camera manager not initialized'}
+            
+    def get_camera_frame(self, camera_id):
+        """Get a frame from a specific camera"""
+        global camera_manager
+        if camera_manager:
+            try:
+                result = camera_manager.get_frame(camera_id)
+                return result
+            except Exception as e:
+                logger.error(f"Error getting frame from camera {camera_id}: {str(e)}")
+                return {'status': 'error', 'message': str(e)}
+        else:
+            return {'status': 'error', 'message': 'Camera manager not initialized'}
+            
+    def capture_snapshot(self, camera_id):
+        """Capture a snapshot from a specific camera"""
+        global camera_manager
+        if camera_manager:
+            try:
+                result = camera_manager.capture_snapshot(camera_id)
+                return result
+            except Exception as e:
+                logger.error(f"Error capturing snapshot from camera {camera_id}: {str(e)}")
+                return {'status': 'error', 'message': str(e)}
+        else:
+            return {'status': 'error', 'message': 'Camera manager not initialized'}
+            
+    def list_stereo_pairs(self):
+        """List all configured stereo pairs"""
+        global camera_manager
+        if camera_manager:
+            try:
+                result = camera_manager.list_stereo_pairs()
+                return result
+            except Exception as e:
+                logger.error(f"Error listing stereo pairs: {str(e)}")
+                return {'status': 'error', 'message': str(e)}
+        else:
+            return {'status': 'error', 'message': 'Camera manager not initialized'}
+            
+    def get_stereo_pair(self, pair_name):
+        """Get a specific stereo pair"""
+        global camera_manager
+        if camera_manager:
+            try:
+                result = camera_manager.get_stereo_pair(pair_name)
+                return result
+            except Exception as e:
+                logger.error(f"Error getting stereo pair {pair_name}: {str(e)}")
+                return {'status': 'error', 'message': str(e)}
+        else:
+            return {'status': 'error', 'message': 'Camera manager not initialized'}
+            
+    def set_stereo_pair(self, pair_name, left_camera_id, right_camera_id):
+        """Set a specific stereo pair"""
+        global camera_manager
+        if camera_manager:
+            try:
+                result = camera_manager.set_stereo_pair(pair_name, left_camera_id, right_camera_id)
+                return result
+            except Exception as e:
+                logger.error(f"Error setting stereo pair {pair_name}: {str(e)}")
+                return {'status': 'error', 'message': str(e)}
+        else:
+            return {'status': 'error', 'message': 'Camera manager not initialized'}
+            
+    def enable_stereo_pair(self, pair_name):
+        """Enable a specific stereo pair"""
+        global camera_manager
+        if camera_manager:
+            try:
+                result = camera_manager.enable_stereo_pair(pair_name)
+                return result
+            except Exception as e:
+                logger.error(f"Error enabling stereo pair {pair_name}: {str(e)}")
+                return {'status': 'error', 'message': str(e)}
+        else:
+            return {'status': 'error', 'message': 'Camera manager not initialized'}
+            
+    def disable_stereo_pair(self, pair_name):
+        """Disable a specific stereo pair"""
+        global camera_manager
+        if camera_manager:
+            try:
+                result = camera_manager.disable_stereo_pair(pair_name)
+                return result
+            except Exception as e:
+                logger.error(f"Error disabling stereo pair {pair_name}: {str(e)}")
+                return {'status': 'error', 'message': str(e)}
+        else:
+            return {'status': 'error', 'message': 'Camera manager not initialized'}
+            
+    def process_stereo_vision(self, pair_name):
+        """Process stereo vision for a specific pair"""
+        global camera_manager
+        if camera_manager:
+            try:
+                result = camera_manager.process_stereo_vision(pair_name)
+                return result
+            except Exception as e:
+                logger.error(f"Error processing stereo vision for pair {pair_name}: {str(e)}")
+                return {'status': 'error', 'message': str(e)}
+        else:
+            return {'status': 'error', 'message': 'Camera manager not initialized'}
+            
+    def get_depth_data(self, pair_name):
+        """Get depth data for a specific stereo pair"""
+        global camera_manager
+        if camera_manager:
+            try:
+                result = camera_manager.get_depth_data(pair_name)
+                return result
+            except Exception as e:
+                logger.error(f"Error getting depth data for pair {pair_name}: {str(e)}")
+                return {'status': 'error', 'message': str(e)}
+        else:
+            return {'status': 'error', 'message': 'Camera manager not initialized'}
+            
+    def enable_mock_cameras(self):
+        """Enable mock cameras for testing"""
+        global camera_manager
+        if camera_manager:
+            try:
+                result = camera_manager.enable_mock_cameras()
+                return result
+            except Exception as e:
+                logger.error(f"Error enabling mock cameras: {str(e)}")
+                return {'status': 'error', 'message': str(e)}
+        else:
+            return {'status': 'error', 'message': 'Camera manager not initialized'}
+            
+    def disable_mock_cameras(self):
+        """Disable mock cameras"""
+        global camera_manager
+        if camera_manager:
+            try:
+                result = camera_manager.disable_mock_cameras()
+                return result
+            except Exception as e:
+                logger.error(f"Error disabling mock cameras: {str(e)}")
+                return {'status': 'error', 'message': str(e)}
+        else:
+            return {'status': 'error', 'message': 'Camera manager not initialized'}
+            
     def get_device_list(self):
         """Get list of all devices"""
         try:
@@ -327,6 +556,126 @@ def get_device_status():
     """Get the status of all devices"""
     device_manager = get_device_manager()
     return jsonify({'status': 'success', 'status_data': device_manager.device_status})
+
+# Camera related API endpoints
+@device_bp.route('/api/cameras/list', methods=['GET'])
+def list_cameras():
+    """List all available cameras"""
+    device_manager = get_device_manager()
+    result = device_manager.get_camera_list()
+    return jsonify(result)
+
+@device_bp.route('/api/cameras/start/<int:camera_id>', methods=['POST'])
+def start_camera_api(camera_id):
+    """Start a specific camera"""
+    device_manager = get_device_manager()
+    result = device_manager.start_camera(camera_id)
+    return jsonify(result)
+
+@device_bp.route('/api/cameras/stop/<int:camera_id>', methods=['POST'])
+def stop_camera_api(camera_id):
+    """Stop a specific camera"""
+    device_manager = get_device_manager()
+    result = device_manager.stop_camera(camera_id)
+    return jsonify(result)
+
+@device_bp.route('/api/cameras/frame/<int:camera_id>', methods=['GET'])
+def get_camera_frame_api(camera_id):
+    """Get a frame from a specific camera"""
+    device_manager = get_device_manager()
+    result = device_manager.get_camera_frame(camera_id)
+    return jsonify(result)
+
+@device_bp.route('/api/cameras/snapshot/<int:camera_id>', methods=['POST'])
+def capture_snapshot_api(camera_id):
+    """Capture a snapshot from a specific camera"""
+    device_manager = get_device_manager()
+    result = device_manager.capture_snapshot(camera_id)
+    return jsonify(result)
+
+# Stereo vision related API endpoints
+@device_bp.route('/api/stereo/pairs', methods=['GET'])
+def list_stereo_pairs_api():
+    """List all configured stereo pairs"""
+    device_manager = get_device_manager()
+    result = device_manager.list_stereo_pairs()
+    return jsonify(result)
+
+@device_bp.route('/api/stereo/pairs/<string:pair_name>', methods=['GET'])
+def get_stereo_pair_api(pair_name):
+    """Get a specific stereo pair"""
+    device_manager = get_device_manager()
+    result = device_manager.get_stereo_pair(pair_name)
+    if result:
+        return jsonify({'status': 'success', 'stereo_pair': result})
+    else:
+        return jsonify({'status': 'error', 'message': f'Stereo pair {pair_name} not found'}), 404
+
+@device_bp.route('/api/stereo/pairs/<string:pair_name>', methods=['POST'])
+def set_stereo_pair_api(pair_name):
+    """Set a specific stereo pair"""
+    if not request.is_json:
+        return jsonify({'status': 'error', 'message': 'Request must be JSON'}), 400
+    
+    data = request.json
+    left_camera_id = data.get('left_camera_id') or data.get('left')
+    right_camera_id = data.get('right_camera_id') or data.get('right')
+    
+    if left_camera_id is None or right_camera_id is None:
+        return jsonify({'status': 'error', 'message': 'Both left and right camera IDs are required'}), 400
+    
+    # Convert camera IDs to integers if they are string representations of integers
+    if isinstance(left_camera_id, str) and left_camera_id.isdigit():
+        left_camera_id = int(left_camera_id)
+    if isinstance(right_camera_id, str) and right_camera_id.isdigit():
+        right_camera_id = int(right_camera_id)
+    
+    device_manager = get_device_manager()
+    result = device_manager.set_stereo_pair(pair_name, left_camera_id, right_camera_id)
+    return jsonify(result)
+
+@device_bp.route('/api/stereo/pairs/<string:pair_name>/enable', methods=['POST'])
+def enable_stereo_pair_api(pair_name):
+    """Enable a specific stereo pair"""
+    device_manager = get_device_manager()
+    result = device_manager.enable_stereo_pair(pair_name)
+    return jsonify(result)
+
+@device_bp.route('/api/stereo/pairs/<string:pair_name>/disable', methods=['POST'])
+def disable_stereo_pair_api(pair_name):
+    """Disable a specific stereo pair"""
+    device_manager = get_device_manager()
+    result = device_manager.disable_stereo_pair(pair_name)
+    return jsonify(result)
+
+@device_bp.route('/api/stereo/process/<string:pair_name>', methods=['GET'])
+def process_stereo_vision_api(pair_name):
+    """Process stereo vision for a specific pair"""
+    device_manager = get_device_manager()
+    result = device_manager.process_stereo_vision(pair_name)
+    return jsonify(result)
+
+@device_bp.route('/api/stereo/depth/<string:pair_name>', methods=['GET'])
+def get_depth_data_api(pair_name):
+    """Get depth data for a specific stereo pair"""
+    device_manager = get_device_manager()
+    result = device_manager.get_depth_data(pair_name)
+    return jsonify(result)
+
+# Mock cameras API endpoints
+@device_bp.route('/api/cameras/mock/enable', methods=['POST'])
+def enable_mock_cameras_api():
+    """Enable mock cameras"""
+    device_manager = get_device_manager()
+    result = device_manager.enable_mock_cameras()
+    return jsonify(result)
+
+@device_bp.route('/api/cameras/mock/disable', methods=['POST'])
+def disable_mock_cameras_api():
+    """Disable mock cameras"""
+    device_manager = get_device_manager()
+    result = device_manager.disable_mock_cameras()
+    return jsonify(result)
 
 # Initialize device communication on module load
 init_device_communication()

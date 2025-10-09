@@ -237,10 +237,17 @@ def check_model_health():
     try:
         # 执行简单的推理测试
         if management_model is not None:
-            # 使用更适合模型处理的测试输入
-            test_features = {"text": [0.1, 0.2, 0.3, 0.4], "length": 4}
+            # 创建适合模型处理的请求数据，避免直接使用张量导致的参数错误
+            dummy_request = {
+                'request_id': 'health_check',
+                'message': 'health check',
+                'conversation_id': 'health_check',
+                'context': {},
+                'timestamp': datetime.now().isoformat()
+            }
             with torch.no_grad():
-                management_model.forward(test_features)
+                # 使用process_local_request方法而不是直接调用forward，确保正确的参数传递
+                management_model.process_local_request(dummy_request)
             
             # 更新健康状态
             system_state['model_health']['status'] = 'active'
@@ -1175,7 +1182,7 @@ def initialize_app():
 if __name__ == '__main__':
     initialize_app()
     
-    port = int(os.environ.get('PORT', 5015))  # Changed from 5001 to 5015 according to PORT_ALLOCATION.md
+    port = int(os.environ.get('PORT', 5000))  # Default to 5000 for A Management Model
     host = os.environ.get('HOST', '0.0.0.0')
     debug = os.environ.get('DEBUG', 'false').lower() == 'true'
     

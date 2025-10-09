@@ -51,7 +51,7 @@ except ImportError:
 
 # Import training controller with enhanced error handling
 try:
-    from training_manager.advanced_train_control import TrainingController, TrainingMode, get_training_controller
+    from manager_model.training_control import TrainingController, get_training_controller
     training_controller = get_training_controller()
     logger.info("Training controller initialized successfully")
 except Exception as e:
@@ -162,8 +162,6 @@ try:
     
     # Initialize Device Communication Manager
     device_manager = get_device_manager()
-    if hasattr(device_manager, 'set_camera_manager'):
-        device_manager.set_camera_manager(camera_manager)
     if hasattr(device_manager, 'start'):
         device_manager.start()
     logger.info("Device communication manager initialized successfully")
@@ -254,10 +252,16 @@ CORS(app, resources={
 })
 
 # Register device communication blueprint
-app.register_blueprint(device_bp)
+if device_bp is not None:
+    app.register_blueprint(device_bp)
+else:
+    logger.warning("No device communication blueprint available, skipping registration")
 
 # Register knowledge self-learning API blueprint
-app.register_blueprint(knowledge_self_learning_bp)
+if knowledge_self_learning_bp is not None:
+    app.register_blueprint(knowledge_self_learning_bp)
+else:
+    logger.warning("No knowledge self-learning API blueprint available, skipping registration")
 
 # Create SocketIO instance with enhanced configuration for stability
 socketio = SocketIO(
@@ -412,6 +416,11 @@ if os.path.exists(registry_path):
 
 # Language resource loading function
 # Language dictionary functionality removed - all text uses English directly
+
+# Socket.IO test page route
+@app.route('/socket_test')
+def socket_test():
+    return render_template('socket_test.html')
 
 # PeerJS server-side support
 connected_peers = {}
@@ -795,6 +804,11 @@ def model_api_configuration():
 def camera_management():
     """Camera management page"""
     return render_template('camera_management.html')
+
+@app.route('/camera_management_en')
+def camera_management_en():
+    """English Camera management page"""
+    return render_template('camera_management_en.html')
 
 @app.route('/device_communication')
 def device_communication_page():
@@ -2720,7 +2734,7 @@ def generate_ai_response(message, knowledge_base, attachments):
         conversation_id = str(uuid.uuid4())
         
         # Use the actual available endpoint in manager_model/app.py
-        endpoint = "http://localhost:5015/api/chat_with_management"
+        endpoint = "http://localhost:5000/api/chat_with_management"
         
         # Prepare request data according to the actual API requirements
         request_data = {
@@ -7121,7 +7135,10 @@ if __name__ == '__main__':
     
     # Initialize device communication system
     logger.info("Initializing device communication system...")
-    init_device_communication()
+    try:
+        init_device_communication()
+    except NameError:
+        logger.warning("Device communication system not available, skipping initialization")
     
     # Load port from system config or use default
     import yaml
@@ -7160,6 +7177,9 @@ if __name__ == '__main__':
                 debug=True,
                 use_reloader=False)
     # Cleanup device communication system on shutdown
-    logger.info("Cleaning up device communication system...")
-    cleanup_device_communication()
+    try:
+        logger.info("Cleaning up device communication system...")
+        cleanup_device_communication()
+    except NameError:
+        logger.warning("Device communication system not available, skipping cleanup")
     logger.info("Self Brain AGI System shutdown complete")
