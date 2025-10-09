@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Copyright 2025 AGI System Team
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -882,3 +883,191 @@ if __name__ == "__main__":
     finally:
         # Cleanup
         manager.cleanup()
+=======
+import os
+import cv2
+import numpy as np
+import base64
+import datetime
+import logging
+import threading
+import os
+from typing import Dict, List, Optional, Any, Tuple
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger('CameraManager')
+
+# Determine snapshot directory
+snapshot_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'web_interface', 'snapshots')
+os.makedirs(snapshot_dir, exist_ok=True)
+
+class CameraManager:
+    def __init__(self):
+        """Initialize the CameraManager with multi-camera support"""
+        self.cameras = {}
+        self.lock = threading.RLock()
+        self.camera_status = {}
+        logger.info("CameraManager initialized")
+    
+    def list_available_cameras(self, max_cameras=10):
+        """List all available cameras on the system"""
+        available_cameras = []
+        for i in range(max_cameras):
+            cap = cv2.VideoCapture(i)
+            if cap.isOpened():
+                # Try to read a frame to ensure camera is working
+                ret, frame = cap.read()
+                if ret:
+                    available_cameras.append(i)
+                cap.release()
+        logger.info(f"Found {len(available_cameras)} available cameras: {available_cameras}")
+        return available_cameras
+    
+    def initialize_camera(self, camera_id=0, resolution=(640, 480), fps=30):
+        """Initialize a camera with the given ID"""
+        with self.lock:
+            if camera_id in self.cameras:
+                logger.warning(f"Camera {camera_id} is already initialized")
+                return False
+            
+            try:
+                cap = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW if os.name == 'nt' else 0)
+                if not cap.isOpened():
+                    logger.error(f"Failed to open camera {camera_id}")
+                    return False
+                
+                # Set camera properties
+                cap.set(cv2.CAP_PROP_FRAME_WIDTH, resolution[0])
+                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, resolution[1])
+                cap.set(cv2.CAP_PROP_FPS, fps)
+                
+                self.cameras[camera_id] = cap
+                self.camera_status[camera_id] = {
+                    'resolution': resolution,
+                    'fps': fps,
+                    'active': True,
+                    'last_frame_time': datetime.datetime.now()
+                }
+                
+                logger.info(f"Camera {camera_id} initialized with resolution {resolution} and {fps} FPS")
+                return True
+            except Exception as e:
+                logger.error(f"Error initializing camera {camera_id}: {str(e)}")
+                return False
+    
+    def get_frame(self, camera_id=0, encoding='jpg'):
+        """Get a frame from the specified camera"""
+        with self.lock:
+            if camera_id not in self.cameras:
+                logger.error(f"Camera {camera_id} is not initialized")
+                return None
+            
+            cap = self.cameras[camera_id]
+            if not cap.isOpened():
+                logger.error(f"Camera {camera_id} is not open")
+                return None
+            
+            try:
+                ret, frame = cap.read()
+                if not ret:
+                    logger.warning(f"Failed to read frame from camera {camera_id}")
+                    return None
+                
+                self.camera_status[camera_id]['last_frame_time'] = datetime.datetime.now()
+                
+                if encoding == 'jpg':
+                    ret, buffer = cv2.imencode('.jpg', frame)
+                    if ret:
+                        return buffer.tobytes()
+                    else:
+                        logger.error(f"Failed to encode frame from camera {camera_id}")
+                        return None
+                else:
+                    # Return raw frame for further processing
+                    return frame
+            except Exception as e:
+                logger.error(f"Error getting frame from camera {camera_id}: {str(e)}")
+                return None
+    
+    def get_frame_base64(self, camera_id=0):
+        """Get a base64 encoded frame from the specified camera"""
+        frame = self.get_frame(camera_id)
+        if frame is None:
+            return None
+        return base64.b64encode(frame).decode('utf-8')
+    
+    def get_stereo_frames(self, left_camera_id=0, right_camera_id=1):
+        """Get frames from both cameras for stereo vision"""
+        left_frame = self.get_frame(left_camera_id)
+        right_frame = self.get_frame(right_camera_id)
+        return left_frame, right_frame
+    
+    def take_snapshot(self, camera_id=0, filename=None):
+        """Take a snapshot from the specified camera and save it"""
+        frame = self.get_frame(camera_id, encoding=None)
+        if frame is None:
+            logger.error(f"Failed to take snapshot from camera {camera_id}")
+            return None
+        
+        if filename is None:
+            timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f"camera_{camera_id}_snapshot_{timestamp}.jpg"
+        
+        filepath = os.path.join(snapshot_dir, filename)
+        try:
+            cv2.imwrite(filepath, frame)
+            logger.info(f"Snapshot saved to {filepath}")
+            return filepath
+        except Exception as e:
+            logger.error(f"Error saving snapshot: {str(e)}")
+            return None
+    
+    def release_camera(self, camera_id=0):
+        """Release the specified camera"""
+        with self.lock:
+            if camera_id in self.cameras:
+                try:
+                    self.cameras[camera_id].release()
+                    del self.cameras[camera_id]
+                    if camera_id in self.camera_status:
+                        del self.camera_status[camera_id]
+                    logger.info(f"Camera {camera_id} released")
+                    return True
+                except Exception as e:
+                    logger.error(f"Error releasing camera {camera_id}: {str(e)}")
+                    return False
+            else:
+                logger.warning(f"Camera {camera_id} is not initialized")
+                return False
+    
+    def release_all_cameras(self):
+        """Release all initialized cameras"""
+        camera_ids = list(self.cameras.keys())
+        for camera_id in camera_ids:
+            self.release_camera(camera_id)
+        logger.info("All cameras released")
+    
+    def get_camera_info(self, camera_id=0):
+        """Get information about the specified camera"""
+        with self.lock:
+            if camera_id in self.camera_status:
+                return self.camera_status[camera_id].copy()
+            else:
+                return None
+    
+    def get_all_cameras_status(self):
+        """Get status of all initialized cameras"""
+        with self.lock:
+            return self.camera_status.copy()
+
+# Create a singleton instance of CameraManager
+def get_camera_manager():
+    """Get the singleton instance of CameraManager"""
+    if not hasattr(get_camera_manager, '_instance'):
+        get_camera_manager._instance = CameraManager()
+    return get_camera_manager._instance
+
+# Initialize camera manager instance on module load
+get_camera_manager()
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13

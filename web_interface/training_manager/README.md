@@ -78,6 +78,23 @@ success, message = training_manager.trainers["model_A"].save_model()
 print(f"Model saved: {success}, {message}")
 ```
 
+<<<<<<< HEAD
+=======
+### Running Tests
+
+You can test the Training API using the provided test script:
+
+```bash
+# Run all tests
+python -m web_interface.training_manager.test_training_api
+
+# Run a specific test
+python -m web_interface.training_manager.test_training_api --test health
+
+# Test with a different model
+python -m web_interface.training_manager.test_training_api --model-id model_B
+```
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 ## API Endpoints
 
@@ -158,4 +175,8 @@ Self Brain AGI System is released under the MIT License.
 For questions or support, please contact the Self Brain development team at [silencecrowtom@qq.com](mailto:silencecrowtom@qq.com).
 
 ---
+<<<<<<< HEAD
 **Self Brain AGI System** - Copyright 2025 AGI System Team
+=======
+**Self Brain AGI System** - Copyright 2025 AGI System Team
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13

@@ -159,10 +159,13 @@ def stop_training():
 def get_training_status():
     """Get the status of training sessions"""
     try:
+<<<<<<< HEAD
         # Log the API request for debugging
         logger.info(f"API request received: /api/training/status from {request.remote_addr}")
         logger.info(f"Request headers: {dict(request.headers)}")
         
+=======
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         # Get parameters
         training_id = request.args.get('training_id')
         

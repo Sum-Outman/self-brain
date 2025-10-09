@@ -179,7 +179,11 @@
     },
     "i2c": {
       "enabled": true,
+<<<<<<< HEAD
       "default_address": 64
+=======
+      "default_address": 0x40
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     },
     "spi": {
       "enabled": true,

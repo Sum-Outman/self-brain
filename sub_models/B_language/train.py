@@ -25,6 +25,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
+<<<<<<< HEAD
+=======
+from transformers import AutoModel, AutoTokenizer, get_linear_schedule_with_warmup
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 import numpy as np
 import time
 from datetime import datetime
@@ -94,14 +98,21 @@ class Vocabulary:
 
 class LanguageCorpusDataset(Dataset):
     """
+<<<<<<< HEAD
     语言语料数据集类，支持从零开始训练
     """
     def __init__(self, data_path=None, max_length=128, vocab_size=None):
+=======
+    语言语料数据集类，支持从零开始训练和预训练两种模式
+    """
+    def __init__(self, data_path=None, is_pretrained=False, max_length=128, vocab_size=None):
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         """
         初始化数据集
         
         参数:
             data_path: 数据文件路径，如果为None则生成合成数据
+<<<<<<< HEAD
             max_length: 序列最大长度
             vocab_size: 词汇表大小
         """
@@ -110,6 +121,23 @@ class LanguageCorpusDataset(Dataset):
         # 从零开始训练模式，构建自定义词汇表
         self.vocab = Vocabulary()
         self.tokenizer = None  # 不使用预训练分词器
+=======
+            is_pretrained: 是否使用预训练模式
+            max_length: 序列最大长度
+            vocab_size: 词汇表大小，仅在非预训练模式下有效
+        """
+        self.is_pretrained = is_pretrained
+        self.max_length = max_length
+        
+        if is_pretrained:
+            # 预训练模式下，直接加载预训练分词器
+            self.tokenizer = AutoTokenizer.from_pretrained('xlm-roberta-base')
+            self.vocab = None
+        else:
+            # 从零开始训练模式，构建自定义词汇表
+            self.vocab = Vocabulary()
+            self.tokenizer = None  # 不使用预训练分词器
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
         # 加载或生成数据
         if data_path and os.path.exists(data_path):
@@ -117,10 +145,18 @@ class LanguageCorpusDataset(Dataset):
         else:
             self.data = self._generate_synthetic_data()
         
+<<<<<<< HEAD
         # 构建并可能扩展词汇表
         self._build_vocabulary()
         if vocab_size and vocab_size > len(self.vocab):
             self._expand_vocabulary(vocab_size)
+=======
+        # 如果是从零开始训练，构建并可能扩展词汇表
+        if not is_pretrained:
+            self._build_vocabulary()
+            if vocab_size and vocab_size > len(self.vocab):
+                self._expand_vocabulary(vocab_size)
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
         # 编码数据
         self.encoded_data = self._encode_data()
@@ -234,6 +270,7 @@ class LanguageCorpusDataset(Dataset):
             label = item['label']
             language = item.get('language', 'en')
             
+<<<<<<< HEAD
             # 从零开始训练模式：使用自定义词汇表
             words = text.split()
             # 添加开始和结束标记
@@ -247,6 +284,33 @@ class LanguageCorpusDataset(Dataset):
             input_ids = [self.vocab.get_idx(word) for word in words]
             # 生成注意力掩码
             attention_mask = [1 if word != '<pad>' else 0 for word in words]
+=======
+            if self.is_pretrained:
+                # 预训练模式：使用预训练分词器
+                encoding = self.tokenizer(
+                    text,
+                    truncation=True,
+                    padding='max_length',
+                    max_length=self.max_length,
+                    return_tensors='pt'
+                )
+                input_ids = encoding['input_ids'].squeeze().tolist()
+                attention_mask = encoding['attention_mask'].squeeze().tolist()
+            else:
+                # 从零开始训练模式：使用自定义词汇表
+                words = text.split()
+                # 添加开始和结束标记
+                words = ['<bos>'] + words + ['<eos>']
+                # 截断或填充到最大长度
+                if len(words) > self.max_length:
+                    words = words[:self.max_length]
+                else:
+                    words += ['<pad>'] * (self.max_length - len(words))
+                # 转换为索引
+                input_ids = [self.vocab.get_idx(word) for word in words]
+                # 生成注意力掩码
+                attention_mask = [1 if word != '<pad>' else 0 for word in words]
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
             # 将情感标签转换为索引
             emotion_labels = {'neutral': 0, 'joy': 1, 'sadness': 2, 'anger': 3, 'fear': 4, 'surprise': 5, 'disgust': 6}
@@ -277,28 +341,48 @@ class LanguageCorpusDataset(Dataset):
 
 class LanguageModel(nn.Module):
     """
+<<<<<<< HEAD
     语言模型类，从零开始训练，增强了情感推理能力
     """
     def __init__(self, vocab_size, embedding_dim=256, hidden_dim=512, 
                  num_layers=2, dropout=0.3):
+=======
+    语言模型类，支持从零开始训练和预训练两种模式，增强了情感推理能力
+    """
+    def __init__(self, vocab_size=None, embedding_dim=256, hidden_dim=512, 
+                 num_layers=2, dropout=0.3, model_name=None):
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         """
         初始化语言模型
         
         参数:
+<<<<<<< HEAD
             vocab_size: 词汇表大小
+=======
+            vocab_size: 词汇表大小，仅在从零开始训练模式下使用
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             embedding_dim: 嵌入维度
             hidden_dim: 隐藏层维度
             num_layers: LSTM层数
             dropout: Dropout比率
+<<<<<<< HEAD
         """
         super(LanguageModel, self).__init__()
         
+=======
+            model_name: 预训练模型名称，设置后使用预训练模式
+        """
+        super(LanguageModel, self).__init__()
+        
+        self.is_pretrained = model_name is not None
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         self.dropout = dropout
         
         # 定义情感类别数量
         self.num_emotion_classes = 7  # 7种基本情绪
         self.num_sub_emotion_classes = 21  # 细粒度子情绪类别
         
+<<<<<<< HEAD
         # 从零开始训练模式：构建自定义模型
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
         self.lstm = nn.LSTM(
@@ -335,6 +419,71 @@ class LanguageModel(nn.Module):
         
         # 语言建模头
         self.lm_head = nn.Linear(self.hidden_dim * 2, vocab_size)
+=======
+        if self.is_pretrained:
+            # 预训练模式：加载预训练模型
+            self.base_model = AutoModel.from_pretrained(model_name)
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+            self.hidden_dim = self.base_model.config.hidden_size
+            
+            # 情感特征提取层
+            self.emotion_feature_extractor = nn.Sequential(
+                nn.Dropout(dropout),
+                nn.Linear(self.hidden_dim, 512),
+                nn.LayerNorm(512),
+                nn.GELU(),
+                nn.Dropout(dropout),
+                nn.Linear(512, 256),
+                nn.LayerNorm(256),
+                nn.GELU()
+            )
+            
+            # 主情感分类头
+            self.emotion_head = nn.Linear(256, self.num_emotion_classes)
+            
+            # 细粒度子情感分类头
+            self.sub_emotion_head = nn.Linear(256, self.num_sub_emotion_classes)
+            
+            # 情感强度回归头
+            self.emotion_intensity_head = nn.Linear(256, 1)
+        else:
+            # 从零开始训练模式：构建自定义模型
+            self.embedding = nn.Embedding(vocab_size, embedding_dim)
+            self.lstm = nn.LSTM(
+                embedding_dim,
+                hidden_dim,
+                num_layers,
+                batch_first=True,
+                bidirectional=True,
+                dropout=dropout if num_layers > 1 else 0
+            )
+            self.dropout_layer = nn.Dropout(dropout)
+            self.hidden_dim = hidden_dim
+            
+            # 情感特征提取层
+            self.emotion_feature_extractor = nn.Sequential(
+                nn.Dropout(dropout),
+                nn.Linear(self.hidden_dim * 2, 512),  # *2 因为是双向LSTM
+                nn.LayerNorm(512),
+                nn.GELU(),
+                nn.Dropout(dropout),
+                nn.Linear(512, 256),
+                nn.LayerNorm(256),
+                nn.GELU()
+            )
+            
+            # 主情感分类头
+            self.emotion_head = nn.Linear(256, self.num_emotion_classes)
+            
+            # 细粒度子情感分类头
+            self.sub_emotion_head = nn.Linear(256, self.num_sub_emotion_classes)
+            
+            # 情感强度回归头
+            self.emotion_intensity_head = nn.Linear(256, 1)
+            
+            # 语言建模头（仅在从零开始训练模式下使用）
+            self.lm_head = nn.Linear(self.hidden_dim * 2, vocab_size)
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
         # 初始化统计跟踪属性
         self.__post_init__()
@@ -357,6 +506,7 @@ class LanguageModel(nn.Module):
     
     def forward(self, input_ids, attention_mask=None):
         """前向传播，增强了情感推理能力"""
+<<<<<<< HEAD
         # 从零开始训练模式
         embedded = self.embedding(input_ids)
         embedded = self.dropout_layer(embedded)
@@ -364,6 +514,22 @@ class LanguageModel(nn.Module):
         # 使用最后一个时间步的输出作为句子表示
         cls_representation = lstm_out[:, -1, :]
         sequence_output = self.dropout_layer(lstm_out)
+=======
+        if self.is_pretrained:
+            # 预训练模式
+            outputs = self.base_model(input_ids, attention_mask=attention_mask)
+            sequence_output = outputs.last_hidden_state
+            # 使用CLS标记的表示作为句子表示
+            cls_representation = sequence_output[:, 0, :]
+        else:
+            # 从零开始训练模式
+            embedded = self.embedding(input_ids)
+            embedded = self.dropout_layer(embedded)
+            lstm_out, _ = self.lstm(embedded)
+            # 使用最后一个时间步的输出作为句子表示
+            cls_representation = lstm_out[:, -1, :]
+            sequence_output = self.dropout_layer(lstm_out)
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
         # 提取情感特征
         emotion_features = self.emotion_feature_extractor(cls_representation)
@@ -377,8 +543,15 @@ class LanguageModel(nn.Module):
         # 情感强度回归（使用sigmoid将输出限制在0-1之间）
         emotion_intensity = torch.sigmoid(self.emotion_intensity_head(emotion_features))
         
+<<<<<<< HEAD
         # 语言建模预测
         lm_logits = self.lm_head(sequence_output)
+=======
+        # 语言建模预测（仅在从零开始训练模式下）
+        lm_logits = None
+        if not self.is_pretrained:
+            lm_logits = self.lm_head(sequence_output)
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
         return lm_logits, emotion_logits, sub_emotion_logits, emotion_intensity
     
@@ -933,6 +1106,11 @@ class LanguageModelTrainer:
         """获取默认配置"""
         return {
             'model_id': 'B_language',
+<<<<<<< HEAD
+=======
+            'is_pretrained': False,  # 从零开始训练
+            'model_name': None,  # 不使用预训练模型
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             'vocab_size': 30000,
             'embedding_dim': 256,
             'hidden_dim': 512,
@@ -995,8 +1173,14 @@ class LanguageModelTrainer:
         # 创建主数据集
         dataset = LanguageCorpusDataset(
             data_path=data_path,
+<<<<<<< HEAD
             max_length=self.config['max_length'],
             vocab_size=self.config['vocab_size']
+=======
+            is_pretrained=self.config['is_pretrained'],
+            max_length=self.config['max_length'],
+            vocab_size=self.config['vocab_size'] if not self.config['is_pretrained'] else None
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         )
         
         # 分割数据集
@@ -1019,7 +1203,11 @@ class LanguageModelTrainer:
         
         print(f'Dataset prepared: {len(self.train_dataset)} train, {len(self.val_dataset)} val, {len(self.test_dataset)} test samples')
         
+<<<<<<< HEAD
         if dataset.vocab:
+=======
+        if not self.config['is_pretrained'] and dataset.vocab:
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             print(f'Vocabulary size: {len(dataset.vocab)}')
         
         return self.train_dataset, self.val_dataset, self.test_dataset
@@ -1028,6 +1216,7 @@ class LanguageModelTrainer:
         """
         初始化模型
         """
+<<<<<<< HEAD
         # 确保数据集已准备好以获取词汇表大小
         if self.train_dataset is None:
             self.prepare_dataset()
@@ -1042,6 +1231,29 @@ class LanguageModelTrainer:
             num_layers=self.config['num_layers'],
             dropout=self.config['dropout']
         )
+=======
+        if self.config['is_pretrained']:
+            # 使用预训练模型
+            self.model = LanguageModel(
+                model_name=self.config['model_name']
+            )
+        else:
+            # 从零开始训练模型
+            # 需要确保数据集已准备好以获取词汇表大小
+            if self.train_dataset is None:
+                self.prepare_dataset()
+            
+            # 获取词汇表大小
+            vocab_size = len(self.train_dataset.dataset.vocab)
+            
+            self.model = LanguageModel(
+                vocab_size=vocab_size,
+                embedding_dim=self.config['embedding_dim'],
+                hidden_dim=self.config['hidden_dim'],
+                num_layers=self.config['num_layers'],
+                dropout=self.config['dropout']
+            )
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
         # 打印模型架构摘要
         print('\nModel Architecture:')
@@ -1282,7 +1494,12 @@ class LanguageModelTrainer:
             'training_history': train_history,
             'best_score': self.trainer.best_score,
             'model_summary': {
+<<<<<<< HEAD
                 'total_parameters': sum(p.numel() for p in self.model.parameters())
+=======
+                'total_parameters': sum(p.numel() for p in self.model.parameters()),
+                'is_pretrained': self.config['is_pretrained']
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             }
         }
         
@@ -1324,6 +1541,7 @@ def save_model(model, path):
     """保存模型到文件，包含主情感、子情感和情感强度组件"""
     # 准备配置信息
     config = {
+<<<<<<< HEAD
         'hidden_dim': model.hidden_dim,
         'num_emotion_classes': model.num_emotion_classes,
         'num_sub_emotion_classes': model.num_sub_emotion_classes,
@@ -1331,6 +1549,20 @@ def save_model(model, path):
         'has_emotion_intensity': hasattr(model, 'emotion_intensity_head') and model.emotion_intensity_head is not None
     }
     
+=======
+        'is_pretrained': model.is_pretrained,
+        'model_name': model.base_model.config._name_or_path if model.is_pretrained else None,
+        'hidden_dim': model.hidden_dim,
+        'num_emotions': model.num_emotions,
+        'has_sub_emotions': hasattr(model, 'sub_emotion_classifier') and model.sub_emotion_classifier is not None,
+        'has_emotion_intensity': hasattr(model, 'emotion_intensity_regressor') and model.emotion_intensity_regressor is not None
+    }
+    
+    # 如果有子情感分类器，保存子情感数量
+    if config['has_sub_emotions']:
+        config['sub_emotion_config'] = model.sub_emotion_config
+    
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     torch.save({
         'model_state_dict': model.state_dict(),
         'config': config
@@ -1344,11 +1576,32 @@ def load_model(path, vocab_size=None):
     # 构建模型配置
     model_config = {
         'vocab_size': vocab_size,
+<<<<<<< HEAD
         'hidden_dim': config.get('hidden_dim', 512)
     }
     
     # 加载自定义模型
     model = LanguageModel(**model_config)
+=======
+        'hidden_dim': config.get('hidden_dim', 512),
+        'num_emotions': config.get('num_emotions', 7)
+    }
+    
+    # 如果有子情感配置，添加到模型配置
+    if config.get('has_sub_emotions', False) and config.get('sub_emotion_config'):
+        model_config['sub_emotion_config'] = config['sub_emotion_config']
+    
+    # 如果有情感强度回归器，添加到模型配置
+    if config.get('has_emotion_intensity', False):
+        model_config['include_emotion_intensity'] = True
+    
+    if config.get('is_pretrained', False) and config.get('model_name'):
+        # 加载预训练模型
+        model = LanguageModel(model_name=config['model_name'], **model_config)
+    else:
+        # 加载自定义模型
+        model = LanguageModel(**model_config)
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     
     # 加载模型状态字典
     model.load_state_dict(checkpoint['model_state_dict'])
@@ -1602,10 +1855,32 @@ def start_joint_training(model_configs, data_paths, config=None, loss_weights=No
 
 # 主函数，用于测试训练功能
 if __name__ == '__main__':
+<<<<<<< HEAD
+=======
+    # 测试情感分析训练
+    print("\n--- 测试情感分析训练 ---")
+    sentiment_config = {
+        'model_id': 'sentiment_analysis',
+        'is_pretrained': True,
+        'model_name': 'xlm-roberta-base',
+        'epochs': 2,
+        'batch_size': 8,
+        'learning_rate': 1e-5,
+        'data_path': './data/en/sample_training_data.json'
+    }
+    
+    sentiment_result = start_training(sentiment_config)
+    print("情感分析训练结果 | Sentiment analysis training result:", json.dumps(sentiment_result, indent=2, ensure_ascii=False))
+    
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     # 测试从零开始训练
     print("\n--- 测试从零开始训练 ---")
     from_scratch_config = {
         'model_id': 'from_scratch',
+<<<<<<< HEAD
+=======
+        'is_pretrained': False,
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         'vocab_size': 10000,
         'epochs': 2,
         'batch_size': 8,
@@ -1614,3 +1889,24 @@ if __name__ == '__main__':
     
     from_scratch_result = start_training(from_scratch_config)
     print("从零开始训练结果 | From scratch training result:", json.dumps(from_scratch_result, indent=2, ensure_ascii=False))
+<<<<<<< HEAD
+=======
+    
+    # 测试联合训练
+    print("\n--- 测试联合训练 ---")
+    joint_result = start_joint_training(
+        model_configs=[
+            {'model_id': 'multilingual', 'is_pretrained': True, 'model_name': 'xlm-roberta-base'},
+            {'model_id': 'emotion', 'is_pretrained': False, 'vocab_size': 5000}
+        ],
+        data_paths=['./data/en/sample_training_data.json', './data/zh/sample_training_data.json'],
+        config={
+            'epochs': 2,
+            'batch_size': 8,
+            'learning_rate': 1e-5
+        },
+        loss_weights=[0.6, 0.4]
+    )
+    
+    print("联合训练结果 | Joint training result:", json.dumps(joint_result, indent=2, ensure_ascii=False))
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13

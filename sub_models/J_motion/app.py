@@ -48,7 +48,12 @@ def handle_control():
     result = motion_controller.control_device(protocol, command)
     return jsonify(result)
 
+<<<<<<< HEAD
 import sys
 if __name__ == '__main__':
     port = int(sys.argv[sys.argv.index('--port')+1]) if '--port' in sys.argv else 5010
     app.run(host='0.0.0.0', port=port, debug=False)
+=======
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5010, debug=True)
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13

@@ -52,7 +52,11 @@ registered_models = {
         "is_local": True,
         "config": {
             "model_source": "local",
+<<<<<<< HEAD
             "api_endpoint": "http://localhost:5000",
+=======
+            "api_endpoint": "http://localhost:5001",
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             "version": "1.0.0"
         }
     },

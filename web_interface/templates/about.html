@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% extends "base_monochrome.html" %}
 
 {% block title %}About - Self Brain AGI{% endblock %}
@@ -85,3 +86,131 @@
     </div>
 </div>
 {% endblock %}
+=======
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Self Brain AGI</title>
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="/knowledge">
+                                <i class="bi bi-book"></i> Knowledge Base
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/training">
+                                <i class="bi bi-cpu"></i> Training Center
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main Content Area -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">About Self Brain AGI</h1>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>System Introduction</h5>
+                            </div>
+                            <div class="card-body">
+                                <h6>Self Brain AGI is an advanced artificial intelligence management system</h6>
+                                <p>
+                                    This system integrates multimodal AI capabilities, including natural language processing, image recognition,
+                                    audio processing, video analysis, and more. With a modular design, it supports flexible
+                                    model training and knowledge management.
+                                </p>
+                                
+                                <h6>Core Features</h6>
+                                <ul>
+                                    <li><strong>Multimodal AI Support:</strong> Text, Image, Audio, Video</li>
+                                    <li><strong>Real-time Training Monitoring:</strong> GPU resource tracking in real-time</li>
+                                    <li><strong>Knowledge Base Management:</strong> Intelligent document processing and retrieval</li>
+                                    <li><strong>Distributed Architecture:</strong> Supports multi-node deployment</li>
+                                    <li><strong>Visual Interface:</strong> Intuitive user experience</li>
+                                </ul>
+
+                                <h6>Tech Stack</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>Backend:</strong>
+                                        <ul>
+                                            <li>Python Flask</li>
+                                            <li>PyTorch/TensorFlow</li>
+                                            <li>CUDA Acceleration</li>
+                                            <li>Redis Caching</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Frontend:</strong>
+                                        <ul>
+                                            <li>Bootstrap 5</li>
+                                            <li>Socket.IO</li>
+                                            <li>Chart.js</li>
+                                            <li>jQuery</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Version Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Version:</strong> v1.0.0</p>
+                                <p><strong>Build:</strong> 2025.09.11</p>
+                                <p><strong>License:</strong> MIT</p>
+                                <p><strong>Author:</strong> Self Brain Team</p>
+                            </div>
+                        </div>
+
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5>Contact Support</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>If you have any questions or suggestions, please contact us through the following methods:</p>
+                                <ul>
+                                    <li>📧 Email: support@selfbrain.ai</li>
+                                    <li>💬 Forum: forum.selfbrain.ai</li>
+                                    <li>📖 Documentation: docs.selfbrain.ai</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/custom.js') }}"></script>
+</body>
+</html>
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13

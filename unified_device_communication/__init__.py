@@ -20,6 +20,7 @@ import psutil
 import platform
 from pathlib import Path
 
+<<<<<<< HEAD
 # Import Camera Manager
 try:
     from camera_manager import get_camera_manager
@@ -29,6 +30,8 @@ except Exception as e:
     logger.error(f"Failed to initialize camera manager: {str(e)}")
     camera_manager = None
 
+=======
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("DeviceCommunication")
@@ -46,13 +49,24 @@ class DeviceManager:
         """Initialize the device manager"""
         self.devices = {}
         self.connected_devices = {}
+<<<<<<< HEAD
         # Use the module-level camera_manager
+=======
+        self.camera_manager = None
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         self.serial_ports = {}
         self.is_running = False
         self.monitor_thread = None
         self.device_status = {}
+<<<<<<< HEAD
         self.stereo_pairs = {}
         self.mock_cameras_enabled = False
+=======
+        
+    def set_camera_manager(self, camera_manager):
+        """Set the camera manager instance"""
+        self.camera_manager = camera_manager
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
     def start(self):
         """Start the device manager"""
@@ -129,6 +143,7 @@ class DeviceManager:
             logger.error(f"Error updating serial ports: {str(e)}")
     
     def _update_device_status(self):
+<<<<<<< HEAD
         """Update the status of all devices"""
         global camera_manager
         # Update camera status
@@ -170,6 +185,28 @@ class DeviceManager:
                 self.device_status['stereo_vision'] = {'status': 'error', 'message': str(e)}
         else:
             self.device_status['stereo_vision'] = {'status': 'not_initialized'}
+=======
+        """Update the status of all connected devices"""
+        try:
+            # Update camera status
+            if self.camera_manager:
+                camera_status = self.camera_manager.get_camera_status()
+                self.device_status['cameras'] = camera_status
+                
+            # Update serial device status
+            serial_status = {}
+            for device_id, device in self.connected_devices.items():
+                if isinstance(device, serial.Serial):
+                    serial_status[device_id] = {
+                        'connected': device.is_open,
+                        'port': device.port,
+                        'baudrate': device.baudrate
+                    }
+            self.device_status['serial'] = serial_status
+            
+        except Exception as e:
+            logger.error(f"Error updating device status: {str(e)}")
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     
     def connect_device(self, device_id, device_type, **kwargs):
         """Connect to a device"""
@@ -267,6 +304,7 @@ class DeviceManager:
             logger.error(f"Error sending command to device {device_id}: {str(e)}")
             return {'status': 'error', 'message': str(e)}
     
+<<<<<<< HEAD
     def list_available_devices(self):
         """List all available devices"""
         global camera_manager
@@ -468,6 +506,8 @@ class DeviceManager:
         else:
             return {'status': 'error', 'message': 'Camera manager not initialized'}
             
+=======
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     def get_device_list(self):
         """Get list of all devices"""
         try:
@@ -557,6 +597,7 @@ def get_device_status():
     device_manager = get_device_manager()
     return jsonify({'status': 'success', 'status_data': device_manager.device_status})
 
+<<<<<<< HEAD
 # Camera related API endpoints
 @device_bp.route('/api/cameras/list', methods=['GET'])
 def list_cameras():
@@ -677,5 +718,7 @@ def disable_mock_cameras_api():
     result = device_manager.disable_mock_cameras()
     return jsonify(result)
 
+=======
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 # Initialize device communication on module load
 init_device_communication()

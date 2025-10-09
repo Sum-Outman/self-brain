@@ -11,6 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+<<<<<<< HEAD
+=======
+# 视频流视觉处理模型定义
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 # Video Stream Visual Processing Model Definition
 
 import torch
@@ -30,18 +34,29 @@ import torchvision.transforms as transforms
 
 class VideoModel(nn.Module):
     def __init__(self, num_classes=100, config_path="config/video_config.json"):
+<<<<<<< HEAD
         """Initialize video stream visual processing model"""
         super(VideoModel, self).__init__()
+=======
+        """初始化视频流视觉处理模型 | Initialize video stream visual processing model"""
+        super(VideoModel, self).__init__()
+        # 使用预训练的3D CNN模型作为基础
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         # Use pre-trained 3D CNN model as base
         self.base_model = models.video.r3d_18(pretrained=True)
         in_features = self.base_model.fc.in_features
         self.base_model.fc = nn.Linear(in_features, num_classes)
         
+<<<<<<< HEAD
         # Load configuration
+=======
+        # 加载配置 | Load configuration
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         self.config = self.load_config(config_path)
         self.model_type = self.config.get("model_type", "local")
         self.external_api_config = self.config.get("external_api", {})
         
+<<<<<<< HEAD
         # Initialize video generation model
         self.generation_model = None
         self.image_generation_model = None  # Add image generation model cache
@@ -49,6 +64,15 @@ class VideoModel(nn.Module):
         if self.model_type == "local":
             try:
                 # Load Stable Video Diffusion model for video generation
+=======
+        # 初始化视频生成模型 | Initialize video generation model
+        self.generation_model = None
+        self.image_generation_model = None  # 添加图像生成模型缓存 | Add image generation model cache
+        
+        if self.model_type == "local":
+            try:
+                # 加载Stable Video Diffusion模型用于视频生成 | Load Stable Video Diffusion model for video generation
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 self.generation_model = StableVideoDiffusionPipeline.from_pretrained(
                     "stabilityai/stable-video-diffusion-img2vid",
                     torch_dtype=torch.float16,
@@ -56,11 +80,19 @@ class VideoModel(nn.Module):
                 )
                 if torch.cuda.is_available():
                     self.generation_model = self.generation_model.to("cuda")
+<<<<<<< HEAD
                 print("Video generation model loaded successfully")
             except Exception as e:
                 print(f"Video generation model loading failed: {e}")
         
         # Emotion to video style mapping
+=======
+                print("视频生成模型加载成功 | Video generation model loaded successfully")
+            except Exception as e:
+                print(f"视频生成模型加载失败: {e} | Video generation model loading failed: {e}")
+        
+        # 情感到视频风格的映射 | Emotion to video style mapping
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         self.emotion_styles = {
             "happy": "bright, vibrant, joyful, lively, cheerful, upbeat",
             "sad": "dark, melancholic, slow, somber, emotional, dramatic",
@@ -71,13 +103,21 @@ class VideoModel(nn.Module):
             "excited": "energetic, dynamic, fast-paced, vibrant, thrilling"
         }
         
+<<<<<<< HEAD
         # Add model unloading method
+=======
+        # 添加模型卸载方法 | Add model unloading method
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         self.unload_models = self.config.get("unload_models", False)
         if self.unload_models:
             self.unload_image_generation_model()
         
     def load_config(self, config_path):
+<<<<<<< HEAD
         """Load configuration file"""
+=======
+        """加载配置文件 | Load configuration file"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         try:
             with open(config_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
@@ -88,16 +128,30 @@ class VideoModel(nn.Module):
             }
         
     def forward(self, x):
+<<<<<<< HEAD
         """Forward pass"""
         return self.base_model(x)
     
     def recognize_video(self, video_path):
         """Recognize video content"""
         try:
+=======
+        """前向传播 | Forward pass"""
+        return self.base_model(x)
+    
+    def recognize_video(self, video_path):
+        """识别视频内容 | Recognize video content"""
+        try:
+            # 加载并预处理视频
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             # Load and preprocess video
             cap = cv2.VideoCapture(video_path)
             frames = []
             
+<<<<<<< HEAD
+=======
+            # 提取固定数量的帧
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             # Extract fixed number of frames
             total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
             frame_indices = np.linspace(0, total_frames-1, 16, dtype=int)
@@ -112,19 +166,35 @@ class VideoModel(nn.Module):
             
             cap.release()
             
+<<<<<<< HEAD
+=======
+            # 转换为张量
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             # Convert to tensor
             frames = np.array(frames)
             frames = torch.tensor(frames, dtype=torch.float32).permute(3, 0, 1, 2).unsqueeze(0)
             
+<<<<<<< HEAD
+=======
+            # 使用模型进行预测
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             # Use model for prediction
             with torch.no_grad():
                 outputs = self.forward(frames)
                 _, predicted = torch.max(outputs, 1)
             
+<<<<<<< HEAD
             # Get class names
             class_names = self.get_video_classes()
             predicted_class_name = class_names[predicted.item()] if predicted.item() < len(class_names) else "unknown"
             
+=======
+            # 获取类别名称 | Get class names
+            class_names = self.get_video_classes()
+            predicted_class_name = class_names[predicted.item()] if predicted.item() < len(class_names) else "unknown"
+            
+            # 返回识别结果
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             # Return recognition result
             return {
                 'status': 'success',
@@ -136,6 +206,7 @@ class VideoModel(nn.Module):
             return {'status': 'error', 'message': str(e)}
     
     def get_video_classes(self):
+<<<<<<< HEAD
         """Get video class names"""
         try:
             # Try to load local class file
@@ -155,6 +226,27 @@ class VideoModel(nn.Module):
             video = VideoFileClip(video_path)
             
             # Apply editing operations
+=======
+        """获取视频类别名称 | Get video class names"""
+        try:
+            # 尝试加载本地类别文件 | Try to load local class file
+            with open("config/video_classes.json", "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            # 默认视频类别 | Default video classes
+            return ["sports", "music", "news", "movie", "documentary", "animation", "educational", "entertainment"]
+    
+    def edit_video(self, video_path, edits):
+        """视频剪辑编辑 | Video editing"""
+        try:
+            # 确保输出目录存在 | Ensure output directory exists
+            os.makedirs("output", exist_ok=True)
+            
+            # 加载视频 | Load video
+            video = VideoFileClip(video_path)
+            
+            # 应用编辑操作 | Apply editing operations
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             for edit in edits:
                 operation = edit.get("operation")
                 params = edit.get("parameters", {})
@@ -190,7 +282,11 @@ class VideoModel(nn.Module):
                         video = video.fadeout(fade_out)
                     
                 elif operation == "crop":
+<<<<<<< HEAD
                     # Crop frame
+=======
+                    # 裁剪画面 | Crop frame
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                     x1 = params.get("x1", 0)
                     y1 = params.get("y1", 0)
                     x2 = params.get("x2", video.w)
@@ -198,19 +294,32 @@ class VideoModel(nn.Module):
                     video = video.crop(x1=x1, y1=y1, x2=x2, y2=y2)
                     
                 elif operation == "rotate":
+<<<<<<< HEAD
                     # Rotate video
+=======
+                    # 旋转视频 | Rotate video
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                     angle = params.get("angle", 0)
                     video = video.rotate(angle)
                     
                 elif operation == "mirror":
+<<<<<<< HEAD
                     # Mirror flip
+=======
+                    # 镜像翻转 | Mirror flip
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                     direction = params.get("direction", "horizontal")
                     if direction == "horizontal":
                         video = video.fx(vfx.mirror_x)
                     else:
                         video = video.fx(vfx.mirror_y)
+<<<<<<< HEAD
                 
             # Save edited video
+=======
+            
+            # 保存编辑后的视频 | Save edited video
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             output_path = "output/edited_video.mp4"
             video.write_videofile(output_path, codec='libx264', audio_codec='aac')
             
@@ -225,6 +334,7 @@ class VideoModel(nn.Module):
             return {'status': 'error', 'message': str(e)}
     
     def modify_video(self, video_path, modifications):
+<<<<<<< HEAD
         """Video content modification"""
         try:
             # Ensure output directory exists
@@ -234,12 +344,27 @@ class VideoModel(nn.Module):
             video = VideoFileClip(video_path)
             
             # Apply modification operations
+=======
+        """视频内容修改 | Video content modification"""
+        try:
+            # 确保输出目录存在 | Ensure output directory exists
+            os.makedirs("output", exist_ok=True)
+            
+            # 加载视频 | Load video
+            video = VideoFileClip(video_path)
+            
+            # 应用修改操作 | Apply modification operations
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             for mod in modifications:
                 operation = mod.get("operation")
                 params = mod.get("parameters", {})
                 
                 if operation == "add_text":
+<<<<<<< HEAD
                     # Add text
+=======
+                    # 添加文字 | Add text
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                     text = params.get("text", "Sample Text")
                     position = params.get("position", ("center", "bottom"))
                     font_size = params.get("font_size", 24)
@@ -247,7 +372,11 @@ class VideoModel(nn.Module):
                     start_time = params.get("start_time", 0)
                     end_time = params.get("end_time", video.duration)
                     
+<<<<<<< HEAD
                     # Create text clip
+=======
+                    # 创建文字clip | Create text clip
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                     txt_clip = (TextClip(text, fontsize=font_size, color=color)
                                .set_position(position)
                                .set_duration(end_time - start_time)
@@ -256,7 +385,11 @@ class VideoModel(nn.Module):
                     video = CompositeVideoClip([video, txt_clip])
                     
                 elif operation == "add_image":
+<<<<<<< HEAD
                     # Add image
+=======
+                    # 添加图片 | Add image
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                     image_path = params.get("image_path")
                     position = params.get("position", ("center", "center"))
                     duration = params.get("duration", video.duration)
@@ -271,7 +404,11 @@ class VideoModel(nn.Module):
                         video = CompositeVideoClip([video, img_clip])
                     
                 elif operation == "filter":
+<<<<<<< HEAD
                     # Apply filter
+=======
+                    # 应用滤镜 | Apply filter
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                     filter_type = params.get("type", "blackwhite")
                     if filter_type == "blackwhite":
                         video = video.fx(vfx.blackwhite)
@@ -285,7 +422,11 @@ class VideoModel(nn.Module):
                         video = video.fx(vfx.lum_contrast, contrast=contrast_factor)
                     
                 elif operation == "audio":
+<<<<<<< HEAD
                     # Modify audio
+=======
+                    # 修改音频 | Modify audio
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                     audio_operation = params.get("audio_operation")
                     if audio_operation == "replace":
                         new_audio_path = params.get("audio_path")
@@ -297,8 +438,13 @@ class VideoModel(nn.Module):
                         video = video.volumex(volume_factor)
                     elif audio_operation == "mute":
                         video = video.without_audio()
+<<<<<<< HEAD
                 
             # Save modified video
+=======
+            
+            # 保存修改后的视频 | Save modified video
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             output_path = "output/modified_video.mp4"
             video.write_videofile(output_path, codec='libx264', audio_codec='aac')
             
@@ -312,14 +458,24 @@ class VideoModel(nn.Module):
             return {'status': 'error', 'message': str(e)}
     
     def generate_video(self, prompt, emotion="neutral", duration=5, fps=24):
+<<<<<<< HEAD
         """Generate video based on semantics and emotion"""
         try:
             # Adjust prompt based on emotion
+=======
+        """根据语义和情感生成视频 | Generate video based on semantics and emotion"""
+        try:
+            # 根据情感调整提示词 | Adjust prompt based on emotion
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             emotion_style = self.emotion_styles.get(emotion, self.emotion_styles["neutral"])
             enhanced_prompt = f"{prompt}, {emotion_style}, high quality, detailed, 4k"
             
             if self.model_type == "external":
+<<<<<<< HEAD
                 # Use external API for video generation
+=======
+                # 使用外部API生成视频 | Use external API for video generation
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 return self._call_external_api("generate", {
                     "prompt": enhanced_prompt,
                     "duration": duration,
@@ -327,12 +483,21 @@ class VideoModel(nn.Module):
                     "emotion": emotion
                 })
             
+<<<<<<< HEAD
             # Use local model for video generation
             if self.generation_model is None:
                 return {'status': 'error', 'message': 'Video generation model not available'}
             
             # Generate initial frame
             # Use cached model or load new one
+=======
+            # 使用本地模型生成视频 | Use local model for video generation
+            if self.generation_model is None:
+                return {'status': 'error', 'message': 'Video generation model not available'}
+            
+            # 生成初始帧 | Generate initial frame
+            # 使用缓存的模型或加载新模型 | Use cached model or load new one
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             if self.image_generation_model is None:
                 self.image_generation_model = StableDiffusionPipeline.from_pretrained(
                     "stabilityai/stable-diffusion-2-1",
@@ -342,6 +507,7 @@ class VideoModel(nn.Module):
                 if torch.cuda.is_available():
                     self.image_generation_model = self.image_generation_model.to("cuda")
             
+<<<<<<< HEAD
             # Generate initial image
             initial_image = self.image_generation_model(enhanced_prompt).images[0]
             
@@ -350,6 +516,16 @@ class VideoModel(nn.Module):
                 self.unload_image_generation_model()
             
             # Generate video from initial image
+=======
+            # 生成初始图像 | Generate initial image
+            initial_image = self.image_generation_model(enhanced_prompt).images[0]
+            
+            # 如果配置了模型卸载，立即释放资源 | If model unloading is configured, release resources immediately
+            if self.unload_models:
+                self.unload_image_generation_model()
+            
+            # 使用初始图像生成视频 | Generate video from initial image
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             with torch.no_grad():
                 if torch.cuda.is_available():
                     video_frames = self.generation_model(
@@ -364,11 +540,19 @@ class VideoModel(nn.Module):
                         num_inference_steps=25
                     ).frames[0]
             
+<<<<<<< HEAD
             # Save generated video
             output_path = "output/generated_video.mp4"
             os.makedirs("output", exist_ok=True)
             
             # Save frames as video
+=======
+            # 保存生成的视频 | Save generated video
+            output_path = "output/generated_video.mp4"
+            os.makedirs("output", exist_ok=True)
+            
+            # 将帧保存为视频 | Save frames as video
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             clip = ImageSequenceClip([np.array(frame) for frame in video_frames], fps=fps)
             clip.write_videofile(output_path, codec='libx264')
             
@@ -386,7 +570,11 @@ class VideoModel(nn.Module):
             return {'status': 'error', 'message': str(e)}
     
     def _call_external_api(self, operation, data):
+<<<<<<< HEAD
         """Call external API"""
+=======
+        """调用外部API | Call external API"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         try:
             api_endpoint = self.external_api_config.get("endpoint")
             api_key = self.external_api_config.get("api_key")
@@ -415,7 +603,11 @@ class VideoModel(nn.Module):
             return {'status': 'error', 'message': str(e)}
     
     def validate_api_connection(self):
+<<<<<<< HEAD
         """Validate external API connection"""
+=======
+        """验证外部API连接 | Validate external API connection"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         api_endpoint = self.external_api_config.get("endpoint")
         api_key = self.external_api_config.get("api_key")
         
@@ -430,12 +622,17 @@ class VideoModel(nn.Module):
             return False
             
     def unload_image_generation_model(self):
+<<<<<<< HEAD
         """Unload image generation model to free memory"""
+=======
+        """卸载图像生成模型以释放内存 | Unload image generation model to free memory"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if self.image_generation_model is not None:
             if torch.cuda.is_available():
                 self.image_generation_model.to("cpu")
             torch.cuda.empty_cache()
             self.image_generation_model = None
+<<<<<<< HEAD
             print("Image generation model unloaded")
     
     def process_realtime_video(self, video_stream_url=None, camera_index=0):
@@ -454,11 +651,32 @@ class VideoModel(nn.Module):
             print("Starting real-time video processing")
             
             # Real-time processing loop
+=======
+            print("图像生成模型已卸载 | Image generation model unloaded")
+    
+    def process_realtime_video(self, video_stream_url=None, camera_index=0):
+        """处理实时视频流 | Process real-time video stream"""
+        try:
+            if video_stream_url:
+                # 处理网络视频流 | Process network video stream
+                cap = cv2.VideoCapture(video_stream_url)
+            else:
+                # 处理摄像头输入 | Process camera input
+                cap = cv2.VideoCapture(camera_index)
+            
+            if not cap.isOpened():
+                return {'status': 'error', 'message': '无法打开视频源 | Cannot open video source'}
+            
+            print("开始实时视频处理 | Starting real-time video processing")
+            
+            # 实时处理循环 | Real-time processing loop
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             while True:
                 ret, frame = cap.read()
                 if not ret:
                     break
                 
+<<<<<<< HEAD
                 # Process current frame
                 processed_frame = self.process_frame(frame)
                 
@@ -474,13 +692,35 @@ class VideoModel(nn.Module):
             cv2.destroyAllWindows()
             
             return {'status': 'success', 'message': 'Real-time video processing completed'}
+=======
+                # 处理当前帧 | Process current frame
+                processed_frame = self.process_frame(frame)
+                
+                # 显示处理结果 | Display processing result
+                cv2.imshow('Real-time Video Processing', processed_frame)
+                
+                # 按'q'退出 | Press 'q' to quit
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+            
+            # 清理资源 | Cleanup resources
+            cap.release()
+            cv2.destroyAllWindows()
+            
+            return {'status': 'success', 'message': '实时视频处理完成 | Real-time video processing completed'}
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
         except Exception as e:
             return {'status': 'error', 'message': str(e)}
     
     def process_frame(self, frame):
+<<<<<<< HEAD
         """Process single video frame"""
         # Basic frame processing: convert to RGB and resize
+=======
+        """处理单个视频帧 | Process single video frame"""
+        # 基本帧处理：转换为RGB并调整大小 | Basic frame processing: convert to RGB and resize
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frame_resized = cv2.resize(frame_rgb, (224, 224))
         
@@ -491,19 +731,35 @@ class VideoModel(nn.Module):
 
     def get_status(self):
         """
+<<<<<<< HEAD
         Get model status information
         
         Returns:
+=======
+        获取模型状态信息
+        Get model status information
+        
+        返回 Returns:
+        状态字典包含模型健康状态、内存使用、性能指标等
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         Status dictionary containing model health, memory usage, performance metrics, etc.
         """
         import psutil
         import torch
         
+<<<<<<< HEAD
         # Get memory usage
         process = psutil.Process()
         memory_info = process.memory_info()
         
         # Get GPU memory usage (if available)
+=======
+        # 获取内存使用情况
+        process = psutil.Process()
+        memory_info = process.memory_info()
+        
+        # 获取GPU内存使用情况（如果可用）
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         gpu_memory = 0
         if torch.cuda.is_available():
             gpu_memory = torch.cuda.memory_allocated() / 1024 / 1024  # MB
@@ -515,15 +771,23 @@ class VideoModel(nn.Module):
             "parameters_count": sum(p.numel() for p in self.parameters()),
             "model_type": self.model_type,
             "generation_model_available": self.generation_model is not None,
+<<<<<<< HEAD
             "last_activity": "2025-08-25 10:00:00",  # Should record actual last activity time
             "performance": {
                 "processing_speed": "To be measured",
                 "recognition_accuracy": "To be measured"
+=======
+            "last_activity": "2025-08-25 10:00:00",  # 应记录实际最后活动时间
+            "performance": {
+                "processing_speed": "待测量",
+                "recognition_accuracy": "待测量"
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             }
         }
 
     def get_input_stats(self):
         """
+<<<<<<< HEAD
         Get input statistics
         
         Returns:
@@ -531,6 +795,17 @@ class VideoModel(nn.Module):
         """
         # This should collect statistics from actual usage
         # Temporarily returning mock data
+=======
+        获取输入统计信息
+        Get input statistics
+        
+        返回 Returns:
+        输入统计字典包含处理量、成功率等
+        Input statistics dictionary containing processing volume, success rate, etc.
+        """
+        # 这里应该从实际使用中收集统计数据
+        # 暂时返回模拟数据
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         return {
             "total_requests": 120,
             "successful_requests": 110,
@@ -550,24 +825,38 @@ if __name__ == '__main__':
     # 测试模型
     # Test model
     model = VideoModel()
+<<<<<<< HEAD
     print("Video stream visual processing model initialized successfully")
     
     # Test video recognition
     print("测试视频识别: ", model.recognize_video("test_video.mp4"))
     
     # Test video editing
+=======
+    print("视频流视觉处理模型初始化成功 | Video stream visual processing model initialized successfully")
+    
+    # 测试视频识别 | Test video recognition
+    print("测试视频识别: ", model.recognize_video("test_video.mp4"))
+    
+    # 测试视频编辑 | Test video editing
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     edits = [
         {"operation": "trim", "parameters": {"start": 0, "end": 10}},
         {"operation": "speed", "parameters": {"factor": 1.5}}
     ]
     print("测试视频编辑: ", model.edit_video("test_video.mp4", edits))
     
+<<<<<<< HEAD
     # Test video modification
+=======
+    # 测试视频修改 | Test video modification
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     modifications = [
         {"operation": "add_text", "parameters": {"text": "Sample Text", "position": ("center", "bottom"), "font_size": 24}}
     ]
     print("测试视频修改: ", model.modify_video("test_video.mp4", modifications))
     
+<<<<<<< HEAD
     # Test video generation
     print("测试视频生成: ", model.generate_video("a beautiful sunset over the ocean", "happy", duration=3))
     
@@ -575,5 +864,14 @@ if __name__ == '__main__':
     print("测试实时视频处理: ", model.process_realtime_video(camera_index=0))
     
     # Test newly added methods
+=======
+    # 测试视频生成 | Test video generation
+    print("测试视频生成: ", model.generate_video("a beautiful sunset over the ocean", "happy", duration=3))
+    
+    # 测试实时视频处理 | Test real-time video processing
+    print("测试实时视频处理: ", model.process_realtime_video(camera_index=0))
+    
+    # 测试新添加的方法
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     print("模型状态: ", model.get_status())
     print("输入统计: ", model.get_input_stats())

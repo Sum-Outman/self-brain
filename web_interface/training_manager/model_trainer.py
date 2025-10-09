@@ -347,6 +347,7 @@ class AManagementModelTrainer(ModelTrainer):
     def prepare_training_data(self):
         """Prepare training data for the management model."""
         try:
+<<<<<<< HEAD
             # Load training data from file or create realistic training data
             train_data, val_data, test_data = self.load_training_data()
             
@@ -447,11 +448,42 @@ class AManagementModelTrainer(ModelTrainer):
             train_padded = tf.keras.preprocessing.sequence.pad_sequences(train_sequences, maxlen=100)
             
             # Save tokenizer for future use
+=======
+            # Sample training data for the management model
+            train_data = [
+                "Hello, can you help me with a programming problem?",
+                "I'm feeling sad today.",
+                "What's the weather like tomorrow?",
+                "Tell me a joke.",
+                "How do I solve this math problem?"
+            ]
+            
+            # Intent labels (0: programming, 1: emotion, 2: weather, 3: joke, 4: math)
+            intent_labels = [0, 1, 2, 3, 4]
+            
+            # Emotion labels (0: happy, 1: sad, 2: angry, 3: surprised, 4: fearful, 5: disgusted, 6: neutral)
+            emotion_labels = [6, 1, 6, 0, 6]
+            
+            # Model selection labels (0: A, 1: B, 2: C, 3: D, 4: E, 5: F, 6: G, 7: H, 8: I, 9: J, 10: K)
+            model_selection_labels = [10, 1, 9, 1, 9]
+            
+            # Convert text to sequences
+            tokenizer = tf.keras.preprocessing.text.Tokenizer(num_words=10000)
+            tokenizer.fit_on_texts(train_data)
+            train_sequences = tokenizer.texts_to_sequences(train_data)
+            train_padded = tf.keras.preprocessing.sequence.pad_sequences(train_sequences, maxlen=100)
+            
+            # Save tokenizer
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             tokenizer_path = os.path.join(os.path.dirname(self.config["model_path"]), "tokenizer.json")
             with open(tokenizer_path, 'w', encoding='utf-8') as f:
                 f.write(tokenizer.to_json())
             
+<<<<<<< HEAD
             # Create comprehensive training dataset
+=======
+            # Create tensorflow datasets
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             train_dataset = tf.data.Dataset.from_tensor_slices((
                 train_padded, 
                 {
@@ -461,6 +493,7 @@ class AManagementModelTrainer(ModelTrainer):
                 }
             ))
             
+<<<<<<< HEAD
             # Create realistic dataset splits
             dataset_size = len(train_texts)
             train_size = int(0.7 * dataset_size)
@@ -478,6 +511,16 @@ class AManagementModelTrainer(ModelTrainer):
             
             logger.info(f"Created realistic training data for Management Model with {dataset_size} samples")
             return train_dataset, val_dataset, test_dataset
+=======
+            # Shuffle and batch the dataset
+            train_dataset = train_dataset.shuffle(len(train_data)).batch(self.config["hyperparameters"]["batch_size"])
+            
+            # For simplicity, use the same data for validation and test
+            validation_dataset = train_dataset.take(1)
+            test_dataset = train_dataset.skip(1)
+            
+            return train_dataset, validation_dataset, test_dataset
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
         except Exception as e:
             logger.error(f"Failed to prepare training data for Management Model: {str(e)}")
@@ -703,6 +746,7 @@ class BLanguageModelTrainer(ModelTrainer):
     def prepare_training_data(self):
         """Prepare training data for the language model."""
         try:
+<<<<<<< HEAD
             # Load training data from file or create realistic multilingual training data
             train_data, val_data, test_data = self.load_training_data()
             
@@ -837,6 +881,35 @@ class BLanguageModelTrainer(ModelTrainer):
             padded_input = np.array(train_padded)[:, :-1]  # Remove last token
             
             # Create comprehensive training dataset
+=======
+            # Sample training data for multilingual support
+            train_data = [
+                {"text": "Hello, how are you?", "language": 0, "emotion": 6},  # English, neutral
+                {"text": "Bonjour, comment allez-vous?", "language": 1, "emotion": 6},  # French, neutral
+                {"text": "Hola, ¿cómo estás?", "language": 2, "emotion": 6},  # Spanish, neutral
+                {"text": "你好，你好吗？", "language": 3, "emotion": 6},  # Chinese, neutral
+                {"text": "Ich bin glücklich!", "language": 4, "emotion": 0}  # German, happy
+            ]
+            
+            # Tokenize the text
+            tokenizer = tf.keras.preprocessing.text.Tokenizer(num_words=20000)
+            texts = [item["text"] for item in train_data]
+            tokenizer.fit_on_texts(texts)
+            
+            # Convert to sequences and pad
+            sequences = tokenizer.texts_to_sequences(texts)
+            padded = tf.keras.preprocessing.sequence.pad_sequences(sequences, maxlen=100)
+            
+            # Extract labels
+            language_labels = [item["language"] for item in train_data]
+            emotion_labels = [item["emotion"] for item in train_data]
+            
+            # Create output for text generation (shifted sequences)
+            text_labels = np.array(padded)[:, 1:]  # Shift right
+            padded_input = np.array(padded)[:, :-1]  # Remove last token
+            
+            # Create tensorflow datasets
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             train_dataset = tf.data.Dataset.from_tensor_slices((
                 padded_input,
                 {
@@ -846,6 +919,7 @@ class BLanguageModelTrainer(ModelTrainer):
                 }
             ))
             
+<<<<<<< HEAD
             # Create realistic dataset splits
             dataset_size = len(train_texts)
             train_size = int(0.7 * dataset_size)
@@ -863,6 +937,16 @@ class BLanguageModelTrainer(ModelTrainer):
             
             logger.info(f"Created realistic training data for Language Model with {dataset_size} multilingual samples")
             return train_dataset, val_dataset, test_dataset
+=======
+            # Shuffle and batch
+            train_dataset = train_dataset.shuffle(len(train_data)).batch(self.config["hyperparameters"]["batch_size"])
+            
+            # For simplicity, use the same data for validation and test
+            validation_dataset = train_dataset.take(1)
+            test_dataset = train_dataset.skip(1)
+            
+            return train_dataset, validation_dataset, test_dataset
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
         except Exception as e:
             logger.error(f"Failed to prepare training data for Language Model: {str(e)}")
@@ -1209,18 +1293,27 @@ class CAudioModelTrainer(ModelTrainer):
             return None, None, None
     
     def prepare_training_data(self):
+<<<<<<< HEAD
         """Prepare realistic training data for the audio processing model."""
+=======
+        """Prepare training data for the audio processing model."""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         try:
             import numpy as np
             import os
             import json
             
+<<<<<<< HEAD
             logger.info(f"Preparing realistic training data for {self.model_id}")
+=======
+            logger.info(f"Preparing training data for {self.model_id}")
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
             # Create training directory if it doesn't exist
             train_dir = self.config["data_paths"]["train"]
             os.makedirs(train_dir, exist_ok=True)
             
+<<<<<<< HEAD
             # Create realistic audio training scenarios
             samples = []
             
@@ -1349,6 +1442,77 @@ class CAudioModelTrainer(ModelTrainer):
                         "description": scenario["description"]
                     })
                     sample_id += 1
+=======
+            # Create sample audio training data (in a real scenario, this would be loaded from actual audio files)
+            # For this example, we'll create synthetic MFCC features as placeholders
+            samples = []
+            
+            # Generate synthetic speech samples
+            for i in range(50):  # 50 speech samples
+                # Generate random MFCC features
+                mfcc = np.random.randn(100, 40).tolist()  # 100 time steps, 40 features
+                
+                # Determine dataset type (80% train, 10% validation, 10% test)
+                dataset_type = "train"
+                if i % 10 == 8:
+                    dataset_type = "val"
+                elif i % 10 == 9:
+                    dataset_type = "test"
+                
+                # Add sample
+                samples.append({
+                    "audio_features": mfcc,
+                    "speech_label": 1,  # Speech
+                    "tone_label": np.random.randint(0, 5),  # Random tone (0-4)
+                    "noise_label": 0,  # No noise
+                    "dataset_type": dataset_type,
+                    "sample_id": f"speech_{i}"
+                })
+            
+            # Generate synthetic noise samples
+            for i in range(20):  # 20 noise samples
+                # Generate random MFCC features with different characteristics
+                mfcc = np.random.randn(100, 40).tolist()
+                
+                # Determine dataset type (80% train, 10% validation, 10% test)
+                dataset_type = "train"
+                if i % 10 == 8:
+                    dataset_type = "val"
+                elif i % 10 == 9:
+                    dataset_type = "test"
+                
+                # Add sample
+                samples.append({
+                    "audio_features": mfcc,
+                    "speech_label": 0,  # Not speech
+                    "tone_label": 0,  # Not applicable
+                    "noise_label": 1,  # Noise
+                    "dataset_type": dataset_type,
+                    "sample_id": f"noise_{i}"
+                })
+            
+            # Generate synthetic mixed samples (speech + noise)
+            for i in range(30):  # 30 mixed samples
+                # Generate random MFCC features
+                mfcc = np.random.randn(100, 40).tolist()
+                
+                # Determine dataset type (80% train, 10% validation, 10% test)
+                dataset_type = "train"
+                if i % 10 == 8:
+                    dataset_type = "val"
+                elif i % 10 == 9:
+                    dataset_type = "test"
+                
+                # Add sample
+                samples.append({
+                    "audio_features": mfcc,
+                    "speech_label": 1,  # Speech
+                    "tone_label": np.random.randint(0, 5),  # Random tone (0-4)
+                    "noise_label": 1,  # With noise
+                    "dataset_type": dataset_type,
+                    "sample_id": f"mixed_{i}"
+                })
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
             # Save samples to JSON files
             for i, sample in enumerate(samples):
@@ -1359,13 +1523,18 @@ class CAudioModelTrainer(ModelTrainer):
             # Convert to TensorFlow datasets
             train_dataset, val_dataset, test_dataset = self._convert_to_datasets(samples)
             
+<<<<<<< HEAD
             logger.info(f"Prepared realistic training data for {self.model_id} with {len(samples)} samples")
+=======
+            logger.info(f"Prepared training data for {self.model_id} with {len(samples)} samples")
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
             return train_dataset, val_dataset, test_dataset
             
         except Exception as e:
             logger.error(f"Failed to prepare training data for {self.model_id}: {str(e)}")
             return None, None, None
+<<<<<<< HEAD
     
     def _generate_speech_mfcc(self, scenario, sequence_length, feature_dim):
         """Generate realistic MFCC features for speech."""
@@ -1487,6 +1656,8 @@ class CAudioModelTrainer(ModelTrainer):
             mfcc_sequence.append(frame.tolist())
         
         return mfcc_sequence
+=======
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 class DImageModelTrainer(ModelTrainer):
     """
@@ -1711,19 +1882,32 @@ class DImageModelTrainer(ModelTrainer):
             return None, None, None
     
     def prepare_training_data(self):
+<<<<<<< HEAD
         """Prepare realistic training data for the image processing model."""
+=======
+        """Prepare training data for the image processing model."""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         try:
             import numpy as np
             import os
             import json
             
+<<<<<<< HEAD
             logger.info(f"Preparing realistic training data for {self.model_id}")
+=======
+            logger.info(f"Preparing training data for {self.model_id}")
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
             # Create training directory if it doesn't exist
             train_dir = self.config["data_paths"]["train"]
             os.makedirs(train_dir, exist_ok=True)
             
+<<<<<<< HEAD
             # Create realistic image training scenarios
+=======
+            # Create sample image training data (in a real scenario, this would be loaded from actual image files)
+            # For this example, we'll create synthetic image data as placeholders
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             samples = []
             
             # Image dimensions
@@ -1731,6 +1915,7 @@ class DImageModelTrainer(ModelTrainer):
             img_width = 224
             channels = 3
             
+<<<<<<< HEAD
             # Comprehensive image categories with realistic distributions
             image_categories = [
                 # People and faces
@@ -1816,6 +2001,43 @@ class DImageModelTrainer(ModelTrainer):
                         "variation": variation
                     })
                     sample_id += 1
+=======
+            # Categories for image classification (example categories)
+            categories = [
+                "person", "bicycle", "car", "motorcycle", "airplane", 
+                "bus", "train", "truck", "boat", "traffic light"
+            ]
+            
+            # Emotion categories (7 emotions)
+            emotions = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral"]
+            
+            # Generate synthetic image samples
+            for i in range(100):  # 100 image samples
+                # Generate random image data
+                img_data = np.random.rand(img_height, img_width, channels).tolist()  # Random pixel values
+                
+                # Determine dataset type (80% train, 10% validation, 10% test)
+                dataset_type = "train"
+                if i % 10 == 8:
+                    dataset_type = "val"
+                elif i % 10 == 9:
+                    dataset_type = "test"
+                
+                # Randomly assign a category and emotion
+                category_idx = np.random.randint(0, len(categories))
+                emotion_idx = np.random.randint(0, len(emotions))
+                
+                # Add sample
+                samples.append({
+                    "image_data": img_data,
+                    "class_label": category_idx,
+                    "class_name": categories[category_idx],
+                    "emotion_label": emotion_idx,
+                    "emotion_name": emotions[emotion_idx],
+                    "dataset_type": dataset_type,
+                    "sample_id": f"image_{i}"
+                })
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
             # Save samples to JSON files
             for i, sample in enumerate(samples):
@@ -1830,13 +2052,18 @@ class DImageModelTrainer(ModelTrainer):
             # Convert to TensorFlow datasets
             train_dataset, val_dataset, test_dataset = self._convert_to_datasets(samples)
             
+<<<<<<< HEAD
             logger.info(f"Prepared realistic training data for {self.model_id} with {len(samples)} samples across {len(image_categories)} categories")
+=======
+            logger.info(f"Prepared training data for {self.model_id} with {len(samples)} samples")
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
             return train_dataset, val_dataset, test_dataset
             
         except Exception as e:
             logger.error(f"Failed to prepare training data for {self.model_id}: {str(e)}")
             return None, None, None
+<<<<<<< HEAD
     
     def _generate_category_image(self, category, height, width, channels, variation):
         """Generate realistic image patterns for different categories."""
@@ -2200,6 +2427,8 @@ class DImageModelTrainer(ModelTrainer):
             if e2 < dx:
                 err += dx
                 y1 += sy
+=======
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 class EVideoModelTrainer(ModelTrainer):
     """
@@ -2447,27 +2676,44 @@ class EVideoModelTrainer(ModelTrainer):
             return None, None, None
     
     def prepare_training_data(self):
+<<<<<<< HEAD
         """Prepare realistic training data for the video processing model."""
+=======
+        """Prepare training data for the video processing model."""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         try:
             import numpy as np
             import os
             import json
             
+<<<<<<< HEAD
             logger.info(f"Preparing realistic training data for {self.model_id}")
+=======
+            logger.info(f"Preparing training data for {self.model_id}")
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
             # Create training directory if it doesn't exist
             train_dir = self.config["data_paths"]["train"]
             os.makedirs(train_dir, exist_ok=True)
             
+<<<<<<< HEAD
             # Create realistic video training scenarios
             samples = []
             
             # Video configuration
+=======
+            # Create sample video training data (in a real scenario, this would be loaded from actual video files)
+            # For this example, we'll create synthetic video data as placeholders
+            samples = []
+            
+            # Video dimensions
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             num_frames = 16
             frame_height = 224
             frame_width = 224
             channels = 3
             
+<<<<<<< HEAD
             # Realistic action categories with detailed descriptions
             action_categories = [
                 {"name": "walking", "description": "Person walking normally"},
@@ -2541,6 +2787,46 @@ class EVideoModelTrainer(ModelTrainer):
                         })
                         
                         sample_id += 1
+=======
+            # Action categories for video (example categories)
+            action_categories = [
+                "walking", "running", "sitting", "standing", "jumping", 
+                "climbing", "bending", "crawling", "swimming", "dancing"
+            ]
+            
+            # Content categories for video
+            content_categories = [
+                "outdoor", "indoor", "city", "nature", "beach", 
+                "mountain", "forest", "desert", "ocean", "river"
+            ]
+            
+            # Generate synthetic video samples
+            for i in range(50):  # 50 video samples (each sample is 16 frames)
+                # Generate random video data (16 frames of random pixels)
+                video_data = np.random.rand(num_frames, frame_height, frame_width, channels).tolist()
+                
+                # Determine dataset type (80% train, 10% validation, 10% test)
+                dataset_type = "train"
+                if i % 10 == 8:
+                    dataset_type = "val"
+                elif i % 10 == 9:
+                    dataset_type = "test"
+                
+                # Randomly assign an action and content category
+                action_idx = np.random.randint(0, len(action_categories))
+                content_idx = np.random.randint(0, len(content_categories))
+                
+                # Add sample
+                samples.append({
+                    "video_data": video_data,
+                    "action_label": action_idx,
+                    "action_name": action_categories[action_idx],
+                    "content_label": content_idx,
+                    "content_name": content_categories[content_idx],
+                    "dataset_type": dataset_type,
+                    "sample_id": f"video_{i}"
+                })
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
             # Save samples to JSON files
             for i, sample in enumerate(samples):
@@ -2555,13 +2841,18 @@ class EVideoModelTrainer(ModelTrainer):
             # Convert to TensorFlow datasets
             train_dataset, val_dataset, test_dataset = self._convert_to_datasets(samples)
             
+<<<<<<< HEAD
             logger.info(f"Prepared realistic training data for {self.model_id} with {len(samples)} samples across {len(action_categories)} actions and {len(content_categories)} content types")
+=======
+            logger.info(f"Prepared training data for {self.model_id} with {len(samples)} samples")
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
             return train_dataset, val_dataset, test_dataset
             
         except Exception as e:
             logger.error(f"Failed to prepare training data for {self.model_id}: {str(e)}")
             return None, None, None
+<<<<<<< HEAD
     
     def _generate_video_sequence(self, action, content, num_frames, height, width, channels, variation):
         """Generate realistic video frames based on action and content."""
@@ -2676,6 +2967,8 @@ class EVideoModelTrainer(ModelTrainer):
             video_sequence.append(frame.tolist())
         
         return video_sequence
+=======
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 class FSpaceModelTrainer(ModelTrainer):
     """
@@ -2965,19 +3258,32 @@ class FSpaceModelTrainer(ModelTrainer):
             return None, None, None
     
     def prepare_training_data(self):
+<<<<<<< HEAD
         """Prepare realistic training data for the spatial perception model."""
+=======
+        """Prepare training data for the spatial perception model."""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         try:
             import numpy as np
             import os
             import json
             
+<<<<<<< HEAD
             logger.info(f"Preparing realistic training data for {self.model_id}")
+=======
+            logger.info(f"Preparing training data for {self.model_id}")
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
             # Create training directory if it doesn't exist
             train_dir = self.config["data_paths"]["train"]
             os.makedirs(train_dir, exist_ok=True)
             
+<<<<<<< HEAD
             # Create realistic spatial perception training scenarios
+=======
+            # Create sample spatial perception training data
+            # For this example, we'll create synthetic binocular image data and corresponding spatial labels
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             samples = []
             
             # Image dimensions
@@ -2985,6 +3291,7 @@ class FSpaceModelTrainer(ModelTrainer):
             img_width = 224
             channels = 3
             
+<<<<<<< HEAD
             # Realistic spatial scenarios with varying distances, positions, and object sizes
             spatial_scenarios = [
                 # Indoor scenarios
@@ -3047,6 +3354,38 @@ class FSpaceModelTrainer(ModelTrainer):
                     })
                     
                     sample_id += 1
+=======
+            # Generate synthetic binocular image samples with spatial labels
+            for i in range(50):  # 50 binocular image pairs
+                # Generate random left and right images
+                left_image_data = np.random.rand(img_height, img_width, channels).tolist()
+                
+                # Create right image with slight horizontal shift (simulating stereo vision)
+                right_image_data = np.roll(np.array(left_image_data), shift=5, axis=1).tolist()
+                
+                # Determine dataset type (80% train, 10% validation, 10% test)
+                dataset_type = "train"
+                if i % 10 == 8:
+                    dataset_type = "val"
+                elif i % 10 == 9:
+                    dataset_type = "test"
+                
+                # Generate realistic spatial labels
+                depth_label = np.random.uniform(0.5, 5.0)  # Depth in meters (0.5-5 meters)
+                position_label = np.random.uniform(-2.0, 2.0, 3).tolist()  # 3D position (x, y, z)
+                volume_label = np.random.uniform(0.1, 2.0)  # Volume in cubic meters
+                
+                # Add sample
+                samples.append({
+                    "left_image_data": left_image_data,
+                    "right_image_data": right_image_data,
+                    "depth_label": depth_label,
+                    "position_label": position_label,
+                    "volume_label": volume_label,
+                    "dataset_type": dataset_type,
+                    "sample_id": f"spatial_{i}"
+                })
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
             # Save samples to JSON files
             for i, sample in enumerate(samples):
@@ -3062,13 +3401,18 @@ class FSpaceModelTrainer(ModelTrainer):
             # Convert to TensorFlow datasets
             train_dataset, val_dataset, test_dataset = self._convert_to_datasets(samples)
             
+<<<<<<< HEAD
             logger.info(f"Prepared realistic training data for {self.model_id} with {len(samples)} spatial perception samples")
+=======
+            logger.info(f"Prepared training data for {self.model_id} with {len(samples)} samples")
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
             return train_dataset, val_dataset, test_dataset
             
         except Exception as e:
             logger.error(f"Failed to prepare training data for {self.model_id}: {str(e)}")
             return None, None, None
+<<<<<<< HEAD
     
     def _generate_stereo_images(self, scenario, height, width, channels, variation):
         """Generate realistic stereo image pairs with proper disparity for spatial perception."""
@@ -3335,6 +3679,8 @@ class FSpaceModelTrainer(ModelTrainer):
             right = center_x + size // 2
             
             image[top:bottom, left:right, :] = object_color
+=======
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 class GSensorModelTrainer(ModelTrainer):
     """
@@ -5560,4 +5906,8 @@ class ModelTrainingManager:
             return {"error": str(e)}
 
 # Create a global instance of the training manager
+<<<<<<< HEAD
 training_manager = ModelTrainingManager()
+=======
+training_manager = ModelTrainingManager()
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13

@@ -665,5 +665,9 @@ def get_monitoring_data():
 
 if __name__ == '__main__':
     import os
+<<<<<<< HEAD
     port = int(os.environ.get('PORT', 5001))
+=======
+    port = int(os.environ.get('PORT', 5002))
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     app.run(host='0.0.0.0', port=port, debug=True)

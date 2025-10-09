@@ -15,6 +15,7 @@ import webbrowser
 from datetime import datetime
 from pathlib import Path
 import signal
+<<<<<<< HEAD
 import traceback
 
 # Debug flag and additional logging
@@ -36,6 +37,8 @@ def debug_print(msg):
     if DEBUG_MODE:
         print("[DEBUG] %s - %s" % (time.strftime('%H:%M:%S'), msg))
         logger.debug(msg)
+=======
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 # Configure logging
 logging.basicConfig(
@@ -109,10 +112,14 @@ def load_config(config_path="config/system_config.yaml"):
                         "G_sensor": True,
                         "H_computer_control": True,
                         "I_knowledge": True,
+<<<<<<< HEAD
                         "J_motion": {
                 "enabled": True,
                 "priority": 1
             },
+=======
+                        "J_motion": True,
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                         "K_programming": True
                     }
                 }
@@ -308,7 +315,11 @@ def create_models_registry():
     
     models_registry = {
         "models": [
+<<<<<<< HEAD
             {"id": "A_management", "name": "Management Model", "type": "manager", "port": 5000, "priority": 1},
+=======
+            {"id": "A_management", "name": "Management Model", "type": "manager", "port": 5000},
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             {"id": "B_language", "name": "Language Model", "type": "language", "port": 5001},
             {"id": "C_audio", "name": "Audio Model", "type": "audio", "port": 5002},
             {"id": "D_image", "name": "Image Model", "type": "vision", "port": 5003},
@@ -385,8 +396,13 @@ def start_submodel(model_name, port):
         # Change to model directory
         os.chdir(model_dir)
         
+<<<<<<< HEAD
         # Start the model service with explicit port parameter
         cmd = [sys.executable, "app.py", "--port", str(port)]
+=======
+        # Start the model service - use the existing Flask app
+        cmd = [sys.executable, "app.py"]
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -669,14 +685,21 @@ def start_web_interface():
         return False
 
 # Start manager model
+<<<<<<< HEAD
 
+=======
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 def start_manager_model():
     """Start manager model service"""
     logger.info("Starting manager model...")
     manager_dir = BASE_DIR / "manager_model"
     config = load_config()
+<<<<<<< HEAD
     # Use the manager port (5000) instead of manager_api port (5015)
     manager_port = config.get('ports', {}).get('manager', 5000)
+=======
+    manager_port = config.get('ports', {}).get('manager_api', 5015)
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     
     # Skip if already running
     if "manager_model" in processes:
@@ -693,18 +716,34 @@ def start_manager_model():
         logger.warning("Manager model directory not found, creating...")
         manager_dir.mkdir(parents=True, exist_ok=True)
         
+<<<<<<< HEAD
         # Create basic app.py file - Using Flask framework compatible with existing code
         app_file = manager_dir / "app.py"
         with open(app_file, 'w', encoding='utf-8') as f:
             content = '''
 from flask import Flask, request, jsonify
 from werkzeug.exceptions import HTTPException
+=======
+        # Create basic app.py file
+        app_file = manager_dir / "app.py"
+        with open(app_file, 'w', encoding='utf-8') as f:
+            content = '''
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
+import os
+import json
+import logging
+import time
+from datetime import datetime
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
+<<<<<<< HEAD
 logger = logging.getLogger('A_Management_Model')
 
 # Application initialization
@@ -794,6 +833,33 @@ class ManagementModel:
         
         self.request_queue.append(request_info)
         self.request_history.append(request_info)
+=======
+logger = logging.getLogger("ManagerModel")
+
+app = FastAPI(title="Self Brain Manager API")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+class ManagerModel:
+    """
+    Manager model for Self Brain system
+    Handles system-wide management operations
+    """
+    def __init__(self):
+        self.system_name = "Self Brain"
+        self.version = "1.0.0"
+        self.team_email = "silencecrowtom@qq.com"
+        self.models = {}
+        self.system_status = "online"
+        logger.info("Manager model initialized")
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     
     def get_system_info(self):
         """Get system information"""
@@ -802,6 +868,7 @@ class ManagementModel:
             "version": self.version,
             "team_email": self.team_email,
             "status": self.system_status,
+<<<<<<< HEAD
             "last_health_check": self.last_health_check.isoformat(),
             "timestamp": datetime.now().isoformat(),
             "active_models": len(self.submodel_registry)
@@ -878,6 +945,33 @@ if __name__ == '__main__':
     # Start the Flask server
     logger.info(f"Starting Manager Model service on port {port}")
     app.run(host='0.0.0.0', port=port, debug=False)
+=======
+            "timestamp": datetime.now().isoformat()
+        }
+
+# Create manager instance
+manager = ManagerModel()
+
+@app.get("/api/health")
+def health():
+    """Health check endpoint"""
+    return {
+        "status": "healthy", 
+        "service": "Manager Model", 
+        "port": os.environ.get("PORT"),
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.get("/api/system/info")
+def system_info():
+    """Get system information"""
+    return manager.get_system_info()
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5015))
+    logger.info(f"Starting Manager Model service on port {port}")
+    uvicorn.run(app, host="0.0.0.0", port=port)
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 '''
             f.write(content)
     
@@ -926,7 +1020,10 @@ def start_all_models():
     
     # Map model names to ports based on system_config.yaml
     model_ports = {
+<<<<<<< HEAD
         "A_management": ports.get('manager', 5000),
+=======
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         "B_language": ports.get('language', 5001),
         "C_audio": ports.get('audio', 5002),
         "D_image": ports.get('image', 5003),
@@ -940,12 +1037,17 @@ def start_all_models():
     }
     
     # Start each model
+<<<<<<< HEAD
     # Start each model if enabled in config
     for model_name, port in model_ports.items():
         if local_models.get(model_name, False):
             start_submodel(model_name, port)
         else:
             logger.info(f"Skipping {model_name} as it's disabled in config")
+=======
+    for model_name, port in model_ports.items():
+        start_submodel(model_name, port)
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     
     logger.info("All submodels startup processes initiated")
 
@@ -1088,6 +1190,7 @@ def init_training_directories():
 # Main function
 def main():
     """主启动函数 | Main startup function"""
+<<<<<<< HEAD
     try:
         debug_print("=== SYSTEM STARTUP INITIATED ===")
         
@@ -1211,6 +1314,98 @@ def main():
         debug_print("Stopping all services...")
         stop_all_services()
         debug_print("All services stopped, exiting.")
+=======
+    logger.info("===== Self Brain AGI System Startup =====")
+    
+    # Initialize the system
+    initialize_system()
+    
+    # Initialize training directories
+    init_training_directories()
+    
+    # Check and install dependencies
+    logger.info("Checking and installing dependencies...")
+    try:
+        requirements_file = BASE_DIR / "requirements.txt"
+        if requirements_file.exists():
+            subprocess.check_call(
+                [sys.executable, '-m', 'pip', 'install', '-r', str(requirements_file)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                encoding='utf-8'
+            )
+            logger.info("Dependencies installed successfully")
+        else:
+            logger.warning("requirements.txt not found, skipping dependency installation")
+    except Exception as e:
+        logger.error(f"Error during dependency installation: {str(e)}")
+    
+    # Start all submodels
+    start_all_models()
+    
+    # Start AGI core system
+    start_agi_core()
+    
+    # Start device manager
+    start_device_manager()
+    
+    # Start web interface with multi-camera support
+    web_interface_dir = BASE_DIR / "web_interface"
+    web_env = os.environ.copy()
+    web_env['SUPPORT_MULTI_CAMERA'] = "true"
+    web_env['SUPPORT_EXTERNAL_DEVICES'] = "true"
+    os.environ.update(web_env)
+    
+    web_started = start_web_interface()
+    if not web_started:
+        logger.error("Failed to start web interface, cannot continue")
+        stop_all_services()
+        sys.exit(1)
+    
+    # Start manager model
+    start_manager_model()
+    
+    # Start process monitor in a separate thread
+    monitor_thread = threading.Thread(target=monitor_processes, daemon=True)
+    monitor_thread.start()
+    
+    # Verify system status
+    verify_system_status()
+    
+    # Open browser after a delay
+    def open_browser():
+        time.sleep(5)  # Wait for services to start
+        logger.info("Opening browser to access Self Brain AGI system...")
+        try:
+            # Get web port from config
+            config = load_config()
+            web_port = config.get('ports', {}).get('web_frontend', 8080)
+            webbrowser.open(f'http://localhost:{web_port}')
+        except Exception as e:
+            logger.error(f"Failed to open browser: {str(e)}")
+    
+    # Start browser thread
+    browser_thread = threading.Thread(target=open_browser)
+    browser_thread.start()
+    
+    # Get web port from config for logging
+    config = load_config()
+    web_port = config.get('ports', {}).get('web_frontend', 8080)
+    
+    logger.info("="*50)
+    logger.info("Self Brain AGI System startup completed!")
+    logger.info(f"Web interface available at http://localhost:{web_port}")
+    logger.info("="*50)
+    
+    # Keep main thread running
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        logger.info("\nSystem shutting down...")
+    finally:
+        stop_all_services()
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 if __name__ == '__main__':
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))

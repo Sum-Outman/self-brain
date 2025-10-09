@@ -4,67 +4,144 @@
       "id": "A_management",
       "name": "Management Model",
       "type": "manager",
+<<<<<<< HEAD
       "port": 5000
+=======
+      "port": 5000,
+      "training_data_path": "data/training/management",
+      "can_be_trained": true,
+      "train_from_scratch": true
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     },
     {
       "id": "B_language",
       "name": "Language Model",
       "type": "language",
+<<<<<<< HEAD
       "port": 5001
+=======
+      "port": 5001,
+      "training_data_path": "data/training/language",
+      "can_be_trained": true,
+      "train_from_scratch": true
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     },
     {
       "id": "C_audio",
       "name": "Audio Model",
       "type": "audio",
+<<<<<<< HEAD
       "port": 5002
+=======
+      "port": 5002,
+      "training_data_path": "data/training/audio",
+      "can_be_trained": true,
+      "train_from_scratch": true
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     },
     {
       "id": "D_image",
       "name": "Image Model",
       "type": "vision",
+<<<<<<< HEAD
       "port": 5003
+=======
+      "port": 5003,
+      "training_data_path": "data/training/image",
+      "can_be_trained": true,
+      "train_from_scratch": true
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     },
     {
       "id": "E_video",
       "name": "Video Model",
       "type": "vision",
+<<<<<<< HEAD
       "port": 5004
+=======
+      "port": 5004,
+      "training_data_path": "data/training/video",
+      "can_be_trained": true,
+      "train_from_scratch": true
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     },
     {
       "id": "F_spatial",
       "name": "Spatial Model",
       "type": "spatial",
+<<<<<<< HEAD
       "port": 5005
+=======
+      "port": 5005,
+      "training_data_path": "data/training/spatial",
+      "can_be_trained": true,
+      "train_from_scratch": true
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     },
     {
       "id": "G_sensor",
       "name": "Sensor Model",
       "type": "sensor",
+<<<<<<< HEAD
       "port": 5006
+=======
+      "port": 5006,
+      "training_data_path": "data/training/sensor",
+      "can_be_trained": true,
+      "train_from_scratch": true
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     },
     {
       "id": "H_computer_control",
       "name": "Computer Control Model",
       "type": "control",
+<<<<<<< HEAD
       "port": 5007
+=======
+      "port": 5007,
+      "training_data_path": "data/training/computer_control",
+      "can_be_trained": true,
+      "train_from_scratch": true
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     },
     {
       "id": "I_knowledge",
       "name": "Knowledge Model",
       "type": "knowledge",
+<<<<<<< HEAD
       "port": 5008
+=======
+      "port": 5008,
+      "training_data_path": "data/training/knowledge",
+      "can_be_trained": true,
+      "train_from_scratch": true
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     },
     {
       "id": "J_motion",
       "name": "Motion Control Model",
       "type": "control",
+<<<<<<< HEAD
       "port": 5009
+=======
+      "port": 5009,
+      "training_data_path": "data/training/motion",
+      "can_be_trained": true,
+      "train_from_scratch": true
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     },
     {
       "id": "K_programming",
       "name": "Programming Model",
       "type": "programming",
+<<<<<<< HEAD
       "port": 5010
+=======
+      "port": 5010,
+      "training_data_path": "data/training/programming",
+      "can_be_trained": true,
+      "train_from_scratch": true
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     }
   ]
 }

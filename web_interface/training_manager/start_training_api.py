@@ -145,11 +145,55 @@ def main():
     parser.add_argument('--host', type=str, default=DEFAULT_HOST, help='Host to bind the server to (default: 0.0.0.0)')
     parser.add_argument('--port', type=int, default=DEFAULT_PORT, help='Port to run the server on (default: 5001)')
     parser.add_argument('--debug', action='store_true', help='Enable debug mode')
+<<<<<<< HEAD
     args = parser.parse_args()
     
+=======
+    parser.add_argument('--test', action='store_true', help='Run tests before starting the server')
+    
+    args = parser.parse_args()
+    
+    # Run tests if requested
+    if args.test:
+        logger.info("Running tests before starting the server...")
+        
+        # Construct the test command
+        test_command = [
+            sys.executable,
+            '-m', 'web_interface.training_manager.test_training_api'
+        ]
+        
+        try:
+            # Run the tests
+            test_result = subprocess.run(
+                test_command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True
+            )
+            
+            logger.info("Tests passed successfully")
+            print(test_result.stdout)
+            
+        except subprocess.CalledProcessError as e:
+            logger.error("Tests failed")
+            print(e.stdout)
+            print(e.stderr)
+            logger.error("Server will not start due to test failures")
+            sys.exit(1)
+        
+        # Add a small delay after tests
+        time.sleep(1)
+    
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     # Start the server
     server = TrainingAPIServer(host=args.host, port=args.port, debug=args.debug)
     server.start()
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     main()
+=======
+    main()
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13

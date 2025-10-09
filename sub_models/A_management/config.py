@@ -50,9 +50,12 @@ class BaseConfig:
         # 临时目录
         self.temp_dir = os.path.join(self.output_dir, 'temp')
         os.makedirs(self.temp_dir, exist_ok=True)
+<<<<<<< HEAD
         
         # API服务端口
         self.port = 5000
+=======
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 # 模型配置
 class ModelConfig(BaseConfig):

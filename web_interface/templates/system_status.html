@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% extends "base_monochrome.html" %}
 
 {% block title %}System Status - Self Brain AGI{% endblock %}
@@ -32,6 +33,58 @@
             </div>
         </div>
     </div>
+=======
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Status - Self Brain AGI</title>
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chart.min.js') }}"></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="/knowledge">
+                                <i class="bi bi-book"></i> Knowledge Base
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/training">
+                                <i class="bi bi-cpu"></i> Training Center
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main Content Area -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">System Status Monitoring</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-btn">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
                 <div class="row">
                     <div class="col-md-6">
@@ -150,9 +203,18 @@
                             </div>
                         </div>
                     </div>
+<<<<<<< HEAD
 </div>
 
 <script>
+=======
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         // Initialize Socket.IO connection
         const socket = io(window.location.origin, {
             transports: ['polling', 'websocket'],
@@ -307,4 +369,10 @@
         
         // Initial system status request
         socket.emit('request_status');
+<<<<<<< HEAD
 </script>
+=======
+    </script>
+</body>
+</html>
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13

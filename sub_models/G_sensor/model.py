@@ -11,6 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+<<<<<<< HEAD
+=======
+# 传感器感知模型定义
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 # Sensor Perception Model Definition
 
 import torch
@@ -232,15 +236,26 @@ from torch.distributions.transforms import CatTransform, StackTransform, Compose
 
 class SensorModel(nn.Module):
     def __init__(self, config_path="config/sensor_config.json"):
+<<<<<<< HEAD
         """Initialize sensor perception model"""
         super(SensorModel, self).__init__()
         
         # Load configuration
+=======
+        """初始化传感器感知模型 | Initialize sensor perception model"""
+        super(SensorModel, self).__init__()
+        
+        # 加载配置 | Load configuration
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         self.config = self.load_config(config_path)
         self.model_type = self.config.get("model_type", "local")
         self.external_api_config = self.config.get("external_api", {})
         
+<<<<<<< HEAD
         # Sensor type mapping
+=======
+        # 传感器类型映射 | Sensor type mapping
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         self.sensor_types = {
             "temperature": {"unit": "°C", "range": [-40, 125]},
             "humidity": {"unit": "%", "range": [0, 100]},
@@ -255,16 +270,25 @@ class SensorModel(nn.Module):
             "gas": {"unit": "ppm", "range": [0, 5000]},
             "smoke": {"unit": "ppm", "range": [0, 1000]},
             "light": {"unit": "lux", "range": [0, 100000]},
+<<<<<<< HEAD
             "taste": {"unit": "intensity", "range": [0, 10]}  # Taste sensor simulation
         }
         
         # Neural network architecture
         self.input_dim = len(self.sensor_types) * 3  # Each sensor has value, min, max
+=======
+            "taste": {"unit": "intensity", "range": [0, 10]}  # 味觉传感器模拟值 | Taste sensor simulation
+        }
+        
+        # 神经网络架构 | Neural network architecture
+        self.input_dim = len(self.sensor_types) * 3  # 每个传感器有值、最小值、最大值 | Each sensor has value, min, max
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         self.fc1 = nn.Linear(self.input_dim, 128)
         self.fc2 = nn.Linear(128, 256)
         self.fc3 = nn.Linear(256, 128)
         self.fc4 = nn.Linear(128, 64)
         self.fc5 = nn.Linear(64, 32)
+<<<<<<< HEAD
         self.fc6 = nn.Linear(32, len(self.sensor_types))  # Output status for each sensor
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(0.2)
@@ -288,17 +312,50 @@ class SensorModel(nn.Module):
         self.language_resources = self.load_language_resources()
         
         # Real-time input interfaces
+=======
+        self.fc6 = nn.Linear(32, len(self.sensor_types))  # 输出每个传感器的状态 | Output status for each sensor
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(0.2)
+        
+        # 实时数据处理 | Real-time data processing
+        self.realtime_data = {}
+        self.data_history = deque(maxlen=1000)  # 保存历史数据 | Save historical data
+        self.realtime_thread = None
+        self.realtime_active = False
+        
+        # 异常检测阈值 | Anomaly detection thresholds
+        self.anomaly_thresholds = {
+            "temperature": 2.0,  # 温度变化阈值 | Temperature change threshold
+            "humidity": 10.0,    # 湿度变化阈值 | Humidity change threshold
+            "acceleration": 5.0, # 加速度变化阈值 | Acceleration change threshold
+            "default": 3.0       # 默认阈值 | Default threshold
+        }
+        
+        # 语言支持 | Language support
+        self.current_lang = self.config.get("default_language", "en")
+        self.language_resources = self.load_language_resources()
+        
+        # 实时输入接口 | Real-time input interfaces
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         self.camera_stream = None
         self.microphone_stream = None
         self.network_streams = {}
         self.serial_ports = {}
         
+<<<<<<< HEAD
         # Connect to main model
+=======
+        # 连接到主模型 | Connect to main model
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         self.data_bus = None
         self.connect_to_main_model()
     
     def load_config(self, config_path):
+<<<<<<< HEAD
         """Load configuration file"""
+=======
+        """加载配置文件 | Load configuration file"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         try:
             with open(config_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
@@ -317,12 +374,20 @@ class SensorModel(nn.Module):
             }
     
     def load_language_resources(self):
+<<<<<<< HEAD
         """Load language resources"""
+=======
+        """加载语言资源 | Load language resources"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         try:
             with open("config/language_resources.json", 'r', encoding='utf-8') as f:
                 return json.load(f)
         except:
+<<<<<<< HEAD
             # Default language resources
+=======
+            # 默认语言资源 | Default language resources
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             return {
                 "en": {
                     "sensor_status": "Sensor Status",
@@ -345,7 +410,11 @@ class SensorModel(nn.Module):
             }
     
     def forward(self, x):
+<<<<<<< HEAD
         """Forward pass"""
+=======
+        """前向传播 | Forward pass"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         x = self.relu(self.fc1(x))
         x = self.dropout(x)
         x = self.relu(self.fc2(x))
@@ -359,9 +428,15 @@ class SensorModel(nn.Module):
         return x
     
     def process_sensor_data(self, sensor_data):
+<<<<<<< HEAD
         """Process sensor data"""
         try:
             # Normalize sensor data
+=======
+        """处理传感器数据 | Process sensor data"""
+        try:
+            # 标准化传感器数据 | Normalize sensor data
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             normalized_data = self.normalize_sensor_data(sensor_data)
             
             # 转换为张量 | Convert to tensor
@@ -398,6 +473,7 @@ class SensorModel(nn.Module):
                 # 归一化到[0,1]范围 | Normalize to [0,1] range
                 normalized_value = (value - sensor_range[0]) / (sensor_range[1] - sensor_range[0])
                 normalized.append(normalized_value)
+<<<<<<< HEAD
                 # Add min and max values
                 normalized.append(sensor_range[0])
                 normalized.append(sensor_range[1])
@@ -406,13 +482,27 @@ class SensorModel(nn.Module):
                 normalized.extend([0.5, 0, 1])
         
         # Ensure consistent length
+=======
+                # 添加最小值和最大值 | Add min and max values
+                normalized.append(sensor_range[0])
+                normalized.append(sensor_range[1])
+            else:
+                # 未知传感器类型，使用默认值 | Unknown sensor type, use default values
+                normalized.extend([0.5, 0, 1])
+        
+        # 确保长度一致 | Ensure consistent length
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         while len(normalized) < self.input_dim:
             normalized.append(0.0)
         
         return normalized[:self.input_dim]
     
     def interpret_output(self, output, sensor_data):
+<<<<<<< HEAD
         """Interpret model output"""
+=======
+        """解释模型输出 | Interpret model output"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         results = {}
         sensor_types = list(self.sensor_types.keys())
         
@@ -429,7 +519,11 @@ class SensorModel(nn.Module):
                     "timestamp": datetime.now().isoformat()
                 }
         
+<<<<<<< HEAD
         # Overall status
+=======
+        # 整体状态 | Overall status
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         overall_status = "normal"
         if any(result["status"] == "anomaly" for result in results.values()):
             overall_status = "anomaly"
@@ -442,13 +536,21 @@ class SensorModel(nn.Module):
         }
     
     def detect_anomalies(self, sensor_data, historical_data=None):
+<<<<<<< HEAD
         """Detect sensor anomalies"""
+=======
+        """检测传感器异常 | Detect sensor anomalies"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         try:
             anomalies = []
             
             for sensor_type, value in sensor_data.items():
                 if sensor_type in self.sensor_types:
+<<<<<<< HEAD
                     # Check if value is within reasonable range
+=======
+                    # 检查值是否在合理范围内 | Check if value is within reasonable range
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                     sensor_range = self.sensor_types[sensor_type]["range"]
                     if value < sensor_range[0] or value > sensor_range[1]:
                         anomalies.append({
@@ -459,7 +561,11 @@ class SensorModel(nn.Module):
                         })
                         continue
                     
+<<<<<<< HEAD
                     # Check for sudden changes
+=======
+                    # 检查突变异常 | Check for sudden changes
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                     if historical_data:
                         threshold = self.anomaly_thresholds.get(sensor_type, self.anomaly_thresholds["default"])
                         recent_values = [d["raw_data"].get(sensor_type, 0) for d in historical_data[-10:] if d]
@@ -478,18 +584,30 @@ class SensorModel(nn.Module):
                 'status': 'success',
                 'anomalies': anomalies,
                 'anomaly_count': len(anomalies),
+<<<<<<< HEAD
                 'confidence': 1.0 - (len(anomalies) * 0.1)  # Confidence based on number of anomalies
+=======
+                'confidence': 1.0 - (len(anomalies) * 0.1)  # 基于异常数量的置信度 | Confidence based on number of anomalies
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             }
         except Exception as e:
             return {'status': 'error', 'message': str(e)}
     
     def fuse_sensor_data(self, sensor_data_list):
+<<<<<<< HEAD
         """Fuse multi-sensor data"""
+=======
+        """融合多传感器数据 | Fuse multi-sensor data"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         try:
             if not sensor_data_list:
                 return {'status': 'error', 'message': 'No sensor data provided'}
             
+<<<<<<< HEAD
             # Use weighted average to fuse data
+=======
+            # 使用加权平均融合数据 | Use weighted average to fuse data
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             fused_data = {}
             weights = {}
             
@@ -500,15 +618,24 @@ class SensorModel(nn.Module):
                             fused_data[sensor_type] = 0.0
                             weights[sensor_type] = 0.0
                         
+<<<<<<< HEAD
                         # Confidence-based weighting
                         confidence = 0.8  # Default confidence
+=======
+                        # 基于置信度的权重 | Confidence-based weighting
+                        confidence = 0.8  # 默认置信度 | Default confidence
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                         if 'confidence' in sensor_data:
                             confidence = sensor_data['confidence']
                         
                         fused_data[sensor_type] += value * confidence
                         weights[sensor_type] += confidence
             
+<<<<<<< HEAD
             # Calculate weighted average
+=======
+            # 计算加权平均值 | Calculate weighted average
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             for sensor_type in fused_data:
                 if weights[sensor_type] > 0:
                     fused_data[sensor_type] /= weights[sensor_type]
@@ -524,7 +651,11 @@ class SensorModel(nn.Module):
             return {'status': 'error', 'message': str(e)}
     
     def connect_to_main_model(self):
+<<<<<<< HEAD
         """Connect to main model data bus"""
+=======
+        """连接到主模型数据总线 | Connect to main model data bus"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         try:
             import redis
             self.data_bus = redis.Redis(
@@ -533,21 +664,33 @@ class SensorModel(nn.Module):
                 db=0
             )
             self.data_bus.ping()
+<<<<<<< HEAD
             print(f"Connected to main model data bus")
             return True
         except Exception as e:
             print(f"Connection failed: {str(e)}")
+=======
+            print(f"{self.get_text('connected_to_main_model')} | 已连接到主模型数据总线")
+            return True
+        except Exception as e:
+            print(f"{self.get_text('connection_failed')}: {str(e)} | 连接主模型失败: {str(e)}")
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             self.data_bus = None
             return False
     
     def send_to_main_model(self, data):
+<<<<<<< HEAD
         """Send data to main model"""
+=======
+        """发送数据到主模型 | Send data to main model"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         try:
             if self.data_bus:
                 self.data_bus.publish('sensor_data', json.dumps(data))
                 return True
             return False
         except Exception as e:
+<<<<<<< HEAD
             print(f"Send failed: {str(e)}")
             return False
     
@@ -557,6 +700,17 @@ class SensorModel(nn.Module):
     
     def switch_language(self, language):
         """Switch language"""
+=======
+            print(f"{self.get_text('send_failed')}: {str(e)} | 发送数据失败: {str(e)}")
+            return False
+    
+    def get_text(self, key):
+        """获取多语言文本 | Get multilingual text"""
+        return self.language_resources.get(self.current_lang, {}).get(key, key)
+    
+    def switch_language(self, language):
+        """切换语言 | Switch language"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if language in self.language_resources:
             self.current_lang = language
             return True
@@ -604,13 +758,22 @@ class SensorModel(nn.Module):
                 input_device_index=device_index,
                 frames_per_buffer=1024
             )
+<<<<<<< HEAD
             print(f"Microphone connected (device {device_index})")
             return {'status': 'success', 'message': 'Microphone stream started'}
+=======
+            print(f"{self.get_text('microphone_connected')} (设备 {device_index})")
+            return {'status': 'success', 'message': '麦克风流已启动 | Microphone stream started'}
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         except Exception as e:
             return {'status': 'error', 'message': str(e)}
     
     def stop_microphone_stream(self):
+<<<<<<< HEAD
         """Stop microphone stream"""
+=======
+        """停止麦克风流 | Stop microphone stream"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if self.microphone_stream:
             self.microphone_stream.stop_stream()
             self.microphone_stream.close()
@@ -619,13 +782,18 @@ class SensorModel(nn.Module):
             self.audio.terminate()
     
     def read_audio_data(self, num_frames=1024):
+<<<<<<< HEAD
         """Read audio data"""
+=======
+        """读取音频数据 | Read audio data"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if self.microphone_stream:
             try:
                 data = self.microphone_stream.read(num_frames, exception_on_overflow=False)
                 return {'status': 'success', 'audio_data': data}
             except Exception as e:
                 return {'status': 'error', 'message': str(e)}
+<<<<<<< HEAD
         return {'status': 'error', 'message': 'Microphone not started'}
     
     def connect_network_stream(self, stream_type, url, config=None):
@@ -633,6 +801,15 @@ class SensorModel(nn.Module):
         try:
             if stream_type == 'video':
                 # Connect network video stream
+=======
+        return {'status': 'error', 'message': '麦克风未启动 | Microphone not started'}
+    
+    def connect_network_stream(self, stream_type, url, config=None):
+        """连接网络流 | Connect network stream"""
+        try:
+            if stream_type == 'video':
+                # 连接网络视频流 | Connect network video stream
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 cap = cv2.VideoCapture(url)
                 if cap.isOpened():
                     self.network_streams[url] = {
@@ -640,25 +817,45 @@ class SensorModel(nn.Module):
                         'capture': cap,
                         'config': config or {}
                     }
+<<<<<<< HEAD
                     print(f"Network stream connected: {url}")
                     return {'status': 'success', 'message': f'Network video stream connected: {url}'}
             
             elif stream_type == 'audio':
                 # Connect network audio stream
                 # Need to implement based on specific protocol
+=======
+                    print(f"{self.get_text('network_stream_connected')}: {url}")
+                    return {'status': 'success', 'message': f'网络视频流已连接: {url}'}
+            
+            elif stream_type == 'audio':
+                # 连接网络音频流 | Connect network audio stream
+                # 这里需要根据具体协议实现 | Need to implement based on specific protocol
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 self.network_streams[url] = {
                     'type': 'audio',
                     'config': config or {}
                 }
+<<<<<<< HEAD
                 print(f"Network stream connected: {url}")
                 return {'status': 'success', 'message': f'Network audio stream connected: {url}'}
             
             return {'status': 'error', 'message': 'Unsupported stream type'}
+=======
+                print(f"{self.get_text('network_stream_connected')}: {url}")
+                return {'status': 'success', 'message': f'网络音频流已连接: {url}'}
+            
+            return {'status': 'error', 'message': '不支持的流类型 | Unsupported stream type'}
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         except Exception as e:
             return {'status': 'error', 'message': str(e)}
     
     def disconnect_network_stream(self, url):
+<<<<<<< HEAD
         """Disconnect network stream"""
+=======
+        """断开网络流 | Disconnect network stream"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if url in self.network_streams:
             stream = self.network_streams[url]
             if stream['type'] == 'video' and 'capture' in stream:
@@ -666,23 +863,40 @@ class SensorModel(nn.Module):
             del self.network_streams[url]
     
     def open_serial_port(self, port, baudrate=9600, timeout=1):
+<<<<<<< HEAD
         """Open serial port"""
         try:
             ser = serial.Serial(port, baudrate, timeout=timeout)
             self.serial_ports[port] = ser
             print(f"Serial port connected: {port}")
             return {'status': 'success', 'message': f'Serial port opened: {port}'}
+=======
+        """打开串口 | Open serial port"""
+        try:
+            ser = serial.Serial(port, baudrate, timeout=timeout)
+            self.serial_ports[port] = ser
+            print(f"{self.get_text('serial_port_connected')}: {port}")
+            return {'status': 'success', 'message': f'串口已打开: {port}'}
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         except Exception as e:
             return {'status': 'error', 'message': str(e)}
     
     def close_serial_port(self, port):
+<<<<<<< HEAD
         """Close serial port"""
+=======
+        """关闭串口 | Close serial port"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if port in self.serial_ports:
             self.serial_ports[port].close()
             del self.serial_ports[port]
     
     def read_serial_data(self, port):
+<<<<<<< HEAD
         """Read serial data"""
+=======
+        """读取串口数据 | Read serial data"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if port in self.serial_ports:
             try:
                 data = self.serial_ports[port].readline().decode('utf-8').strip()
@@ -691,6 +905,7 @@ class SensorModel(nn.Module):
                 return {'status': 'success', 'data': ''}
             except Exception as e:
                 return {'status': 'error', 'message': str(e)}
+<<<<<<< HEAD
         return {'status': 'error', 'message': f'Serial port not open: {port}'}
     
     def write_serial_data(self, port, data):
@@ -707,26 +922,58 @@ class SensorModel(nn.Module):
         """Start real-time data processing"""
         if self.realtime_active:
             return {'status': 'error', 'message': 'Real-time processing already running'}
+=======
+        return {'status': 'error', 'message': f'串口未打开: {port}'}
+    
+    def write_serial_data(self, port, data):
+        """写入串口数据 | Write serial data"""
+        if port in self.serial_ports:
+            try:
+                self.serial_ports[port].write(data.encode('utf-8'))
+                return {'status': 'success', 'message': '数据已发送 | Data sent'}
+            except Exception as e:
+                return {'status': 'error', 'message': str(e)}
+        return {'status': 'error', 'message': f'串口未打开: {port}'}
+    
+    def start_realtime_processing(self):
+        """启动实时数据处理 | Start real-time data processing"""
+        if self.realtime_active:
+            return {'status': 'error', 'message': '实时处理已在运行 | Real-time processing already running'}
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
         self.realtime_active = True
         self.realtime_thread = threading.Thread(target=self._realtime_processing_loop)
         self.realtime_thread.daemon = True
         self.realtime_thread.start()
         
+<<<<<<< HEAD
         return {'status': 'success', 'message': 'Real-time processing started'}
     
     def stop_realtime_processing(self):
         """Stop real-time data processing"""
+=======
+        return {'status': 'success', 'message': '实时处理已启动 | Real-time processing started'}
+    
+    def stop_realtime_processing(self):
+        """停止实时数据处理 | Stop real-time data processing"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         self.realtime_active = False
         if self.realtime_thread:
             self.realtime_thread.join(timeout=2.0)
         self.realtime_thread = None
     
     def _realtime_processing_loop(self):
+<<<<<<< HEAD
         """Real-time processing loop"""
         while self.realtime_active:
             try:
                 # Process camera data
+=======
+        """实时处理循环 | Real-time processing loop"""
+        while self.realtime_active:
+            try:
+                # 处理摄像头数据 | Process camera data
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 if self.camera_stream and self.camera_stream.isOpened():
                     frame_result = self.capture_frame()
                     if frame_result['status'] == 'success':
@@ -779,7 +1026,11 @@ class SensorModel(nn.Module):
                                 'timestamp': datetime.now().isoformat()
                             })
                 
+<<<<<<< HEAD
                 time.sleep(0.1)  # 100ms interval
+=======
+                time.sleep(0.1)  # 100ms间隔 | 100ms interval
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 
             except Exception as e:
                 print(f"实时处理错误: {str(e)} | Real-time processing error: {str(e)}")
@@ -823,15 +1074,25 @@ class SensorModel(nn.Module):
                 'volume': float(volume),
                 'max_amplitude': float(max_amplitude),
                 'samples': len(audio_array),
+<<<<<<< HEAD
                 'sample_rate': 44100  # Assuming sample rate
+=======
+                'sample_rate': 44100  # 假设采样率 | Assuming sample rate
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             }
         except Exception as e:
             return {'error': str(e)}
     
     def parse_serial_data(self, data):
+<<<<<<< HEAD
         """Parse serial data"""
         try:
             # Simple CSV format parsing
+=======
+        """解析串口数据 | Parse serial data"""
+        try:
+            # 简单的CSV格式解析 | Simple CSV format parsing
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             if ',' in data:
                 parts = data.split(',')
                 sensor_data = {}
@@ -844,7 +1105,11 @@ class SensorModel(nn.Module):
                             sensor_data[key.strip()] = value.strip()
                 return sensor_data
             
+<<<<<<< HEAD
             # JSON format parsing
+=======
+            # JSON格式解析 | JSON format parsing
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             if data.startswith('{') and data.endswith('}'):
                 return json.loads(data)
             
@@ -853,7 +1118,11 @@ class SensorModel(nn.Module):
             return None
     
     def get_realtime_interfaces_status(self):
+<<<<<<< HEAD
         """Get real-time interfaces status"""
+=======
+        """获取实时接口状态 | Get real-time interfaces status"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         status = {
             'camera': {
                 'active': self.camera_stream is not None and self.camera_stream.isOpened(),
@@ -861,7 +1130,11 @@ class SensorModel(nn.Module):
             },
             'microphone': {
                 'active': self.microphone_stream is not None,
+<<<<<<< HEAD
                 'device_index': 0  # Need actual implementation
+=======
+                'device_index': 0  # 需要实际实现 | Need actual implementation
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             },
             'network_streams': {
                 'count': len(self.network_streams),
@@ -878,7 +1151,11 @@ class SensorModel(nn.Module):
         return status
     
     def cleanup(self):
+<<<<<<< HEAD
         """Cleanup resources"""
+=======
+        """清理资源 | Cleanup resources"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         self.stop_realtime_processing()
         self.stop_camera_stream()
         self.stop_microphone_stream()
@@ -890,12 +1167,21 @@ class SensorModel(nn.Module):
             self.close_serial_port(port)
     
     def __del__(self):
+<<<<<<< HEAD
         """Destructor"""
         self.cleanup()
 
 # External API integration functions
 def connect_external_api(api_config):
     """Connect to external API"""
+=======
+        """析构函数 | Destructor"""
+        self.cleanup()
+
+# 外部API集成功能 | External API integration functions
+def connect_external_api(api_config):
+    """连接外部API | Connect to external API"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     try:
         api_type = api_config.get('type')
         api_key = api_config.get('api_key')
@@ -926,16 +1212,27 @@ def connect_external_api(api_config):
             return {'status': 'success', 'client': client}
         
         else:
+<<<<<<< HEAD
             return {'status': 'error', 'message': f'Unsupported API type: {api_type}'}
+=======
+            return {'status': 'error', 'message': f'不支持的API类型: {api_type} | Unsupported API type: {api_type}'}
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
 
 def process_with_external_api(api_client, data, api_type):
+<<<<<<< HEAD
     """Process data with external API"""
     try:
         if api_type == 'openai':
             # OpenAI API processing
+=======
+    """使用外部API处理数据 | Process data with external API"""
+    try:
+        if api_type == 'openai':
+            # OpenAI API处理 | OpenAI API processing
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             response = api_client.Completion.create(
                 engine="text-davinci-003",
                 prompt=str(data),
@@ -944,38 +1241,66 @@ def process_with_external_api(api_client, data, api_type):
             return {'status': 'success', 'result': response.choices[0].text.strip()}
         
         elif api_type == 'azure':
+<<<<<<< HEAD
             # Azure Computer Vision API processing
             if isinstance(data, np.ndarray):
                 # Process image data
+=======
+            # Azure计算机视觉API处理 | Azure Computer Vision API processing
+            if isinstance(data, np.ndarray):
+                # 处理图像数据 | Process image data
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 _, img_encoded = cv2.imencode('.jpg', data)
                 analysis = api_client.analyze_image_in_stream(img_encoded.tobytes(), visual_features=['Categories', 'Description'])
                 return {'status': 'success', 'result': analysis.as_dict()}
         
         elif api_type == 'google_cloud':
+<<<<<<< HEAD
             # Google Cloud Vision API processing
             if isinstance(data, np.ndarray):
                 # Process image data
+=======
+            # Google Cloud Vision API处理 | Google Cloud Vision API processing
+            if isinstance(data, np.ndarray):
+                # 处理图像数据 | Process image data
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 _, img_encoded = cv2.imencode('.jpg', data)
                 image = vision.Image(content=img_encoded.tobytes())
                 response = api_client.label_detection(image=image)
                 return {'status': 'success', 'result': [label.description for label in response.label_annotations]}
         
         elif api_type == 'aws':
+<<<<<<< HEAD
             # AWS Rekognition API processing
             if isinstance(data, np.ndarray):
                 # Process image data
+=======
+            # AWS Rekognition API处理 | AWS Rekognition API processing
+            if isinstance(data, np.ndarray):
+                # 处理图像数据 | Process image data
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 _, img_encoded = cv2.imencode('.jpg', data)
                 response = api_client.detect_labels(Image={'Bytes': img_encoded.tobytes()})
                 return {'status': 'success', 'result': [label['Name'] for label in response['Labels']]}
         
+<<<<<<< HEAD
         return {'status': 'error', 'message': 'Unsupported API operation'}
+=======
+        return {'status': 'error', 'message': '不支持的API操作 | Unsupported API operation'}
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
 
+<<<<<<< HEAD
 # Model training functions
 def train_sensor_model(model, training_data, epochs=10, learning_rate=0.001):
     """Train sensor model"""
+=======
+# 模型训练功能 | Model training functions
+def train_sensor_model(model, training_data, epochs=10, learning_rate=0.001):
+    """训练传感器模型 | Train sensor model"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     try:
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
         criterion = nn.MSELoss()
@@ -1005,12 +1330,20 @@ def train_sensor_model(model, training_data, epochs=10, learning_rate=0.001):
         return {'status': 'error', 'message': str(e)}
 
 def create_training_data_from_history(history_data, sensor_types):
+<<<<<<< HEAD
     """Create training data from history"""
+=======
+    """从历史数据创建训练数据 | Create training data from history"""
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     try:
         training_data = []
         for data_point in history_data:
             if 'raw_data' in data_point and 'processed_result' in data_point:
+<<<<<<< HEAD
                 # Create input features
+=======
+                # 创建输入特征 | Create input features
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 input_features = []
                 for sensor_type in sensor_types:
                     value = data_point['raw_data'].get(sensor_type, 0)
@@ -1018,7 +1351,11 @@ def create_training_data_from_history(history_data, sensor_types):
                     normalized_value = (value - sensor_range[0]) / (sensor_range[1] - sensor_range[0])
                     input_features.extend([normalized_value, sensor_range[0], sensor_range[1]])
                 
+<<<<<<< HEAD
                 # Create target output
+=======
+                # 创建目标输出 | Create target output
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 target_output = []
                 for sensor_type in sensor_types:
                     confidence = data_point['processed_result']['sensor_results'].get(sensor_type, {}).get('confidence', 0.5)
@@ -1034,12 +1371,21 @@ def create_training_data_from_history(history_data, sensor_types):
     except Exception as e:
         return []
 
+<<<<<<< HEAD
 # Main function and test code
 if __name__ == "__main__":
     # Create sensor model instance
     sensor_model = SensorModel()
     
     # Test sensor data processing
+=======
+# 主函数和测试代码 | Main function and test code
+if __name__ == "__main__":
+    # 创建传感器模型实例 | Create sensor model instance
+    sensor_model = SensorModel()
+    
+    # 测试传感器数据处理 | Test sensor data processing
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     test_data = {
         'temperature': 25.5,
         'humidity': 60.0,
@@ -1047,6 +1393,7 @@ if __name__ == "__main__":
     }
     
     result = sensor_model.process_sensor_data(test_data)
+<<<<<<< HEAD
     print("Sensor processing result:", result)
     
     # Test anomaly detection
@@ -1054,12 +1401,27 @@ if __name__ == "__main__":
     print("Anomaly detection result:", anomalies)
     
     # Test multi-sensor data fusion
+=======
+    print("传感器处理结果:", result)
+    
+    # 测试异常检测 | Test anomaly detection
+    anomalies = sensor_model.detect_anomalies(test_data)
+    print("异常检测结果:", anomalies)
+    
+    # 测试多传感器数据融合 | Test multi-sensor data fusion
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     sensor_data_list = [
         {'temperature': 25.0, 'confidence': 0.9},
         {'temperature': 26.0, 'confidence': 0.8},
         {'temperature': 24.5, 'confidence': 0.7}
     ]
     fused = sensor_model.fuse_sensor_data(sensor_data_list)
+<<<<<<< HEAD
     print("Data fusion result:", fused)
     
     print("Sensor model test completed")
+=======
+    print("数据融合结果:", fused)
+    
+    print("传感器模型测试完成 | Sensor model test completed")
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13

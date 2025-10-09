@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% extends "base_monochrome.html" %}
 
 {% block title %}Data Upload - Self Brain AGI{% endblock %}
@@ -368,3 +369,70 @@
     });
 </script>
 {% endblock %}
+=======
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Upload - AI Management System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/upload.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Data Upload Center</h1>
+            <p>Upload training data for all AI models</p>
+        </header>
+
+        <div class="upload-section">
+            <div class="model-selector">
+                <label>Select Model:</label>
+                <select id="modelSelect">
+                    <option value="B_language">Language Model (B)</option>
+                    <option value="C_audio">Audio Processing (C)</option>
+                    <option value="D_image">Image Analysis (D)</option>
+                    <option value="E_video">Video Processing (E)</option>
+                    <option value="F_spatial">Spatial Computing (F)</option>
+                    <option value="G_sensor">Sensor Data (G)</option>
+                    <option value="I_knowledge">Knowledge Base (I)</option>
+                    <option value="J_motion">Motion Control (J)</option>
+                    <option value="K_programming">Code Generation (K)</option>
+                </select>
+            </div>
+
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <p>Drag & drop files here or click to browse</p>
+                <input type="file" id="fileInput" multiple accept=".json,.csv,.txt,.py,.jpg,.png,.wav,.mp4">
+            </div>
+
+            <div class="upload-options">
+                <label>
+                    <input type="checkbox" id="jointTraining"> Enable Joint Training
+                </label>
+                <label>
+                    <input type="checkbox" id="externalApi"> Use External API
+                </label>
+            </div>
+
+            <button id="uploadBtn" class="btn-primary" disabled>Upload & Train</button>
+        </div>
+
+        <div class="progress-section" style="display: none;">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p id="progressText">Uploading...</p>
+        </div>
+
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <h3>Upload Results</h3>
+            <div id="uploadResults"></div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+</body>
+</html>
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13

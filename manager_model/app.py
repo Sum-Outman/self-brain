@@ -131,6 +131,7 @@ class ModelManager:
             return True
         return False
 
+<<<<<<< HEAD
 # 导入AdvancedTrainingController
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from training_manager.advanced_train_control import (
@@ -159,10 +160,47 @@ def get_training_controller():
             batch_size = config.get('batch_size', 32)
             
             training_config = {
+=======
+# 训练控制器类
+class TrainingController:
+    def __init__(self):
+        self.stop_event = None
+        self.training_thread = None
+        self.training_progress = {
+            'status': 'idle',
+            'epoch': 0,
+            'loss': 0.0,
+            'accuracy': 0.0,
+            'steps_completed': 0,
+            'total_steps': 0,
+            'config': {}
+        }
+        
+    def start_training(self, config):
+        global management_model
+        
+        if management_model is None:
+            return {'status': 'error', 'message': 'Model not initialized'}
+        
+        # 设置训练配置
+        epochs = config.get('epochs', 10)
+        learning_rate = config.get('learning_rate', 0.001)
+        batch_size = config.get('batch_size', 32)
+        
+        self.training_progress = {
+            'status': 'training',
+            'epoch': 0,
+            'loss': 0.0,
+            'accuracy': 0.0,
+            'steps_completed': 0,
+            'total_steps': epochs,
+            'config': {
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 'epochs': epochs,
                 'learning_rate': learning_rate,
                 'batch_size': batch_size
             }
+<<<<<<< HEAD
             
             # 调用API启动训练
             result = start_training_api(["A_management"], "individual", training_config)
@@ -190,6 +228,48 @@ def get_training_controller():
     return TrainingControllerWrapper(controller)
 
 training_controller = get_training_controller()
+=======
+        }
+        
+        # 启动训练线程
+        self.stop_event = threading.Event()
+        self.training_thread = threading.Thread(
+            target=train_management_model,
+            args=(management_model, self.training_progress, self.stop_event),
+            kwargs={
+                'epochs': epochs,
+                'learning_rate': learning_rate,
+                'batch_size': batch_size
+            }
+        )
+        self.training_thread.daemon = True
+        self.training_thread.start()
+        
+        logger.info(f"Starting real training with config: {self.training_progress['config']}")
+        
+        return {
+            'status': 'success',
+            'message': 'Real training started',
+            'training_id': f"train_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        }
+    
+    def stop_training(self):
+        if self.training_progress['status'] == 'training':
+            # 调用stop_training_process函数停止训练
+            stop_training_process(self.stop_event)
+            self.training_progress['status'] = 'stopped'
+            logger.info("Training stopped by user")
+            return {'status': 'success', 'message': 'Training stopped'}
+        return {'status': 'error', 'message': 'No training in progress'}
+    
+    def get_training_progress(self):
+        # 直接返回真实的训练进度（由train_management_model函数更新）
+        return self.training_progress
+
+# 实例化管理器和控制器
+model_manager = ModelManager()
+training_controller = TrainingController()
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 emotion_engine = None  # 稍后初始化
 
 # 初始化管理模型
@@ -237,6 +317,7 @@ def check_model_health():
     try:
         # 执行简单的推理测试
         if management_model is not None:
+<<<<<<< HEAD
             # 创建适合模型处理的请求数据，避免直接使用张量导致的参数错误
             dummy_request = {
                 'request_id': 'health_check',
@@ -248,6 +329,12 @@ def check_model_health():
             with torch.no_grad():
                 # 使用process_local_request方法而不是直接调用forward，确保正确的参数传递
                 management_model.process_local_request(dummy_request)
+=======
+            # 使用更适合模型处理的测试输入
+            test_features = {"text": [0.1, 0.2, 0.3, 0.4], "length": 4}
+            with torch.no_grad():
+                management_model.forward(test_features)
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
             # 更新健康状态
             system_state['model_health']['status'] = 'active'
@@ -1182,7 +1269,11 @@ def initialize_app():
 if __name__ == '__main__':
     initialize_app()
     
+<<<<<<< HEAD
     port = int(os.environ.get('PORT', 5000))  # Default to 5000 for A Management Model
+=======
+    port = int(os.environ.get('PORT', 5015))  # Changed from 5001 to 5015 according to PORT_ALLOCATION.md
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     host = os.environ.get('HOST', '0.0.0.0')
     debug = os.environ.get('DEBUG', 'false').lower() == 'true'
     

@@ -19,6 +19,10 @@ import faiss
 import pickle
 from collections import deque, defaultdict
 import sqlite3
+<<<<<<< HEAD
+=======
+from sentence_transformers import SentenceTransformer
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 # Import core components
 from manager_model.model_registry import ModelRegistry, get_model_registry
@@ -44,7 +48,11 @@ class KnowledgeBaseModel(nn.Module):
         self.description = 'Comprehensive knowledge model with expertise across various domains'
         
         # Neural network architecture
+<<<<<<< HEAD
         self.hidden_size = 512  # Custom hidden size for our from-scratch implementation
+=======
+        self.hidden_size = 768  # Using 768 to match sentence transformer embeddings
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         self.num_layers = 3
         self.attention_heads = 12
         
@@ -117,8 +125,18 @@ class KnowledgeBaseModel(nn.Module):
             self.vector_dim = self.hidden_size
             self.index = faiss.IndexFlatL2(self.vector_dim)
             
+<<<<<<< HEAD
             # From-scratch embedding generator
             self.embedding_model = self.generate_embeddings_from_scratch
+=======
+            # Load or create sentence transformer for embeddings
+            try:
+                self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+            except Exception as e:
+                logger.warning(f"Failed to load sentence transformer, using mock embeddings: {str(e)}")
+                # Mock embedding function for testing
+                self.embedding_model = lambda texts: np.random.rand(len(texts), self.vector_dim).astype('float32')
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
             # Set up SQLite database for metadata
             self.db_path = os.path.join(self.kb_dir, 'knowledge_metadata.db')
@@ -200,6 +218,7 @@ class KnowledgeBaseModel(nn.Module):
             logger.error(f"Failed to initialize {self.name}: {str(e)}")
             self.is_initialized = False
     
+<<<<<<< HEAD
     def generate_embeddings_from_scratch(self, texts):
         """Generate embeddings from scratch without using pre-trained models
         This is a from-scratch implementation of text embedding generation
@@ -229,6 +248,8 @@ class KnowledgeBaseModel(nn.Module):
         
         return np.array(embeddings, dtype='float32')
     
+=======
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     def register_handlers(self):
         """Register message handlers for incoming requests"""
         # Register handler for model requests
@@ -312,10 +333,21 @@ class KnowledgeBaseModel(nn.Module):
             return f"I couldn't find the information you're looking for. Error: {str(e)}"
     
     def generate_embedding(self, text):
+<<<<<<< HEAD
         """Generate embedding for the given text using our from-scratch implementation"""
         try:
             # Directly use our from-scratch embedding generator
             embedding = self.generate_embeddings_from_scratch([text])[0]
+=======
+        """Generate embedding for the given text"""
+        try:
+            if callable(self.embedding_model):
+                # Use mock embedding
+                embedding = self.embedding_model([text])[0]
+            else:
+                # Use actual sentence transformer
+                embedding = self.embedding_model.encode([text], convert_to_tensor=False)[0]
+>>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
             # Ensure embedding is float32 and has the correct dimensions
             embedding = np.array(embedding, dtype='float32')
