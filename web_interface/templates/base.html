@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Self Brain AGI{% endblock %}</title>
+    <title>{% block title %}Self Brain{% endblock %}</title>
     
     <!-- Global constants object -->
     <script>
@@ -34,13 +34,13 @@
     <link href="{{ url_for('static', filename='css/monochrome.css', v='1.1') }}" rel="stylesheet">
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="monochrome-theme">
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-light border-bottom">
         <div class="container-fluid">
             <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
                 <img src="{{ url_for('static', filename='images/self_brain.svg') }}" alt="Self Brain" style="height: 30px; width: 30px; margin-right: 8px;">
-                Self Brain AGI
+                Self Brain
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -62,7 +62,7 @@
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'training' %}active fw-bold{% endif %}" href="/training">
+                        <a class="nav-link {% if request.endpoint == 'training_page' %}active fw-bold{% endif %}" href="/training">
                             <i class="bi bi-cpu"></i> Training
                         </a>
                     </li>
@@ -88,7 +88,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'help' %}active fw-bold{% endif %}" href="/help">
+                        <a class="nav-link {% if request.endpoint == 'help_page' %}active fw-bold{% endif %}" href="/help">
                             <i class="bi bi-question-circle"></i> Help
                         </a>
                     </li>

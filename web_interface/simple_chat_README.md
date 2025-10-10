@@ -28,7 +28,7 @@ Before running the simple chat interface, make sure you have:
    ```
    python run_simple_chat.py
    ```
-4. Open a web browser and go to `http://localhost:5001`
+4. Open a web browser and go to `http://localhost:8080`
 
 ## Usage
 

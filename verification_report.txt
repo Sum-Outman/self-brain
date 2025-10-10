@@ -84,8 +84,9 @@ DELETE 端点:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 主系统: http://localhost:5000
-知识管理: http://localhost:5000/knowledge_manage
-知识导入: http://localhost:5000/knowledge/import
+Web界面: http://localhost:8080
+知识管理: http://localhost:8080/knowledge_manage
+知识导入: http://localhost:8080/knowledge/import
 
 结论:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

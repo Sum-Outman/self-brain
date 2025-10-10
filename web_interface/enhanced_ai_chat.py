@@ -35,20 +35,20 @@ class EnhancedAIChat:
     
     def __init__(self):
         self.model_endpoints = {
-            'a_management': 'http://localhost:5001',
-            'b_language': 'http://localhost:5002',
-            'c_audio': 'http://localhost:5003',
-            'd_image': 'http://localhost:5004',
-            'e_video': 'http://localhost:5005',
-            'f_spatial': 'http://localhost:5006',
-            'g_sensor': 'http://localhost:5007',
-            'h_computer': 'http://localhost:5008',
-            'i_motion': 'http://localhost:5009',
-            'j_knowledge': 'http://localhost:5010',
-            'k_programming': 'http://localhost:5011'
+            'a_management': 'http://localhost:5000',
+            'b_language': 'http://localhost:5001',
+            'c_audio': 'http://localhost:5002',
+            'd_image': 'http://localhost:5003',
+            'e_video': 'http://localhost:5004',
+            'f_spatial': 'http://localhost:5005',
+            'g_sensor': 'http://localhost:5006',
+            'h_computer': 'http://localhost:5007',
+            'i_motion': 'http://localhost:5008',
+            'j_knowledge': 'http://localhost:5009',
+            'k_programming': 'http://localhost:5010'
         }
         
-        self.a_manager_endpoint = 'http://localhost:5015'
+        self.a_manager_endpoint = 'http://localhost:5000'
         self.conversation_history = []
         self.model_status = {}
         self.real_time_data = {}
@@ -451,6 +451,6 @@ if __name__ == "__main__":
     print("5. 设备权限检测")
     print("6. 统一数据总线")
     print()
-    print("访问 http://localhost:5006 查看增强版主页")
-    
-    app.run(host='0.0.0.0', port=5006, debug=True)
+    print("访问 http://localhost:8080 查看增强版主页")
+      
+    app.run(host='0.0.0.0', port=8080, debug=True)

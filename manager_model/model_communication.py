@@ -27,15 +27,15 @@ class ModelCommunicator:
         # 模型服务端点配置
         self.model_endpoints = {
             'B_language': 'http://localhost:5001',
-            'C_audio': 'http://localhost:5002',
-            'D_image': 'http://localhost:5003',
-            'E_video': 'http://localhost:5004',
-            'F_spatial': 'http://localhost:5005',
-            'G_sensor': 'http://localhost:5010',
-            'H_computer': 'http://localhost:5011',
-            'I_motion': 'http://localhost:5012',
-            'I_knowledge': 'http://localhost:5009',
-            'K_programming': 'http://localhost:5013'
+    'C_audio': 'http://localhost:5002',
+    'D_image': 'http://localhost:5003',
+    'E_video': 'http://localhost:5004',
+    'F_spatial': 'http://localhost:5005',
+    'G_sensor': 'http://localhost:5006',
+    'H_computer': 'http://localhost:5007',
+    'I_knowledge': 'http://localhost:5008',
+    'J_motion': 'http://localhost:5009',
+    'K_programming': 'http://localhost:5010'
         }
         
         # 请求队列和响应缓存

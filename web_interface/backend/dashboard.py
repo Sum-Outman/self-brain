@@ -217,7 +217,8 @@ def update_training_metrics():
 def get_training_metrics():
     """Get training metrics data"""
     # Rate limiting
-    if error := check_rate_limit(request.remote_addr, 'get_training_metrics'):
+    error = check_rate_limit(request.remote_addr, 'get_training_metrics')
+    if error:
         return error
     
     # Load latest data
@@ -234,11 +235,13 @@ def update_completed_trainings():
     global training_metrics_data
     
     # Security verification
-    if error := check_api_key():
+    error = check_api_key()
+    if error:
         return error
     
     # Rate limiting
-    if error := check_rate_limit(request.remote_addr, 'update_completed_trainings'):
+    error = check_rate_limit(request.remote_addr, 'update_completed_trainings')
+    if error:
         return error
     
     try:
@@ -274,7 +277,8 @@ def update_completed_trainings():
 def get_system_status():
     """Get system status"""
     # Rate limiting
-    if error := check_rate_limit(request.remote_addr, 'get_system_status'):
+    error = check_rate_limit(request.remote_addr, 'get_system_status')
+    if error:
         return error
     
     # Load monitoring configuration
@@ -449,11 +453,13 @@ def get_system_status():
 def rotate_api_key():
     """Rotate API key"""
     # Security verification
-    if error := check_api_key():
+    error = check_api_key()
+    if error:
         return error
     
     # Rate limiting
-    if error := check_rate_limit(request.remote_addr, 'rotate_api_key'):
+    error = check_rate_limit(request.remote_addr, 'rotate_api_key')
+    if error:
         return error
     
     try:
@@ -506,7 +512,7 @@ def load_configuration():
     current_app.config.setdefault('DATA_DIR', 'data')
     current_app.config.setdefault('MONITORING', {
         'enabled': False,
-        'endpoint': 'http://localhost:5000/monitoring'
+        'endpoint': 'http://localhost:8000/monitoring'
     })
     
     # Try to load from config file

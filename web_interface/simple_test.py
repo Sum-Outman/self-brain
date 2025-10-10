@@ -8,7 +8,7 @@ def test_system_status():
     """测试系统状态API"""
     print("=== 测试系统状态 ===")
     try:
-        response = requests.get('http://localhost:5000/api/system_status')
+        response = requests.get('http://localhost:5015/api/system_status')
         if response.status_code == 200:
             data = response.json()
             print(f"系统状态: {data.get('status')}")
@@ -26,7 +26,7 @@ def test_model_list():
     """测试模型列表API"""
     print("\n=== 测试模型列表 ===")
     try:
-        response = requests.get('http://localhost:5000/api/models')
+        response = requests.get('http://localhost:5015/api/models')
         if response.status_code == 200:
             data = response.json()
             if data.get('status') == 'success':
@@ -49,7 +49,7 @@ def test_training_status():
     """测试训练状态API"""
     print("\n=== 测试训练状态 ===")
     try:
-        response = requests.get('http://localhost:5000/api/training/status')
+        response = requests.get('http://localhost:5015/api/training/status')
         if response.status_code == 200:
             data = response.json()
             if data.get('status') == 'success':
@@ -89,7 +89,7 @@ def test_knowledge_base():
             print(f"知识库存储目录不存在: {kb_dir}")
             
         # 尝试获取知识库优化状态
-        response = requests.post('http://localhost:5000/api/knowledge/optimize')
+        response = requests.post('http://localhost:5015/api/knowledge/optimize')
         if response.status_code == 200:
             data = response.json()
             if data.get('success'):

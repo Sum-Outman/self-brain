@@ -1,1121 +1,573 @@
-{% extends "base_monochrome.html" %}
-
-{% block title %}Knowledge - Self Brain AGI{% endblock %}
-
-{% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <!-- Header removed for minimal design -->
-        </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Quick Actions</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <!-- Primary Actions -->
-                        <div class="col-md-4 mb-2">
-                            <button class="btn btn-dark w-100" onclick="openCreateModal()">
-                                <i class="bi bi-plus-circle"></i> Create Knowledge Entry
-                            </button>
-                        </div>
-                        <div class="col-md-4 mb-2">
-                            <button class="btn btn-outline-dark w-100" onclick="triggerFileImport()">
-                                <i class="bi bi-upload"></i> Import Knowledge
-                            </button>
-                        </div>
-                        <div class="col-md-4 mb-2">
-                            <button class="btn btn-outline-dark w-100" onclick="backupKnowledge()">
-                                <i class="bi bi-download"></i> Backup Knowledge
-                            </button>
-                        </div>
-                    </div>
-                    <!-- Maintenance Actions -->
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <div class="border-top pt-3">
-                                <h6 class="text-muted mb-2">Maintenance Tools</h6>
-                                <div class="row">
-                                    <div class="col-md-6 mb-2">
-                                        <button class="btn btn-outline-danger w-100" onclick="cleanKnowledgeDatabase()">
-                                            <i class="bi bi-trash"></i> Clean Database
-                                        </button>
-                                    </div>
-                                    <div class="col-md-6 mb-2">
-                                        <button class="btn btn-outline-secondary w-100" onclick="optimizeDatabase()">
-                                            <i class="bi bi-gear"></i> Optimize Database
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Self-Learning Control -->
-                    <div class="row mt-3" id="learning-control-section">
-                        <div class="col-12">
-                            <div class="border-top pt-3">
-                                <h6 class="text-muted mb-2">Self-Learning Control</h6>
-                                <div class="row">
-                                    <div class="col-md-8 mb-2">
-                                        <select class="form-select" id="model-selector">
-                                            <option value="all">All Models</option>
-                                            <option value="A">Model A - Management</option>
-                                            <option value="B">Model B - Language</option>
-                                            <option value="C">Model C - Audio</option>
-                                            <option value="D">Model D - Image</option>
-                                            <option value="E">Model E - Video</option>
-                                            <option value="F">Model F - Spatial</option>
-                                            <option value="G">Model G - Sensor</option>
-                                            <option value="H">Model H - Computer</option>
-                                            <option value="I">Model I - Motion</option>
-                                            <option value="J">Model J - Knowledge</option>
-                                            <option value="K">Model K - Programming</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <button class="btn btn-dark w-100" id="learning-control-btn" onclick="toggleSelfLearning()">
-                                            <i class="bi bi-play-circle"></i> Start Self-Learning
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="mt-2">
-                                    <div id="self-learning-status" class="text-muted text-sm">
-                                        Self-learning is inactive
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Base Management - Self Brain</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script src="{{ url_for('static', filename='js/knowledge_learning.js') }}"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
+        .navbar {
+            background-color: #343a40 !important;
+        }
+        .sidebar {
+            background-color: #ffffff;
+            border-right: 1px solid #dee2e6;
+            height: calc(100vh - 56px);
+            overflow-y: auto;
+        }
+        .sidebar-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .sidebar-item:hover {
+            background-color: #f8f9fa;
+        }
+        .sidebar-item.active {
+            background-color: #e9ecef;
+            border-left-color: #343a40;
+            font-weight: 500;
+        }
+        .main-content {
+            height: calc(100vh - 56px);
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .card-header {
+            background-color: #343a40;
+            color: white;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        .progress {
+            height: 25px;
+            margin-top: 10px;
+        }
+        .btn-primary {
+            background-color: #343a40;
+            border-color: #343a40;
+        }
+        .btn-primary:hover {
+            background-color: #23272b;
+            border-color: #1d2124;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+        .knowledge-category {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .knowledge-category:hover {
+            transform: translateY(-2px);
+        }
+        .badge {
+            font-size: 0.8rem;
+        }
+        .scrollable-area {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .search-bar {
+            position: sticky;
+            top: 0;
+            background-color: white;
+            padding: 10px 0;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Self Brain AGI</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="/knowledge_manage">Knowledge Base</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/training">Training Center</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/system_settings">Models</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/system_status">System Status</a>
+                    </li>
+                </ul>
             </div>
         </div>
-    </div>
+    </nav>
 
-    <!-- Statistics -->
-    <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h3 class="mb-1" id="total-entries">0</h3>
-                    <p class="text-secondary mb-0">Total Entries</p>
+    <!-- Main Content -->
+    <div class="container-fluid" style="margin-top: 70px;">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar">
+                <div class="sidebar-item active">
+                    <i class="bi bi-journal-bookmark-fill me-2"></i> Knowledge Base
+                </div>
+                <div class="sidebar-item">
+                    <i class="bi bi-book-plus me-2"></i> Add Knowledge
+                </div>
+                <div class="sidebar-item">
+                    <i class="bi bi-folder-symlink me-2"></i> Categories
+                </div>
+                <div class="sidebar-item">
+                    <i class="bi bi-upload me-2"></i> Import Data
+                </div>
+                <div class="sidebar-item">
+                    <i class="bi bi-download me-2"></i> Export Data
+                </div>
+                <div class="sidebar-item">
+                    <i class="bi bi-gear me-2"></i> Settings
                 </div>
             </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h3 class="mb-1" id="total-size">0 MB</h3>
-                    <p class="text-secondary mb-0">Total Size</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h3 class="mb-1" id="recent-entries">0</h3>
-                    <p class="text-secondary mb-0">This Week</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h3 class="mb-1" id="active-models">0</h3>
-                    <p class="text-secondary mb-0">Active Models</p>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Search and Filter -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Search & Filter</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <input type="text" class="form-control" id="search-input" placeholder="Search knowledge entries...">
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <select class="form-select" id="category-filter">
-                                <option value="">All Categories</option>
-                                <option value="training-data">Training Data</option>
-                                <option value="model-config">Model Config</option>
-                                <option value="documentation">Documentation</option>
-                                <option value="examples">Examples</option>
+            <!-- Main Content Area -->
+            <div class="col-md-10 main-content">
+                <!-- Knowledge Management Header -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4>Knowledge Base Management</h4>
+                        <div class="btn-group">
+                            <select id="model-select" class="form-select form-select-sm me-2">
+                                <option value="all">All Models</option>
+                                <option value="main">Main Model</option>
+                                <option value="language">Language Model</option>
+                                <option value="vision">Vision Model</option>
+                                <option value="audio">Audio Model</option>
+                                <option value="specialized">Specialized Models</option>
                             </select>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <select class="form-select" id="model-filter">
-                                <option value="">All Models</option>
-                                <option value="A">Model A - Management</option>
-                                <option value="B">Model B - Language</option>
-                                <option value="C">Model C - Audio</option>
-                                <option value="D">Model D - Image</option>
-                                <option value="E">Model E - Video</option>
-                                <option value="F">Model F - Spatial</option>
-                                <option value="G">Model G - Sensor</option>
-                                <option value="H">Model H - Computer</option>
-                                <option value="I">Model I - Motion</option>
-                                <option value="J">Model J - Knowledge</option>
-                                <option value="K">Model K - Programming</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Knowledge Entries Table -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Knowledge Entries</h5>
-                </div>
-                <div class="card-body">
-                    <!-- Batch Actions -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-outline-dark btn-sm" onclick="exportSelected()">
-                                    <i class="bi bi-download"></i> Export Selected
-                                </button>
-                                <button type="button" class="btn btn-outline-dark btn-sm" onclick="deleteSelected()">
-                                    <i class="bi bi-trash"></i> Delete Selected
-                                </button>
-                            </div>
-                        </div>
-                        <div class="col-md-6 text-end">
-                            <button type="button" class="btn btn-dark btn-sm" onclick="toggleSelectAll()">
-                                <i class="bi bi-check-square"></i> Select All
+                            <button id="start-knowledge-learning" class="btn btn-primary btn-sm">
+                                <i class="bi bi-lightbulb me-1"></i> Start Autonomous Learning
+                            </button>
+                            <button id="stop-knowledge-learning" class="btn btn-secondary btn-sm ml-2" disabled>
+                                <i class="bi bi-lightbulb-off me-1"></i> Stop Learning
                             </button>
                         </div>
                     </div>
-                    
-                    <div class="table-responsive">
-                        <table class="table table-hover" id="knowledge-table">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="5%"><input type="checkbox" id="select-all" onclick="toggleSelectAll()"></th>
-                                    <th>ID</th>
-                                    <th>Title</th>
-                                    <th>Category</th>
-                                    <th>Model</th>
-                                    <th>Size</th>
-                                    <th>Created</th>
-                                    <th>Updated</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="knowledge-tbody">
-                                <!-- Data will be loaded dynamically -->
-                            </tbody>
-                        </table>
+                    <div class="card-body">
+                        <!-- Learning Progress -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="font-weight-bold">Learning Progress:</span>
+                                <span id="knowledge-percentage">0%</span>
+                            </div>
+                            <div class="progress">
+                                <div id="knowledge-progress-bar" class="progress-bar bg-primary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+
+                        <!-- System Status -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <i class="bi bi-brain text-3xl text-primary mb-2"></i>
+                                        <h5 class="card-title">Knowledge Entries</h5>
+                                        <p class="card-text" id="knowledge-count">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <i class="bi bi-tag text-3xl text-secondary mb-2"></i>
+                                        <h5 class="card-title">Categories</h5>
+                                        <p class="card-text" id="category-count">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <i class="bi bi-bookmark-check text-3xl text-success mb-2"></i>
+                                        <h5 class="card-title">Learning Sessions</h5>
+                                        <p class="card-text" id="session-count">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <i class="bi bi-clock-history text-3xl text-info mb-2"></i>
+                                        <h5 class="card-title">Last Update</h5>
+                                        <p class="card-text" id="last-update">Never</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Search Bar -->
+                        <div class="search-bar">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Search knowledge..." id="knowledge-search">
+                                <button class="btn btn-primary" type="button" id="search-btn">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Knowledge Categories -->
+                        <div class="mt-4">
+                            <h5>Knowledge Categories</h5>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
+                                <!-- Categories will be dynamically loaded -->
+                                <div class="card knowledge-category p-3" onclick="viewKnowledgeCategory('physics')">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6>Physics</h6>
+                                            <small>120 entries</small>
+                                        </div>
+                                        <span class="badge bg-primary">Science</span>
+                                    </div>
+                                </div>
+                                <div class="card knowledge-category p-3" onclick="viewKnowledgeCategory('mathematics')">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6>Mathematics</h6>
+                                            <small>85 entries</small>
+                                        </div>
+                                        <span class="badge bg-secondary">Science</span>
+                                    </div>
+                                </div>
+                                <div class="card knowledge-category p-3" onclick="viewKnowledgeCategory('chemistry')">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6>Chemistry</h6>
+                                            <small>65 entries</small>
+                                        </div>
+                                        <span class="badge bg-success">Science</span>
+                                    </div>
+                                </div>
+                                <div class="card knowledge-category p-3" onclick="viewKnowledgeCategory('biology')">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6>Biology</h6>
+                                            <small>78 entries</small>
+                                        </div>
+                                        <span class="badge bg-info">Science</span>
+                                    </div>
+                                </div>
+                                <div class="card knowledge-category p-3" onclick="viewKnowledgeCategory('medicine')">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6>Medicine</h6>
+                                            <small>110 entries</small>
+                                        </div>
+                                        <span class="badge bg-warning">Health</span>
+                                    </div>
+                                </div>
+                                <div class="card knowledge-category p-3" onclick="viewKnowledgeCategory('history')">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6>History</h6>
+                                            <small>45 entries</small>
+                                        </div>
+                                        <span class="badge bg-danger">Humanities</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Knowledge Entries -->
+                        <div class="mt-6">
+                            <h5>Recent Knowledge Entries</h5>
+                            <div class="scrollable-area">
+                                <table class="table table-hover mt-2">
+                                    <thead class="thead-dark">
+                                        <tr>
+                                            <th scope="col">Title</th>
+                                            <th scope="col">Category</th>
+                                            <th scope="col">Added On</th>
+                                            <th scope="col">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recent-entries">
+                                        <!-- Recent entries will be dynamically loaded -->
+                                        <tr>
+                                            <td>Quantum Mechanics Basics</td>
+                                            <td>Physics</td>
+                                            <td>2023-10-15</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary"><i class="bi bi-eye"></i></button>
+                                                <button class="btn btn-sm btn-secondary"><i class="bi bi-pencil"></i></button>
+                                                <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Machine Learning Algorithms</td>
+                                            <td>Computer Science</td>
+                                            <td>2023-10-12</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary"><i class="bi bi-eye"></i></button>
+                                                <button class="btn btn-sm btn-secondary"><i class="bi bi-pencil"></i></button>
+                                                <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Organic Chemistry Principles</td>
+                                            <td>Chemistry</td>
+                                            <td>2023-10-10</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary"><i class="bi bi-eye"></i></button>
+                                                <button class="btn btn-sm btn-secondary"><i class="bi bi-pencil"></i></button>
+                                                <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                    <nav aria-label="Knowledge pagination">
-                        <ul class="pagination justify-content-center" id="pagination">
-                            <!-- Pagination will be generated dynamically -->
-                        </ul>
-                    </nav>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Edit Modal -->
-<div class="modal fade" id="editModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Knowledge Entry</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="edit-form">
-                    <input type="hidden" id="edit-id">
+    <!-- Import Modal -->
+    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importModalLabel">Import Knowledge Data</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Title</label>
-                        <input type="text" class="form-control" id="edit-title" required>
+                        <label for="file-upload" class="form-label">Select File</label>
+                        <input type="file" class="form-control" id="file-upload" accept=".txt,.pdf,.doc,.docx,.csv">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Category</label>
-                        <select class="form-select" id="edit-category" required>
-                            <option value="training-data">Training Data</option>
-                            <option value="model-config">Model Config</option>
-                            <option value="documentation">Documentation</option>
-                            <option value="examples">Examples</option>
+                        <label for="import-category" class="form-label">Category</label>
+                        <select class="form-select" id="import-category">
+                            <option value="general">General</option>
+                            <option value="physics">Physics</option>
+                            <option value="mathematics">Mathematics</option>
+                            <option value="chemistry">Chemistry</option>
+                            <option value="biology">Biology</option>
+                            <option value="medicine">Medicine</option>
+                            <option value="history">History</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Model Association</label>
-                        <select class="form-select" id="edit-model" required>
-                            <option value="A">Model A - Management</option>
-                            <option value="B">Model B - Language</option>
-                            <option value="C">Model C - Audio</option>
-                            <option value="D">Model D - Image</option>
-                            <option value="E">Model E - Video</option>
-                            <option value="F">Model F - Spatial</option>
-                            <option value="G">Model G - Sensor</option>
-                            <option value="H">Model H - Computer</option>
-                            <option value="I">Model I - Motion</option>
-                            <option value="J">Model J - Knowledge</option>
-                            <option value="K">Model K - Programming</option>
+                        <label for="import-model" class="form-label">Target Model</label>
+                        <select class="form-select" id="import-model">
+                            <option value="all">All Models</option>
+                            <option value="main">Main Model</option>
+                            <option value="language">Language Model</option>
+                            <option value="vision">Vision Model</option>
+                            <option value="audio">Audio Model</option>
+                            <option value="specialized">Specialized Models</option>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Content</label>
-                        <textarea class="form-control" id="edit-content" rows="8" required></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-dark" id="save-edit">Save Changes</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Confirm Deletion</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete this knowledge entry? This action cannot be undone.</p>
-                <input type="hidden" id="delete-id">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-dark" id="confirm-delete">Delete</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<style>
-.table th {
-    border-top: none;
-    font-weight: 600;
-}
-
-.btn-group-sm > .btn {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-}
-
-.pagination {
-    margin-top: 1rem;
-}
-
-.modal-content {
-    border-radius: 0;
-}
-</style>
-
-<script>
-let currentPage = 1;
-let totalPages = 1;
-let knowledgeData = [];
-
-// Load knowledge entries
-function loadKnowledgeEntries(page = 1) {
-    console.log('Loading knowledge entries, page:', page);
-    
-    const search = document.getElementById('search-input').value;
-    const category = document.getElementById('category-filter').value;
-    const model = document.getElementById('model-filter').value;
-    
-    const url = `/api/knowledge/entries?page=${page}&search=${encodeURIComponent(search)}&category=${category}&model=${model}`;
-    console.log('API URL:', url);
-    
-    fetch(url, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
-        },
-        mode: 'cors',
-        credentials: 'include'
-    })
-    .then(response => {
-        console.log('API Response status:', response.status);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('API Data received:', data);
-        knowledgeData = data.entries;
-        currentPage = data.page;
-        totalPages = data.pages;
-        
-        console.log('Rendering table with', data.entries.length, 'entries');
-        renderTable(data.entries);
-        renderPagination();
-        updateStatistics(data.stats);
-    })
-    .catch(error => {
-        console.error('Error loading knowledge entries:', error);
-        showToast('Error loading knowledge entries: ' + error.message, 'error');
-    });
-}
-
-// Render table
-function renderTable(entries) {
-    const tbody = document.getElementById('knowledge-tbody');
-    tbody.innerHTML = '';
-    
-    if (entries.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center">No knowledge entries found</td></tr>';
-        return;
-    }
-    
-    entries.forEach(entry => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td><input type="checkbox" class="row-checkbox" value="${entry.id}"></td>
-            <td>${entry.id}</td>
-            <td>${entry.title}</td>
-            <td><span class="badge bg-secondary">${entry.category}</span></td>
-            <td><span class="badge bg-light text-dark">${entry.model}</span></td>
-            <td>${formatFileSize(entry.size)}</td>
-            <td>${formatDate(entry.created_at)}</td>
-            <td>${formatDate(entry.updated_at)}</td>
-            <td>
-                <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary btn-sm" onclick="viewEntry('${entry.id}')">
-                        <i class="bi bi-eye"></i> View
-                    </button>
-                    <button class="btn btn-outline-warning btn-sm" onclick="editEntry('${entry.id}')">
-                        <i class="bi bi-pencil"></i> Edit
-                    </button>
-                    <button class="btn btn-outline-danger btn-sm" onclick="deleteEntry('${entry.id}')">
-                        <i class="bi bi-trash"></i> Delete
-                    </button>
                 </div>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-// Get selected entry IDs
-function getSelectedIds() {
-    const checkboxes = document.querySelectorAll('.row-checkbox:checked');
-    return Array.from(checkboxes).map(cb => cb.value);
-}
-
-// Toggle select all checkboxes
-function toggleSelectAll() {
-    const selectAll = document.getElementById('select-all');
-    const checkboxes = document.querySelectorAll('.row-checkbox');
-    checkboxes.forEach(cb => cb.checked = selectAll.checked);
-}
-
-// Delete selected entries
-function deleteSelected() {
-    const selected = getSelectedIds();
-    if (selected.length === 0) {
-        showToast('Please select at least one entry', 'error');
-        return;
-    }
-
-    if (confirm(`Are you sure you want to delete ${selected.length} selected entries?`)) {
-        fetch('/api/knowledge/delete_selected', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ ids: selected })
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (result.success) {
-                showToast(`Successfully deleted ${result.deleted_count || selected.length} entries`, 'success');
-                loadKnowledgeEntries(currentPage);
-                // Uncheck select all
-                document.getElementById('select-all').checked = false;
-            } else {
-                showToast('Error deleting entries: ' + result.message, 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showToast('Error deleting selected entries', 'error');
-        });
-    }
-}
-
-// Export selected entries
-function exportSelected() {
-    const selected = getSelectedIds();
-    if (selected.length === 0) {
-        showToast('Please select at least one entry', 'error');
-        return;
-    }
-
-    // Get actual entries data
-    const exportData = knowledgeData.filter(entry => selected.includes(entry.id));
-    
-    if (exportData.length === 0) {
-        showToast('No valid entries to export', 'error');
-        return;
-    }
-
-    // Create export format
-    const exportJson = JSON.stringify(exportData, null, 2);
-    
-    // Create download
-    const blob = new Blob([exportJson], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `knowledge_export_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    showToast(`Successfully exported ${exportData.length} entries`, 'success');
-}
-
-// Render pagination
-function renderPagination() {
-    const pagination = document.getElementById('pagination');
-    pagination.innerHTML = '';
-    
-    // Previous button
-    const prevLi = document.createElement('li');
-    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-    prevLi.innerHTML = `<a class="page-link" href="#" onclick="loadKnowledgeEntries(${currentPage - 1})">Previous</a>`;
-    pagination.appendChild(prevLi);
-    
-    // Page numbers
-    for (let i = 1; i <= totalPages; i++) {
-        const li = document.createElement('li');
-        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
-        li.innerHTML = `<a class="page-link" href="#" onclick="loadKnowledgeEntries(${i})">${i}</a>`;
-        pagination.appendChild(li);
-    }
-    
-    // Next button
-    const nextLi = document.createElement('li');
-    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-    nextLi.innerHTML = `<a class="page-link" href="#" onclick="loadKnowledgeEntries(${currentPage + 1})">Next</a>`;
-    pagination.appendChild(nextLi);
-}
-
-// Update statistics
-function updateStatistics(stats) {
-    document.getElementById('total-entries').textContent = stats.total_entries;
-    document.getElementById('total-size').textContent = formatFileSize(stats.total_size);
-    document.getElementById('recent-entries').textContent = stats.recent_entries;
-    document.getElementById('active-models').textContent = stats.active_models;
-}
-
-// Format file size
-function formatFileSize(bytes) {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
-// Format date
-function formatDate(dateString) {
-    return new Date(dateString).toLocaleDateString();
-}
-
-// View entry
-function viewEntry(id) {
-    window.location.href = `/knowledge/view/${id}`;
-}
-
-// Edit entry
-function editEntry(id) {
-    const entry = knowledgeData.find(e => e.id === id);
-    if (!entry) return;
-    
-    document.getElementById('edit-id').value = entry.id;
-    document.getElementById('edit-title').value = entry.title;
-    document.getElementById('edit-category').value = entry.category;
-    document.getElementById('edit-model').value = entry.model;
-    document.getElementById('edit-content').value = entry.content;
-    
-    new bootstrap.Modal(document.getElementById('editModal')).show();
-}
-
-// Delete entry
-function deleteEntry(id) {
-    document.getElementById('delete-id').value = id;
-    new bootstrap.Modal(document.getElementById('deleteModal')).show();
-}
-
-// Save edit
-function saveEdit() {
-    const id = document.getElementById('edit-id').value;
-    const data = {
-        title: document.getElementById('edit-title').value,
-        category: document.getElementById('edit-category').value,
-        model: document.getElementById('edit-model').value,
-        content: document.getElementById('edit-content').value
-    };
-    
-    fetch(`/api/knowledge/update/${id}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            showToast('Knowledge entry updated successfully', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-            loadKnowledgeEntries(currentPage);
-        } else {
-            showToast('Error updating entry: ' + result.message, 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('Error updating knowledge entry', 'error');
-    });
-}
-
-// Confirm delete
-    function confirmDelete() {
-        const id = document.getElementById('delete-id').value;
-        
-        fetch(`/api/knowledge/delete/${id}`, {
-            method: 'POST'
-        })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            showToast('Knowledge entry deleted successfully', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
-            loadKnowledgeEntries(currentPage);
-        } else {
-            showToast('Error deleting entry: ' + (result.message || result.error || 'Unknown error'), 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('Error deleting knowledge entry', 'error');
-    });
-}
-
-// Show toast notification
-function showToast(message, type = 'info') {
-    const toastContainer = document.createElement('div');
-    toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-    toastContainer.innerHTML = `
-        <div class="toast show" role="alert">
-            <div class="toast-header">
-                <strong class="me-auto">${type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Info'}</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-            </div>
-            <div class="toast-body">
-                ${message}
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="confirm-import">Import</button>
+                </div>
             </div>
         </div>
-    `;
-    document.body.appendChild(toastContainer);
-    
-    setTimeout(() => {
-        document.body.removeChild(toastContainer);
-    }, 3000);
-}
+    </div>
 
-// Create knowledge entry modal
-    function openCreateModal() {
-        document.getElementById('edit-title').value = '';
-        document.getElementById('edit-category').value = '';
-        document.getElementById('edit-model').value = '';
-        document.getElementById('edit-content').value = '';
-        document.getElementById('edit-id').value = '';
-        document.getElementById('edit-modal-title').textContent = 'Create Knowledge Entry';
-        bootstrap.Modal.getInstance(document.getElementById('editModal')).show();
-    }
-
-    // Trigger file import
-    function triggerFileImport() {
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = '.json';
-        fileInput.style.display = 'none';
-        fileInput.onchange = function(e) {
-            if (e.target.files.length > 0) {
-                importKnowledgeFile(e.target.files[0]);
-            }
-        };
-        document.body.appendChild(fileInput);
-        fileInput.click();
-        setTimeout(() => {
-            document.body.removeChild(fileInput);
-        }, 100);
-    }
-
-    // Import knowledge file
-    function importKnowledgeFile(file) {
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        fetch('/api/knowledge/import', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (result.status === 'success') {
-                showToast('Knowledge imported successfully', 'success');
-                loadKnowledgeEntries(currentPage);
-            } else {
-                showToast('Error importing knowledge: ' + (result.error || 'Unknown error'), 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showToast('Error importing knowledge', 'error');
-        });
-    }
-
-    // Backup knowledge
-    function backupKnowledge() {
-        fetch('/api/knowledge/backup', {
-            method: 'POST'
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (result.status === 'success') {
-                showToast('Knowledge backup created successfully: ' + result.backup_file, 'success');
-            } else {
-                showToast('Error creating backup: ' + (result.error || 'Unknown error'), 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showToast('Error creating backup', 'error');
-        });
-    }
-
-    // Clean knowledge database
-    function cleanKnowledgeDatabase() {
-        if (confirm('Are you sure you want to clean the knowledge database? This may remove redundant data.')) {
-            fetch('/api/knowledge/clean', {
-                method: 'POST'
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.status === 'success') {
-                    showToast('Knowledge database cleaned successfully', 'success');
-                    loadKnowledgeEntries(currentPage);
-                } else {
-                    showToast('Error cleaning database: ' + (result.error || 'Unknown error'), 'error');
+    <script>
+        // Initialize page on load
+        $(document).ready(function() {
+            // Load knowledge base stats
+            loadKnowledgeStats();
+            
+            // Bind search button click event
+            $('#search-btn').click(function() {
+                searchKnowledge();
+            });
+            
+            // Bind search input enter key
+            $('#knowledge-search').keypress(function(e) {
+                if (e.which === 13) {
+                    searchKnowledge();
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('Error cleaning database', 'error');
+            });
+            
+            // Bind import button click event
+            $('#confirm-import').click(function() {
+                importKnowledgeData();
+            });
+        });
+
+        // Load knowledge base statistics
+        function loadKnowledgeStats() {
+            $.ajax({
+                url: '/api/knowledge/stats',
+                type: 'GET',
+                success: function(response) {
+                    if (response.status === 'success') {
+                        const data = response.data;
+                        $('#knowledge-count').text(data.knowledgeCount);
+                        $('#category-count').text(data.categoryCount);
+                        $('#session-count').text(data.sessionCount);
+                        $('#last-update').text(data.lastUpdate);
+                    }
+                },
+                error: function() {
+                    console.error('Failed to load knowledge stats');
+                }
             });
         }
-    }
 
-    // Optimize database
-    function optimizeDatabase() {
-        fetch('/api/knowledge/optimize', {
-            method: 'POST'
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (result.status === 'success') {
-                showToast('Knowledge database optimized successfully', 'success');
-            } else {
-                showToast('Error optimizing database: ' + (result.error || 'Unknown error'), 'error');
+        // Search knowledge
+        function searchKnowledge() {
+            const query = $('#knowledge-search').val();
+            if (query.trim() === '') {
+                loadRecentEntries();
+                return;
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showToast('Error optimizing database', 'error');
-        });
-    }
-
-// Self-learning functionality
-let selfLearningActive = false;
-let currentLearningModel = 'all';
-let learningProgressInterval = null;
-
-// Toggle self-learning
-function toggleSelfLearning() {
-    const btn = document.getElementById('learning-control-btn');
-    const statusEl = document.getElementById('self-learning-status');
-    const model = document.getElementById('model-selector').value;
-    
-    if (selfLearningActive && model === currentLearningModel) {
-        // Stop self-learning
-        stopSelfLearning(model);
-    } else {
-        // Start self-learning
-        startSelfLearning(model);
-    }
-}
-
-// Start self-learning
-function startSelfLearning(model) {
-    const btn = document.getElementById('learning-control-btn');
-    const statusEl = document.getElementById('self-learning-status');
-    
-    showToast(`Starting self-learning for ${model === 'all' ? 'all models' : getModelName(model)}`, 'info');
-    
-    // Update UI immediately
-    btn.innerHTML = '<i class="bi bi-pause-circle"></i> Stop Self-Learning';
-    btn.className = 'btn btn-danger w-100';
-    statusEl.innerHTML = `Self-learning is active for ${model === 'all' ? 'all models' : getModelName(model)}`;
-    statusEl.className = 'text-success text-sm';
-    
-    // API call to start self-learning
-    fetch('/api/knowledge/self_learning/start', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ model: model })
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.status === 'success') {
-            selfLearningActive = true;
-            currentLearningModel = model;
-            showToast(`Self-learning started successfully for ${model === 'all' ? 'all models' : getModelName(model)}`, 'success');
             
-            // Start polling for progress updates
-            startProgressPolling();
-        } else {
-            // Revert UI changes if API call fails
-            btn.innerHTML = '<i class="bi bi-play-circle"></i> Start Self-Learning';
-            btn.className = 'btn btn-dark w-100';
-            statusEl.innerHTML = 'Self-learning is inactive';
-            statusEl.className = 'text-muted text-sm';
-            showToast('Error starting self-learning: ' + (result.error || 'Unknown error'), 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        // Revert UI changes if API call fails
-        btn.innerHTML = '<i class="bi bi-play-circle"></i> Start Self-Learning';
-        btn.className = 'btn btn-dark w-100';
-        statusEl.innerHTML = 'Self-learning is inactive';
-        statusEl.className = 'text-muted text-sm';
-        showToast('Error starting self-learning', 'error');
-    });
-}
-
-// Stop self-learning
-function stopSelfLearning(model) {
-    const btn = document.getElementById('learning-control-btn');
-    const statusEl = document.getElementById('self-learning-status');
-    
-    showToast(`Stopping self-learning for ${model === 'all' ? 'all models' : getModelName(model)}`, 'info');
-    
-    // Stop progress polling
-    stopProgressPolling();
-    
-    // Clear progress bar
-    clearProgressDisplay();
-    
-    // API call to stop self-learning
-    fetch('/api/knowledge/self_learning/stop', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ model: model })
-    })
-    .then(response => response.json())
-    .then(result => {
-        // Update UI regardless of API response (best effort)
-        btn.innerHTML = '<i class="bi bi-play-circle"></i> Start Self-Learning';
-        btn.className = 'btn btn-dark w-100';
-        statusEl.innerHTML = 'Self-learning is inactive';
-        statusEl.className = 'text-muted text-sm';
-        
-        if (result.status === 'success') {
-            selfLearningActive = false;
-            showToast(`Self-learning stopped successfully for ${model === 'all' ? 'all models' : getModelName(model)}`, 'success');
-        } else {
-            showToast('Error stopping self-learning: ' + (result.error || 'Unknown error'), 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        // Update UI regardless of API response (best effort)
-        btn.innerHTML = '<i class="bi bi-play-circle"></i> Start Self-Learning';
-        btn.className = 'btn btn-dark w-100';
-        statusEl.innerHTML = 'Self-learning is inactive';
-        statusEl.className = 'text-muted text-sm';
-        showToast('Error stopping self-learning', 'error');
-    });
-}
-
-// Get model name by code
-function getModelName(code) {
-    const modelNames = {
-        'A': 'Model A - Management',
-        'B': 'Model B - Language',
-        'C': 'Model C - Audio',
-        'D': 'Model D - Image',
-        'E': 'Model E - Video',
-        'F': 'Model F - Spatial',
-        'G': 'Model G - Sensor',
-        'H': 'Model H - Computer',
-        'I': 'Model I - Motion',
-        'J': 'Model J - Knowledge',
-        'K': 'Model K - Programming'
-    };
-    return modelNames[code] || code;
-}
-
-// Check self-learning status on page load
-function checkSelfLearningStatus() {
-    fetch('/api/knowledge/self_learning/status', {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.data && result.data.active) {
-            selfLearningActive = true;
-            currentLearningModel = result.data.model || 'all';
-            
-            const btn = document.getElementById('learning-control-btn');
-            const statusEl = document.getElementById('self-learning-status');
-            const modelSelector = document.getElementById('model-selector');
-            
-            btn.innerHTML = '<i class="bi bi-pause-circle"></i> Stop Self-Learning';
-            btn.className = 'btn btn-danger w-100';
-            statusEl.innerHTML = `Self-learning is active for ${currentLearningModel === 'all' ? 'all models' : getModelName(currentLearningModel)}`;
-            statusEl.className = 'text-success text-sm';
-            modelSelector.value = currentLearningModel;
-            
-            // Start polling for progress updates
-            startProgressPolling();
-        }
-    })
-    .catch(error => {
-        console.error('Error checking self-learning status:', error);
-        // Continue with default inactive state
-    });
-}
-
-// Start polling for progress updates
-function startProgressPolling() {
-    // Clear existing interval if any
-    stopProgressPolling();
-    
-    // Create interval to poll every 2 seconds
-    learningProgressInterval = setInterval(() => {
-        fetch('/api/knowledge/self_learning/progress', {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (result.status === 'success' && result.data) {
-                updateProgressDisplay(result.data);
-                
-                // Check if learning has completed
-                if (result.data.status === 'completed') {
-                    showToast('Self-learning process has completed successfully', 'success');
-                    stopProgressPolling();
-                    
-                    // Update UI
-                    const btn = document.getElementById('learning-control-btn');
-                    const statusEl = document.getElementById('self-learning-status');
-                    
-                    btn.innerHTML = '<i class="bi bi-play-circle"></i> Start Self-Learning';
-                    btn.className = 'btn btn-dark w-100';
-                    statusEl.innerHTML = 'Self-learning is inactive';
-                    statusEl.className = 'text-muted text-sm';
-                    selfLearningActive = false;
+            $.ajax({
+                url: '/api/knowledge/search',
+                type: 'GET',
+                data: { query: query },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        updateSearchResults(response.data);
+                    }
+                },
+                error: function() {
+                    console.error('Failed to search knowledge');
                 }
-                
-                // Check if there was an error
-                if (result.data.status === 'error') {
-                    showToast('Self-learning process encountered an error', 'error');
-                    stopProgressPolling();
+            });
+        }
+
+        // Load recent entries
+        function loadRecentEntries() {
+            $.ajax({
+                url: '/api/knowledge/recent',
+                type: 'GET',
+                success: function(response) {
+                    if (response.status === 'success') {
+                        updateSearchResults(response.data);
+                    }
+                },
+                error: function() {
+                    console.error('Failed to load recent entries');
                 }
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching self-learning progress:', error);
-            // Continue polling despite errors
-        });
-    }, 2000);
-}
-
-// Stop progress polling
-function stopProgressPolling() {
-    if (learningProgressInterval) {
-        clearInterval(learningProgressInterval);
-        learningProgressInterval = null;
-    }
-}
-
-// Update progress display
-function updateProgressDisplay(data) {
-    // Create progress container if it doesn't exist
-    let progressContainer = document.getElementById('learning-progress-container');
-    if (!progressContainer) {
-        const cardBody = document.querySelector('.card-body');
-        
-        // Create progress container
-        progressContainer = document.createElement('div');
-        progressContainer.id = 'learning-progress-container';
-        progressContainer.className = 'mt-4';
-        
-        // Add progress bar
-        progressContainer.innerHTML = `
-            <div class="mb-2">
-                <div class="d-flex justify-content-between">
-                    <span class="text-sm font-medium text-gray-700">Learning Progress</span>
-                    <span id="progress-percentage" class="text-sm font-medium text-gray-700">0%</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                    <div id="progress-bar" class="bg-success h-2 rounded-full" style="width: 0%"></div>
-                </div>
-            </div>
-            <div class="mt-3">
-                <span class="text-sm font-medium text-gray-700">Current Status: <span id="progress-status" class="text-gray-900"></span></span>
-            </div>
-            <div class="mt-3">
-                <span class="text-sm font-medium text-gray-700">Duration: <span id="progress-duration" class="text-gray-900">00:00:00</span></span>
-            </div>
-        `;
-        
-        // Insert after the learning control section
-        const learningControlSection = document.getElementById('learning-control-section');
-        if (learningControlSection) {
-            cardBody.insertBefore(progressContainer, learningControlSection.nextSibling);
-        } else {
-            cardBody.appendChild(progressContainer);
+            });
         }
-    }
-    
-    // Update progress bar
-    const progressBar = document.getElementById('progress-bar');
-    const progressPercentage = document.getElementById('progress-percentage');
-    const progressStatus = document.getElementById('progress-status');
-    const progressDuration = document.getElementById('progress-duration');
-    
-    if (progressBar && progressPercentage) {
-        const progress = Math.min(Math.max(data.progress || 0, 0), 100);
-        progressBar.style.width = `${progress}%`;
-        progressPercentage.textContent = `${progress}%`;
-    }
-    
-    if (progressStatus) {
-        progressStatus.textContent = data.status || 'Unknown';
-        
-        // Update status color based on status
-        switch (data.status) {
-            case 'running':
-                progressStatus.className = 'text-success font-medium';
-                break;
-            case 'stopping':
-                progressStatus.className = 'text-warning font-medium';
-                break;
-            case 'completed':
-                progressStatus.className = 'text-primary font-medium';
-                break;
-            case 'error':
-                progressStatus.className = 'text-danger font-medium';
-                break;
-            default:
-                progressStatus.className = 'text-gray-900';
-        }
-    }
-    
-    if (progressDuration && data.duration) {
-        progressDuration.textContent = data.duration || '00:00:00';
-    }
-}
 
-// Clear progress display
-function clearProgressDisplay() {
-    const progressContainer = document.getElementById('learning-progress-container');
-    if (progressContainer) {
-        progressContainer.remove();
-    }
-}
-
-// Event listeners
-document.addEventListener('DOMContentLoaded', function() {
-    loadKnowledgeEntries();
-    checkSelfLearningStatus();
-    
-    // Search and filter listeners
-    const searchInput = document.getElementById('search-input');
-    const categoryFilter = document.getElementById('category-filter');
-    const modelFilter = document.getElementById('model-filter');
-    const saveEditBtn = document.getElementById('save-edit');
-    const confirmDeleteBtn = document.getElementById('confirm-delete');
-    const modelSelector = document.getElementById('model-selector');
-    
-    if (searchInput) {
-        searchInput.addEventListener('input', () => loadKnowledgeEntries(1));
-    }
-    
-    if (categoryFilter) {
-        categoryFilter.addEventListener('change', () => loadKnowledgeEntries(1));
-    }
-    
-    if (modelFilter) {
-        modelFilter.addEventListener('change', () => loadKnowledgeEntries(1));
-    }
-    
-    // Modal listeners
-    if (saveEditBtn) {
-        saveEditBtn.addEventListener('click', saveEdit);
-    }
-    
-    if (confirmDeleteBtn) {
-        confirmDeleteBtn.addEventListener('click', confirmDelete);
-    }
-    
-    // Disable model selector when self-learning is active
-    if (modelSelector) {
-        modelSelector.addEventListener('change', function() {
-            if (selfLearningActive) {
-                this.value = currentLearningModel;
-                showToast('Cannot change model while self-learning is active. Stop it first.', 'error');
+        // Update search results
+        function updateSearchResults(results) {
+            const tableBody = $('#recent-entries');
+            tableBody.empty();
+            
+            if (results.length === 0) {
+                tableBody.append(`
+                    <tr>
+                        <td colspan="4" class="text-center">No results found</td>
+                    </tr>
+                `);
+                return;
             }
-        });
-    }
-});
-</script>
-{% endblock %}
+            
+            results.forEach(entry => {
+                tableBody.append(`
+                    <tr>
+                        <td>${entry.title}</td>
+                        <td>${entry.category}</td>
+                        <td>${entry.addedOn}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary"><i class="bi bi-eye"></i></button>
+                            <button class="btn btn-sm btn-secondary"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        // Import knowledge data
+        function importKnowledgeData() {
+            const fileInput = document.getElementById('file-upload');
+            const category = $('#import-category').val();
+            const model = $('#import-model').val();
+            
+            if (fileInput.files.length === 0) {
+                alert('Please select a file to import');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('category', category);
+            formData.append('model', model);
+            
+            // Show loading state
+            $('#confirm-import').prop('disabled', true);
+            $('#confirm-import').html('<i class="fas fa-spinner fa-spin me-1"></i> Importing...');
+            
+            $.ajax({
+                url: '/api/knowledge/import',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.status === 'success') {
+                        alert('Import successful');
+                        $('#importModal').modal('hide');
+                        loadKnowledgeStats();
+                        loadRecentEntries();
+                    } else {
+                        alert('Import failed: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Failed to connect to import API');
+                },
+                complete: function() {
+                    // Reset button state
+                    $('#confirm-import').prop('disabled', false);
+                    $('#confirm-import').html('Import');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

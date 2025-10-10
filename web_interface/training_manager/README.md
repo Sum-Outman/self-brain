@@ -52,7 +52,7 @@ The Training Manager provides a RESTful API server that can be started with the 
 python -m web_interface.training_manager.training_api
 ```
 
-The server will start on `http://localhost:5001` by default.
+The server will start on `http://localhost:5000` by default.
 
 ### Using the ModelTrainer Directly
 

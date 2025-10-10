@@ -22,7 +22,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 
 # Default settings
 DEFAULT_HOST = '0.0.0.0'
-DEFAULT_PORT = 5001
+DEFAULT_PORT = 5000
 DEFAULT_DEBUG = False
 
 class TrainingAPIServer:
@@ -145,10 +145,6 @@ def main():
     parser.add_argument('--host', type=str, default=DEFAULT_HOST, help='Host to bind the server to (default: 0.0.0.0)')
     parser.add_argument('--port', type=int, default=DEFAULT_PORT, help='Port to run the server on (default: 5001)')
     parser.add_argument('--debug', action='store_true', help='Enable debug mode')
-<<<<<<< HEAD
-    args = parser.parse_args()
-    
-=======
     parser.add_argument('--test', action='store_true', help='Run tests before starting the server')
     
     args = parser.parse_args()
@@ -185,15 +181,9 @@ def main():
         
         # Add a small delay after tests
         time.sleep(1)
-    
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     # Start the server
     server = TrainingAPIServer(host=args.host, port=args.port, debug=args.debug)
     server.start()
 
 if __name__ == '__main__':
-<<<<<<< HEAD
     main()
-=======
-    main()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13

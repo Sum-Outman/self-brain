@@ -16,7 +16,7 @@ def test_endpoint():
     time.sleep(3)
     try:
         print("Testing POST to /api/knowledge/optimize...")
-        response = requests.post('http://localhost:5000/api/knowledge/optimize', timeout=5)
+        response = requests.post('http://localhost:5009/api/knowledge/optimize', timeout=5)
         print(f"Status: {response.status_code}")
         if response.status_code == 200:
             print("Success!")
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     # Run Flask app with socketio
     socketio.run(app, 
                 host='0.0.0.0', 
-                port=5000, 
+                port=8080, 
                 debug=True, 
                 use_reloader=False,
                 allow_unsafe_werkzeug=True)

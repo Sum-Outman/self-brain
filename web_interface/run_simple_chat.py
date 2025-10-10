@@ -150,8 +150,8 @@ if __name__ == '__main__':
     print("3. ✅ Real-time message sending")
     print("4. ✅ Connection to the main AI system")
     print()
-    print("Access http://localhost:5001 to use the chat interface")
-    print("Note: Make sure the main AI system is running on localhost:5015")
+    print("Access http://localhost:8080 to use the main web interface")
+    print("Note: Make sure the main AI system is running on localhost:5000")
     
     # Run the app
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=True)

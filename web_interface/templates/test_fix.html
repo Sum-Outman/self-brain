@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self Brain - Minimal Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        pre {
+            background-color: #f1f3f4;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        #testButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #testButton:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Self Brain - Minimal JavaScript Test</h1>
+        <p>This is a minimal test page to verify JavaScript file loading and error handling.</p>
+        
+        <div id="logContainer">
+            <h2>Console Log:</h2>
+            <pre id="consoleLog"></pre>
+        </div>
+        
+        <button id="testButton">Test Error Handling</button>
+    </div>
+
+    <script>
+        // Override console.log to also display in the page
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+        
+        const consoleLogElement = document.getElementById('consoleLog');
+        
+        console.log = function() {
+            const message = Array.from(arguments).join(' ');
+            originalConsoleLog.apply(console, arguments);
+            consoleLogElement.textContent += 'LOG: ' + message + '\n';
+        };
+        
+        console.error = function() {
+            const message = Array.from(arguments).join(' ');
+            originalConsoleError.apply(console, arguments);
+            consoleLogElement.textContent += 'ERROR: ' + message + '\n';
+        };
+        
+        console.warn = function() {
+            const message = Array.from(arguments).join(' ');
+            originalConsoleWarn.apply(console, arguments);
+            consoleLogElement.textContent += 'WARN: ' + message + '\n';
+        };
+        
+        console.log('Test page loaded. Testing error handling...');
+        
+        // Test button click event
+        document.getElementById('testButton').addEventListener('click', function() {
+            console.log('Test button clicked. Testing try-catch block...');
+            try {
+                // Test accessing a non-existent element's property
+                const nonExistentElement = document.querySelector('#nonExistentElement');
+                const parent = nonExistentElement.parentElement;
+                console.log('This line should not be executed if error occurs.');
+            } catch (error) {
+                console.log('Error caught successfully: ', error.message);
+            }
+        });
+    </script>
+</body>
+</html>

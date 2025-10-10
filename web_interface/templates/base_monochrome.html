@@ -41,21 +41,13 @@
                     </li>
 
                     <li class="nav-item">
-<<<<<<< HEAD
-                        <a class="nav-link {% if request.endpoint == 'knowledge_page' %}active fw-bold{% endif %}" href="/knowledge">
-=======
                         <a class="nav-link {% if request.endpoint == 'knowledge_manage' %}active fw-bold{% endif %}" href="/knowledge_manage">
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                             <i class="bi bi-database"></i> Knowledge
                         </a>
                     </li>
 
                     <li class="nav-item">
-<<<<<<< HEAD
                         <a class="nav-link {% if request.endpoint == 'training_page' %}active fw-bold{% endif %}" href="/training">
-=======
-                        <a class="nav-link {% if request.endpoint == 'training' %}active fw-bold{% endif %}" href="/training">
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                             <i class="bi bi-cpu"></i> Training
                         </a>
                     </li>
@@ -70,10 +62,6 @@
                             <i class="bi bi-camera"></i> Camera Management
                         </a>
                     </li>
-<<<<<<< HEAD
-
-=======
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'device_communication_page' %}active fw-bold{% endif %}" href="/device_communication">
                             <i class="bi bi-gear"></i> Device Communication
@@ -85,11 +73,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-<<<<<<< HEAD
                         <a class="nav-link {% if request.endpoint == 'help_page' %}active fw-bold{% endif %}" href="/help">
-=======
-                        <a class="nav-link {% if request.endpoint == 'help' %}active fw-bold{% endif %}" href="/help">
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                             <i class="bi bi-question-circle"></i> Help
                         </a>
                     </li>
@@ -263,72 +247,21 @@
 
 
 
-<<<<<<< HEAD
-        // Initialize Socket.IO with reliable configuration
-        function initializeSocket() {
-            if (typeof io === 'undefined') {
-                console.error('Socket.IO client library not loaded');
-=======
         // Initialize Socket.IO with enhanced error handling
         function initializeSocket() {
             if (typeof io === 'undefined') {
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 updateSystemStatus(false);
                 return null;
             }
             
             try {
-<<<<<<< HEAD
-                // Create Socket.IO connection with minimal, reliable configuration
-                const socket = io(window.location.origin, {
-                    transports: ['websocket', 'polling'],
-                    timeout: 30000,
-=======
                 const socket = io(window.location.origin, {
                     transports: ['polling', 'websocket'],
                     timeout: 10000,
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                     reconnection: true,
                     reconnectionDelay: 1000,
                     reconnectionAttempts: 10,
                     reconnectionDelayMax: 5000,
-<<<<<<< HEAD
-                    forceNew: true,
-                    autoConnect: true
-                });
-                
-                // Basic connection events
-                socket.on('connect', () => {
-                    console.log('Socket.IO connected successfully');
-                    updateSystemStatus(true);
-                    showToast('Connected to Self Brain AGI System', 'success');
-                });
-                
-                socket.on('disconnect', (reason) => {
-                    console.log('Socket.IO disconnected:', reason);
-                    updateSystemStatus(false);
-                });
-                
-                socket.on('connect_error', (error) => {
-                    console.error('Socket.IO connection error:', error);
-                    updateSystemStatus(false);
-                    // Log detailed error information
-                    if (error && error.message) {
-                        console.error('Connection error details:', error.message);
-                        // Special handling for common errors
-                        if (error.message.includes('xhr poll error')) {
-                            console.warn('This might be due to CORS issues or server not responding');
-                        } else if (error.message.includes('timeout')) {
-                            console.warn('Connection timed out - server might be busy');
-                        }
-                    }
-                });
-                
-                socket.on('reconnect', (attemptNumber) => {
-                    console.log('Socket.IO reconnected after', attemptNumber, 'attempts');
-                    updateSystemStatus(true);
-                    showToast('Reconnected to system', 'success');
-=======
                     randomizationFactor: 0.5,
                     forceNew: false,
                     rememberUpgrade: true,
@@ -361,69 +294,21 @@
                 
                 socket.on('reconnect_failed', () => {
                     updateSystemStatus(false);
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 });
                 
                 return socket;
             } catch (error) {
-<<<<<<< HEAD
-                console.error('Failed to initialize Socket.IO:', error);
                 updateSystemStatus(false);
-                showToast('Failed to initialize system connection', 'error');
-=======
-                updateSystemStatus(false);
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 return null;
             }
         }
 
-<<<<<<< HEAD
-        // Force system status to online temporarily for testing
-        // This bypasses the Socket.IO connection check
-        function forceSystemStatusOnline() {
-            console.log('Forcing system status to online for testing purposes');
-            const statusElement = document.getElementById('systemStatus');
-            if (statusElement) {
-                statusElement.className = 'text-success fw-bold';
-                statusElement.innerHTML = '<i class="bi bi-circle-fill" style="font-size: 12px;"></i> System Online';
-            }
-        }
-
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Initializing Self Brain AGI System...');
-            
-            // First try to initialize Socket.IO normally
-            window.socket = initializeSocket();
-            
-            // Set initial status based on socket connection
-            const isSocketConnected = window.socket && window.socket.connected;
-            updateSystemStatus(isSocketConnected);
-            
-            // If not connected via Socket.IO, force status to online temporarily
-            if (!isSocketConnected) {
-                console.log('Socket.IO connection not established, forcing status to online temporarily');
-                forceSystemStatusOnline();
-            }
-            
-            // Add periodic status check every 5 seconds
-            setInterval(() => {
-                // First check if we have a socket and it's connected
-                if (window.socket && window.socket.connected) {
-                    updateSystemStatus(true);
-                } else {
-                    // If socket is not connected, force status to online for testing
-                    forceSystemStatusOnline();
-                }
-            }, 5000);
-=======
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             window.socket = initializeSocket();
             // Remove HTTP connection monitoring to reduce network noise
             // Status is now managed by Socket.IO events only
             updateSystemStatus(window.socket && window.socket.connected);
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         });
     </script>
     {% block extra_js %}{% endblock %}

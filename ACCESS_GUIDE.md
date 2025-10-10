@@ -4,7 +4,7 @@
 您的AGI大脑系统现已完全部署并运行，包含两个主要服务：
 
 ### 1. Web Interface (用户界面)
-- **URL**: http://localhost:5000
+- **URL**: http://localhost:8080
 - **功能**: 完整的Web界面，包含系统监控、数据上传、知识管理、训练控制
 - **状态**: ✅ 运行中
 
@@ -18,10 +18,10 @@
 ### 主要功能页面
 | 功能 | URL | 描述 |
 |------|-----|------|
-| **主界面** | http://localhost:5000 | 系统总览和控制面板 |
-| **数据上传** | http://localhost:5000/upload | 上传训练数据到所有AI模型 |
-| **知识管理** | http://localhost:5000/knowledge_manage | 管理知识库 |
-| **训练控制** | http://localhost:5000/training | 监控和控制训练过程 |
+| **主界面** | http://localhost:8080 | 系统总览和控制面板 |
+| **数据上传** | http://localhost:8080/upload | 上传训练数据到所有AI模型 |
+| **知识管理** | http://localhost:8080/knowledge_manage | 管理知识库 |
+| **训练控制** | http://localhost:8080/training | 监控和控制训练过程 |
 | **API控制台** | http://127.0.0.1:5015 | 管理模型API测试界面 |
 
 ### API端点 (A Management Model)
@@ -37,13 +37,13 @@
 ## 🎯 使用流程
 
 ### 1. 数据上传
-1. 访问 http://localhost:5000/upload
+1. 访问 http://localhost:8080/upload
 2. 选择模型类型 (支持11种AI模型)
 3. 上传训练文件
 4. 监控上传进度
 
 ### 2. 系统监控
-1. 访问 http://localhost:5000
+1. 访问 http://localhost:8080
 2. 查看实时系统状态
 3. 使用交互控制面板
 

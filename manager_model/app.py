@@ -131,36 +131,6 @@ class ModelManager:
             return True
         return False
 
-<<<<<<< HEAD
-# 导入AdvancedTrainingController
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from training_manager.advanced_train_control import (
-    get_training_controller as get_advanced_training_controller,
-    TrainingMode, 
-    start_training_api, 
-    stop_training_api
-)
-
-# 实例化管理器和控制器
-model_manager = ModelManager()
-# 使用高级训练控制器
-def get_training_controller():
-    """获取训练控制器实例"""
-    controller = get_advanced_training_controller()
-    
-    class TrainingControllerWrapper:
-        """包装高级训练控制器以保持API兼容性"""
-        def __init__(self, controller):
-            self.controller = controller
-            
-        def start_training(self, config):
-            # 转换配置为AdvancedTrainingController需要的格式
-            epochs = config.get('epochs', 10)
-            learning_rate = config.get('learning_rate', 0.001)
-            batch_size = config.get('batch_size', 32)
-            
-            training_config = {
-=======
 # 训练控制器类
 class TrainingController:
     def __init__(self):
@@ -195,40 +165,10 @@ class TrainingController:
             'steps_completed': 0,
             'total_steps': epochs,
             'config': {
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 'epochs': epochs,
                 'learning_rate': learning_rate,
                 'batch_size': batch_size
             }
-<<<<<<< HEAD
-            
-            # 调用API启动训练
-            result = start_training_api(["A_management"], "individual", training_config)
-            return result
-            
-        def stop_training(self):
-            # 调用API停止训练
-            result = stop_training_api()
-            return result
-            
-        def get_training_progress(self):
-            # 获取训练状态
-            status = self.controller.get_training_status()
-            return {
-                'status': status['current_status'],
-                'epoch': status.get('current_epoch', 0),
-                'loss': status.get('metrics', {}).get('loss', 0.0),
-                'accuracy': status.get('metrics', {}).get('accuracy', 0.0),
-                'steps_completed': status.get('current_epoch', 0),
-                'total_steps': status.get('total_epochs', 0),
-                'config': status.get('config', {})
-            }
-    
-    # 返回包装后的控制器实例
-    return TrainingControllerWrapper(controller)
-
-training_controller = get_training_controller()
-=======
         }
         
         # 启动训练线程
@@ -252,7 +192,7 @@ training_controller = get_training_controller()
             'message': 'Real training started',
             'training_id': f"train_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         }
-    
+        
     def stop_training(self):
         if self.training_progress['status'] == 'training':
             # 调用stop_training_process函数停止训练
@@ -261,7 +201,7 @@ training_controller = get_training_controller()
             logger.info("Training stopped by user")
             return {'status': 'success', 'message': 'Training stopped'}
         return {'status': 'error', 'message': 'No training in progress'}
-    
+        
     def get_training_progress(self):
         # 直接返回真实的训练进度（由train_management_model函数更新）
         return self.training_progress
@@ -269,7 +209,6 @@ training_controller = get_training_controller()
 # 实例化管理器和控制器
 model_manager = ModelManager()
 training_controller = TrainingController()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 emotion_engine = None  # 稍后初始化
 
 # 初始化管理模型
@@ -311,36 +250,34 @@ def initialize_management_model():
         return False
 
 # 检查模型健康状态
-def check_model_health():
-    global system_state
-    
-    try:
-        # 执行简单的推理测试
-        if management_model is not None:
-<<<<<<< HEAD
-            # 创建适合模型处理的请求数据，避免直接使用张量导致的参数错误
-            dummy_request = {
-                'request_id': 'health_check',
-                'message': 'health check',
-                'conversation_id': 'health_check',
-                'context': {},
-                'timestamp': datetime.now().isoformat()
-            }
-            with torch.no_grad():
-                # 使用process_local_request方法而不是直接调用forward，确保正确的参数传递
-                management_model.process_local_request(dummy_request)
-=======
-            # 使用更适合模型处理的测试输入
-            test_features = {"text": [0.1, 0.2, 0.3, 0.4], "length": 4}
-            with torch.no_grad():
-                management_model.forward(test_features)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
+        def check_model_health():
+            global system_state
             
-            # 更新健康状态
-            system_state['model_health']['status'] = 'active'
-            system_state['model_health']['last_check'] = datetime.now().isoformat()
-            return True
-        return False
+            try:
+                # 执行简单的推理测试
+                if management_model is not None:
+                    # 创建适合模型处理的请求数据，避免直接使用张量导致的参数错误
+                    dummy_request = {
+                        'request_id': 'health_check',
+                        'message': 'health check',
+                        'conversation_id': 'health_check',
+                        'context': {},
+                        'timestamp': datetime.now().isoformat()
+                    }
+                    with torch.no_grad():
+                        # 使用process_local_request方法而不是直接调用forward，确保正确的参数传递
+                        management_model.process_local_request(dummy_request)
+                    
+                # 更新健康状态
+                system_state['model_health']['status'] = 'active'
+                system_state['model_health']['last_check'] = datetime.now().isoformat()
+                return True
+            except Exception as e:
+                logger.error(f"模型健康检查失败: {e}")
+                system_state['model_health']['status'] = 'error'
+                system_state['model_health']['last_check'] = datetime.now().isoformat()
+                system_state['model_health']['error'] = str(e)
+                return False
     except Exception as e:
         logger.error(f"模型健康检查失败: {e}")
         system_state['model_health']['status'] = 'error'
@@ -1269,11 +1206,7 @@ def initialize_app():
 if __name__ == '__main__':
     initialize_app()
     
-<<<<<<< HEAD
-    port = int(os.environ.get('PORT', 5000))  # Default to 5000 for A Management Model
-=======
     port = int(os.environ.get('PORT', 5015))  # Changed from 5001 to 5015 according to PORT_ALLOCATION.md
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     host = os.environ.get('HOST', '0.0.0.0')
     debug = os.environ.get('DEBUG', 'false').lower() == 'true'
     

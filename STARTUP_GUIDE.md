@@ -7,8 +7,8 @@
 # 启动独立的A Management Model
 python a_manager_standalone.py
 
-# 访问地址: http://localhost:5014
-# 健康检查: http://localhost:5014/api/health
+# 访问地址: http://localhost:8080
+# 健康检查: http://localhost:5015/api/health
 ```
 
 ### 2. 启动Manager Model API
@@ -17,8 +17,7 @@ python a_manager_standalone.py
 cd manager_model
 python app.py
 
-# 访问地址: http://localhost:5015
-# 健康检查: http://localhost:5015/api/health
+
 ```
 
 ### 3. 一键启动所有服务
@@ -31,7 +30,7 @@ start_system_updated.bat
 
 | Service | Port | URL | Status |
 |---------|------|-----|--------|
-| **A Management Model** | 5001 | http://localhost:5001 | ✅ 主系统 |
+| **A Management Model** | 5000 | http://localhost:5000 | ✅ 主系统 |
 | **B Language Model** | 5002 | http://localhost:5002 | ✅ 语言处理 |
 | **C Audio Model** | 5003 | http://localhost:5003 | ✅ 音频处理 |
 | **D Image Model** | 5004 | http://localhost:5004 | ✅ 图像处理 |

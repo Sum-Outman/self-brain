@@ -530,4 +530,6 @@ def set_language():
     return jsonify({'error': '无效的语言代码。使用 zh, en, ja, de, ru', 'lang': 'en'}), 400
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5006, debug=True)
+    import os
+    port = int(os.environ.get('PORT', 5007))
+    app.run(host='0.0.0.0', port=port, debug=True)

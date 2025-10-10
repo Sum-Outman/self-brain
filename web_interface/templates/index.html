@@ -1,21 +1,62 @@
-<<<<<<< HEAD
-{% extends "base_monochrome.html" %}
-
-{% block title %}Self Brain - Advanced AGI System{% endblock %}
-
+{% extends 'base.html' %}
+{% block title %}Self Brain - Advanced AI Management System{% endblock %}
 {% block extra_css %}
 <style>
-    /* Custom styles for index page */
-    .model-status-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.5rem;
+    :root {
+        --primary-color: #333333;
+        --secondary-color: #555555;
+        --accent-color: #777777;
+        --light-gray: #f5f5f5;
+        --medium-gray: #e0e0e0;
+        --dark-gray: #333333;
+        --text-color: #333333;
     }
     
-    .camera-container {
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #FFFFFF;
+        color: var(--text-color);
+        line-height: 1.6;
+    }
+    
+    .btn {
+        border-radius: 6px;
         transition: all 0.3s ease;
     }
     
+    .btn-gray {
+        background-color: var(--medium-gray);
+        color: var(--dark-gray);
+        border: none;
+    }
+    
+    .btn-gray:hover {
+        background-color: var(--accent-color);
+        color: white;
+    }
+    
+    .card {
+        border: 1px solid var(--medium-gray);
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+        background-color: #FFFFFF;
+        border-bottom: 1px solid var(--medium-gray);
+    }
+    
+    textarea {
+        resize: none;
+    }
+    
+    /* Camera System Styles */
     .camera-status-indicator {
         display: inline-block;
         width: 10px;
@@ -23,1188 +64,376 @@
         border-radius: 50%;
     }
     
-    .status-active {
-        background-color: var(--success-color);
-    }
-    
     .status-inactive {
-        background-color: var(--secondary-color);
-    }
-    
-    .status-error {
-        background-color: var(--error-color);
+        background-color: #cccccc;
     }
     
     .status-connecting {
-        background-color: var(--warning-color);
+        background-color: #ffcc00;
     }
     
-    .chat-messages-container {
-        height: 400px;
+    .status-active {
+        background-color: #4caf50;
+    }
+    
+    .camera-container {
+        margin-bottom: 1rem;
+    }
+    
+    /* Progress Bar Styles */
+    .progress-bar {
+        transition: width 0.5s ease;
+    }
+    
+    /* Message Styles */
+    .message-container {
+        max-height: 400px;
         overflow-y: auto;
     }
     
-    .progress-bar-custom {
-        height: 0.625rem;
-        background-color: var(--gray-100);
-        border-radius: 0.25rem;
-        overflow: hidden;
+    /* Animations */
+    @keyframes bounce {
+        0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+        40% { transform: scale(1.2); opacity: 1; }
     }
     
-    .progress-bar-fill {
-        height: 100%;
-        background-color: var(--primary-color);
-        border-radius: 0.25rem;
-        transition: width 0.5s ease-out;
+    .animate-bounce {
+        animation: bounce 1.4s infinite ease-in-out both;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-
-            
-            <!-- AI Chat Interface -->
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">AI Assistant</h5>
-                    <div class="btn-group">
-                        <button class="btn btn-sm btn-outline-secondary" onclick="clearChat()">
-                            <i class="bi bi-eraser"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="exportChat()">
-                            <i class="bi bi-download"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Chat Messages Container -->
-                <div id="messagesContainer" class="chat-messages-container p-3">
-                    <div class="text-center text-muted py-5">
-                        <i class="bi bi-chat-dots display-6 mb-3"></i>
-                        <p class="small">Start a conversation with the AI system</p>
-                    </div>
-                </div>
-                
-                <!-- Quick Actions -->
-                <div class="card-footer">
-                    <div class="d-flex flex-wrap gap-2 mb-3">
-                        <button class="btn btn-sm btn-outline-secondary" onclick="quickAction('summarize')">
-                            <i class="bi bi-list-ul me-1"></i>Summarize
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="quickAction('translate')">
-                            <i class="bi bi-translate me-1"></i>Translate
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="quickAction('code')">
-                            <i class="bi bi-code me-1"></i>Generate Code
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="quickAction('analyze')">
-                            <i class="bi bi-bar-chart me-1"></i>Analyze
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="quickAction('brainstorm')">
-                            <i class="bi bi-lightbulb me-1"></i>Brainstorm
-                        </button>
-                    </div>
-                    
-                    <!-- Message Input Area -->
-                    <div class="input-group">
-                        <textarea id="messageInput" class="form-control" rows="1" placeholder="Type your message here..." onkeydown="handleKeyDown(event)" oninput="adjustTextareaHeight(this)"></textarea>
-                        <div class="input-group-append">
-                            <button class="btn btn-dark" type="button" onclick="sendMessage()">
-                                <i class="bi bi-send"></i>
-=======
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Self Brain - Advanced AGI System</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/fontawesome.min.css') }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.min.css">
-    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
-    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/chart.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/vue.global.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/peerjs.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/camera_control.js') }}"></script>
-    
-    <!-- Custom CSS Variables and Styles -->
-    <style>
-        /* CSS Variables for Clean Monochrome Style */
-        :root {
-            --primary-color: #222222;
-            --secondary-color: #666666;
-            --bg-color: #FFFFFF;
-            --card-bg-color: #FFFFFF;
-            --text-color: #333333;
-            --border-color: #e0e0e0;
-            --hover-color: #f5f5f5;
-            --success-color: #2d3d30;
-            --warning-color: #8a754d;
-            --error-color: #6d3a3a;
-        }
-        
-        /* Status indicator styles */
-        .camera-status-indicator {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-        
-        .status-active {
-            background-color: var(--success-color);
-        }
-        
-        .status-inactive {
-            background-color: var(--secondary-color);
-        }
-        
-        .status-error {
-            background-color: var(--error-color);
-        }
-        
-        .status-connecting {
-            background-color: var(--warning-color);
-        }
-        
-        /* Button styles */
-        .btn-gray {
-            background-color: #f0f0f0;
-            color: var(--secondary-color);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            transition: all 0.2s ease;
-            font-size: 0.85rem;
-            padding: 0.5rem 0.75rem;
-            font-weight: 500;
-        }
-        
-        .btn-gray:hover {
-            background-color: var(--hover-color);
-            color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-color) !important;
-            color: white !important;
-            border: none !important;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-            font-size: 0.85rem;
-            padding: 0.5rem 0.75rem;
-            font-weight: 500;
-        }
-        
-        .btn-primary:hover {
-            background-color: #1a1a1a !important;
-        }
-        
-        /* Reset Styles */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            background-color: #fafafa;
-            color: var(--text-color);
-            line-height: 1.6;
-            font-size: 14px;
-        }
-        
-        /* Navigation Bar */
-        .navbar {
-            background-color: var(--bg-color) !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.25rem;
-            color: var(--primary-color) !important;
-            letter-spacing: -0.5px;
-        }
-        
-        .nav-link {
-            color: var(--secondary-color) !important;
-            font-size: 0.85rem;
-            padding: 0.65rem 0.75rem !important;
-            margin-right: 0.3rem;
-            transition: all 0.2s ease;
-            border-radius: 6px;
-            font-weight: 500;
-        }
-        
-        .nav-link:hover,
-        .nav-link.active {
-            color: var(--primary-color) !important;
-            background-color: var(--hover-color);
-        }
-        
-        /* Theme Toggle Button */
-        #toggleTheme {
-            background: none;
-            border: none;
-            color: var(--secondary-color);
-            cursor: pointer;
-            font-size: 1.2rem;
-            padding: 0.5rem;
-            transition: color 0.3s;
-        }
-        
-        #toggleTheme:hover {
-            color: var(--primary-color);
-        }
-        
-        /* Main Content */
-        main {
-            padding-top: 2.5rem;
-            padding-bottom: 3rem;
-        }
-        
-        /* Cards */
-        .bg-white {
-            background-color: var(--card-bg-color) !important;
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-            transition: all 0.3s ease;
-        }
-        
-        .bg-white:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-            border-color: var(--primary-color);
-        }
-        
-        /* Section Headers */
-        h2 {
-            font-size: 1.15rem;
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border-color);
-            letter-spacing: -0.25px;
-        }
-        
-        h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--primary-color);
-            letter-spacing: -0.25px;
-        }
-        
-        h4 {
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: var(--primary-color);
-        }
-        
-        /* Camera Containers */
-        .camera-container {
-            transition: all 0.3s ease;
-        }
-        
-        /* Input Fields */
-        textarea, select, input {
-            font-size: 0.95rem;
-            border: 1px solid var(--border-color) !important;
-            border-radius: 6px !important;
-            background-color: var(--bg-color) !important;
-            color: var(--text-color) !important;
-            transition: all 0.2s ease;
-        }
-        
-        textarea:focus, select:focus, input:focus {
-            border-color: var(--primary-color) !important;
-            box-shadow: 0 0 0 2px rgba(34, 34, 34, 0.1) !important;
-            outline: none !important;
-        }
-        
-        /* Progress Bar */
-        .bg-primary {
-            background-color: var(--primary-color) !important;
-        }
-        
-        /* Grid Layout */
-        .grid {
-            display: grid;
-            gap: 1.5rem;
-        }
-        
-        /* Responsive Grid Adjustments */
-        @media (min-width: 1024px) {
-            .grid-cols-3 {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-        
-        /* Animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .animate-fadeIn {
-            animation: fadeIn 0.3s ease;
-        }
-        
-        /* Utility Classes */
-        .text-center {
-            text-align: center;
-        }
-        
-        .text-gray {
-            color: var(--secondary-color);
-        }
-        
-        .text-dark {
-            color: var(--primary-color);
-        }
-        
-        .text-success {
-            color: var(--success-color);
-        }
-        
-        .text-warning {
-            color: var(--warning-color);
-        }
-        
-        .text-danger {
-            color: var(--error-color);
-        }
-        
-        /* Footer */
-        footer {
-            background-color: var(--bg-color);
-            border-top: 1px solid var(--border-color);
-            padding: 1.5rem 0;
-            margin-top: 2rem;
-        }
-    </style>
-</head>
-<body class="bg-white">
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-light border-bottom">
-        <div class="container-fluid">
-            <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
-                <img src="{{ url_for('static', filename='images/self_brain.svg') }}" alt="Self Brain" style="height: 30px; width: 30px; margin-right: 8px;">
-                Self Brain AGI
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/">
-                            <i class="bi bi-house-door me-2"></i> Dashboard
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link" href="/knowledge_manage">
-                            <i class="bi bi-database me-2"></i> Knowledge
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link" href="/training">
-                            <i class="bi bi-cpu me-2"></i> Training
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link" href="/system_settings">
-                            <i class="bi bi-sliders me-2"></i> Settings
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/camera_management">
-                            <i class="bi bi-camera me-2"></i> Camera Management
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/device_communication">
-                            <i class="bi bi-gear me-2"></i> Device Communication
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/upload">
-                            <i class="bi bi-cloud-upload me-2"></i> Upload Data
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/help">
-                            <i class="bi bi-question-circle me-2"></i> Help
-                        </a>
-                    </li>
-                </ul>
-                
-                <div class="d-flex align-items-center">
-                    <span id="systemStatus" class="text-success font-medium">
-                        <i class="bi bi-circle-fill" style="font-size: 12px;"></i> System Online
-                    </span>
-                    <button id="toggleTheme" class="ml-4 text-gray hover:text-dark transition-colors p-2">
-                        <i class="fa fa-moon-o"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </nav>
-    
     <!-- Main Content -->
-    <main class="container">
+    <main class="container py-5">
         <div class="row">
             <!-- Left Column - System Overview -->
             <div class="col-12 col-md-4">
                 <!-- System Status Card -->
-                    <div class="bg-gray-50 rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 hover:shadow-md transition-all">
-                        <div class="p-4 border-b border-gray-200">
-                            <h2 class="text-base font-semibold text-gray-700">System Overview</h2>
+                <div class="bg-gray-50 rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 hover:shadow-md transition-all">
+                    <div class="p-4 border-b border-gray-200">
+                        <h2 class="text-base font-semibold text-gray-700">System Overview</h2>
+                    </div>
+                    
+                    <div class="p-4 space-y-3">
+                        <div class="flex items-center justify-between py-1 px-2 rounded-md hover:bg-gray-100 transition-colors">
+                            <span class="text-sm text-gray-600">System Status</span>
+                            <span class="text-sm font-medium text-success" id="systemStatusText">Operational</span>
                         </div>
-                        
-                        <div class="p-4 space-y-3">
-                            <div class="flex items-center justify-between py-1 px-2 rounded-md hover:bg-gray-100 transition-colors">
-                                <span class="text-sm text-gray-600">System Status</span>
-                                <span class="text-sm font-medium text-success" id="systemStatusText">Operational</span>
-                            </div>
-                            <div class="flex items-center justify-between py-1 px-2 rounded-md hover:bg-gray-100 transition-colors">
-                                <span class="text-sm text-gray-600">Hardware Status</span>
-                                <span class="text-sm font-medium text-success" id="hardwareStatus">Optimal</span>
-                            </div>
-                            <div class="flex items-center justify-between py-1 px-2 rounded-md hover:bg-gray-100 transition-colors">
-                                <span class="text-sm text-gray-600">Response Time</span>
-                                <span class="text-sm font-medium text-gray-800" id="responseTime">&lt; 200ms</span>
-                            </div>
-                            <div class="flex items-center justify-between py-1 px-2 rounded-md hover:bg-gray-100 transition-colors">
-                                <span class="text-sm text-gray-600">Models Online</span>
-                                <span class="text-sm font-medium text-gray-800" id="modelsOnline">0/11</span>
-                            </div>
+                        <div class="flex items-center justify-between py-1 px-2 rounded-md hover:bg-gray-100 transition-colors">
+                            <span class="text-sm text-gray-600">Hardware Status</span>
+                            <span class="text-sm font-medium text-success" id="hardwareStatus">Optimal</span>
+                        </div>
+                        <div class="flex items-center justify-between py-1 px-2 rounded-md hover:bg-gray-100 transition-colors">
+                            <span class="text-sm text-gray-600">Response Time</span>
+                            <span class="text-sm font-medium text-gray-800" id="responseTime">&lt; 200ms</span>
+                        </div>
+                        <div class="flex items-center justify-between py-1 px-2 rounded-md hover:bg-gray-100 transition-colors">
+                            <span class="text-sm text-gray-600">Models Online</span>
+                            <span class="text-sm font-medium text-gray-800" id="modelsOnline">0/11</span>
                         </div>
                     </div>
+                </div>
                 
                 <!-- AI Chat Interface -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray overflow-hidden">
-                        <div class="p-4 border-b border-gray flex justify-between items-center">
-                            <h2 class="text-lg font-bold text-dark">AI Assistant</h2>
-                            <div class="flex space-x-2">
-                                <button class="btn-gray rounded-lg p-2 hover:bg-gray-300 transition-colors" onclick="clearChat()">
-                                    <i class="fa fa-eraser"></i>
+                <div class="bg-white rounded-xl shadow-sm border border-gray overflow-hidden">
+                    <div class="p-4 border-b border-gray flex justify-between items-center">
+                        <h2 class="text-lg font-bold text-dark">AI Assistant</h2>
+                        <div class="flex space-x-2">
+                            <button class="btn-gray rounded-lg p-2 hover:bg-gray-300 transition-colors" onclick="clearChat()">
+                                <i class="fa fa-eraser"></i>
+                            </button>
+                            <button class="btn-gray rounded-lg p-2 hover:bg-gray-300 transition-colors" onclick="exportChat()">
+                                <i class="fa fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Chat Messages Container -->
+                    <div id="messagesContainer" class="p-4 h-[400px] overflow-y-auto">
+                        <div class="text-center text-gray py-12">
+                            <i class="fa fa-comments text-3xl mb-3 text-gray-400"></i>
+                            <p class="text-sm">Start a conversation with the AI system</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="p-3 border-t border-gray flex flex-wrap gap-2">
+                        <button class="px-3 py-1 text-xs bg-gray-light rounded-full text-gray hover:bg-gray-300 transition-colors" onclick="quickAction('summarize')">
+                            <i class="fa fa-list-ul mr-1"></i>Summarize
+                        </button>
+                        <button class="px-3 py-1 text-xs bg-gray-light rounded-full text-gray hover:bg-gray-300 transition-colors" onclick="quickAction('translate')">
+                            <i class="fa fa-language mr-1"></i>Translate
+                        </button>
+                        <button class="px-3 py-1 text-xs bg-gray-light rounded-full text-gray hover:bg-gray-300 transition-colors" onclick="quickAction('code')">
+                            <i class="fa fa-code mr-1"></i>Generate Code
+                        </button>
+                        <button class="px-3 py-1 text-xs bg-gray-light rounded-full text-gray hover:bg-gray-300 transition-colors" onclick="quickAction('analyze')">
+                            <i class="fa fa-bar-chart mr-1"></i>Analyze
+                        </button>
+                        <button class="px-3 py-1 text-xs bg-gray-light rounded-full text-gray hover:bg-gray-300 transition-colors" onclick="quickAction('brainstorm')">
+                            <i class="fa fa-lightbulb-o mr-1"></i>Brainstorm
+                        </button>
+                    </div>
+                    
+                    <!-- Message Input Area -->
+                    <div class="p-4 border-t border-gray">
+                        <div class="relative">
+                            <textarea id="messageInput" class="w-full p-3 border border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none" rows="1" placeholder="Type your message here..." onkeydown="handleKeyDown(event)" oninput="adjustTextareaHeight(this)"></textarea>
+                        
+                            <div class="absolute right-3 bottom-3 flex space-x-2">
+                                <button class="text-gray hover:text-primary transition-colors p-1" onclick="toggleVoice()">
+                                    <i class="fa fa-microphone"></i>
                                 </button>
-                                <button class="btn-gray rounded-lg p-2 hover:bg-gray-300 transition-colors" onclick="exportChat()">
-                                    <i class="fa fa-download"></i>
+                                <label class="text-gray hover:text-primary transition-colors cursor-pointer p-1">
+                                    <i class="fa fa-paperclip"></i>
+                                    <input type="file" class="hidden">
+                                </label>
+                                <button class="bg-gray rounded-lg p-2 hover:bg-gray-300 transition-colors" onclick="sendMessage()">
+                                    <i class="fa fa-paper-plane"></i>
                                 </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Chat Messages Container -->
-                        <div id="messagesContainer" class="p-4 h-[400px] overflow-y-auto">
-                            <div class="text-center text-gray py-12">
-                                <i class="fa fa-comments text-3xl mb-3 text-gray-400"></i>
-                                <p class="text-sm">Start a conversation with the AI system</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Quick Actions -->
-                        <div class="p-3 border-t border-gray flex flex-wrap gap-2">
-                            <button class="px-3 py-1 text-xs bg-gray-light rounded-full text-gray hover:bg-gray-300 transition-colors" onclick="quickAction('summarize')">
-                                <i class="fa fa-list-ul mr-1"></i>Summarize
-                            </button>
-                            <button class="px-3 py-1 text-xs bg-gray-light rounded-full text-gray hover:bg-gray-300 transition-colors" onclick="quickAction('translate')">
-                                <i class="fa fa-language mr-1"></i>Translate
-                            </button>
-                            <button class="px-3 py-1 text-xs bg-gray-light rounded-full text-gray hover:bg-gray-300 transition-colors" onclick="quickAction('code')">
-                                <i class="fa fa-code mr-1"></i>Generate Code
-                            </button>
-                            <button class="px-3 py-1 text-xs bg-gray-light rounded-full text-gray hover:bg-gray-300 transition-colors" onclick="quickAction('analyze')">
-                                <i class="fa fa-bar-chart mr-1"></i>Analyze
-                            </button>
-                            <button class="px-3 py-1 text-xs bg-gray-light rounded-full text-gray hover:bg-gray-300 transition-colors" onclick="quickAction('brainstorm')">
-                                <i class="fa fa-lightbulb-o mr-1"></i>Brainstorm
-                            </button>
-                        </div>
-                        
-                        <!-- Message Input Area -->
-                        <div class="p-4 border-t border-gray">
-                            <div class="relative">
-                                <textarea id="messageInput" class="w-full p-3 border border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none" rows="1" placeholder="Type your message here..." onkeydown="handleKeyDown(event)" oninput="adjustTextareaHeight(this)"></textarea>
-                            
-                                <div class="absolute right-3 bottom-3 flex space-x-2">
-                                    <button class="text-gray hover:text-primary transition-colors p-1" onclick="toggleVoice()">
-                                        <i class="fa fa-microphone"></i>
-                                    </button>
-                                    <label class="text-gray hover:text-primary transition-colors cursor-pointer p-1">
-                                        <i class="fa fa-paperclip"></i>
-                                        <input type="file" multiple style="display: none;" onchange="handleFileUpload(this.files)">
-                                    </label>
-                                    <button class="bg-primary text-white px-4 py-1.5 rounded-lg hover:bg-primary/90 transition-colors send-btn" onclick="sendMessage()">
-                                        <i class="fa fa-paper-plane"></i>
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Middle Column - Main Content -->
+
+            <!-- Middle Column - Model Management -->
             <div class="col-12 col-md-4">
-                <!-- Training Control -->
+                <!-- Model Management Card -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray overflow-hidden mb-6">
                     <div class="p-4 border-b border-gray">
-                        <h2 class="text-lg font-bold text-dark">Training Control</h2>
+                        <h2 class="text-lg font-bold text-dark">Model Management</h2>
                     </div>
                     
                     <div class="p-4">
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            <button class="btn-gray rounded-lg py-2.5 px-2 hover:bg-gray-300 transition-all text-center text-sm" onclick="startTraining()">
-                                <i class="fa fa-play-circle mr-1 text-primary"></i>Start Training
-                            </button>
-                            <button class="btn-gray rounded-lg py-2.5 px-2 hover:bg-gray-300 transition-all text-center text-sm" onclick="stopTraining()">
-                                <i class="fa fa-stop-circle mr-1 text-danger"></i>Stop Training
-                            </button>
-                            <button class="btn-gray rounded-lg py-2.5 px-2 hover:bg-gray-300 transition-all text-center text-sm" onclick="window.location.href='/knowledge_import'">
-                                <i class="fa fa-book mr-1 text-success"></i>Import Knowledge
-                            </button>
-                            <button class="btn-gray rounded-lg py-2.5 px-2 hover:bg-gray-300 transition-all text-center text-sm" onclick="window.location.href='/upload'">
-                                <i class="fa fa-upload mr-1 text-primary"></i>Upload Data
-                            </button>
-                            <button class="btn-gray rounded-lg py-2.5 px-2 hover:bg-gray-300 transition-all text-center text-sm" onclick="exportTrainingData()">
-                                <i class="fa fa-download mr-1 text-success"></i>Export Data
-                            </button>
-                            <button class="btn-gray rounded-lg py-2.5 px-2 hover:bg-gray-300 transition-all text-center text-sm" onclick="runSystemCheck()">
-                                <i class="fa fa-stethoscope mr-1 text-warning"></i>System Check
-                            </button>
+                        <div id="modelStatusGrid" class="grid grid-cols-1 gap-3">
+                            <!-- Model status items will be inserted here by JavaScript -->
+                            <div class="text-center py-8 text-gray">
+                                <i class="fa fa-refresh fa-spin text-2xl mb-3 text-gray-400"></i>
+                                <p class="text-sm">Loading model status...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Right Column - Camera Management -->
+            <div class="col-12 col-md-4">
                 
-                <!-- Model Architecture -->
+                <!-- Camera Management -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray overflow-hidden">
-                    <div class="p-4 border-b border-gray">
-                        <h2 class="text-lg font-bold text-dark">AI System Architecture</h2>
+                    <div class="p-4 border-b border-gray flex justify-between items-center">
+                        <h2 class="text-lg font-bold text-dark">Camera System</h2>
+                        <button class="btn-gray rounded-lg px-3 py-1 text-sm hover:bg-gray-300 transition-colors" onclick="refreshCameraList()">
+                            <i class="fa fa-refresh mr-1"></i> Refresh
+                        </button>
                     </div>
                     
-                    <div class="p-4">
-                        <div class="flex justify-center mb-4">
-                            <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white">
-                                <span class="text-xl font-bold">A</span>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-2" id="modelStatusGrid">
-                            <!-- Model status will be populated dynamically -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Right Column - System Status and Controls -->
-            <div class="col-12 col-md-4 space-y-6">
-                <!-- Training Progress -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray overflow-hidden">
-                    <div class="p-4 border-b border-gray">
-                        <h2 class="text-lg font-bold text-dark">Training Progress</h2>
-                    </div>
-                    
-                    <div class="p-4">
-                        <div class="mb-4">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-xs text-gray font-medium">Training Progress</span>
-                                <span class="text-xs font-bold text-primary" id="trainingProgressText">0%</span>
-                            </div>
-                            <div class="h-2.5 bg-gray-light rounded-full overflow-hidden">
-                                <div class="h-full bg-primary rounded-full transition-all duration-500 ease-out" id="trainingProgressBar" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-3 gap-3">
-                            <div class="p-2.5 bg-gray-light rounded-lg text-center">
-                                <p class="text-xs text-gray mb-1.5">CPU</p>
-                                <div class="flex justify-center items-baseline">
-                                    <p class="text-lg font-bold text-dark" id="cpuUsage">0%</p>
-                                </div>
-                            </div>
-                            <div class="p-2.5 bg-gray-light rounded-lg text-center">
-                                <p class="text-xs text-gray mb-1.5">Memory</p>
-                                <div class="flex justify-center items-baseline">
-                                    <p class="text-lg font-bold text-dark" id="memoryUsage">0%</p>
-                                </div>
-                            </div>
-                            <div class="p-2.5 bg-gray-light rounded-lg text-center">
-                                <p class="text-xs text-gray mb-1.5">GPU</p>
-                                <div class="flex justify-center items-baseline">
-                                    <p class="text-lg font-bold text-dark" id="gpuUsage">0%</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Enhanced Multi-Camera System with Stereo Vision -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray overflow-hidden">
-                    <div class="p-4 border-b border-gray">
-                        <h2 class="text-lg font-bold text-dark">Multi-Camera System</h2>
-                        <p class="text-xs text-gray mt-1">Real-time camera management with stereo vision capabilities</p>
-                    </div>
-                    
-                    <div class="p-4 space-y-4">
-                        <!-- Camera Selection -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div>
-                                <label for="camera1Selector" class="text-xs text-gray-600 block mb-1 font-medium">Left Camera</label>
-                                <select id="camera1Selector" class="text-xs w-full bg-gray-50 border border-gray-200 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400 transition-colors">
-                                    <option value="default">Select Camera</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="camera2Selector" class="text-xs text-gray-600 block mb-1 font-medium">Right Camera</label>
-                                <select id="camera2Selector" class="text-xs w-full bg-gray-50 border border-gray-200 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400 transition-colors">
-                                    <option value="default">Select Camera</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="camera3Selector" class="text-xs text-gray-600 block mb-1 font-medium">Top Camera</label>
-                                <select id="camera3Selector" class="text-xs w-full bg-gray-50 border border-gray-200 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400 transition-colors">
-                                    <option value="default">Select Camera (Optional)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="cameraResolution" class="text-xs text-gray-600 block mb-1 font-medium">Resolution</label>
-                                <select id="cameraResolution" class="text-xs w-full bg-gray-50 border border-gray-200 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400 transition-colors">
-                                    <option value="640x480">640x480</option>
-                                    <option value="1280x720" selected>1280x720</option>
-                                    <option value="1920x1080">1920x1080</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <!-- Camera Preview -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div class="camera-container">
-                                <div class="flex items-center justify-between mb-2">
-                                    <h4 class="text-sm font-medium text-gray-700">Left Camera</h4>
-                                    <span id="camera1Status" class="camera-status-indicator status-inactive"></span>
-                                </div>
-                                <div class="bg-gray-100 rounded-lg overflow-hidden relative h-36 border border-gray-200">
-                                    <div class="absolute inset-0 flex items-center justify-center">
-                                        <i class="fa fa-video-camera text-2xl text-gray-400"></i>
-                                    </div>
-                                    <video id="camera1Video" class="w-full h-full object-cover" autoplay muted playsinline></video>
-                                </div>
-                            </div>
-                            <div class="camera-container">
-                                <div class="flex items-center justify-between mb-2">
-                                    <h4 class="text-sm font-medium text-gray-700">Right Camera</h4>
-                                    <span id="camera2Status" class="camera-status-indicator status-inactive"></span>
-                                </div>
-                                <div class="bg-gray-100 rounded-lg overflow-hidden relative h-36 border border-gray-200">
-                                    <div class="absolute inset-0 flex items-center justify-center">
-                                        <i class="fa fa-video-camera text-2xl text-gray-400"></i>
-                                    </div>
-                                    <video id="camera2Video" class="w-full h-full object-cover" autoplay muted playsinline></video>
-                                </div>
-                            </div>
-                            <div class="camera-container md:col-span-2">
-                                <div class="flex items-center justify-between mb-2">
-                                    <h4 class="text-sm font-medium text-gray-700">Depth Map</h4>
-                                    <span id="depthMapStatus" class="camera-status-indicator status-inactive"></span>
-                                </div>
-                                <div class="bg-gray-100 rounded-lg overflow-hidden relative h-40 border border-gray-200">
-                                    <div class="absolute inset-0 flex items-center justify-center">
-                                        <i class="fa fa-area-chart text-2xl text-gray-400"></i>
-                                    </div>
-                                    <canvas id="depthMapCanvas" class="w-full h-full object-cover"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Action Buttons -->
-                        <div class="flex flex-wrap justify-center gap-2">
-                            <button class="text-xs bg-gray-100 rounded-md py-2 px-3 hover:bg-gray-200 transition-all" id="refreshCameras">
-                                <i class="fa fa-refresh mr-1 text-gray-600"></i>Refresh Camera List
-                            </button>
-                            <button class="text-xs bg-gray-100 rounded-md py-2 px-3 hover:bg-gray-200 transition-all" id="startStereoVision">
-                                <i class="fa fa-eye mr-1 text-gray-600"></i>Start Stereo Vision
-                            </button>
-                            <button class="text-xs bg-gray-100 rounded-md py-2 px-3 hover:bg-gray-200 transition-all" id="takeSnapshots">
-                                <i class="fa fa-camera mr-1 text-gray-600"></i>Take Snapshots
-                            </button>
-                            <button class="text-xs bg-gray-100 rounded-md py-2 px-3 hover:bg-gray-200 transition-all" id="stopAllCamerasBtn">
-                                <i class="fa fa-stop mr-1 text-gray-600"></i>Stop All
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
-                            </button>
+                    <div class="p-4" id="cameraList">
+                        <div class="text-center py-8 text-gray">
+                            <i class="fa fa-camera text-2xl mb-3 text-gray-400"></i>
+                            <p class="text-sm">Loading camera list...</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-<<<<<<< HEAD
-        
-        <!-- Middle Column - Main Content -->
-        <div class="col-12 col-md-4">
-
-            
-            <!-- Model Architecture -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">AI System Architecture</h5>
-                </div>
-                <div class="card-body">
-                    <div class="text-center mb-4">
-                        <div class="bg-dark text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
-                            <span class="h5 mb-0">A</span>
-                        </div>
-                        <div class="mt-2 small text-muted" id="modelsOnline">Models: 0/11</div>
-                    </div>
-                    
-                    <div class="model-status-grid" id="modelStatusGrid">
-                        <!-- Model status will be populated dynamically -->
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Right Column - Multi-Camera System -->
-        <div class="col-12 col-md-6">
-            
-            <!-- Enhanced Multi-Camera System with Stereo Vision -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Multi-Camera System</h5>
-                    <p class="text-muted small mb-0">Real-time camera management with stereo vision capabilities</p>
-                </div>
-                <div class="card-body">
-                    <!-- Camera Selection -->
-                    <div class="row g-2 mb-3">
-                        <div class="col-12 col-sm-6">
-                            <label for="camera1Selector" class="form-label small">Left Camera</label>
-                            <select id="camera1Selector" class="form-select form-select-sm">
-                                <option value="default">Select Camera</option>
-                            </select>
-                        </div>
-                        <div class="col-12 col-sm-6">
-                            <label for="camera2Selector" class="form-label small">Right Camera</label>
-                            <select id="camera2Selector" class="form-select form-select-sm">
-                                <option value="default">Select Camera</option>
-                            </select>
-                        </div>
-                        <div class="col-12 col-sm-6">
-                            <label for="camera3Selector" class="form-label small">Top Camera</label>
-                            <select id="camera3Selector" class="form-select form-select-sm">
-                                <option value="default">Select Camera (Optional)</option>
-                            </select>
-                        </div>
-                        <div class="col-12 col-sm-6">
-                            <label for="cameraResolution" class="form-label small">Resolution</label>
-                            <select id="cameraResolution" class="form-select form-select-sm">
-                                <option value="640x480">640x480</option>
-                                <option value="1280x720" selected>1280x720</option>
-                                <option value="1920x1080">1920x1080</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <!-- Camera Preview -->
-                    <div class="row g-2">
-                        <div class="col-12 col-sm-6">
-                            <div class="camera-container">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h6 class="mb-0">Left Camera</h6>
-                                    <span id="camera1Status" class="camera-status-indicator status-inactive"></span>
-                                </div>
-                                <div class="bg-light rounded border position-relative" style="height: 144px;">
-                                    <div class="position-absolute top-50 start-50 translate-middle">
-                                        <i class="bi bi-camera-video text-muted display-6"></i>
-                                    </div>
-                                    <video id="camera1Video" class="w-100 h-100 object-fit-cover rounded" autoplay muted playsinline></video>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-sm-6">
-                            <div class="camera-container">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h6 class="mb-0">Right Camera</h6>
-                                    <span id="camera2Status" class="camera-status-indicator status-inactive"></span>
-                                </div>
-                                <div class="bg-light rounded border position-relative" style="height: 144px;">
-                                    <div class="position-absolute top-50 start-50 translate-middle">
-                                        <i class="bi bi-camera-video text-muted display-6"></i>
-                                    </div>
-                                    <video id="camera2Video" class="w-100 h-100 object-fit-cover rounded" autoplay muted playsinline></video>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="camera-container">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h6 class="mb-0">Depth Map</h6>
-                                    <span id="depthMapStatus" class="camera-status-indicator status-inactive"></span>
-                                </div>
-                                <div class="bg-light rounded border position-relative" style="height: 160px;">
-                                    <div class="position-absolute top-50 start-50 translate-middle">
-                                        <i class="bi bi-graph-up text-muted display-6"></i>
-                                    </div>
-                                    <canvas id="depthMapCanvas" class="w-100 h-100 object-fit-cover rounded"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Action Buttons -->
-                    <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
-                        <button class="btn btn-sm btn-outline-dark" id="refreshCameras">
-                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh Camera List
-                        </button>
-                        <button class="btn btn-sm btn-outline-dark" id="startStereoVision">
-                            <i class="bi bi-eye me-1"></i>Start Stereo Vision
-                        </button>
-                        <button class="btn btn-sm btn-outline-dark" id="takeSnapshots">
-                            <i class="bi bi-camera me-1"></i>Take Snapshots
-                        </button>
-                        <button class="btn btn-sm btn-outline-dark" id="stopAllCamerasBtn">
-                            <i class="bi bi-stop me-1"></i>Stop All
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    // Initialize the system
-    document.addEventListener('DOMContentLoaded', function() {
-        initializeModelStatus();
-        // Remove initializeSystemStatus and startRealTimeMonitoring as they are related to deleted sections
-    });
-
-    // Remove system status functions as they are related to deleted sections
-
-    function initializeModelStatus() {
-        // Fetch real model status from backend API
-        fetch('/api/models/status')
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success' && data.models) {
-                    updateModelStatusUI(data.models);
-                } else {
-                    console.error('Failed to fetch model status:', data.message);
-=======
     </main>
-
-    <!-- Footer -->
-    <footer class="bg-gray-50 border-t border-gray-200 py-5">
-        <div class="container mx-auto px-4">
-            <div class="text-center text-xs text-gray-500">
-                <p class="font-medium">Self Brain - Advanced AI Management System</p>
-                <p class="mt-1">Contact: silencecrowtom@qq.com | All models are trained from scratch</p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- JavaScript -->
+    
+    <!-- JavaScript Functions -->
     <script>
-        // Initialize system status
+        // Initialize the page
         document.addEventListener('DOMContentLoaded', function() {
-            initializeSystemStatus();
-            initializeModelStatus();
-            startRealTimeMonitoring();
+            window.currentPage = 'index';
+            initSystemStatus();
+            initModelStatus();
+            initCameraSystem();
+            
+            // Start periodic training progress updates
+            startTrainingProgressUpdates();
         });
 
-        // System status functions
-        function initializeSystemStatus() {
-            // Real system status check
-            fetch('/api/system/status')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'Active') {
-                        document.getElementById('systemStatus').innerHTML = '<i class="bi bi-circle-fill" style="font-size: 12px;"></i> All Systems Online';
-                        document.getElementById('systemStatusText').textContent = 'Operational';
-                        document.getElementById('hardwareStatus').textContent = 'Optimal';
-                        document.getElementById('responseTime').textContent = data.response_time || '< 200ms';
-                    } else {
-                        document.getElementById('systemStatus').innerHTML = '<i class="bi bi-exclamation-circle-fill" style="font-size: 12px;"></i> System Issues';
-                        document.getElementById('systemStatusText').textContent = 'Check System';
-                        document.getElementById('hardwareStatus').textContent = 'Needs Attention';
-                        document.getElementById('responseTime').textContent = 'Unknown';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching system status:', error);
-                    document.getElementById('systemStatus').innerHTML = '<i class="bi bi-x-circle-fill" style="font-size: 12px;"></i> Connection Error';
-                    document.getElementById('systemStatusText').textContent = 'Offline';
-                    document.getElementById('hardwareStatus').textContent = 'Unknown';
-                    document.getElementById('responseTime').textContent = 'N/A';
-                });
+        // System status initialization
+        function initSystemStatus() {
+            const systemStatus = document.getElementById('systemStatusText');
+            const hardwareStatus = document.getElementById('hardwareStatus');
+            const responseTime = document.getElementById('responseTime');
+            const modelsOnline = document.getElementById('modelsOnline');
+            
+            if (systemStatus) systemStatus.textContent = 'Operational';
+            if (hardwareStatus) hardwareStatus.textContent = 'Optimal';
+            if (responseTime) responseTime.textContent = '< 200ms';
+            if (modelsOnline) modelsOnline.textContent = '0/11';
         }
 
-        function initializeModelStatus() {
-            // Fetch real model status from backend API
-            fetch('/api/models/status')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success' && data.models) {
-                        updateModelStatusUI(data.models);
-                    } else {
-                        console.error('Failed to fetch model status:', data.message);
-                        // Show error status instead of simulated data
-                        const errorStatus = {
-                            'A_Management': { status: 'error', progress: 0 },
-                            'B_Language': { status: 'error', progress: 0 },
-                            'C_Audio': { status: 'error', progress: 0 },
-                            'D_Visual': { status: 'error', progress: 0 },
-                            'E_Video': { status: 'error', progress: 0 },
-                            'F_Spatial': { status: 'error', progress: 0 },
-                            'G_Sensor': { status: 'error', progress: 0 },
-                            'H_Computer': { status: 'error', progress: 0 },
-                            'I_Motion': { status: 'error', progress: 0 },
-                            'J_Knowledge': { status: 'error', progress: 0 },
-                            'K_Programming': { status: 'error', progress: 0 }
-                        };
-                        updateModelStatusUI(errorStatus);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching model status:', error);
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
-                    // Show error status instead of simulated data
-                    const errorStatus = {
-                        'A_Management': { status: 'error', progress: 0 },
-                        'B_Language': { status: 'error', progress: 0 },
-                        'C_Audio': { status: 'error', progress: 0 },
-                        'D_Visual': { status: 'error', progress: 0 },
-                        'E_Video': { status: 'error', progress: 0 },
-                        'F_Spatial': { status: 'error', progress: 0 },
-                        'G_Sensor': { status: 'error', progress: 0 },
-                        'H_Computer': { status: 'error', progress: 0 },
-                        'I_Motion': { status: 'error', progress: 0 },
-                        'J_Knowledge': { status: 'error', progress: 0 },
-                        'K_Programming': { status: 'error', progress: 0 }
-                    };
-                    updateModelStatusUI(errorStatus);
-<<<<<<< HEAD
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching model status:', error);
-                // Show error status instead of simulated data
-                const errorStatus = {
-                    'A_Management': { status: 'error', progress: 0 },
-                    'B_Language': { status: 'error', progress: 0 },
-                    'C_Audio': { status: 'error', progress: 0 },
-                    'D_Visual': { status: 'error', progress: 0 },
-                    'E_Video': { status: 'error', progress: 0 },
-                    'F_Spatial': { status: 'error', progress: 0 },
-                    'G_Sensor': { status: 'error', progress: 0 },
-                    'H_Computer': { status: 'error', progress: 0 },
-                    'I_Motion': { status: 'error', progress: 0 },
-                    'J_Knowledge': { status: 'error', progress: 0 },
-                    'K_Programming': { status: 'error', progress: 0 }
-                };
-                updateModelStatusUI(errorStatus);
-            });
-    }
-
-    function updateModelStatusUI(models) {
-        const grid = document.getElementById('modelStatusGrid');
-        grid.innerHTML = ''; // Clear existing content
-        
-        const modelConfig = {
-            'A_Management': { id: 'A', name: 'Management Model' },
-            'B_Language': { id: 'B', name: 'Language Model' },
-            'C_Audio': { id: 'C', name: 'Audio Model' },
-            'D_Visual': { id: 'D', name: 'Vision Model' },
-            'E_Video': { id: 'E', name: 'Video Model' },
-            'F_Spatial': { id: 'F', name: 'Spatial Model' },
-            'G_Sensor': { id: 'G', name: 'Sensor Model' },
-            'H_Computer': { id: 'H', name: 'Computer Control' },
-            'I_Motion': { id: 'I', name: 'Actuator Model' },
-            'J_Knowledge': { id: 'J', name: 'Knowledge Model' },
-            'K_Programming': { id: 'K', name: 'Programming Model' }
-        };
-
-        let onlineCount = 0;
-        Object.keys(modelConfig).forEach(modelKey => {
-            const model = models[modelKey] || { status: 'offline', progress: 0 };
-            const config = modelConfig[modelKey];
-            
-            const element = document.createElement('div');
-            element.className = 'card bg-light p-2 text-center';
-            
-            let statusClass = 'text-muted';
-            if (model.status === 'online') {
-                statusClass = 'text-success';
-                onlineCount++;
-            } else if (model.status === 'training') {
-                statusClass = 'text-warning';
-            } else if (model.status === 'error') {
-                statusClass = 'text-danger';
-            }
-            
-            element.innerHTML = `
-                <div class="fw-bold small">${config.id}</div>
-                <div class="small text-muted">${config.name}</div>
-                <div class="small ${statusClass}">${model.status}</div>
-                ${model.progress > 0 ? `<div class="small text-muted mt-1">${model.progress}%</div>` : ''}
-            `;
-            grid.appendChild(element);
-        });
-
-        // Update models online count
-        document.getElementById('modelsOnline').textContent = `${onlineCount}/${Object.keys(modelConfig).length}`;
-    }
-
-    // Chat functions
-    function handleKeyDown(event) {
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            sendMessage();
-        }
-    }
-
-    function adjustTextareaHeight(textarea) {
-        textarea.style.height = 'auto';
-        textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
-    }
-
-    function sendMessage() {
-        const input = document.getElementById('messageInput');
-        const message = input.value.trim();
-        
-        if (message) {
-            addMessage('user', message);
-            input.value = '';
-            adjustTextareaHeight(input);
-            
-            // Show typing indicator
-            const container = document.getElementById('messagesContainer');
-            const typingIndicator = document.createElement('div');
-            typingIndicator.id = 'typingIndicator';
-            typingIndicator.className = 'card bg-light p-3 mb-3';
-            typingIndicator.innerHTML = `
-                <div class="small text-muted mb-1">Self Brain AI</div>
-                <div class="d-flex gap-1">
-                    <div class="bg-secondary rounded-circle" style="width: 8px; height: 8px; animation: bounce 1s infinite"></div>
-                    <div class="bg-secondary rounded-circle" style="width: 8px; height: 8px; animation: bounce 1s infinite 0.1s"></div>
-                    <div class="bg-secondary rounded-circle" style="width: 8px; height: 8px; animation: bounce 1s infinite 0.2s"></div>
-                </div>
-            `;
-            container.appendChild(typingIndicator);
-            container.scrollTop = container.scrollHeight;
-            
-            // Call actual API to get AI response
-            fetch('/api/chat/send', {
-=======
-                });
-        }
-
-        function updateModelStatusUI(models) {
-            const grid = document.getElementById('modelStatusGrid');
-            grid.innerHTML = ''; // Clear existing content
-            
+        // Model status initialization
+        function initModelStatus() {
+            // Initialize with empty model data
             const modelConfig = {
-                'A_Management': { id: 'A', name: 'Management Model' },
-                'B_Language': { id: 'B', name: 'Language Model' },
-                'C_Audio': { id: 'C', name: 'Audio Model' },
-                'D_Visual': { id: 'D', name: 'Vision Model' },
-                'E_Video': { id: 'E', name: 'Video Model' },
-                'F_Spatial': { id: 'F', name: 'Spatial Model' },
-                'G_Sensor': { id: 'G', name: 'Sensor Model' },
-                'H_Computer': { id: 'H', name: 'Computer Control' },
-                'I_Motion': { id: 'I', name: 'Actuator Model' },
-                'J_Knowledge': { id: 'J', name: 'Knowledge Model' },
-                'K_Programming': { id: 'K', name: 'Programming Model' }
+                manager_model: {
+                    name: "Manager Model",
+                    description: "Core AI management system",
+                    status: "loading",
+                    progress: 0,
+                    type: "management"
+                },
+                language_model: {
+                    name: "Language Model",
+                    description: "Natural language processing",
+                    status: "loading",
+                    progress: 0,
+                    type: "language"
+                },
+                audio_model: {
+                    name: "Audio Model",
+                    description: "Audio processing and synthesis",
+                    status: "loading",
+                    progress: 0,
+                    type: "audio"
+                },
+                vision_model: {
+                    name: "Vision Model",
+                    description: "Image recognition and processing",
+                    status: "loading",
+                    progress: 0,
+                    type: "vision"
+                },
+                video_model: {
+                    name: "Video Model",
+                    description: "Video analysis and processing",
+                    status: "offline",
+                    progress: 0,
+                    type: "video"
+                },
+                spatial_model: {
+                    name: "Spatial Model",
+                    description: "3D spatial perception and mapping",
+                    status: "offline",
+                    progress: 0,
+                    type: "spatial"
+                },
+                sensor_model: {
+                    name: "Sensor Model",
+                    description: "Sensor data processing",
+                    status: "offline",
+                    progress: 0,
+                    type: "sensor"
+                },
+                control_model: {
+                    name: "Control Model",
+                    description: "Computer control system",
+                    status: "offline",
+                    progress: 0,
+                    type: "control"
+                },
+                actuator_model: {
+                    name: "Actuator Model",
+                    description: "Actuator and device control",
+                    status: "offline",
+                    progress: 0,
+                    type: "actuator"
+                },
+                knowledge_model: {
+                    name: "Knowledge Model",
+                    description: "Knowledge base and expert system",
+                    status: "offline",
+                    progress: 0,
+                    type: "knowledge"
+                },
+                code_model: {
+                    name: "Code Model",
+                    description: "Code generation and optimization",
+                    status: "offline",
+                    progress: 0,
+                    type: "code"
+                }
             };
+            
+            updateModelStatusUI(modelConfig);
+        }
 
-            let onlineCount = 0;
-            Object.keys(modelConfig).forEach(modelKey => {
-                const model = models[modelKey] || { status: 'offline', progress: 0 };
-                const config = modelConfig[modelKey];
+        // Update model status UI
+        function updateModelStatusUI(modelConfig) {
+            const grid = document.getElementById('modelStatusGrid');
+            if (grid) {
+                grid.innerHTML = '';
                 
-                const element = document.createElement('div');
-                element.className = 'text-center p-2 bg-gray-light rounded-lg';
+                let onlineCount = 0;
+                const totalModels = Object.keys(modelConfig).length;
                 
-                let statusClass = 'text-gray';
-                if (model.status === 'online') {
-                    statusClass = 'text-success';
-                    onlineCount++;
-                } else if (model.status === 'training') {
-                    statusClass = 'text-warning';
-                } else if (model.status === 'error') {
-                    statusClass = 'text-danger';
+                for (const [key, model] of Object.entries(modelConfig)) {
+                    if (model.status === 'online') {
+                        onlineCount++;
+                    }
+                    
+                    const modelItem = document.createElement('div');
+                    modelItem.className = 'flex items-center justify-between p-3 border border-gray rounded-lg hover:bg-gray-50 transition-colors';
+                    
+                    // Create model icon based on type
+                    let iconClass = 'fa-cog';
+                    switch(model.type) {
+                        case 'management': iconClass = 'fa-sitemap'; break;
+                        case 'language': iconClass = 'fa-comment'; break;
+                        case 'audio': iconClass = 'fa-volume-up'; break;
+                        case 'vision': iconClass = 'fa-eye'; break;
+                        case 'video': iconClass = 'fa-film'; break;
+                        case 'spatial': iconClass = 'fa-cube'; break;
+                        case 'sensor': iconClass = 'fa-rss'; break;
+                        case 'control': iconClass = 'fa-gamepad'; break;
+                        case 'actuator': iconClass = 'fa-arrows-alt'; break;
+                        case 'knowledge': iconClass = 'fa-book'; break;
+                        case 'code': iconClass = 'fa-code'; break;
+                    }
+                    
+                    // Add progress bar if model is training
+                    const isTraining = model.status === 'training';
+                    let progressHtml = '';
+                    if (isTraining) {
+                        progressHtml = `
+                            <div class="w-full mt-2">
+                                <div class="flex justify-between items-center text-xs text-gray mb-1">
+                                    <span>Training</span>
+                                    <span>${model.progress}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-blue h-1.5 rounded-full" style="width: ${model.progress}%" aria-valuenow="${model.progress}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    modelItem.innerHTML = `
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-gray flex items-center justify-center text-gray mr-3">
+                                <i class="fa ${iconClass}"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-sm">${model.name}</div>
+                                <div class="text-xs text-gray">${model.description}</div>
+                                ${progressHtml}
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="text-xs font-medium px-2 py-1 rounded-full ${model.status === 'online' ? 'bg-green-100 text-green-800' : model.status === 'training' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
+                                ${model.status === 'online' ? 'Online' : model.status === 'training' ? 'Training' : 'Offline'}
+                            </span>
+                        </div>
+                    `;
+                    
+                    grid.appendChild(modelItem);
                 }
                 
-                element.innerHTML = `
-                    <div class="text-sm font-medium">${config.id}</div>
-                    <div class="text-xs text-gray">${config.name}</div>
-                    <div class="text-xs ${statusClass}">${model.status}</div>
-                    ${model.progress > 0 ? `<div class="text-xs text-gray mt-1">${model.progress}%</div>` : ''}
-                `;
-                grid.appendChild(element);
-            });
-
-            // Update models online count
-            document.getElementById('modelsOnline').textContent = `${onlineCount}/${Object.keys(modelConfig).length}`;
-        }
-
-        function startRealTimeMonitoring() {
-            // Get real-time system metrics from backend
-            function updateMetrics() {
-                fetch('/api/training/status')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success' && data.system) {
-                            document.getElementById('cpuUsage').textContent = `${Math.round(data.system.cpu_usage)}%`;
-                            document.getElementById('memoryUsage').textContent = `${Math.round(data.system.memory_usage.percent)}%`;
-                            
-                            // GPU usage from system data
-                            if (data.system.gpu_info && data.system.gpu_info.length > 0) {
-                                const gpuUsage = data.system.gpu_info[0].utilization || 0;
-                                document.getElementById('gpuUsage').textContent = `${gpuUsage}%`;
-                            } else {
-                                document.getElementById('gpuUsage').textContent = '0%';
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching system metrics:', error);
-                        // Fallback to system status API
-                        fetch('/api/system/status')
-                            .then(response => response.json())
-                            .then(data => {
-                                document.getElementById('cpuUsage').textContent = data.cpu || '0%';
-                                document.getElementById('memoryUsage').textContent = data.memory || '0%';
-                                document.getElementById('gpuUsage').textContent = data.gpu_usage || '0%';
-                            });
-                    });
+                const modelsOnline = document.getElementById('modelsOnline');
+                if (modelsOnline) {
+                    modelsOnline.textContent = `${onlineCount}/${totalModels}`;
+                }
             }
-            
-            // Update immediately and set interval
-            updateMetrics();
-            setInterval(updateMetrics, 3000);
         }
 
-        // Chat functions
+
+
+        // Handle key down in textarea
         function handleKeyDown(event) {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
@@ -1212,532 +441,564 @@
             }
         }
 
+        // Adjust textarea height based on content
         function adjustTextareaHeight(textarea) {
             textarea.style.height = 'auto';
-            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+            textarea.style.height = (textarea.scrollHeight) + 'px';
         }
 
+        // Send message function
         function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const message = input.value.trim();
+            const messageInput = document.getElementById('messageInput');
+            const messagesContainer = document.getElementById('messagesContainer');
+            const message = messageInput.value.trim();
             
-            if (message) {
-                addMessage('user', message);
-                input.value = '';
-                adjustTextareaHeight(input);
-                
-                // Show typing indicator
-                const container = document.getElementById('messagesContainer');
-                const typingIndicator = document.createElement('div');
-                typingIndicator.id = 'typingIndicator';
-                typingIndicator.className = 'mb-3 p-3 rounded-lg max-w-[80%] bg-gray-light text-dark';
-                typingIndicator.innerHTML = `
-                    <div class="text-xs opacity-75 mb-1">Self Brain AI</div>
-                    <div class="flex space-x-1">
-                        <div class="w-2 h-2 bg-gray rounded-full animate-bounce" style="animation-delay: 0ms"></div>
-                        <div class="w-2 h-2 bg-gray rounded-full animate-bounce" style="animation-delay: 150ms"></div>
-                        <div class="w-2 h-2 bg-gray rounded-full animate-bounce" style="animation-delay: 300ms"></div>
-                    </div>
-                `;
-                container.appendChild(typingIndicator);
-                container.scrollTop = container.scrollHeight;
-                
-                // Call actual API to get AI response
-                fetch('/api/chat/send', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        conversation_id: 'main_conversation',
-                        message: message,
-                        knowledge_base: 'all',
-                        attachments: []
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Remove typing indicator
-                    document.getElementById('typingIndicator').remove();
-                    
-                    if (data.status === 'success' && data.response) {
-                        addMessage('ai', data.response);
-                    } else {
-                        addMessage('ai', 'I apologize, but I\'m having trouble processing your request. Please try again later.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error sending message:', error);
-                    // Remove typing indicator
-                    const typingElement = document.getElementById('typingIndicator');
-                    if (typingElement) typingElement.remove();
-                    addMessage('ai', 'I apologize, but there was an error connecting to the AI system. Please check your connection and try again.');
-                });
+            if (!message || !messagesContainer) {
+                return;
             }
-        }
-
-        function addMessage(sender, content) {
-            const container = document.getElementById('messagesContainer');
-            const messageElement = document.createElement('div');
-            messageElement.className = `mb-3 p-3 rounded-lg max-w-[80%] ${sender === 'user' ? 'bg-primary text-white ml-auto' : 'bg-gray-light text-dark'}`;
-            messageElement.innerHTML = `
-                <div class="text-xs opacity-75 mb-1">${sender === 'user' ? 'You' : 'Self Brain AI'}</div>
-                <div>${content}</div>
+            
+            // Add user message to container
+            addMessage('user', message);
+            
+            // Clear input
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            
+            // Show typing indicator
+            const typingIndicator = document.createElement('div');
+            typingIndicator.id = 'typingIndicator';
+            typingIndicator.className = 'flex items-center text-gray p-3 mb-3';
+            typingIndicator.innerHTML = `
+                <div class="w-8 h-8 rounded-full bg-gray flex items-center justify-center mr-3">
+                    <i class="fa fa-robot text-gray-500"></i>
+                </div>
+                <div class="flex space-x-1">
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                </div>
             `;
-            container.appendChild(messageElement);
-            container.scrollTop = container.scrollHeight;
+            messagesContainer.appendChild(typingIndicator);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
             
-            // Remove initial placeholder if present
-            const placeholder = container.querySelector('.text-center');
-            if (placeholder) {
-                placeholder.remove();
-            }
-        }
-
-        function clearChat() {
-            const container = document.getElementById('messagesContainer');
-            container.innerHTML = '<div class="text-center text-gray py-8"><i class="fa fa-comments text-3xl mb-2"></i><p>Start a conversation with the AI system</p></div>';
-        }
-
-        function exportChat() {
-            const container = document.getElementById('messagesContainer');
-            const messages = container.innerHTML;
-            const blob = new Blob([messages], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `self-brain-chat-${new Date().toISOString().slice(0, 10)}.html`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            showNotification('Chat exported successfully', 'success');
-        }
-
-        function quickAction(action) {
-            const prompts = {
-                summarize: 'Please summarize our conversation so far.',
-                translate: 'Please translate the following text to English: ',
-                code: 'Write a Python function that ',
-                analyze: 'Analyze the following data and provide insights: ',
-                brainstorm: 'Let\'s brainstorm ideas for '
-            };
-            
-            const input = document.getElementById('messageInput');
-            input.value = prompts[action] || '';
-            input.focus();
-            adjustTextareaHeight(input);
-        }
-
-        function toggleVoice() {
-            showNotification('Voice input functionality is being implemented', 'info');
-        }
-
-        function handleFileUpload(files) {
-            if (files.length > 0) {
-                Array.from(files).forEach(file => {
-                    addMessage('user', `Uploaded file: ${file.name} (${formatFileSize(file.size)})`);
-                });
-            }
-        }
-
-        function formatFileSize(bytes) {
-            if (bytes < 1024) return bytes + ' B';
-            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-            else return (bytes / 1048576).toFixed(1) + ' MB';
-        }
-
-        // Training functions
-        function startTraining() {
-            showNotification('Starting comprehensive model training...', 'info');
-            
-            // Call real training API
-            fetch('/api/training/start', {
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
+            // Call backend API to get response from main model
+            fetch('/api/chat', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-<<<<<<< HEAD
-                    conversation_id: 'main_conversation',
-                    message: message,
-                    knowledge_base: 'all',
-                    attachments: []
-                })
+                body: JSON.stringify({ message: message })
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                    throw new Error('Network response was not ok');
                 }
                 return response.json();
             })
             .then(data => {
                 // Remove typing indicator
-                const typingElement = document.getElementById('typingIndicator');
-                if (typingElement) typingElement.remove();
+                if (document.getElementById('typingIndicator')) {
+                    document.getElementById('typingIndicator').remove();
+                }
                 
-                if (data.status === 'success' && data.response) {
+                // Add response to container
+                if (data.response) {
                     addMessage('ai', data.response);
                 } else {
-                    // Handle specific error cases if needed
-                    let errorMessage = 'I apologize, but I\'m having trouble processing your request. Please try again later.';
-                    if (data.error) {
-                        errorMessage = data.error;
-                    }
-                    addMessage('ai', errorMessage);
+                    addMessage('ai', "Sorry, I couldn't generate a response. Please try again.");
                 }
             })
             .catch(error => {
-                console.error('Error sending message:', error);
+                console.error('Error:', error);
                 // Remove typing indicator
-                const typingElement = document.getElementById('typingIndicator');
-                if (typingElement) typingElement.remove();
-                
-                // Show more specific error messages based on error type
-                let errorMessage = 'I apologize, but there was an error connecting to the AI system. Please check your connection and try again.';
-                
-                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-                    errorMessage = 'Connection error: Cannot reach the AI system. Please check your network connection.';
-                } else if (error.message.includes('401')) {
-                    errorMessage = 'Authentication error: Please log in again to continue.';
-                } else if (error.message.includes('429')) {
-                    errorMessage = 'Rate limit exceeded: Please wait a moment before sending another message.';
-                } else if (error.message.includes('503')) {
-                    errorMessage = 'Service unavailable: The AI system is currently busy. Please try again later.';
+                if (document.getElementById('typingIndicator')) {
+                    document.getElementById('typingIndicator').remove();
                 }
-                
-                addMessage('ai', errorMessage);
-                showToast(errorMessage, 'error');
+                // Show error message
+                addMessage('ai', "I'm sorry, but there was an error connecting to the AI model. Please try again later.");
             });
         }
-    }
 
-    function addMessage(sender, content) {
-        const container = document.getElementById('messagesContainer');
-        const messageElement = document.createElement('div');
-        messageElement.className = `card mb-3 ${sender === 'user' ? 'ms-auto bg-dark text-white' : 'bg-light'}`;
-        messageElement.style.maxWidth = '80%';
-        messageElement.innerHTML = `
-            <div class="card-body p-3">
-                <div class="small opacity-75 mb-1">${sender === 'user' ? 'You' : 'Self Brain AI'}</div>
-                <div>${content}</div>
-            </div>
-        `;
-        container.appendChild(messageElement);
-        container.scrollTop = container.scrollHeight;
-        
-        // Remove initial placeholder if present
-        const placeholder = container.querySelector('.text-center');
-        if (placeholder) {
-            placeholder.remove();
-        }
-    }
-
-    function clearChat() {
-        const container = document.getElementById('messagesContainer');
-        container.innerHTML = '<div class="text-center text-muted py-5"><i class="bi bi-chat-dots display-6 mb-3"></i><p class="small">Start a conversation with the AI system</p></div>';
-    }
-
-    function exportChat() {
-        const container = document.getElementById('messagesContainer');
-        const messages = container.innerHTML;
-        const blob = new Blob([messages], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `self-brain-chat-${new Date().toISOString().slice(0, 10)}.html`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        showToast('Chat exported successfully', 'success');
-    }
-
-    function quickAction(action) {
-        const prompts = {
-            summarize: 'Please summarize our conversation so far.',
-            translate: 'Please translate the following text to English: ',
-            code: 'Write a Python function that ',
-            analyze: 'Analyze the following data and provide insights: ',
-            brainstorm: 'Let\'s brainstorm ideas for '
-        };
-
-        if (prompts[action]) {
-            const input = document.getElementById('messageInput');
-            input.value = prompts[action];
-            adjustTextareaHeight(input);
-            input.focus();
-        }
-    }
-
-    function showToast(message, type = 'info') {
-        const toastContainer = document.getElementById('toastContainer');
-        
-        if (!toastContainer) {
-            // Create toast container if not exists
-            const container = document.createElement('div');
-            container.id = 'toastContainer';
-            container.className = 'position-fixed bottom-3 right-3 z-50';
-            document.body.appendChild(container);
-        }
-
-        const toast = document.createElement('div');
-        toast.className = `toast show mb-2 ${type === 'error' ? 'bg-danger text-white' : type === 'success' ? 'bg-success text-white' : 'bg-secondary text-white'}`;
-        toast.role = 'alert';
-        toast.ariaLive = 'assertive';
-        toast.ariaAtomic = 'true';
-        toast.style.minWidth = '300px';
-        toast.innerHTML = `
-            <div class="toast-body">
-                ${message}
-            </div>
-        `;
-        
-        document.getElementById('toastContainer').appendChild(toast);
-
-        // Remove toast after 3 seconds
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 500);
-        }, 3000);
-    }
-
-    // Camera system functions
-    document.getElementById('takeSnapshots').addEventListener('click', function() {
-        // Use the global function from camera_control.js
-        if (typeof takeAllCameraSnapshots === 'function') {
-            takeAllCameraSnapshots();
-        } else {
-            showToast('Camera control module not loaded', 'error');
-        }
-    });
-
-    // Add event listeners for other camera control buttons
-    document.getElementById('refreshCameras').addEventListener('click', function() {
-        // Function to refresh camera list
-        function refreshCameraList() {
-            // This will be replaced by actual API call in production
-            // For now, simulate fetching camera list
-            const cameras = ['Default Camera', 'USB Camera 1', 'Webcam', 'External Camera'];
-            
-            // Clear existing options
-            const camera1Selector = document.getElementById('camera1Selector');
-            const camera2Selector = document.getElementById('camera2Selector');
-            const camera3Selector = document.getElementById('camera3Selector');
-            
-            camera1Selector.innerHTML = '<option value="default">Select Camera</option>';
-            camera2Selector.innerHTML = '<option value="default">Select Camera</option>';
-            camera3Selector.innerHTML = '<option value="default">Select Camera (Optional)</option>';
-            
-            // Add new options
-            cameras.forEach(camera => {
-                const option1 = document.createElement('option');
-                option1.value = camera.toLowerCase().replace(/\s+/g, '_');
-                option1.textContent = camera;
-                camera1Selector.appendChild(option1);
-                
-                const option2 = option1.cloneNode(true);
-                camera2Selector.appendChild(option2);
-                
-                const option3 = option1.cloneNode(true);
-                camera3Selector.appendChild(option3);
-            });
-            
-            showToast('Camera list refreshed', 'success');
-        }
-        
-        // Call the function to refresh camera list
-        refreshCameraList();
-    });
-
-    document.getElementById('startStereoVision').addEventListener('click', function() {
-        // Function to start stereo vision
-        function startStereoVision() {
-            // Get selected cameras
-            const camera1 = document.getElementById('camera1Selector').value;
-            const camera2 = document.getElementById('camera2Selector').value;
-            
-            if (camera1 === 'default' || camera2 === 'default') {
-                showToast('Please select both left and right cameras', 'error');
+        // Add message to container
+        function addMessage(sender, message) {
+            const messagesContainer = document.getElementById('messagesContainer');
+            if (!messagesContainer) {
                 return;
             }
             
-            // Update camera status indicators
-            document.getElementById('camera1Status').className = 'camera-status-indicator status-connecting';
-            document.getElementById('camera2Status').className = 'camera-status-indicator status-connecting';
-            document.getElementById('depthMapStatus').className = 'camera-status-indicator status-connecting';
+            // Clear welcome message if it's the first message
+            if (messagesContainer.querySelector('.text-center.text-gray.py-12')) {
+                messagesContainer.innerHTML = '';
+            }
             
-            // This will be replaced by actual API call in production
-            // For now, simulate starting stereo vision
-            setTimeout(() => {
-                document.getElementById('camera1Status').className = 'camera-status-indicator status-active';
-                document.getElementById('camera2Status').className = 'camera-status-indicator status-active';
-                document.getElementById('depthMapStatus').className = 'camera-status-indicator status-active';
-                
-                showToast('Stereo vision started successfully', 'success');
-            }, 1500);
-        }
-        
-        // Call the function to start stereo vision
-        startStereoVision();
-    });
-
-    document.getElementById('stopAllCamerasBtn').addEventListener('click', function() {
-        // Function to stop all cameras
-        function stopAllCameras() {
-            // Update camera status indicators
-            document.getElementById('camera1Status').className = 'camera-status-indicator status-inactive';
-            document.getElementById('camera2Status').className = 'camera-status-indicator status-inactive';
-            document.getElementById('depthMapStatus').className = 'camera-status-indicator status-inactive';
+            const messageElement = document.createElement('div');
+            messageElement.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`;
             
-            showToast('All cameras stopped', 'success');
-        }
-        
-        // Call the function to stop all cameras
-        stopAllCameras();
-    });
-
-    // Add bounce animation for typing indicator
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
-            40% { transform: scale(1.2); opacity: 1; }
-        }
-    `;
-    document.head.appendChild(style);
-</script>
-{% endblock %}
-=======
-                    training_type: 'comprehensive',
-                    models: 'all',
-                    epochs: 100,
-                    batch_size: 32
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    showNotification('Training started successfully', 'success');
-                    // Start monitoring training progress
-                    monitorTrainingProgress();
-                } else {
-                    showNotification('Failed to start training: ' + (data.message || 'Unknown error'), 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error starting training:', error);
-                showNotification('Error starting training: ' + error.message, 'error');
-            });
-        }
-
-        function monitorTrainingProgress() {
-            const progressInterval = setInterval(() => {
-                fetch('/api/training/status')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            const progress = data.progress || 0;
-                            document.getElementById('trainingProgressBar').style.width = progress + '%';
-                            document.getElementById('trainingProgressText').textContent = Math.round(progress) + '%';
-                            
-                            if (progress >= 100) {
-                                clearInterval(progressInterval);
-                                showNotification('Training completed successfully', 'success');
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching training progress:', error);
-                        clearInterval(progressInterval);
-                    });
-            }, 2000);
-        }
-
-        function stopTraining() {
-            fetch('/api/training/stop', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    showNotification('Training stopped successfully', 'success');
-                    document.getElementById('trainingProgressBar').style.width = '0%';
-                    document.getElementById('trainingProgressText').textContent = '0%';
-                } else {
-                    showNotification('Failed to stop training: ' + (data.message || 'Unknown error'), 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error stopping training:', error);
-                showNotification('Error stopping training: ' + error.message, 'error');
-            });
-        }
-
-        function exportTrainingData() {
-            showNotification('Exporting training data...', 'info');
-            // Implementation for exporting training data
-        }
-
-        function runSystemCheck() {
-            showNotification('Running comprehensive system diagnostics...', 'info');
-            // Implementation for system check
-        }
-
-        // Camera system functions are now handled by camera_control.js
-        document.getElementById('takeSnapshots').addEventListener('click', function() {
-            // Use the global function from camera_control.js
-            takeAllCameraSnapshots();
-        });
-
-        // Notification system
-        function showNotification(message, type = 'info') {
-            // Create notification element
-            const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 p-3 rounded-lg shadow-lg z-50 ${
-                type === 'success' ? 'bg-success text-white' : 
-                type === 'error' ? 'bg-danger text-white' : 
-                'bg-primary text-white'
-            }`;
-            notification.innerHTML = `
-                <div class="flex items-center">
-                    <i class="fa fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}-circle mr-2"></i>
-                    <span>${message}</span>
+            const bgColor = sender === 'user' ? 'bg-gray' : 'bg-gray-light';
+            const textColor = sender === 'user' ? 'text-white' : 'text-gray';
+            const alignSelf = sender === 'user' ? 'flex-row-reverse' : 'flex-row';
+            
+            const iconClass = sender === 'user' ? 'fa-user' : 'fa-robot';
+            
+            messageElement.innerHTML = `
+                <div class="flex items-start ${alignSelf} max-w-[80%]">
+                    <div class="w-8 h-8 rounded-full ${bgColor} flex items-center justify-center ${textColor} mr-3 flex-shrink-0">
+                        <i class="fa ${iconClass}"></i>
+                    </div>
+                    <div class="bg-gray-light rounded-lg p-3 ${textColor} text-sm">
+                        ${message}
+                    </div>
                 </div>
             `;
             
-            document.body.appendChild(notification);
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Clear chat function
+        function clearChat() {
+            const messagesContainer = document.getElementById('messagesContainer');
+            if (messagesContainer) {
+                messagesContainer.innerHTML = `
+                    <div class="text-center text-gray py-12">
+                        <i class="fa fa-comments text-3xl mb-3 text-gray-400"></i>
+                        <p class="text-sm">Start a conversation with the AI system</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Export chat function
+        function exportChat() {
+            const messagesContainer = document.getElementById('messagesContainer');
+            if (!messagesContainer || messagesContainer.querySelector('.text-center.text-gray.py-12')) {
+                showToast('No chat history to export', 'warning');
+                return;
+            }
             
-            // Remove after 3 seconds
+            // Collect messages
+            const messages = [];
+            const messageElements = messagesContainer.querySelectorAll('.flex.mb-4');
+            
+            messageElements.forEach(element => {
+                const sender = element.classList.contains('justify-end') ? 'User' : 'AI';
+                const messageText = element.querySelector('.rounded-lg.p-3').textContent.trim();
+                messages.push(`${sender}: ${messageText}`);
+            });
+            
+            // Create and download text file
+            const blob = new Blob([messages.join('\n\n')], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `chat_history_${new Date().toISOString().slice(0, 10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showToast('Chat history exported successfully', 'success');
+        }
+
+        // Quick action function
+        function quickAction(type) {
+            const messageInput = document.getElementById('messageInput');
+            if (!messageInput) {
+                return;
+            }
+            
+            let prompt = '';
+            switch(type) {
+                case 'summarize':
+                    prompt = 'Please summarize the following information: ';
+                    break;
+                case 'translate':
+                    prompt = 'Translate the following text to English: ';
+                    break;
+                case 'code':
+                    prompt = 'Write code for: ';
+                    break;
+                case 'analyze':
+                    prompt = 'Analyze this data: ';
+                    break;
+                case 'brainstorm':
+                    prompt = 'Brainstorm ideas for: ';
+                    break;
+            }
+            
+            messageInput.value = prompt;
+            adjustTextareaHeight(messageInput);
+            messageInput.focus();
+        }
+
+        // Toggle voice input
+        function toggleVoice() {
+            showToast('Voice input feature is not available yet', 'warning');
+        }
+
+        // Initialize camera system
+        function initCameraSystem() {
+            refreshCameraList();
+        }
+
+        // Refresh camera list
+        function refreshCameraList() {
+            const cameraList = document.getElementById('cameraList');
+            if (!cameraList) {
+                return;
+            }
+            
+            cameraList.innerHTML = `
+                <div class="text-center py-8 text-gray">
+                    <i class="fa fa-refresh fa-spin text-2xl mb-3 text-gray-400"></i>
+                    <p class="text-sm">Loading camera list...</p>
+                </div>
+            `;
+            
+            // Simulate API call to get camera list
             setTimeout(() => {
-                notification.remove();
-            }, 3000);
+                // Sample camera data
+                const cameras = [
+                    {
+                        id: 'camera_1',
+                        name: 'Front Camera',
+                        status: 'inactive',
+                        resolution: '1920x1080',
+                        fps: '30'
+                    },
+                    {
+                        id: 'camera_2',
+                        name: 'Side Camera',
+                        status: 'inactive',
+                        resolution: '1280x720',
+                        fps: '30'
+                    },
+                    {
+                        id: 'camera_3',
+                        name: 'Webcam',
+                        status: 'active',
+                        resolution: '640x480',
+                        fps: '30'
+                    }
+                ];
+                
+                // Update camera list
+                cameraList.innerHTML = '';
+                
+                cameras.forEach(camera => {
+                    const cameraElement = document.createElement('div');
+                    cameraElement.className = 'camera-container p-3 border border-gray rounded-lg hover:bg-gray-50 transition-colors';
+                    
+                    cameraElement.innerHTML = `
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="font-medium text-sm">${camera.name}</div>
+                            <span class="camera-status-indicator status-${camera.status}"></span>
+                        </div>
+                        <div class="text-xs text-gray mb-2">Resolution: ${camera.resolution}, FPS: ${camera.fps}</div>
+                        <div class="flex space-x-2">
+                            <button class="btn-gray rounded-lg px-3 py-1 text-xs hover:bg-gray-300 transition-colors" onclick="toggleCamera('${camera.id}')">
+                                <i class="fa fa-power-off mr-1"></i> ${camera.status === 'active' ? 'Turn Off' : 'Turn On'}
+                            </button>
+                            <button class="btn-gray rounded-lg px-3 py-1 text-xs hover:bg-gray-300 transition-colors" onclick="viewCamera('${camera.id}')">
+                                <i class="fa fa-eye mr-1"></i> View
+                            </button>
+                        </div>
+                    `;
+                    
+                    cameraList.appendChild(cameraElement);
+                });
+                
+                // Add stereo vision controls if there are multiple cameras
+                if (cameras.length >= 2) {
+                    const stereoControls = document.createElement('div');
+                    stereoControls.className = 'p-3 border border-gray rounded-lg bg-gray-50';
+                    stereoControls.innerHTML = `
+                        <div class="font-medium text-sm mb-2">Stereo Vision</div>
+                        <div class="flex space-x-2">
+                            <button class="btn-gray rounded-lg px-3 py-1 text-xs hover:bg-gray-300 transition-colors" onclick="startStereoVision()">
+                                <i class="fa fa-play mr-1"></i> Start
+                            </button>
+                            <button class="btn-gray rounded-lg px-3 py-1 text-xs hover:bg-gray-300 transition-colors" onclick="stopStereoVision()">
+                                <i class="fa fa-stop mr-1"></i> Stop
+                            </button>
+                        </div>
+                    `;
+                    
+                    cameraList.appendChild(stereoControls);
+                }
+            }, 1500);
+        }
+
+        // Toggle camera state
+        function toggleCamera(cameraId) {
+            showToast(`Camera ${cameraId} toggled`, 'info');
+            refreshCameraList();
         }
         
-        // Theme toggle
-        document.getElementById('toggleTheme').addEventListener('click', function() {
-            const body = document.body;
-            const isDark = body.classList.contains('dark');
+        // Get training progress from API
+        function getTrainingProgress() {
+            return fetch('/api/training/progress')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success' && data.data) {
+                        return data.data;
+                    } else {
+                        console.warn('Invalid training progress data:', data);
+                        return null;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching training progress:', error);
+                    return null;
+                });
+        }
+        
+        // Update training progress in UI
+        function updateTrainingProgress(progressData) {
+            if (!progressData) return;
             
-            if (isDark) {
-                body.classList.remove('dark');
-                body.style.backgroundColor = '#FFFFFF';
-                body.style.color = '#111111';
-                this.innerHTML = '<i class="fa fa-moon-o"></i>';
-            } else {
-                body.classList.add('dark');
-                body.style.backgroundColor = '#111111';
-                body.style.color = '#FFFFFF';
-                this.innerHTML = '<i class="fa fa-sun-o"></i>';
+            // Update model status with training progress
+            const modelConfig = getCurrentModelConfig();
+            
+            // Update the model that's currently being trained
+            if (progressData.model_id && modelConfig[progressData.model_id]) {
+                modelConfig[progressData.model_id].status = progressData.status === 'training' ? 'training' : 'online';
+                modelConfig[progressData.model_id].progress = progressData.progress || 0;
+                
+                // Add more details to the description if available
+                if (progressData.current_epoch && progressData.total_epochs) {
+                    modelConfig[progressData.model_id].description = `${modelConfig[progressData.model_id].description} | Epoch ${progressData.current_epoch}/${progressData.total_epochs}`;
+                }
+            }
+            
+            // Update UI
+            updateModelStatusUI(modelConfig);
+        }
+        
+        // Start periodic training progress updates
+        function startTrainingProgressUpdates() {
+            // Get initial progress
+            getTrainingProgress().then(progressData => {
+                updateTrainingProgress(progressData);
+            });
+            
+            // Set interval for periodic updates (every 5 seconds)
+            window.trainingProgressInterval = setInterval(() => {
+                getTrainingProgress().then(progressData => {
+                    updateTrainingProgress(progressData);
+                });
+            }, 5000);
+        }
+        
+        // Get current model configuration
+        function getCurrentModelConfig() {
+            // Initialize with default model data
+            const modelConfig = {
+                manager_model: {
+                    name: "Manager Model",
+                    description: "Core AI management system",
+                    status: "loading",
+                    progress: 0,
+                    type: "management"
+                },
+                language_model: {
+                    name: "Language Model",
+                    description: "Natural language processing",
+                    status: "loading",
+                    progress: 0,
+                    type: "language"
+                },
+                audio_model: {
+                    name: "Audio Model",
+                    description: "Audio processing and synthesis",
+                    status: "loading",
+                    progress: 0,
+                    type: "audio"
+                },
+                vision_model: {
+                    name: "Vision Model",
+                    description: "Image recognition and processing",
+                    status: "loading",
+                    progress: 0,
+                    type: "vision"
+                },
+                video_model: {
+                    name: "Video Model",
+                    description: "Video analysis and processing",
+                    status: "loading",
+                    progress: 0,
+                    type: "video"
+                },
+                spatial_model: {
+                    name: "Spatial Model",
+                    description: "3D spatial perception and mapping",
+                    status: "loading",
+                    progress: 0,
+                    type: "spatial"
+                },
+                sensor_model: {
+                    name: "Sensor Model",
+                    description: "Sensor data processing",
+                    status: "loading",
+                    progress: 0,
+                    type: "sensor"
+                },
+                control_model: {
+                    name: "Control Model",
+                    description: "Computer control system",
+                    status: "loading",
+                    progress: 0,
+                    type: "control"
+                },
+                actuator_model: {
+                    name: "Actuator Model",
+                    description: "Actuator and device control",
+                    status: "loading",
+                    progress: 0,
+                    type: "actuator"
+                },
+                knowledge_model: {
+                    name: "Knowledge Model",
+                    description: "Knowledge base and expert system",
+                    status: "loading",
+                    progress: 0,
+                    type: "knowledge"
+                },
+                code_model: {
+                    name: "Code Model",
+                    description: "Code generation and optimization",
+                    status: "loading",
+                    progress: 0,
+                    type: "code"
+                }
+            };
+            
+            return modelConfig;
+        }
+
+        // View camera feed
+        function viewCamera(cameraId) {
+            showToast(`Opening camera ${cameraId} feed`, 'info');
+        }
+
+        // Start stereo vision
+        function startStereoVision() {
+            showToast('Stereo vision started', 'success');
+        }
+
+        // Stop stereo vision
+        function stopStereoVision() {
+            showToast('Stereo vision stopped', 'info');
+        }
+
+        // Show toast message
+        function showToast(message, type = 'info', duration = 3000) {
+            const toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) {
+                console.error('Toast container not found');
+                return;
+            }
+            
+            const toastId = 'toast-' + Date.now();
+            
+            // Set icon and color based on type
+            let iconClass = 'fa-info-circle';
+            let bgColor = 'bg-gray';
+            let textColor = 'text-white';
+            
+            switch(type) {
+                case 'success':
+                    iconClass = 'fa-check-circle';
+                    bgColor = 'bg-green';
+                    break;
+                case 'error':
+                    iconClass = 'fa-exclamation-circle';
+                    bgColor = 'bg-red';
+                    break;
+                case 'warning':
+                    iconClass = 'fa-exclamation-triangle';
+                    bgColor = 'bg-yellow';
+                    textColor = 'text-gray';
+                    break;
+            }
+            
+            const toastHtml = `
+                <div class="toast" id="${toastId}" role="alert" aria-live="assertive" aria-atomic="true" data-delay="${duration}">
+                    <div class="toast-header ${bgColor} ${textColor}">
+                        <i class="fa ${iconClass} mr-2"></i>
+                        <strong class="mr-auto">Notification</strong>
+                        <button type="button" class="ml-2 mb-1 close text-white" data-dismiss="toast" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+            
+            const toast = new bootstrap.Toast(document.getElementById(toastId));
+            toast.show();
+            
+            // Remove toast after duration
+            setTimeout(() => {
+                const toastElement = document.getElementById(toastId);
+                if (toastElement) {
+                    toastElement.remove();
+                }
+            }, duration + 100);
+        }
+
+        // Theme toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleThemeButton = document.getElementById('toggleTheme');
+            if (!toggleThemeButton) {
+                return;
+            }
+            
+            toggleThemeButton.addEventListener('click', function() {
+                const html = document.documentElement;
+                const isDark = html.classList.toggle('dark-mode');
+                
+                // Update button icon
+                if (isDark) {
+                    toggleThemeButton.innerHTML = '<i class="fa fa-sun-o"></i>';
+                    showToast('Dark mode enabled', 'info');
+                } else {
+                    toggleThemeButton.innerHTML = '<i class="fa fa-moon-o"></i>';
+                    showToast('Light mode enabled', 'info');
+                }
+                
+                // Store preference
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            });
+            
+            // Load stored preference
+            const storedTheme = localStorage.getItem('theme');
+            const html = document.documentElement;
+            
+            if (storedTheme === 'dark') {
+                html.classList.add('dark-mode');
+                if (toggleThemeButton) {
+                    toggleThemeButton.innerHTML = '<i class="fa fa-sun-o"></i>';
+                }
+            }
+        });
+        
+        // Clean up resources when page is unloaded
+        window.addEventListener('beforeunload', function() {
+            // Clear training progress update interval
+            if (window.trainingProgressInterval) {
+                clearInterval(window.trainingProgressInterval);
+                window.trainingProgressInterval = null;
             }
         });
     </script>
-</body>
-</html>
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
+{% endblock %}

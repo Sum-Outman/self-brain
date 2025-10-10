@@ -17,7 +17,7 @@ logging.basicConfig(
 logger = logging.getLogger("SelfBrainTrainingAPITest")
 
 # API Base URL
-API_BASE_URL = "http://localhost:5001/api/training"
+API_BASE_URL = "http://localhost:5000/api/training"
 
 # Test timeout (seconds)
 TEST_TIMEOUT = 30

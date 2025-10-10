@@ -5,7 +5,7 @@
 ### 1. System Status
 - ✅ All 10 sub-models (A-K) operational
 - ✅ Management service running on http://localhost:5015
-- ✅ Web interface running on http://localhost:5000
+- ✅ Web interface running on http://localhost:8080
 - ✅ All API endpoints responding correctly
 - ✅ Memory usage: 32-64MB, CPU: 1-2%
 
@@ -84,7 +84,7 @@ git push origin main
 
 | Service | URL | Description |
 |---------|-----|-------------|
-| Web Interface | http://localhost:5000 | Main user interface |
+| Web Interface | http://localhost:8080 | Main user interface |
 | Management API | http://localhost:5015 | System management |
 | Health Check | http://localhost:5015/api/health | System status |
 | Statistics | http://localhost:5015/api/stats | Performance metrics |

@@ -1,7 +1,6 @@
-<<<<<<< HEAD
-{% extends "base_monochrome.html" %}
+{% extends "base.html" %}
 
-{% block title %}System Status - Self Brain AGI{% endblock %}
+{% block title %}System Status - Self Brain{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -12,11 +11,12 @@
         font-weight: bold;
     }
     .card {
-        border: 1px solid #dee2e6;
+        border: 1px solid #dddddd;
+        border-radius: 4px;
     }
     .card-header {
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #dee2e6;
+        background-color: #f5f5f5;
+        border-bottom: 1px solid #dddddd;
     }
 </style>
 {% endblock %}
@@ -33,19 +33,6 @@
             </div>
         </div>
     </div>
-=======
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Status - Self Brain AGI</title>
-    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
-    <script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/chart.min.js') }}"></script>
-</head>
-<body>
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
@@ -53,14 +40,14 @@
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link" href="/dashboard">
-                                <i class="bi bi-speedometer2"></i> Dashboard
+                            <a class="nav-link" href="/">
+                                <i class="bi bi-house-door"></i> Home
                             </a>
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link" href="/knowledge">
-                                <i class="bi bi-book"></i> Knowledge Base
+                            <a class="nav-link" href="/knowledge_manage">
+                                <i class="bi bi-database"></i> Knowledge
                             </a>
                         </li>
                         <li class="nav-item">
@@ -203,18 +190,12 @@
                             </div>
                         </div>
                     </div>
-<<<<<<< HEAD
-</div>
-
-<script>
-=======
                 </div>
             </main>
         </div>
     </div>
 
     <script>
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         // Initialize Socket.IO connection
         const socket = io(window.location.origin, {
             transports: ['polling', 'websocket'],
@@ -369,10 +350,4 @@
         
         // Initial system status request
         socket.emit('request_status');
-<<<<<<< HEAD
-</script>
-=======
     </script>
-</body>
-</html>
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13

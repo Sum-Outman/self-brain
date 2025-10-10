@@ -227,15 +227,15 @@ if __name__ == '__main__':
     os.makedirs('uploads', exist_ok=True)
     
     logger.info("Starting Self Brain AGI System - Simple Version")
-    logger.info("Visit http://localhost:5000 for main page")
+    logger.info("Visit http://localhost:8080 for main page")
     logger.info("Available endpoints:")
-    logger.info("  - Main Interface: http://localhost:5000")
-    logger.info("  - Training Control: http://localhost:5000/training")
+    logger.info("  - Main Interface: http://localhost:8080")
+    logger.info("  - Training Control: http://localhost:8080/training")
     
     # Run Flask application with Socket.IO
     socketio.run(app, 
                 host='0.0.0.0', 
-                port=5000,
+                port=8080,
                 debug=True, 
                 allow_unsafe_werkzeug=True,
                 use_reloader=False)

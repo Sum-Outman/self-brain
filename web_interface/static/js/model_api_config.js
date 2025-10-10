@@ -431,5 +431,4 @@ class ModelAPIConfig {
 // Create a global instance for easy access
 window.ModelAPIConfig = new ModelAPIConfig();
 
-// Export the class for ES6 modules
-export default ModelAPIConfig;
+// No export needed as we've created a global instance

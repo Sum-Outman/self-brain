@@ -31,10 +31,10 @@ if not exist temp mkdir temp
 REM 启动训练控制服务
 echo 启动增强版音频训练控制服务...
 echo Starting Enhanced Audio Training Control Service...
-echo 服务将在 http://localhost:5006 运行
-echo Service will run at http://localhost:5006
-echo API文档: http://localhost:5006/api/training/status
-echo API Documentation: http://localhost:5006/api/training/status
+echo 服务将在 http://localhost:5002 运行
+echo Service will run at http://localhost:5002
+echo API文档: http://localhost:5002/api/training/status
+echo API Documentation: http://localhost:5002/api/training/status
 echo.
 
 python enhanced_train_control.py

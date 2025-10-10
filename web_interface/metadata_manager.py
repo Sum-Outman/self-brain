@@ -8,11 +8,8 @@ import mimetypes
 class KnowledgeMetadataManager:
     def __init__(self, storage_path):
         self.storage_path = Path(storage_path)
-<<<<<<< HEAD
         # 先确保storage_path存在
         self.storage_path.mkdir(exist_ok=True)
-=======
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         self.metadata_dir = self.storage_path / "metadata"
         self.metadata_dir.mkdir(exist_ok=True)
     

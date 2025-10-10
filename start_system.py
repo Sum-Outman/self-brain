@@ -15,7 +15,6 @@ import webbrowser
 from datetime import datetime
 from pathlib import Path
 import signal
-<<<<<<< HEAD
 import traceback
 
 # Debug flag and additional logging
@@ -37,15 +36,6 @@ def debug_print(msg):
     if DEBUG_MODE:
         print("[DEBUG] %s - %s" % (time.strftime('%H:%M:%S'), msg))
         logger.debug(msg)
-=======
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger("SelfBrainSystem")
 
 # Define base directory as absolute path
 BASE_DIR = Path(__file__).parent.absolute()
@@ -112,14 +102,10 @@ def load_config(config_path="config/system_config.yaml"):
                         "G_sensor": True,
                         "H_computer_control": True,
                         "I_knowledge": True,
-<<<<<<< HEAD
                         "J_motion": {
                 "enabled": True,
                 "priority": 1
             },
-=======
-                        "J_motion": True,
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                         "K_programming": True
                     }
                 }
@@ -396,13 +382,8 @@ def start_submodel(model_name, port):
         # Change to model directory
         os.chdir(model_dir)
         
-<<<<<<< HEAD
         # Start the model service with explicit port parameter
         cmd = [sys.executable, "app.py", "--port", str(port)]
-=======
-        # Start the model service - use the existing Flask app
-        cmd = [sys.executable, "app.py"]
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -685,21 +666,13 @@ def start_web_interface():
         return False
 
 # Start manager model
-<<<<<<< HEAD
-
-=======
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 def start_manager_model():
     """Start manager model service"""
     logger.info("Starting manager model...")
     manager_dir = BASE_DIR / "manager_model"
     config = load_config()
-<<<<<<< HEAD
     # Use the manager port (5000) instead of manager_api port (5015)
     manager_port = config.get('ports', {}).get('manager', 5000)
-=======
-    manager_port = config.get('ports', {}).get('manager_api', 5015)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     
     # Skip if already running
     if "manager_model" in processes:
@@ -716,27 +689,12 @@ def start_manager_model():
         logger.warning("Manager model directory not found, creating...")
         manager_dir.mkdir(parents=True, exist_ok=True)
         
-<<<<<<< HEAD
         # Create basic app.py file - Using Flask framework compatible with existing code
         app_file = manager_dir / "app.py"
         with open(app_file, 'w', encoding='utf-8') as f:
             content = '''
 from flask import Flask, request, jsonify
 from werkzeug.exceptions import HTTPException
-=======
-        # Create basic app.py file
-        app_file = manager_dir / "app.py"
-        with open(app_file, 'w', encoding='utf-8') as f:
-            content = '''
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
-import os
-import json
-import logging
-import time
-from datetime import datetime
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 # Configure logging
 logging.basicConfig(
@@ -744,108 +702,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 <<<<<<< HEAD
-logger = logging.getLogger('A_Management_Model')
-
-# Application initialization
-app = Flask(__name__)
-app.config['JSON_AS_ASCII'] = False
-
-# Simple login authentication decorator
-def login_required(f):
-    """Decorator to verify if user is logged in
-    In production, replace with more secure authentication mechanism
-    """
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        # Check if authentication is enabled (read from config or use default)
-        auth_enabled = False
-        
-        if not auth_enabled:
-            return f(*args, **kwargs)
-        
-        # Simple token-based authentication
-        token = request.headers.get('Authorization')
-        if not token or not token.startswith('Bearer '):
-            return jsonify({"error": "Unauthorized access"}), 401
-            
-        # In a real system, validate the token against a database or authentication service
-        valid_tokens = ["test_token"]
-        if token[7:] not in valid_tokens:
-            return jsonify({"error": "Invalid token"}), 401
-        
-        return f(*args, **kwargs)
-    return decorated_function
-
-# ManagementModel class with proper initialization parameters
-class ManagementModel:
-    """
-    Main management model for Self Brain system
-    Manages all sub-models and coordinates system operations
-    """
-    def __init__(self, submodel_registry=None):
-        # Initialize submodel registry
-        self.submodel_registry = submodel_registry or {}
-        
-        # System information
-        self.system_name = "Self Brain"
-        self.version = "1.0.0"
-        self.team_email = "silencecrowtom@qq.com"
-        
-        # System status
-        self.system_status = "online"
-        self.last_health_check = datetime.now()
-        
-        # Initialize request queue and history
-        self.request_queue = deque(maxlen=100)
-        self.request_history = []
-        
-        # Initialize emotion engine
-        self.emotion_engine = None
-        
-        logger.info("Manager model initialized successfully")
-    
-    def process_user_input(self, user_input, context=None):
-        """Process user input and generate response"""
-        # This is a placeholder implementation
-        # In a real system, this would analyze the input and coordinate with appropriate submodels
-        
-        # Simple echo response for testing
-        response = {
-            "status": "success",
-            "message": f"Received: {user_input}",
-            "context": context,
-            "timestamp": datetime.now().isoformat()
-        }
-        
-        # Log the request
-        self.log_request(user_input, response)
-        
-        return response
-    
-    def log_request(self, request_data, response_data):
-        """Log request and response data"""
-        request_info = {
-            "request_id": str(uuid.uuid4()),
-            "timestamp": datetime.now().isoformat(),
-            "request_data": request_data,
-            "response_data": response_data
-        }
-        
-        self.request_queue.append(request_info)
-        self.request_history.append(request_info)
-=======
 logger = logging.getLogger("ManagerModel")
-
-app = FastAPI(title="Self Brain Manager API")
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 class ManagerModel:
     """
@@ -859,7 +716,6 @@ class ManagerModel:
         self.models = {}
         self.system_status = "online"
         logger.info("Manager model initialized")
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     
     def get_system_info(self):
         """Get system information"""
@@ -868,110 +724,12 @@ class ManagerModel:
             "version": self.version,
             "team_email": self.team_email,
             "status": self.system_status,
-<<<<<<< HEAD
-            "last_health_check": self.last_health_check.isoformat(),
-            "timestamp": datetime.now().isoformat(),
-            "active_models": len(self.submodel_registry)
-        }
-
-# Global manager model instance
-manager_model = None
-
-# Initialize manager model
-def initialize_management_model():
-    """Initialize the management model"""
-    global manager_model
-    
-    try:
-        # Create empty submodel registry
-        submodel_registry = {}
-        
-        # Initialize the management model
-        manager_model = ManagementModel(submodel_registry)
-        
-        logger.info("Management model initialized successfully")
-        return True
-    except Exception as e:
-        logger.error(f"Failed to initialize management model: {str(e)}")
-        return False
-
-# Routes
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    """Health check endpoint"""
-    return jsonify({
-        "status": "healthy",
-        "service": "Manager Model",
-        "port": os.environ.get("PORT", "5000"),
-        "timestamp": datetime.now().isoformat()
-    })
-
-@app.route('/api/system/info', methods=['GET'])
-def system_info():
-    """Get system information"""
-    if manager_model:
-        return jsonify(manager_model.get_system_info())
-    else:
-        return jsonify({"error": "Manager model not initialized"}), 503
-
-@app.route('/api/chat', methods=['POST'])
-def chat():
-    """Chat endpoint for user interaction"""
-    if not manager_model:
-        return jsonify({"error": "Manager model not initialized"}), 503
-    
-    try:
-        data = request.json
-        user_input = data.get('text', '')
-        context = data.get('context', None)
-        
-        if not user_input:
-            return jsonify({"error": "No text provided"}), 400
-        
-        response = manager_model.process_user_input(user_input, context)
-        return jsonify(response)
-    except Exception as e:
-        logger.error(f"Error processing chat request: {str(e)}")
-        return jsonify({"error": "Internal server error"}), 500
-
-# Main entry point
-if __name__ == '__main__':
-    # Initialize management model
-    initialize_management_model()
-    
-    # Get port from environment or use default
-    port = int(os.environ.get('PORT', 5000))
-    
-    # Start the Flask server
-    logger.info(f"Starting Manager Model service on port {port}")
-    app.run(host='0.0.0.0', port=port, debug=False)
-=======
             "timestamp": datetime.now().isoformat()
         }
 
 # Create manager instance
 manager = ManagerModel()
 
-@app.get("/api/health")
-def health():
-    """Health check endpoint"""
-    return {
-        "status": "healthy", 
-        "service": "Manager Model", 
-        "port": os.environ.get("PORT"),
-        "timestamp": datetime.now().isoformat()
-    }
-
-@app.get("/api/system/info")
-def system_info():
-    """Get system information"""
-    return manager.get_system_info()
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5015))
-    logger.info(f"Starting Manager Model service on port {port}")
-    uvicorn.run(app, host="0.0.0.0", port=port)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 '''
             f.write(content)
     
@@ -1020,10 +778,7 @@ def start_all_models():
     
     # Map model names to ports based on system_config.yaml
     model_ports = {
-<<<<<<< HEAD
         "A_management": ports.get('manager', 5000),
-=======
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         "B_language": ports.get('language', 5001),
         "C_audio": ports.get('audio', 5002),
         "D_image": ports.get('image', 5003),
@@ -1037,17 +792,12 @@ def start_all_models():
     }
     
     # Start each model
-<<<<<<< HEAD
     # Start each model if enabled in config
     for model_name, port in model_ports.items():
         if local_models.get(model_name, False):
             start_submodel(model_name, port)
         else:
             logger.info(f"Skipping {model_name} as it's disabled in config")
-=======
-    for model_name, port in model_ports.items():
-        start_submodel(model_name, port)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     
     logger.info("All submodels startup processes initiated")
 
@@ -1190,7 +940,6 @@ def init_training_directories():
 # Main function
 def main():
     """主启动函数 | Main startup function"""
-<<<<<<< HEAD
     try:
         debug_print("=== SYSTEM STARTUP INITIATED ===")
         
@@ -1207,20 +956,10 @@ def main():
         # Check and install dependencies
         debug_print("3. Installing dependencies...")
         try:
-            requirements_file = BASE_DIR / "requirements.txt"
-            if requirements_file.exists():
-                debug_print(f"   - Found requirements.txt: {requirements_file}")
-                subprocess.check_call(
-                    [sys.executable, '-m', 'pip', 'install', '-r', str(requirements_file)],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    encoding='utf-8'
-                )
-                debug_print("   - Dependencies installed successfully")
-            else:
-                debug_print("   - requirements.txt not found, skipping dependency installation")
+            # Dependencies already installed manually, skipping installation step
+            debug_print("   - Dependencies already installed, skipping installation step")
         except Exception as e:
-            debug_print(f"   - Error during dependency installation: {str(e)}")
+            debug_print(f"   - Error during dependency check: {str(e)}")
         
         # Start all submodels
         debug_print("4. Starting all submodels...")
@@ -1314,7 +1053,6 @@ def main():
         debug_print("Stopping all services...")
         stop_all_services()
         debug_print("All services stopped, exiting.")
-=======
     logger.info("===== Self Brain AGI System Startup =====")
     
     # Initialize the system
@@ -1326,7 +1064,8 @@ def main():
     # Check and install dependencies
     logger.info("Checking and installing dependencies...")
     try:
-        requirements_file = BASE_DIR / "requirements.txt"
+        # Use Python 3.6 compatible requirements file
+        requirements_file = BASE_DIR / "requirements_core.txt"
         if requirements_file.exists():
             subprocess.check_call(
                 [sys.executable, '-m', 'pip', 'install', '-r', str(requirements_file)],
@@ -1336,7 +1075,7 @@ def main():
             )
             logger.info("Dependencies installed successfully")
         else:
-            logger.warning("requirements.txt not found, skipping dependency installation")
+            logger.warning(f"{requirements_file.name} not found, skipping dependency installation")
     except Exception as e:
         logger.error(f"Error during dependency installation: {str(e)}")
     
@@ -1405,7 +1144,6 @@ def main():
         logger.info("\nSystem shutting down...")
     finally:
         stop_all_services()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 if __name__ == '__main__':
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))

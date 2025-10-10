@@ -33,7 +33,7 @@ def test_endpoint():
     time.sleep(2)
     try:
         print("\n=== Testing Endpoint ===")
-        response = requests.post('http://localhost:5000/api/knowledge/optimize', timeout=5)
+        response = requests.post('http://localhost:5009/api/knowledge/optimize', timeout=5)
         print(f"Status: {response.status_code}")
         print(f"Response: {response.text[:200]}...")
     except Exception as e:
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     
     # Start a test server
     print("\n=== Starting Test Server ===")
-    threading.Thread(target=lambda: app.run(host='127.0.0.1', port=5002, debug=False), daemon=True).start()
+    threading.Thread(target=lambda: app.run(host='127.0.0.1', port=8888, debug=False), daemon=True).start()
     
     # Test the endpoint
     test_endpoint()

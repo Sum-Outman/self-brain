@@ -222,11 +222,11 @@
 - **所有11个模型**: 本地部署，已启用
 - **健康检查**: 自动运行中
 - **监控服务**: 实时性能监控激活
-- **Web界面**: 可通过http://localhost:5000访问
+- **Web界面**: 可通过http://localhost:8080访问
 
 ### 访问地址
-- **主系统**: http://localhost:5000
-- **管理模型API**: http://localhost:5001
+- **主系统**: http://localhost:5000 (管理模型)
+- **管理模型API**: http://localhost:5015
 - **各子模型**: http://localhost:8001-8010
 
 ## 总结

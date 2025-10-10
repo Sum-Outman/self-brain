@@ -3,7 +3,7 @@
 
 class AudioTrainingControl {
     constructor() {
-        this.apiBaseUrl = 'http://localhost:5006/api';
+        this.apiBaseUrl = 'http://localhost:5002/api';
         this.isTraining = false;
         this.currentEpoch = 0;
         this.totalEpochs = 0;

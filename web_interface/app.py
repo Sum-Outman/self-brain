@@ -30,22 +30,15 @@ import subprocess
 import uuid
 import random
 import yaml
-<<<<<<< HEAD
 import requests
-=======
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-<<<<<<< HEAD
 # Configure logging
 logging.basicConfig(level=logging.INFO,
                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("WebInterface")
-
-=======
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 # Import training control panel and data bus
 try:
     import psutil
@@ -53,13 +46,12 @@ try:
 except ImportError:
     psutil = None
     psutil_available = False
-<<<<<<< HEAD
     logger.warning("psutil not available - system monitoring features will be limited")
 
 # Import training controller with enhanced error handling
 try:
-    from manager_model.training_control import TrainingController, get_training_controller
-    training_controller = get_training_controller()
+    from training_manager.advanced_train_control import TrainingController, TrainingMode
+    training_controller = TrainingController()
     logger.info("Training controller initialized successfully")
 except Exception as e:
     logger.error(f"Failed to initialize training controller: {str(e)}")
@@ -169,6 +161,8 @@ try:
     
     # Initialize Device Communication Manager
     device_manager = get_device_manager()
+    if hasattr(device_manager, 'set_camera_manager'):
+        device_manager.set_camera_manager(camera_manager)
     if hasattr(device_manager, 'start'):
         device_manager.start()
     logger.info("Device communication manager initialized successfully")
@@ -193,46 +187,6 @@ try:
 except Exception as e:
     logger.error(f"Failed to initialize knowledge self-learning API: {str(e)}")
     knowledge_self_learning_bp = None
-=======
-    # Don't use logger here as it's not defined yet - will log after logger initialization
-
-from training_manager.advanced_train_control import TrainingController, TrainingMode
-
-# Initialize training controller
-training_controller = TrainingController()
-
-# Import Camera Manager
-from camera_manager import get_camera_manager
-camera_manager = get_camera_manager()
-
-# Import real-time monitoring system
-
-# Import emotion engine
-from manager_model.emotion_engine import get_emotion_engine, EmotionEngine
-emotion_engine = get_emotion_engine()
-from web_interface.backend.enhanced_realtime_monitor import init_enhanced_realtime_monitor
-
-# Import model API manager
-from web_interface.backend.model_api_manager import get_model_api_manager
-model_api_manager = get_model_api_manager()
-
-# Import unified device communication module
-from unified_device_communication import device_bp
-from unified_device_communication import get_device_manager, init_device_communication, cleanup_device_communication
-
-# Initialize Device Communication Manager
-device_manager = get_device_manager()
-device_manager.set_camera_manager(camera_manager)
-device_manager.start()
-
-# Import knowledge self-learning API
-from web_interface.backend.knowledge_self_learning_api import knowledge_self_learning_bp
-
-# Configure logging
-logging.basicConfig(level=logging.INFO,
-                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger("WebInterface")
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 # Create Flask application
 app = Flask(__name__, 
@@ -251,7 +205,7 @@ print(f"App root path: {app.root_path}")
 @app.after_request
 def add_cors_headers(response):
     """Add CORS headers to all responses"""
-    response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', 'http://localhost:5000')
+    response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Cache-Control'
     response.headers['Access-Control-Allow-Credentials'] = 'true'
@@ -265,7 +219,7 @@ def handle_options():
     """Handle OPTIONS requests immediately"""
     if request.method == 'OPTIONS':
         response = make_response()
-        response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', 'http://localhost:5000')
+        response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
         response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Cache-Control'
         response.headers['Access-Control-Allow-Credentials'] = 'true'
@@ -299,7 +253,6 @@ CORS(app, resources={
 })
 
 # Register device communication blueprint
-<<<<<<< HEAD
 if device_bp is not None:
     app.register_blueprint(device_bp)
 else:
@@ -310,12 +263,6 @@ if knowledge_self_learning_bp is not None:
     app.register_blueprint(knowledge_self_learning_bp)
 else:
     logger.warning("No knowledge self-learning API blueprint available, skipping registration")
-=======
-app.register_blueprint(device_bp)
-
-# Register knowledge self-learning API blueprint
-app.register_blueprint(knowledge_self_learning_bp)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 # Create SocketIO instance with enhanced configuration for stability
 socketio = SocketIO(
@@ -380,15 +327,9 @@ def handle_status_request():
         
         # Get training sessions from training controller
         sessions = []
-<<<<<<< HEAD
         if training_controller and hasattr(training_controller, 'get_training_history'):
             try:
                 sessions = training_controller.get_training_history()
-=======
-        if training_control and hasattr(training_control, 'get_training_history'):
-            try:
-                sessions = training_control.get_training_history()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             except Exception as e:
                 logger.warning(f"Failed to get training history: {e}")
                 # Return actual error instead of empty sessions
@@ -438,12 +379,6 @@ def error_handler(e):
     logger.error(f"Socket.IO error: {e}")
     emit('error', {'message': str(e)})
 
-<<<<<<< HEAD
-=======
-# Create training control panel instance
-training_control = TrainingController()
-
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 # Initialize enhanced real-time monitoring system
 init_enhanced_realtime_monitor(app, socketio)
 
@@ -462,15 +397,9 @@ try:
         
         # Initialize actual model instances
         for model_id, config in model_configs.items():
-<<<<<<< HEAD
             if training_controller and hasattr(training_controller, 'load_model'):
                 try:
                     training_controller.load_model(model_id, config)
-=======
-            if training_control and hasattr(training_control, 'load_model'):
-                try:
-                    training_control.load_model(model_id, config)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                     logger.info(f"Successfully loaded model: {model_id}")
                 except Exception as e:
                     logger.error(f"Failed to load model {model_id}: {str(e)}")
@@ -489,14 +418,11 @@ if os.path.exists(registry_path):
 # Language resource loading function
 # Language dictionary functionality removed - all text uses English directly
 
-<<<<<<< HEAD
 # Socket.IO test page route
 @app.route('/socket_test')
 def socket_test():
     return render_template('socket_test.html')
 
-=======
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 # PeerJS server-side support
 connected_peers = {}
 peer_sessions = {}
@@ -854,24 +780,16 @@ def system_settings():
             if 'active' not in model_registry[model_id]:
                 model_registry[model_id]['active'] = True
         
-<<<<<<< HEAD
-        return render_template('settings_merged.html', 
-=======
         return render_template('system_settings.html', 
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
-                             model_registry=model_registry, 
-                             model_registry_json=json.dumps(model_registry),
-                             system_config=system_config)
+                               model_registry=model_registry, 
+                               model_registry_json=json.dumps(model_registry),
+                               system_config=system_config)
     except Exception as e:
         logger.error(f"Error loading system settings: {str(e)}")
-<<<<<<< HEAD
-        return render_template('settings_merged.html', 
-=======
         return render_template('system_settings.html', 
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
-                             model_registry={}, 
-                             model_registry_json='{}',
-                             system_config={})
+                               model_registry={}, 
+                               model_registry_json='{}',
+                               system_config={})
 
 @app.route('/external_api_settings')
 def external_api_settings():
@@ -888,14 +806,11 @@ def camera_management():
     """Camera management page"""
     return render_template('camera_management.html')
 
-<<<<<<< HEAD
 @app.route('/camera_management_en')
 def camera_management_en():
     """English Camera management page"""
     return render_template('camera_management_en.html')
 
-=======
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 @app.route('/device_communication')
 def device_communication_page():
     """Device communication page"""
@@ -1112,32 +1027,17 @@ def advanced_chat():
 @app.route('/knowledge_manage')
 def knowledge_manage():
     """Knowledge management page"""
-<<<<<<< HEAD
-    # 确保使用正确的模板文件
-    return render_template('knowledge_merged.html')
-=======
     return render_template('knowledge_manage_enhanced.html')
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 @app.route('/knowledge_optimize')
 def knowledge_optimize():
     """Knowledge database optimization page"""
-<<<<<<< HEAD
-    # 确保使用正确的模板文件
-    return render_template('knowledge_merged.html')
-=======
     return render_template('knowledge_optimize.html')
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 @app.route('/knowledge_import')
 def knowledge_import():
     """Knowledge import page"""
-<<<<<<< HEAD
-    # 确保使用正确的模板文件
-    return render_template('knowledge_merged.html')
-=======
     return render_template('knowledge_import.html')
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 @app.route('/model_details/<model_id>')
 def model_details(model_id):
@@ -1161,17 +1061,17 @@ def set_language(lang):
             # Try to notify each model to update language via HTTP request
             import requests
             model_ports = {
-                'A_management': 5001,
-                'B_language': 5002,
-                'C_audio': 5003,
-                'D_image': 5004,
-                'E_video': 5005,
-                'F_spatial': 5006,
-                'G_sensor': 5007,
-                'H_computer_control': 5008,
-                'I_knowledge': 5009,
-                'J_motion': 5010,
-                'K_programming': 5011
+                'A_management': 5000,
+                'B_language': 5001,
+                'C_audio': 5002,
+                'D_image': 5003,
+                'E_video': 5004,
+                'F_spatial': 5005,
+                'G_sensor': 5006,
+                'H_computer_control': 5007,
+                'I_knowledge': 5008,
+                'J_motion': 5009,
+                'K_programming': 5010
             }
             
             for model_name, port in model_ports.items():
@@ -1190,23 +1090,14 @@ def set_language(lang):
 @app.route('/knowledge')
 def knowledge_page():
     """Knowledge base main page"""
-<<<<<<< HEAD
-    return render_template('knowledge_merged.html')
-=======
     return render_template('knowledge_manage.html')
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 
 
 @app.route('/knowledge_base')
 def knowledge_base_redirect():
-<<<<<<< HEAD
-    """Redirect /knowledge_base to /knowledge"""
-    return redirect('/knowledge', code=301)
-=======
     """Redirect /knowledge_base to /knowledge_manage"""
     return redirect('/knowledge_manage', code=301)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 @app.route('/training_center')
 def training_center_redirect():
@@ -1228,11 +1119,7 @@ def get_system_status():
     """Get system status API - REAL IMPLEMENTATION"""
     try:
         # Get real system health status
-<<<<<<< HEAD
         health_data = training_controller.get_system_health()
-=======
-        health_data = training_control.get_system_health()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
         # Get real model count from registry
         total_models = len(model_registry)
@@ -1271,15 +1158,13 @@ def get_system_status():
             'system': {'version': '1.0.0', 'uptime': 'Unknown'}
         })
 
-<<<<<<< HEAD
-=======
 @app.route('/api/system/status')
 def get_system_status_v2():
     """Get system status API - v2 endpoint for frontend compatibility"""
     try:
         # Get real system status from training controller
-        if training_control and hasattr(training_control, 'get_system_health'):
-            health_data = training_control.get_system_health()
+        if training_controller and hasattr(training_controller, 'get_system_health'):
+            health_data = training_controller.get_system_health()
             return jsonify({
                 'status': 'running',
                 'message': 'System operational',
@@ -1299,7 +1184,6 @@ def get_system_status_v2():
             'status': 'error',
             'message': str(e)
         })
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 @app.route('/api/system/version')
 def get_system_version():
@@ -1328,11 +1212,7 @@ def get_status_simple():
                            if model_data.get('active', True)])
         
         # Get real system health status
-<<<<<<< HEAD
         health_data = training_controller.get_system_health()
-=======
-        health_data = training_control.get_system_health()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
         return jsonify({
             'status': 'running',
@@ -1353,19 +1233,11 @@ def get_status_simple():
 def get_training_status():
     """Get training status API endpoint"""
     try:
-<<<<<<< HEAD
         # Get training sessions from training_controller - handle case when training_controller is None
         sessions = []
         if training_controller and hasattr(training_controller, 'get_training_history'):
             try:
                 sessions = training_controller.get_training_history()
-=======
-        # Get training sessions from training_control - handle case when training_control is None
-        sessions = []
-        if training_control and hasattr(training_control, 'get_training_history'):
-            try:
-                sessions = training_control.get_training_history()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             except Exception as e:
                 logger.warning(f"Failed to get training history: {e}")
                 sessions = []
@@ -1458,11 +1330,7 @@ def get_training_status():
 def get_models():
     """Get models list API"""
     try:
-<<<<<<< HEAD
         models_dict = training_controller.get_model_registry()
-=======
-        models_dict = training_control.get_model_registry()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         # Convert model dict to array format
         models_array = []
         for model_id, model_data in models_dict.items():
@@ -1539,11 +1407,7 @@ def upload_chat_file():
 def get_training_sessions():
     """Get training sessions list API"""
     try:
-<<<<<<< HEAD
         sessions = training_controller.get_training_history()
-=======
-        sessions = training_control.get_training_history()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         return jsonify({'status': 'success', 'sessions': sessions})
     except Exception as e:
         logger.error(f"Failed to get training sessions: {str(e)}")
@@ -1555,15 +1419,9 @@ def start_training():
     try:
         print("=== DEBUG: /api/training/start endpoint called ===")
         
-<<<<<<< HEAD
         # Check if training_controller is initialized
         if training_controller is None:
             print("DEBUG: Training controller is None")
-=======
-        # Check if training_control is initialized
-        if training_control is None:
-            print("DEBUG: Training control is None")
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             return jsonify({'status': 'error', 'message': 'Training controller not initialized'}), 500
         
         data = request.get_json()
@@ -1602,17 +1460,10 @@ def start_training():
             'compute_device': data.get('compute_device', 'auto')
         }
         
-<<<<<<< HEAD
         print(f"DEBUG: Calling training_controller.start_training with: {model_ids}, {mode}, {training_config}")
         
         # Call the training controller
         result = training_controller.start_training(model_ids, mode, training_config)
-=======
-        print(f"DEBUG: Calling training_control.start_training with: {model_ids}, {mode}, {training_config}")
-        
-        # Call the training controller
-        result = training_control.start_training(model_ids, mode, training_config)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
         print(f"DEBUG: Training controller returned: {result}")
         
@@ -1642,11 +1493,7 @@ def start_training():
 def stop_training(session_id):
     """Stop training API"""
     try:
-<<<<<<< HEAD
         success = training_controller.stop_training(session_id)
-=======
-        success = training_control.stop_training(session_id)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if success:
             return jsonify({'status': 'success'})
         else:
@@ -1667,11 +1514,7 @@ def toggle_model_status(model_id):
             return jsonify({'status': 'error', 'message': 'Invalid status value'})
         
         # Call training controller to update model status
-<<<<<<< HEAD
         success = training_controller.update_model_status(model_id, new_status)
-=======
-        success = training_control.update_model_status(model_id, new_status)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
         if success:
             return jsonify({'status': 'success', 'message': f'Model {model_id} status updated to {new_status}'})
@@ -1685,11 +1528,7 @@ def toggle_model_status(model_id):
 def start_model(model_id):
     """Start model API"""
     try:
-<<<<<<< HEAD
         success = training_controller.start_model_service(model_id)
-=======
-        success = training_control.start_model_service(model_id)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if success:
             return jsonify({'status': 'success', 'message': f'Model {model_id} started successfully'})
         else:
@@ -1702,11 +1541,7 @@ def start_model(model_id):
 def stop_model(model_id):
     """Stop model API"""
     try:
-<<<<<<< HEAD
         success = training_controller.stop_model_service(model_id)
-=======
-        success = training_control.stop_model_service(model_id)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if success:
             return jsonify({'status': 'success', 'message': f'Model {model_id} stopped successfully'})
         else:
@@ -1720,20 +1555,12 @@ def restart_model(model_id):
     """Restart model API"""
     try:
         # First stop the model
-<<<<<<< HEAD
         stop_success = training_controller.stop_model_service(model_id)
-=======
-        stop_success = training_control.stop_model_service(model_id)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if not stop_success:
             return jsonify({'status': 'error', 'message': f'Failed to stop model {model_id} during restart'})
         
         # Then start the model
-<<<<<<< HEAD
         start_success = training_controller.start_model_service(model_id)
-=======
-        start_success = training_control.start_model_service(model_id)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if start_success:
             return jsonify({'status': 'success', 'message': f'Model {model_id} restarted successfully'})
         else:
@@ -1746,11 +1573,7 @@ def restart_model(model_id):
 def pause_training(session_id):
     """Pause training API"""
     try:
-<<<<<<< HEAD
         success = training_controller.pause_training(session_id)
-=======
-        success = training_control.pause_training(session_id)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if success:
             return jsonify({'status': 'success'})
         else:
@@ -1763,11 +1586,7 @@ def pause_training(session_id):
 def resume_training(session_id):
     """Resume training API"""
     try:
-<<<<<<< HEAD
         success = training_controller.resume_training(session_id)
-=======
-        success = training_control.resume_training(session_id)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if success:
             return jsonify({'status': 'success'})
         else:
@@ -1776,16 +1595,25 @@ def resume_training(session_id):
         logger.error(f"Failed to resume training: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
 
+@app.route('/api/training/delete/<session_id>', methods=['DELETE'])
+def delete_training_session(session_id):
+    """Delete training session API"""
+    try:
+        success = training_controller.delete_training_session(session_id)
+        if success:
+            return jsonify({'status': 'success', 'message': 'Session deleted successfully'})
+        else:
+            return jsonify({'status': 'error', 'message': 'Failed to delete session'})
+    except Exception as e:
+        logger.error(f"Failed to delete training session: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)})
+
 @app.route('/api/model/test/<model_id>')
 def test_model_connection(model_id):
     """Test model connection API"""
     try:
         # Get model configuration
-<<<<<<< HEAD
         model_config = training_controller.get_model_configuration(model_id)
-=======
-        model_config = training_control.get_model_configuration(model_id)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         return jsonify({'status': 'success', 'model': model_config})
     except Exception as e:
         logger.error(f"Failed to test model connection: {str(e)}")
@@ -1990,11 +1818,7 @@ def test_model_api_connection(model_id):
             return jsonify({'status': 'error', 'message': 'Missing required parameters'})
         
         # Get model information to verify it exists
-<<<<<<< HEAD
         model_config = training_controller.get_model_configuration(model_id)
-=======
-        model_config = training_control.get_model_configuration(model_id)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if not model_config:
             return jsonify({'status': 'error', 'message': f'Model {model_id} not found'})
         
@@ -2246,11 +2070,7 @@ def switch_model_to_external(model_id):
             return jsonify({'status': 'error', 'message': 'Missing required API configuration parameters'})
         
         # Get existing model configuration
-<<<<<<< HEAD
         model_config = training_controller.get_model_configuration(model_id)
-=======
-        model_config = training_control.get_model_configuration(model_id)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if not model_config:
             return jsonify({'status': 'error', 'message': 'Model not found'})
         
@@ -2262,11 +2082,7 @@ def switch_model_to_external(model_id):
         }
         
         # Update model configuration
-<<<<<<< HEAD
         training_controller.update_model_configuration(model_id, updated_config)
-=======
-        training_control.update_model_configuration(model_id, updated_config)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
         # Switch to external model in the model registry
         try:
@@ -2279,13 +2095,8 @@ def switch_model_to_external(model_id):
             
             if success:
                 # Restart the model service with new configuration
-<<<<<<< HEAD
                 training_controller.stop_model_service(model_id)
                 training_controller.start_model_service(model_id)
-=======
-                training_control.stop_model_service(model_id)
-                training_control.start_model_service(model_id)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 
                 logger.info(f"Model {model_id} successfully switched to external API")
                 return jsonify({
@@ -2302,11 +2113,7 @@ def switch_model_to_external(model_id):
                 original_config = {**model_config, 'model_source': 'local'}
                 if 'external_api' in original_config:
                     del original_config['external_api']
-<<<<<<< HEAD
                 training_controller.update_model_configuration(model_id, original_config)
-=======
-                training_control.update_model_configuration(model_id, original_config)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             except:
                 pass
             return jsonify({'status': 'error', 'message': str(e)})
@@ -2320,11 +2127,7 @@ def switch_model_to_local(model_id):
     """Switch a model back to local implementation"""
     try:
         # Get existing model configuration
-<<<<<<< HEAD
         model_config = training_controller.get_model_configuration(model_id)
-=======
-        model_config = training_control.get_model_configuration(model_id)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if not model_config:
             return jsonify({'status': 'error', 'message': 'Model not found'})
         
@@ -2334,11 +2137,7 @@ def switch_model_to_local(model_id):
             del updated_config['external_api']
         
         # Update model configuration
-<<<<<<< HEAD
         training_controller.update_model_configuration(model_id, updated_config)
-=======
-        training_control.update_model_configuration(model_id, updated_config)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
         # Switch to local model in the model registry
         try:
@@ -2348,13 +2147,8 @@ def switch_model_to_local(model_id):
             
             if success:
                 # Restart the model service with new configuration
-<<<<<<< HEAD
                 training_controller.stop_model_service(model_id)
                 training_controller.start_model_service(model_id)
-=======
-                training_control.stop_model_service(model_id)
-                training_control.start_model_service(model_id)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 
                 logger.info(f"Model {model_id} successfully switched back to local implementation")
                 return jsonify({
@@ -2369,11 +2163,7 @@ def switch_model_to_local(model_id):
             # Try to revert the configuration
             try:
                 original_config = {**model_config, 'model_source': 'external'}
-<<<<<<< HEAD
                 training_controller.update_model_configuration(model_id, original_config)
-=======
-                training_control.update_model_configuration(model_id, original_config)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             except:
                 pass
             return jsonify({'status': 'error', 'message': str(e)})
@@ -2387,11 +2177,7 @@ def get_system_resources():
     """Get system resources API"""
     try:
         # Get system health status
-<<<<<<< HEAD
         health_data = training_controller.get_system_health()
-=======
-        health_data = training_control.get_system_health()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         return jsonify({'status': 'success', 'resources': health_data})
     except Exception as e:
         logger.error(f"Failed to get system resources: {str(e)}")
@@ -2454,11 +2240,7 @@ def model_api_config_switch_local(model_id):
 def get_all_models():
     """Get all models detailed info API"""
     try:
-<<<<<<< HEAD
         models_dict = training_controller.get_model_registry()
-=======
-        models_dict = training_control.get_model_registry()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         # Convert model dict to array format
         models_array = []
         for model_id, model_data in models_dict.items():
@@ -2486,11 +2268,7 @@ def get_all_models():
 def get_models_performance():
     """Get models performance data API"""
     try:
-<<<<<<< HEAD
         models_dict = training_controller.get_model_registry()
-=======
-        models_dict = training_control.get_model_registry()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         performance_data = []
         
         for model_id, model_data in models_dict.items():
@@ -2521,11 +2299,7 @@ def save_model_api_config(model_id):
             return jsonify({'status': 'error', 'message': 'Missing required API configuration parameters'})
         
         # Get existing model configuration
-<<<<<<< HEAD
         model_config = training_controller.get_model_configuration(model_id)
-=======
-        model_config = training_control.get_model_configuration(model_id)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if not model_config:
             return jsonify({'status': 'error', 'message': 'Model not found'})
         
@@ -2544,11 +2318,7 @@ def save_model_api_config(model_id):
         }
         
         # Update model configuration
-<<<<<<< HEAD
         success = training_controller.update_model_configuration(model_id, updated_config)
-=======
-        success = training_control.update_model_configuration(model_id, updated_config)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
         if success:
             # Switch to external model in the model registry
@@ -2562,13 +2332,8 @@ def save_model_api_config(model_id):
                 model_registry.switch_to_external(model_id, api_url, api_key)
                 
                 # Restart the model service with new configuration
-<<<<<<< HEAD
                 training_controller.stop_model_service(model_id)
                 training_controller.start_model_service(model_id)
-=======
-                training_control.stop_model_service(model_id)
-                training_control.start_model_service(model_id)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 
                 logger.info(f"Model {model_id} API configuration updated successfully")
                 return jsonify({
@@ -2590,11 +2355,7 @@ def save_model_api_config(model_id):
 def get_model_details(model_id):
     """Get specific model details API"""
     try:
-<<<<<<< HEAD
         model_config = training_controller.get_model_configuration(model_id)
-=======
-        model_config = training_control.get_model_configuration(model_id)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         return jsonify({'status': 'success', 'model': model_config})
     except Exception as e:
         logger.error(f"Failed to get model details: {str(e)}")
@@ -2624,11 +2385,7 @@ def update_model(model_id):
         
         # Get existing model configuration
         try:
-<<<<<<< HEAD
             model_config = training_controller.get_model_configuration(model_id)
-=======
-            model_config = training_control.get_model_configuration(model_id)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             if not model_config:
                 return jsonify({'status': 'error', 'message': 'Model not found'})
             
@@ -2636,11 +2393,7 @@ def update_model(model_id):
             updated_config = {**model_config, **config}
             
             # Update model configuration
-<<<<<<< HEAD
             training_controller.update_model_configuration(model_id, updated_config)
-=======
-            training_control.update_model_configuration(model_id, updated_config)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             
             logger.info(f"Model configuration updated successfully: {model_id}, config: {config}")
             return jsonify({
@@ -2650,11 +2403,7 @@ def update_model(model_id):
             })
             
         except AttributeError:
-<<<<<<< HEAD
             # If training_controller doesn't have update_model_configuration method, use file storage
-=======
-            # If training_control doesn't have update_model_configuration method, use file storage
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             import json
             import os
             
@@ -2702,11 +2451,7 @@ def update_model(model_id):
 def delete_model(model_id):
     """Delete model API"""
     try:
-<<<<<<< HEAD
         success = training_controller.delete_model(model_id)
-=======
-        success = training_control.delete_model(model_id)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if success:
             return jsonify({'status': 'success', 'message': 'Model deleted successfully'})
         else:
@@ -2735,29 +2480,23 @@ def export_model_config():
         elif hasattr(model_registry, 'get_models'):
             registry_data = model_registry.get_models()
         else:
-<<<<<<< HEAD
             # Fallback to training_controller.get_model_registry but handle exceptions
             try:
                 registry_data = training_controller.get_model_registry()
-=======
-            # Fallback to training_control.get_model_registry but handle exceptions
-            try:
-                registry_data = training_control.get_model_registry()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             except Exception:
                 # Create mock data for demonstration
                 registry_data = {
-                    "A_management": {"type": "Central Coordinator", "status": "online", "port": 5001},
-                    "B_language": {"type": "Natural Language Processing", "status": "online", "port": 5002},
-                    "C_audio": {"type": "Sound Analysis & Synthesis", "status": "online", "port": 5003},
-                    "D_image": {"type": "Computer Vision", "status": "online", "port": 5004},
-                    "E_video": {"type": "Video Understanding", "status": "online", "port": 5005},
-                    "F_spatial": {"type": "3D Spatial Awareness", "status": "online", "port": 5006},
-                    "G_sensor": {"type": "IoT Data Processing", "status": "online", "port": 5007},
-                    "H_computer_control": {"type": "System Automation", "status": "online", "port": 5008},
-                    "I_knowledge": {"type": "Knowledge Graph", "status": "online", "port": 5009},
-                    "J_motion": {"type": "Motion Control", "status": "online", "port": 5010},
-                    "K_programming": {"type": "Code Generation & Understanding", "status": "online", "port": 5011}
+                    "A_management": {"type": "Central Coordinator", "status": "online", "port": 5000},
+                    "B_language": {"type": "Natural Language Processing", "status": "online", "port": 5001},
+                    "C_audio": {"type": "Sound Analysis & Synthesis", "status": "online", "port": 5002},
+                    "D_image": {"type": "Computer Vision", "status": "online", "port": 5003},
+                    "E_video": {"type": "Video Understanding", "status": "online", "port": 5004},
+                    "F_spatial": {"type": "3D Spatial Awareness", "status": "online", "port": 5005},
+                    "G_sensor": {"type": "IoT Data Processing", "status": "online", "port": 5006},
+                    "H_computer_control": {"type": "System Automation", "status": "online", "port": 5007},
+                    "I_knowledge": {"type": "Knowledge Graph", "status": "online", "port": 5008},
+                    "J_motion": {"type": "Motion Control", "status": "online", "port": 5009},
+                    "K_programming": {"type": "Code Generation & Understanding", "status": "online", "port": 5010}
                 }
         
         # Create JSON data
@@ -2783,11 +2522,7 @@ def export_model_config():
 def get_training_modes():
     """Get training modes API"""
     try:
-<<<<<<< HEAD
         modes = training_controller.get_training_modes()
-=======
-        modes = training_control.get_training_modes()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         return jsonify({'status': 'success', 'modes': modes})
     except Exception as e:
         logger.error(f"Failed to get training modes: {str(e)}")
@@ -2797,11 +2532,7 @@ def get_training_modes():
 def get_training_history():
     """Get training history API"""
     try:
-<<<<<<< HEAD
         history = training_controller.get_training_history()
-=======
-        history = training_control.get_training_history()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         return jsonify({'status': 'success', 'history': history})
     except Exception as e:
         logger.error(f"Failed to get training history: {str(e)}")
@@ -2872,25 +2603,62 @@ def reset_training_config():
 def get_performance_analytics():
     """Get performance analytics API"""
     try:
-<<<<<<< HEAD
         analytics = training_controller.get_performance_analytics()
-=======
-        analytics = training_control.get_performance_analytics()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         return jsonify({'status': 'success', 'analytics': analytics})
     except Exception as e:
         logger.error(f"Failed to get performance analytics: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
 
+@app.route('/api/training/progress')
+def get_training_progress():
+    """Get training progress API that forwards requests to manager_model"""
+    try:
+        # Forward request to A_management model's training progress endpoint
+        response = requests.get(
+            "http://localhost:5000/api/training/progress",
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            return jsonify(response.json())
+        else:
+            logger.warning(f"Failed to get training progress from manager_model, status code: {response.status_code}")
+            # Return mock progress data if manager_model is not available
+            return jsonify({
+                'status': 'success',
+                'data': {
+                    'progress': 0,
+                    'current_epoch': 0,
+                    'total_epochs': 0,
+                    'loss': 0.0,
+                    'accuracy': 0.0,
+                    'status': 'idle',
+                    'model_id': 'unknown',
+                    'timestamp': datetime.now().isoformat()
+                }
+            })
+    except Exception as e:
+        logger.error(f"Error getting training progress: {str(e)}")
+        # Return mock progress data in case of exception
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'progress': 0,
+                'current_epoch': 0,
+                'total_epochs': 0,
+                'loss': 0.0,
+                'accuracy': 0.0,
+                'status': 'idle',
+                'model_id': 'unknown',
+                'timestamp': datetime.now().isoformat()
+            }
+        })
+
 @app.route('/api/knowledge/status')
 def get_knowledge_status():
     """Get knowledge base status API"""
     try:
-<<<<<<< HEAD
         status = training_controller.get_knowledge_base_status()
-=======
-        status = training_control.get_knowledge_base_status()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         return jsonify({'success': True, 'knowledge': status})
     except Exception as e:
         logger.error(f"Failed to get knowledge status: {str(e)}")
@@ -2903,11 +2671,7 @@ def update_knowledge():
         data = request.get_json()
         updates = data.get('updates', {})
         
-<<<<<<< HEAD
         success = training_controller.update_knowledge_base(updates)
-=======
-        success = training_control.update_knowledge_base(updates)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         if success:
             return jsonify({'success': True, 'message': 'Knowledge base updated successfully'})
         else:
@@ -2924,7 +2688,7 @@ def get_conversations():
         # Call A management model to get real conversations
         import requests
         response = requests.get(
-            "http://localhost:5015/api/conversations",
+            "http://localhost:5000/api/conversations",
             timeout=10
         )
         
@@ -2968,7 +2732,7 @@ def get_messages(conversation_id):
         # Call A management model to get real messages
         import requests
         response = requests.get(
-            f"http://localhost:5015/api/conversations/{conversation_id}/messages",
+            f"http://localhost:5000/api/conversations/{conversation_id}/messages",
             timeout=10
         )
         
@@ -3052,11 +2816,7 @@ def generate_ai_response(message, knowledge_base, attachments):
         conversation_id = str(uuid.uuid4())
         
         # Use the actual available endpoint in manager_model/app.py
-<<<<<<< HEAD
         endpoint = "http://localhost:5000/api/chat_with_management"
-=======
-        endpoint = "http://localhost:5015/api/chat_with_management"
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
         # Prepare request data according to the actual API requirements
         request_data = {
@@ -3067,6 +2827,8 @@ def generate_ai_response(message, knowledge_base, attachments):
                 "attachments": attachments if attachments else []
             }
         }
+        
+        logger.info(f"Sending request to A Management Model at {endpoint}: {request_data}")
         
         # Send request to A Management Model
         response = requests.post(
@@ -3079,9 +2841,12 @@ def generate_ai_response(message, knowledge_base, attachments):
             timeout=30
         )
         
+        logger.info(f"Received response from A Management Model: status={response.status_code}")
+        
         if response.status_code == 200:
             try:
                 result = response.json()
+                logger.info(f"A Management Model response: {result}")
                 
                 # Handle the response format from /api/chat_with_management
                 if isinstance(result, dict):
@@ -3102,6 +2867,7 @@ def generate_ai_response(message, knowledge_base, attachments):
             except (ValueError, KeyError) as e:
                 # If JSON parsing fails, return raw text
                 logger.error(f"Error parsing A Management Model response: {str(e)}")
+                logger.error(f"Raw response: {response.text}")
                 return response.text
         else:
             logger.warning(f"A Management Model API call failed: {response.status_code} - {response.text}")
@@ -3112,7 +2878,10 @@ def generate_ai_response(message, knowledge_base, attachments):
         # Start A Management Model service if not running
         try:
             import subprocess
-            subprocess.Popen([sys.executable, "manager_model/app.py"],
+            import os
+            # Use absolute path to avoid issues
+            manager_model_path = os.path.join(os.path.dirname(__file__), '..', 'manager_model', 'app.py')
+            subprocess.Popen([sys.executable, manager_model_path],
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             logger.info("Started A Management Model service")
             return "A Management Model service was not running. I've started it now. Please try your message again in a few seconds."
@@ -3427,18 +3196,19 @@ def generate_enhanced_ai_response(message, attachments, knowledge_base, model):
             logger.warning(f"Failed to load model registry from file: {str(registry_error)}")
         
         # Call different AI services based on selected model
+        # Using port configuration from system_config.yaml
         model_endpoints = {
-            'a_manager': 'http://localhost:5001/process_message',
-            'b_language': 'http://localhost:5002/generate_text',
-            'c_audio': 'http://localhost:5003/process_audio',
-            'd_image': 'http://localhost:5004/analyze_image',
-            'e_video': 'http://localhost:5005/analyze_video',
-            'f_spatial': 'http://localhost:5006/process_spatial',
-            'g_sensor': 'http://localhost:5007/process_sensor',
-            'h_computer': 'http://localhost:5008/execute_command',
-            'i_knowledge': 'http://localhost:5009/query_knowledge',
-            'j_motion': 'http://localhost:5010/plan_motion',
-            'k_programming': 'http://localhost:5011/generate_code'
+            'a_manager': 'http://localhost:5000/api/chat_with_management',
+            'b_language': 'http://localhost:5001/generate_text',
+            'c_audio': 'http://localhost:5002/process_audio',
+            'd_image': 'http://localhost:5003/analyze_image',
+            'e_video': 'http://localhost:5004/analyze_video',
+            'f_spatial': 'http://localhost:5005/process_spatial',
+            'g_sensor': 'http://localhost:5006/process_sensor',
+            'h_computer': 'http://localhost:5007/execute_command',
+            'i_knowledge': 'http://localhost:5008/query_knowledge',
+            'j_motion': 'http://localhost:5009/plan_motion',
+            'k_programming': 'http://localhost:5010/generate_code'
         }
         
         endpoint = model_endpoints.get(model, model_endpoints['a_manager'])
@@ -3537,7 +3307,7 @@ def generate_intelligent_response(message, attachments, knowledge_base, model, e
             # Directly call A Management Model for model information
             import requests
             response = requests.post(
-                "http://localhost:5015/api/chat",
+                "http://localhost:5000/api/chat_with_management",
                 json={"message": message},
                 headers={'Content-Type': 'application/json'},
                 timeout=30
@@ -4080,33 +3850,33 @@ def get_knowledge_entries():
 from metadata_manager import KnowledgeMetadataManager
 from search_engine import KnowledgeSearchEngine
 import logging
-<<<<<<< HEAD
 import os
-=======
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-<<<<<<< HEAD
-# 获取项目根目录
-project_root = os.path.dirname(os.path.dirname(__file__))
+# 初始化管理器 - 使用项目目录下的路径
+project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+knowledge_base_path = os.path.join(project_dir, 'knowledge_base_storage')
+search_index_path = os.path.join(project_dir, 'search_index')
+
+# 确保目录存在
+def ensure_dir_exists(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+        logger.info(f"Created directory: {path}")
+
+ensure_dir_exists(knowledge_base_path)
+ensure_dir_exists(search_index_path)
 
 # 初始化管理器
-metadata_manager = KnowledgeMetadataManager(os.path.join(project_root, "knowledge_base"))
+logger.info(f"Initializing knowledge metadata manager with path: {knowledge_base_path}")
+metadata_manager = KnowledgeMetadataManager(knowledge_base_path)
 
-# 初始化搜索引擎 - 内部已包含增强的错误处理和临时目录回退机制
-logger.info("Initializing knowledge search engine...")
-search_engine = KnowledgeSearchEngine(os.path.join(project_root, "search_index"))
-=======
-# 初始化管理器
-metadata_manager = KnowledgeMetadataManager("d:\\shiyan\\knowledge_base_storage")
-
-# 初始化搜索引擎 - 内部已包含增强的错误处理和临时目录回退机制
-logger.info("Initializing knowledge search engine...")
-search_engine = KnowledgeSearchEngine("d:\\shiyan\\search_index")
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
+# 初始化搜索引擎
+logger.info(f"Initializing knowledge search engine with path: {search_index_path}")
+search_engine = KnowledgeSearchEngine(search_index_path)
 logger.info("Knowledge search engine initialized successfully")
 
 @app.route('/api/knowledge/upload', methods=['POST'])
@@ -4127,11 +3897,7 @@ def upload_knowledge():
             return jsonify({'status': 'error', 'message': 'No file selected'})
         
         # Ensure storage path exists
-<<<<<<< HEAD
         storage_path = os.path.join(project_root, "knowledge_base", "storage")
-=======
-        storage_path = "d:\\shiyan\\knowledge_base_storage"
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         category_path = os.path.join(storage_path, 'categories', category)
         os.makedirs(category_path, exist_ok=True)
         
@@ -4940,7 +4706,6 @@ def handle_training_log(log_data):
     except Exception as e:
         logger.error(f"Failed to process training log: {str(e)}")
 
-<<<<<<< HEAD
 # Camera control events
 def handle_camera_stream_event(event_type, data):
     """Common handler for camera stream events"""
@@ -5033,10 +4798,6 @@ def handle_start_depth_stream(data):
 def handle_stop_depth_stream(data):
     """Handle stop depth stream event"""
     handle_depth_stream_event('stop', data)
-
-
-=======
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 # Background task: periodically broadcast system status
 def background_broadcast():
     """Background broadcast system status"""
@@ -5076,11 +4837,7 @@ def not_found(error):
         "knowledge_base": "Knowledge Base",
         "analytics": "Analytics",
         "ai_chat": "AI Chat",
-<<<<<<< HEAD
         "training_controller": "Training Controller",
-=======
-        "training_control": "Training Control",
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         "model_management": "Model Management",
         "system_settings": "System Settings",
         "help": "Help",
@@ -5118,11 +4875,7 @@ def internal_error(error):
         "knowledge_base": "Knowledge Base",
         "analytics": "Analytics",
         "ai_chat": "AI Chat",
-<<<<<<< HEAD
         "training_controller": "Training Controller",
-=======
-        "training_control": "Training Control",
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         "model_management": "Model Management",
         "system_settings": "System Settings",
         "help": "Help",
@@ -5466,7 +5219,6 @@ def test_page():
 @app.route('/api/system/status')
 def system_status():
     """Real-time system status API"""
-<<<<<<< HEAD
     start_time = time.time()
     try:
         # Log the API request for debugging
@@ -5484,25 +5236,10 @@ def system_status():
             'gpu': 'GPU Active',
             'models': '11/11',
             'response_time': f'{int((time.time() - start_time) * 1000)}ms',
-=======
-    try:
-        import psutil
-        
-        # Get system information
-        cpu_percent = psutil.cpu_percent(interval=1)
-        memory = psutil.virtual_memory()
-        
-        return jsonify({
-            'status': 'Active',
-            'gpu': 'GPU Active',
-            'models': '11/11',
-            'response_time': '< 200ms',
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             'cpu': f'{cpu_percent}%',
             'memory': f'{memory.percent}%',
             'gpu_usage': '78%',
             'timestamp': datetime.now().isoformat()
-<<<<<<< HEAD
         }
         
         logger.info(f"API response data: {response_data}")
@@ -5520,19 +5257,6 @@ def system_status():
         }
         logger.info(f"API fallback response data: {response_data}")
         return jsonify(response_data)
-=======
-        })
-    except Exception as e:
-        return jsonify({
-            'status': 'Active',
-            'gpu': 'GPU Active',
-            'models': '11/11',
-            'response_time': '< 200ms',
-            'cpu': '45%',
-            'memory': '62%',
-            'gpu_usage': '78%'
-        })
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
 @app.route('/api/execute', methods=['POST'])
 def execute_command():
@@ -5599,7 +5323,6 @@ def training_status():
 def models_status():
     """All models status API - REAL IMPLEMENTATION"""
     try:
-<<<<<<< HEAD
         models_dict = training_controller.get_model_registry()
         models_array = []
         models_status_obj = {}
@@ -5620,50 +5343,25 @@ def models_status():
                 'status': model_data.get('current_status', 'unknown'),
                 'progress': model_data.get('training_progress', 0)
             }
-=======
-        models_dict = training_control.get_model_registry()
-        models_array = []
-        for model_id, model_data in models_dict.items():
-            config = model_data.get('config', {})
-            models_array.append({
-                'name': config.get('name', model_id),
-                'status': model_data.get('current_status', 'unknown'),
-                'type': config.get('model_type', 'unknown')
-            })
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
         active_count = len([m for m in models_array if m['status'] == 'active'])
         
         return jsonify({
-<<<<<<< HEAD
             'status': 'success',  # Add status field expected by frontend
             'total': len(models_array),
             'active': active_count,
             'models': models_status_obj,  # Use object format with progress
-=======
-            'total': len(models_array),
-            'active': active_count,
-            'models': models_array,
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             'timestamp': datetime.now().isoformat()
         })
     except Exception as e:
         logger.error(f"Failed to get models status: {str(e)}")
         return jsonify({
-<<<<<<< HEAD
             'status': 'error',  # Add status field for error case
             'message': str(e),  # Add message field for error description
             'total': 0,
             'active': 0,
             'models': {},
             'timestamp': datetime.now().isoformat()
-=======
-            'total': 0,
-            'active': 0,
-            'models': [],
-            'timestamp': datetime.now().isoformat(),
-            'error': str(e)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         }), 500
 
 @app.route('/api/models/refresh-status', methods=['GET'])
@@ -5676,11 +5374,7 @@ def refresh_models_status():
         
         # Test connections for all external models
         try:
-<<<<<<< HEAD
             models_dict = training_controller.get_model_registry()
-=======
-            models_dict = training_control.get_model_registry()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             for model_id, model_data in models_dict.items():
                 config = model_data.get('config', {})
                 if config.get('model_source') == 'external' and 'external_api' in config:
@@ -5697,11 +5391,7 @@ def refresh_models_status():
                         except Exception as e:
                             logger.error(f"Error testing connection for model {model_id}: {str(e)}")
         except Exception as e:
-<<<<<<< HEAD
             # If training_controller.get_model_registry() fails, fallback to just test model registry connection
-=======
-            # If training_control.get_model_registry() fails, fallback to just test model registry connection
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             logger.warning(f"Failed to get model registry, using fallback: {str(e)}")
         
         # Return success response
@@ -6627,7 +6317,7 @@ def get_current_emotion():
         
         # 调用A管理模型的情感API
         response = requests.get(
-            "http://localhost:5015/api/emotion/current",
+            "http://localhost:5000/api/emotion/current",
             timeout=5
         )
         
@@ -6666,7 +6356,7 @@ def get_emotion_summary():
         
         # 调用A管理模型的情感摘要API
         response = requests.get(
-            f"http://localhost:5015/api/emotion/summary?time_period={time_period}",
+            f"http://localhost:5000/api/emotion/summary?time_period={time_period}",
             timeout=5
         )
         
@@ -6705,7 +6395,7 @@ def reset_emotion():
     try:
         # 调用A管理模型的重置情感API
         response = requests.post(
-            "http://localhost:5015/api/emotion/reset",
+            "http://localhost:5000/api/emotion/reset",
             timeout=5
         )
         
@@ -6751,7 +6441,7 @@ def analyze_text_emotion():
         
         # 调用A管理模型的情感分析API
         response = requests.post(
-            "http://localhost:5015/api/emotion/analyze",
+            "http://localhost:5000/api/emotion/analyze",
             json={'text': text},
             timeout=5
         )
@@ -6856,11 +6546,7 @@ def start_pretraining():
                 }
 
                 # Start training for individual model with pretraining mode
-<<<<<<< HEAD
                 training_id = training_controller.start_training([model_id], TrainingMode.PRETRAINING, training_config)
-=======
-                training_id = training_control.start_training([model_id], TrainingMode.PRETRAINING, training_config)
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
                 logger.info(f"Pretraining started for model {model_id}: {training_id}")
 
@@ -6916,10 +6602,7 @@ def get_sensor_data():
         elif platform.system() == 'Windows':
             # Windows platform can try to use wmi library to get temperature
             try:
-<<<<<<< HEAD
                 # Optional dependency for Windows temperature monitoring
-=======
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 import wmi
                 w = wmi.WMI(namespace="root\\OpenHardwareMonitor")
                 temperature_info = w.Sensor()
@@ -6927,7 +6610,6 @@ def get_sensor_data():
                     if sensor.SensorType == 'Temperature' and 'CPU' in sensor.Name:
                         temperature = float(sensor.Value)
                         break
-<<<<<<< HEAD
             except ImportError:
                 # Handle case where wmi library is not installed
                 logger.warning("wmi library not found. Install with 'pip install wmi' for Windows temperature monitoring")
@@ -6935,9 +6617,6 @@ def get_sensor_data():
             except Exception as e:
                 # Handle other exceptions
                 logger.error(f"Error getting temperature via WMI: {str(e)}")
-=======
-            except Exception:
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 pass
         
         # Build response data
@@ -6993,7 +6672,6 @@ def get_serial_ports():
         except Exception as e:
             logger.warning(f"Cannot use device_communication module: {str(e)}")
         
-<<<<<<< HEAD
         # If cannot use device_communication module, use pyserial to get port info directly
         available_ports = []
         
@@ -7009,13 +6687,6 @@ def get_serial_ports():
             # Handle other exceptions
             logger.error(f"Error importing serial port modules: {str(e)}")
             return jsonify({'status': 'error', 'message': str(e), 'ports': []})
-=======
-        # If cannot use device_communication module, use psutil to get port info directly
-        import serial.tools.list_ports
-        import platform
-        
-        available_ports = []
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
         if platform.system() == 'Windows':
             # Windows platform
@@ -7295,7 +6966,6 @@ def api_stereo_pair(pair_name):
                     'message': 'Request must be JSON'
                 }), 400
             data = request.json
-<<<<<<< HEAD
             
             # Support both parameter naming conventions for compatibility
             left_camera_id = data.get('left_camera_id') or data.get('left')
@@ -7313,34 +6983,17 @@ def api_stereo_pair(pair_name):
             if isinstance(right_camera_id, str) and right_camera_id.isdigit():
                 right_camera_id = int(right_camera_id)
             
-=======
-            left_camera_id = data.get('left')
-            right_camera_id = data.get('right')
-            if left_camera_id is None or right_camera_id is None:
-                return jsonify({
-                    'status': 'error',
-                    'message': 'Left and right camera IDs are required'
-                }), 400
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             result = camera_manager.set_stereo_pair(pair_name, left_camera_id, right_camera_id)
             if result:
                 return jsonify({
                     'status': 'success',
-<<<<<<< HEAD
                     'message': f'Stereo pair {pair_name} created successfully',
                     'pair_name': pair_name
-=======
-                    'message': f'Stereo pair {pair_name} set successfully'
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 })
             else:
                 return jsonify({
                     'status': 'error',
-<<<<<<< HEAD
                     'message': f'Failed to create stereo pair {pair_name}'
-=======
-                    'message': 'Failed to set stereo pair'
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
                 }), 400
     except Exception as e:
         logger.error(f"Error handling stereo pair: {str(e)}")
@@ -7371,7 +7024,6 @@ def api_process_stereo_vision(pair_name):
             'message': str(e)
         }), 500
 
-<<<<<<< HEAD
 @app.route('/api/stereo/pairs/<string:pair_name>/enable', methods=['POST'])
 def api_enable_stereo_pair(pair_name):
     """Enable a specific stereo pair"""
@@ -7443,8 +7095,6 @@ def api_get_depth_data(pair_name):
             'message': str(e)
         }), 500
 
-=======
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 # Device Communication Manager API Endpoints
 @app.route('/api/device_communication/available_devices', methods=['GET'])
 def api_get_available_devices():
@@ -7587,14 +7237,10 @@ if __name__ == '__main__':
     
     # Initialize device communication system
     logger.info("Initializing device communication system...")
-<<<<<<< HEAD
     try:
         init_device_communication()
     except NameError:
         logger.warning("Device communication system not available, skipping initialization")
-=======
-    init_device_communication()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     
     # Load port from system config or use default
     import yaml
@@ -7633,14 +7279,9 @@ if __name__ == '__main__':
                 debug=True,
                 use_reloader=False)
     # Cleanup device communication system on shutdown
-<<<<<<< HEAD
     try:
         logger.info("Cleaning up device communication system...")
         cleanup_device_communication()
     except NameError:
         logger.warning("Device communication system not available, skipping cleanup")
-=======
-    logger.info("Cleaning up device communication system...")
-    cleanup_device_communication()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
     logger.info("Self Brain AGI System shutdown complete")

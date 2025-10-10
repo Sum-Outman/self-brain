@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Copyright 2025 AGI System Team
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -682,13 +681,13 @@ class CameraManager:
         if stereo_pair['left_camera_id'] not in self.active_camera_streams:
             return {
                 'status': 'error',
-                'message': f'Left camera {stereo_pair['left_camera_id']} is not active'
+                'message': "Left camera {stereo_pair['left_camera_id']} is not active"
             }
             
         if stereo_pair['right_camera_id'] not in self.active_camera_streams:
             return {
                 'status': 'error',
-                'message': f'Right camera {stereo_pair['right_camera_id']} is not active'
+                'message': "Right camera {stereo_pair['right_camera_id']} is not active"
             }
             
         # Enable the pair
@@ -883,16 +882,6 @@ if __name__ == "__main__":
     finally:
         # Cleanup
         manager.cleanup()
-=======
-import os
-import cv2
-import numpy as np
-import base64
-import datetime
-import logging
-import threading
-import os
-from typing import Dict, List, Optional, Any, Tuple
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -1070,4 +1059,3 @@ def get_camera_manager():
 
 # Initialize camera manager instance on module load
 get_camera_manager()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13

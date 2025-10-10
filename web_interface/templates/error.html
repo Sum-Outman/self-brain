@@ -1,10 +1,6 @@
-<<<<<<< HEAD
-{% extends "base_monochrome.html" %}
-=======
 {% extends "base.html" %}
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
 
-{% block title %}Error - Self Brain AGI System{% endblock %}
+{% block title %}Error - Self Brain{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -109,11 +105,7 @@
 <script>
     // Auto-retry mechanism for temporary errors
     document.addEventListener('DOMContentLoaded', function() {
-<<<<<<< HEAD
         const errorCode = parseInt('{{ error_code or 500 }}') || 500;
-=======
-        const errorCode = {{ error_code or 500 }};
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
         
         // For 5xx errors, suggest retry after delay
         if (errorCode >= 500) {
@@ -125,8 +117,4 @@
         }
     });
 </script>
-<<<<<<< HEAD
 {% endblock %}
-=======
-{% endblock %}
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13

@@ -16,7 +16,7 @@ The system had issues with the external API integration functionality, particula
 - Preserved existing configuration data where available
 
 ### 3. Verified Web Interface and API Endpoints
-- Confirmed that the web server is running correctly on http://localhost:5000
+- Confirmed that the web server is running correctly on http://localhost:8080
 - Validated all model management API endpoints: `GET /api/models`, `GET /api/models/<model_id>`, `POST /api/models/<model_id>/switch-external`, `POST /api/models/<model_id>/api-config`
 
 ### 4. Developed and Ran Integration Tests
@@ -32,7 +32,7 @@ The system had issues with the external API integration functionality, particula
 4. **Test Automation**: Created a reusable test script to validate the system functionality
 
 ## System Status
-- Web interface is running on http://localhost:5000
+- Web interface is running on http://localhost:8080
 - All 11 models are listed and accessible through the API
 - External API configuration can be saved successfully
 - Connection testing mechanism works as expected (returns appropriate error for test keys)

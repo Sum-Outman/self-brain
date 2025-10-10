@@ -1,15 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-<<<<<<< HEAD
-"""Self Brain AGI System Initialization Script
-This script initializes the system environment for Self Brain AGI."""
-=======
 """
 Self Brain System Initialization Script
 This script initializes the Self Brain AGI system, ensuring all models are properly configured
 for training from scratch and all features are enabled.
 """
-
 import os
 import sys
 import json
@@ -35,6 +30,9 @@ logger = logging.getLogger("SelfBrainInit")
 BASE_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
 CONFIG_PATH = BASE_DIR / "web_interface" / "config.json"
 SYSTEM_CONFIG_PATH = BASE_DIR / "config" / "system_config.yaml"
+
+# Use core requirements file
+REQUIREMENTS_FILE = BASE_DIR / "requirements_core.txt"
 
 # Check Python version
 
@@ -1132,4 +1130,3 @@ if __name__ == "__main__":
     
     if __name__ == "__main__":
         main()
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13

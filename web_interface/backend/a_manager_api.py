@@ -52,11 +52,7 @@ registered_models = {
         "is_local": True,
         "config": {
             "model_source": "local",
-<<<<<<< HEAD
             "api_endpoint": "http://localhost:5000",
-=======
-            "api_endpoint": "http://localhost:5001",
->>>>>>> 55541e2569d492f61ad4c096b6721db4fe055a13
             "version": "1.0.0"
         }
     },
@@ -69,7 +65,7 @@ registered_models = {
         "is_local": True,
         "config": {
             "model_source": "local",
-            "api_endpoint": "http://localhost:5002",
+            "api_endpoint": "http://localhost:5001",
             "version": "1.0.0"
         }
     },
@@ -82,7 +78,7 @@ registered_models = {
         "is_local": True,
         "config": {
             "model_source": "local",
-            "api_endpoint": "http://localhost:5003",
+            "api_endpoint": "http://localhost:5002",
             "version": "1.0.0"
         }
     },
@@ -95,7 +91,7 @@ registered_models = {
         "is_local": True,
         "config": {
             "model_source": "local",
-            "api_endpoint": "http://localhost:5004",
+            "api_endpoint": "http://localhost:5003",
             "version": "1.0.0"
         }
     },
@@ -108,7 +104,7 @@ registered_models = {
         "is_local": True,
         "config": {
             "model_source": "local",
-            "api_endpoint": "http://localhost:5005",
+            "api_endpoint": "http://localhost:5004",
             "version": "1.0.0"
         }
     },
@@ -121,7 +117,7 @@ registered_models = {
         "is_local": True,
         "config": {
             "model_source": "local",
-            "api_endpoint": "http://localhost:5006",
+            "api_endpoint": "http://localhost:5005",
             "version": "1.0.0"
         }
     },
@@ -134,7 +130,7 @@ registered_models = {
         "is_local": True,
         "config": {
             "model_source": "local",
-            "api_endpoint": "http://localhost:5007",
+            "api_endpoint": "http://localhost:5006",
             "version": "1.0.0"
         }
     },
@@ -147,7 +143,7 @@ registered_models = {
         "is_local": True,
         "config": {
             "model_source": "local",
-            "api_endpoint": "http://localhost:5008",
+            "api_endpoint": "http://localhost:5007",
             "version": "1.0.0"
         }
     },
@@ -160,7 +156,7 @@ registered_models = {
         "is_local": True,
         "config": {
             "model_source": "local",
-            "api_endpoint": "http://localhost:5009",
+            "api_endpoint": "http://localhost:5008",
             "version": "1.0.0"
         }
     },
@@ -173,7 +169,7 @@ registered_models = {
         "is_local": True,
         "config": {
             "model_source": "local",
-            "api_endpoint": "http://localhost:5010",
+            "api_endpoint": "http://localhost:5009",
             "version": "1.0.0"
         }
     },
@@ -186,7 +182,7 @@ registered_models = {
         "is_local": True,
         "config": {
             "model_source": "local",
-            "api_endpoint": "http://localhost:5011",
+            "api_endpoint": "http://localhost:5010",
             "version": "1.0.0"
         }
     }

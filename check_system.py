@@ -15,10 +15,10 @@ print("Self Brain AGI System Status Check")
 print("==================================")
 
 # Check main web interface
-check_service("http://localhost:5000", "Main Web Interface")
+check_service("http://localhost:8080", "Main Web Interface")
 
 # Check A Management Model
-check_service("http://localhost:5001", "A Management Model")
+check_service("http://localhost:5000", "A Management Model")
 
 # Check basic API endpoints if available
-check_service("http://localhost:5000/api", "Main API")
+check_service("http://localhost:5015/api", "Main API")
